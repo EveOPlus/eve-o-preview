@@ -132,6 +132,7 @@ Some of the application options are not exposed in the GUI. They can be adjusted
 | **ThumbnailMinimumSize** | <div style="font-size: small">Minimum thumbnail size that can be set either via GUI or by resizing a thumbnail window. Value is written in the form "width, height"<br />The default value is **"100, 80"**.<br />For example: **"ThumbnailMinimumSize": "100, 80"**</div> |
 | **ThumbnailMaximumSize** | <div style="font-size: small">Maximum thumbnail size that can be set either via GUI or by resizing a thumbnail window. Value is written in the form "width, height"<br />The default value is **"640, 400"**.<br />For example: **"ThumbnailMaximumSize": "640, 400"**</div> |
 | **ThumbnailRefreshPeriod** | <div style="font-size: small">Thumbnail refresh period in milliseconds. This option accepts values between **300** and **1000** only.<br />The default value is **500** milliseconds.<br />For example: **"ThumbnailRefreshPeriod": 500**</div> |
+| **ClientCrop** | <div style="font-size: small">Specify cropping options for thumbnail capture.<br />This does nothing unless explicitly configured, however you can specify a global value to apply to all clients.<br />For example: **"ClientCrop": { "EVE - Awox": "45, 43, 1600, 1360" }** for just Awox, or<br>for all clients: **"ClientCrop": { "*": "45, 43, 1600, 1360" }**</div> |
 
 <div style="page-break-after: always;"></div>
 
@@ -198,7 +199,7 @@ You should modify this entry with a list of each of your clients replacing "Exam
 If a character appears in the list but is not currently logged in, then it will simply be skipped.
 If a character does not appear in the list, then they will never become active when cycling clients.
 
-By now you may have noticed that there are two groups. The above configuration can be followed for a second group by using the values **CycleGroup2ForwardHotkeys**, **CycleGroup2BackwardHotkeys**, and **CycleGroup2ForwardHotkeys**
+By now you may have noticed that there are four groups. The above configuration can be followed for a second group by using the values **CycleGroup2ForwardHotkeys**, **CycleGroup2BackwardHotkeys**, and **CycleGroup2ForwardHotkeys** or a fourth group using **CycleGroup4ForwardHotkeys** etc.
 This may provide useful if you want to have one HotKey to cycle through a group of DPS characters, while another HotKey cycles through support roles such as gate scouts, or a group of logi.
 
 Alternatively you may not want to use any of these HotKeys. Please note that deleting the values in their entirety will simply result in them being automatically re-generated.
@@ -210,6 +211,12 @@ Should you wish to remove these HotKeys completely, Simply set the values to emp
 	  "CycleGroup2ForwardHotkeys": [],
 	  "CycleGroup2BackwardHotkeys": [],
 	  "CycleGroup2ClientsOrder": {}
+      "CycleGroup3ForwardHotkeys": [],
+	  "CycleGroup3BackwardHotkeys": [],
+	  "CycleGroup3ClientsOrder": {},
+	  "CycleGroup4ForwardHotkeys": [],
+	  "CycleGroup4BackwardHotkeys": [],
+	  "CycleGroup4ClientsOrder": {}
 
 **Hints** 
 * Minimise the use of modifiers or standard keys to minimise issues with the client playing up. In the default example unusual Function keys (e.g. F14) are used which are then bound to a game pad or gaming mouse.

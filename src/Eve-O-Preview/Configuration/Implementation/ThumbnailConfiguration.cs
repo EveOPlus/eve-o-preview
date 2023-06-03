@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using EveOPreview.Services.Interop;
 using Newtonsoft.Json;
 
 namespace EveOPreview.Configuration.Implementation
@@ -17,25 +18,43 @@ namespace EveOPreview.Configuration.Implementation
 		{
 			this.ConfigVersion = 1;
 
-			this.CycleGroup1ForwardHotkeys = new List<string> { "F14", "Control+F14" };
-			this.CycleGroup1BackwardHotkeys = new List<string> { "F13", "Control+F13" };
-			this.CycleGroup1ClientsOrder = new Dictionary<string, int>
-			{
-				{ "EVE - Example DPS Toon 1", 1 },
-				{ "EVE - Example DPS Toon 2", 2 },
-				{ "EVE - Example DPS Toon 3", 3 }
-			};
+            this.CycleGroup1ForwardHotkeys = new List<string> { "F14", "Control+F14" };
+            this.CycleGroup1BackwardHotkeys = new List<string> { "F13", "Control+F13" };
+            this.CycleGroup1ClientsOrder = new Dictionary<string, int>
+            {
+                { "EVE - Example DPS Toon 1", 1 },
+                { "EVE - Example DPS Toon 2", 2 },
+                { "EVE - Example DPS Toon 3", 3 }
+            };
 
-			this.CycleGroup2ForwardHotkeys = new List<string> { "F16", "Control+F16" };
-			this.CycleGroup2BackwardHotkeys = new List<string> { "F15", "Control+F15" };
-			this.CycleGroup2ClientsOrder = new Dictionary<string, int>
-			{
-				{ "EVE - Example Logi Toon 1", 1 },
-				{ "EVE - Example Scout Toon 2", 2 },
-				{ "EVE - Example Tackle Toon 3", 3 }
-			};
+            this.CycleGroup2ForwardHotkeys = new List<string> { "F16", "Control+F16" };
+            this.CycleGroup2BackwardHotkeys = new List<string> { "F15", "Control+F15" };
+            this.CycleGroup2ClientsOrder = new Dictionary<string, int>
+            {
+                { "EVE - Example Logi Toon 1", 1 },
+                { "EVE - Example Scout Toon 2", 2 },
+                { "EVE - Example Tackle Toon 3", 3 }
+            };
 
-			this.PerClientActiveClientHighlightColor = new Dictionary<string, Color>
+            this.CycleGroup3ForwardHotkeys = new List<string> { "F14", "Control+F18" };
+            this.CycleGroup3BackwardHotkeys = new List<string> { "F13", "Control+F17" };
+            this.CycleGroup3ClientsOrder = new Dictionary<string, int>
+            {
+                { "EVE - Example DPS Toon 4", 1 },
+                { "EVE - Example DPS Toon 5", 2 },
+                { "EVE - Example DPS Toon 6", 3 }
+            };
+
+            this.CycleGroup4ForwardHotkeys = new List<string> { "F16", "Control+F20" };
+            this.CycleGroup4BackwardHotkeys = new List<string> { "F15", "Control+F19" };
+            this.CycleGroup4ClientsOrder = new Dictionary<string, int>
+            {
+                { "EVE - Example Logi Toon 4", 1 },
+                { "EVE - Example Scout Toon 5", 2 },
+                { "EVE - Example Tackle Toon 6", 3 }
+            };
+
+            this.PerClientActiveClientHighlightColor = new Dictionary<string, Color>
 			{
 				{"EVE - Example Toon 1", Color.Red},
 				{"EVE - Example Toon 2", Color.Green}
@@ -43,8 +62,9 @@ namespace EveOPreview.Configuration.Implementation
 
 			this.PerClientLayout = new Dictionary<string, Dictionary<string, Point>>();
 			this.FlatLayout = new Dictionary<string, Point>();
-			this.ClientLayout = new Dictionary<string, ClientLayout>();
-			this.ClientHotkey = new Dictionary<string, string>();
+            this.ClientLayout = new Dictionary<string, ClientLayout>();
+            this.ClientCrop = new Dictionary<string, Rectangle>();
+            this.ClientHotkey = new Dictionary<string, string>();
 			this.DisableThumbnail = new Dictionary<string, bool>();
 			this.PriorityClients = new List<string>();
 
@@ -97,16 +117,34 @@ namespace EveOPreview.Configuration.Implementation
 		[JsonProperty("CycleGroup1ClientsOrder")]
 		public Dictionary<string, int> CycleGroup1ClientsOrder { get; set; }
 
-		[JsonProperty("CycleGroup2ForwardHotkeys")]
-		public List<string> CycleGroup2ForwardHotkeys { get; set; }
+        [JsonProperty("CycleGroup2ForwardHotkeys")]
+        public List<string> CycleGroup2ForwardHotkeys { get; set; }
 
-		[JsonProperty("CycleGroup2BackwardHotkeys")]
-		public List<string> CycleGroup2BackwardHotkeys { get; set; }
+        [JsonProperty("CycleGroup2BackwardHotkeys")]
+        public List<string> CycleGroup2BackwardHotkeys { get; set; }
 
-		[JsonProperty("CycleGroup2ClientsOrder")]
-		public Dictionary<string, int> CycleGroup2ClientsOrder { get; set; }
+        [JsonProperty("CycleGroup2ClientsOrder")]
+        public Dictionary<string, int> CycleGroup2ClientsOrder { get; set; }
 
-		[JsonProperty("PerClientActiveClientHighlightColor")]
+        [JsonProperty("CycleGroup3ForwardHotkeys")]
+        public List<string> CycleGroup3ForwardHotkeys { get; set; }
+
+        [JsonProperty("CycleGroup3BackwardHotkeys")]
+        public List<string> CycleGroup3BackwardHotkeys { get; set; }
+
+        [JsonProperty("CycleGroup3ClientsOrder")]
+        public Dictionary<string, int> CycleGroup3ClientsOrder { get; set; }
+
+        [JsonProperty("CycleGroup4ForwardHotkeys")]
+        public List<string> CycleGroup4ForwardHotkeys { get; set; }
+
+        [JsonProperty("CycleGroup4BackwardHotkeys")]
+        public List<string> CycleGroup4BackwardHotkeys { get; set; }
+
+        [JsonProperty("CycleGroup4ClientsOrder")]
+        public Dictionary<string, int> CycleGroup4ClientsOrder { get; set; }
+
+        [JsonProperty("PerClientActiveClientHighlightColor")]
 		public Dictionary<string, Color> PerClientActiveClientHighlightColor { get; set; }
 
 		public bool MinimizeToTray { get; set; }
@@ -181,9 +219,11 @@ namespace EveOPreview.Configuration.Implementation
 		[JsonProperty]
 		private Dictionary<string, Point> FlatLayout { get; set; }
 		[JsonProperty]
-		private Dictionary<string, ClientLayout> ClientLayout { get; set; }
-		[JsonProperty]
-		private Dictionary<string, string> ClientHotkey { get; set; }
+        private Dictionary<string, ClientLayout> ClientLayout { get; set; }
+        [JsonProperty]
+        private Dictionary<string, Rectangle> ClientCrop{ get; set; }
+        [JsonProperty]
+        private Dictionary<string, string> ClientHotkey { get; set; }
 		[JsonProperty]
 		private Dictionary<string, bool> DisableThumbnail { get; set; }
 		[JsonProperty]
@@ -236,17 +276,24 @@ namespace EveOPreview.Configuration.Implementation
 			}
 
 			layoutSource[currentClient] = location;
-		}
+        }
 
-		public ClientLayout GetClientLayout(string currentClient)
-		{
-			ClientLayout layout;
-			this.ClientLayout.TryGetValue(currentClient, out layout);
+        public ClientLayout GetClientLayout(string currentClient)
+        {
+            ClientLayout layout;
+            this.ClientLayout.TryGetValue(currentClient, out layout);
 
-			return layout;
-		}
+            return layout;
+        }
 
-		public void SetClientLayout(string currentClient, ClientLayout layout)
+        public Rectangle GetClientCrop(string currentClient)
+        {
+            Rectangle crop;
+            this.ClientCrop.TryGetValue(currentClient, out crop);
+            return crop;
+        }
+
+        public void SetClientLayout(string currentClient, ClientLayout layout)
 		{
 			this.ClientLayout[currentClient] = layout;
 		}

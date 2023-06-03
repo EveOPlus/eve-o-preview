@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using EveOPreview.Configuration;
 using EveOPreview.Services.Interop;
 
 namespace EveOPreview.Services.Implementation
@@ -9,10 +10,12 @@ namespace EveOPreview.Services.Implementation
 	{
 		#region Private constants
 		private const int WINDOW_SIZE_THRESHOLD = 300;
-		#endregion
+        private IThumbnailConfiguration _config;
+        #endregion
 
-		public WindowManager()
+        public WindowManager(IThumbnailConfiguration config)
 		{
+			this._config = config;
 			// Composition is always enabled for Windows 8+
 			this.IsCompositionEnabled = 
 				((Environment.OSVersion.Version.Major == 6) && (Environment.OSVersion.Version.Minor >= 2)) // Win 8 and Win 8.1
@@ -85,7 +88,7 @@ namespace EveOPreview.Services.Implementation
 
 		public IDwmThumbnail GetLiveThumbnail(IntPtr destination, IntPtr source)
 		{
-			IDwmThumbnail thumbnail = new DwmThumbnail(this);
+			IDwmThumbnail thumbnail = new DwmThumbnail(this, _config);
 			thumbnail.Register(destination, source);
 
 			return thumbnail;

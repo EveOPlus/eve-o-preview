@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using EveOPreview.Services.Interop;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -10,11 +11,19 @@ namespace EveOPreview.Configuration
 		List<string> CycleGroup1BackwardHotkeys { get; set; }
 		Dictionary<string, int> CycleGroup1ClientsOrder { get; set; }
 
-		List<string> CycleGroup2ForwardHotkeys { get; set; }
-		List<string> CycleGroup2BackwardHotkeys { get; set; }
-		Dictionary<string, int> CycleGroup2ClientsOrder { get; set; }
+        List<string> CycleGroup2ForwardHotkeys { get; set; }
+        List<string> CycleGroup2BackwardHotkeys { get; set; }
+        Dictionary<string, int> CycleGroup2ClientsOrder { get; set; }
 
-		Dictionary<string, Color> PerClientActiveClientHighlightColor { get; set; }
+        List<string> CycleGroup3ForwardHotkeys { get; set; }
+        List<string> CycleGroup3BackwardHotkeys { get; set; }
+        Dictionary<string, int> CycleGroup3ClientsOrder { get; set; }
+
+        List<string> CycleGroup4ForwardHotkeys { get; set; }
+        List<string> CycleGroup4BackwardHotkeys { get; set; }
+        Dictionary<string, int> CycleGroup4ClientsOrder { get; set; }
+
+        Dictionary<string, Color> PerClientActiveClientHighlightColor { get; set; }
 
 		bool MinimizeToTray { get; set; }
 		int ThumbnailRefreshPeriod { get; set; }
@@ -53,6 +62,8 @@ namespace EveOPreview.Configuration
 
 		Point GetThumbnailLocation(string currentClient, string activeClient, Point defaultLocation);
 		void SetThumbnailLocation(string currentClient, string activeClient, Point location);
+
+		Rectangle GetClientCrop(string currentClient);
 
 		ClientLayout GetClientLayout(string currentClient);
 		void SetClientLayout(string currentClient, ClientLayout layout);

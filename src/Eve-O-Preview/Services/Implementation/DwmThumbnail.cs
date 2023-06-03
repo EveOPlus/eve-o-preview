@@ -1,6 +1,11 @@
 ﻿using System;
+using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Windows.Forms;
+using EveOPreview.Configuration;
 using EveOPreview.Services.Interop;
+
 
 namespace EveOPreview.Services.Implementation
 {
@@ -8,28 +13,67 @@ namespace EveOPreview.Services.Implementation
 	{
 		#region Private fields
 		private readonly IWindowManager _windowManager;
-		private IntPtr _handle;
+        private IThumbnailConfiguration _config;
+        private IntPtr _handle;
 		private DWM_THUMBNAIL_PROPERTIES _properties;
 		#endregion
 
-		public DwmThumbnail(IWindowManager windowManager)
+		public DwmThumbnail(IWindowManager windowManager, IThumbnailConfiguration config)
 		{
 			this._windowManager = windowManager;
 			this._handle = IntPtr.Zero;
+			this._config = config; 
+
 		}
 
-		public void Register(IntPtr destination, IntPtr source)
-		{
-			this._properties = new DWM_THUMBNAIL_PROPERTIES();
-			this._properties.dwFlags = DWM_TNP_CONSTANTS.DWM_TNP_VISIBLE
-									  + DWM_TNP_CONSTANTS.DWM_TNP_OPACITY
-									  + DWM_TNP_CONSTANTS.DWM_TNP_RECTDESTINATION
-									  + DWM_TNP_CONSTANTS.DWM_TNP_SOURCECLIENTAREAONLY;
-			this._properties.opacity = 255;
-			this._properties.fVisible = true;
-			this._properties.fSourceClientAreaOnly = true;
 
-			if (!this._windowManager.IsCompositionEnabled)
+        [DllImport("user32.dll")]
+		static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
+
+        private string GetWindowTitle(IntPtr handle)
+        {
+            const int nChars = 256;
+            StringBuilder Buff = new StringBuilder(nChars);
+
+            if (GetWindowText(handle, Buff, nChars) > 0)
+            {
+                return Buff.ToString();
+            }
+            return null;
+        }
+
+        public void Register(IntPtr destination, IntPtr source)
+		{
+			Rectangle cc = new Rectangle();
+            String clientTitle = this.GetWindowTitle(source);
+            if (clientTitle != null)
+			{
+				cc = this._config.GetClientCrop(clientTitle);
+			}
+            if (cc.IsEmpty)
+            {
+                cc = this._config.GetClientCrop("*");
+            }
+
+            this._properties = new DWM_THUMBNAIL_PROPERTIES();
+            this._properties.dwFlags = DWM_TNP_CONSTANTS.DWM_TNP_VISIBLE
+									   + DWM_TNP_CONSTANTS.DWM_TNP_OPACITY
+                                       + DWM_TNP_CONSTANTS.DWM_TNP_RECTDESTINATION;
+            this._properties.opacity = 255;
+            this._properties.fVisible = true;
+
+            if (cc.IsEmpty)
+			{
+                this._properties.dwFlags += DWM_TNP_CONSTANTS.DWM_TNP_SOURCECLIENTAREAONLY;
+                this._properties.fSourceClientAreaOnly = true;
+			}
+			else
+            {
+                this._properties.dwFlags += DWM_TNP_CONSTANTS.DWM_TNP_RECTSOURCE;
+                this._properties.rcSource = new RECT(cc.X, cc.Y, cc.Right, cc.Bottom);
+            }
+
+            if (!this._windowManager.IsCompositionEnabled)
 			{
 				return;
 			}
