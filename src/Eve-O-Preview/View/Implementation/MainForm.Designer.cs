@@ -65,7 +65,8 @@ namespace EveOPreview.View
 			this.ShowThumbnailsAlwaysOnTopCheckBox = new System.Windows.Forms.CheckBox();
 			this.HideThumbnailsOnLostFocusCheckBox = new System.Windows.Forms.CheckBox();
 			this.EnablePerClientThumbnailsLayoutsCheckBox = new System.Windows.Forms.CheckBox();
-			this.MinimizeToTrayCheckBox = new System.Windows.Forms.CheckBox();
+            this.HideThumbnailsOnSingleClientCheckBox = new System.Windows.Forms.CheckBox();
+            this.MinimizeToTrayCheckBox = new System.Windows.Forms.CheckBox();
 			this.ThumbnailsWidthNumericEdit = new System.Windows.Forms.NumericUpDown();
 			this.ThumbnailsHeightNumericEdit = new System.Windows.Forms.NumericUpDown();
 			this.ThumbnailOpacityTrackBar = new System.Windows.Forms.TrackBar();
@@ -206,7 +207,8 @@ namespace EveOPreview.View
 			GeneralSettingsPanel.Controls.Add(this.ShowThumbnailsAlwaysOnTopCheckBox);
 			GeneralSettingsPanel.Controls.Add(this.HideThumbnailsOnLostFocusCheckBox);
 			GeneralSettingsPanel.Controls.Add(this.EnablePerClientThumbnailsLayoutsCheckBox);
-			GeneralSettingsPanel.Controls.Add(this.MinimizeToTrayCheckBox);
+            GeneralSettingsPanel.Controls.Add(this.HideThumbnailsOnSingleClientCheckBox);
+            GeneralSettingsPanel.Controls.Add(this.MinimizeToTrayCheckBox);
 			GeneralSettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
 			GeneralSettingsPanel.Location = new System.Drawing.Point(3, 3);
 			GeneralSettingsPanel.Name = "GeneralSettingsPanel";
@@ -287,10 +289,23 @@ namespace EveOPreview.View
 			this.EnablePerClientThumbnailsLayoutsCheckBox.Text = "Unique layout for each EVE client";
 			this.EnablePerClientThumbnailsLayoutsCheckBox.UseVisualStyleBackColor = true;
 			this.EnablePerClientThumbnailsLayoutsCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
-			// 
-			// MinimizeToTrayCheckBox
-			// 
-			this.MinimizeToTrayCheckBox.AutoSize = true;
+            // 
+            // HideThumbnailsOnSingleClient
+            // 
+            this.HideThumbnailsOnSingleClientCheckBox.AutoSize = true;
+            this.HideThumbnailsOnSingleClientCheckBox.Checked = true;
+            this.HideThumbnailsOnSingleClientCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.HideThumbnailsOnSingleClientCheckBox.Location = new System.Drawing.Point(8, 176);
+            this.HideThumbnailsOnSingleClientCheckBox.Name = "HideThumbnailsOnSingleClient";
+            this.HideThumbnailsOnSingleClientCheckBox.Size = new System.Drawing.Size(185, 17);
+            this.HideThumbnailsOnSingleClientCheckBox.TabIndex = 24;
+            this.HideThumbnailsOnSingleClientCheckBox.Text = "Hide thumbnails with single client";
+            this.HideThumbnailsOnSingleClientCheckBox.UseVisualStyleBackColor = true;
+            this.HideThumbnailsOnSingleClientCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            // 
+            // MinimizeToTrayCheckBox
+            // 
+            this.MinimizeToTrayCheckBox.AutoSize = true;
 			this.MinimizeToTrayCheckBox.Location = new System.Drawing.Point(8, 7);
 			this.MinimizeToTrayCheckBox.Name = "MinimizeToTrayCheckBox";
 			this.MinimizeToTrayCheckBox.Size = new System.Drawing.Size(139, 17);
@@ -907,7 +922,8 @@ namespace EveOPreview.View
 		private CheckBox ShowThumbnailsAlwaysOnTopCheckBox;
 		private CheckBox HideThumbnailsOnLostFocusCheckBox;
 		private CheckBox EnablePerClientThumbnailsLayoutsCheckBox;
-		private CheckBox MinimizeToTrayCheckBox;
+		private CheckBox HideThumbnailsOnSingleClientCheckBox;
+        private CheckBox MinimizeToTrayCheckBox;
 		private NumericUpDown ThumbnailsWidthNumericEdit;
 		private NumericUpDown ThumbnailsHeightNumericEdit;
 		private TrackBar ThumbnailOpacityTrackBar;

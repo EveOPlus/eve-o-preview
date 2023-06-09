@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using EveOPreview.Configuration;
@@ -85,9 +86,24 @@ namespace EveOPreview.Services
 
 		private void ThumbnailUpdateTimerTick(object sender, EventArgs e)
 		{
+			this.EnableDisableThumbnails();
 			this.UpdateThumbnailsList();
 			this.RefreshThumbnails();
-		}
+        }
+
+		/// <summary>
+		/// Disables thumbnails if only one account is active
+		/// </summary>
+		private void EnableDisableThumbnails()
+		{
+            var characters = _thumbnailViews.Values.ToList();
+            //Need to add logic here depending on whether or not we want the thumbnails to show when login screens are on, up for discussion in pull request
+            bool refreshEnabled = characters.Count > 1;
+			if (!_configuration.HideThumbnailsOnSingleClient)
+                refreshEnabled = true;
+            foreach (var c in characters)
+                _configuration.ToggleThumbnail(c.Title, !refreshEnabled);
+        }
 
 		private async void UpdateThumbnailsList()
 		{

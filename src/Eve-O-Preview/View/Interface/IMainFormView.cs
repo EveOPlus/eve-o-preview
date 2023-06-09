@@ -31,7 +31,9 @@ namespace EveOPreview.View
 		bool ShowThumbnailFrames { get; set; }
 
 		bool EnableActiveClientHighlight { get; set; }
-		Color ActiveClientHighlightColor { get; set; }
+		bool HideThumbnailsOnSingleClient { get; set; }
+
+        Color ActiveClientHighlightColor { get; set; }
 
 		void SetDocumentationUrl(string url);
 		void SetVersionInfo(string version);

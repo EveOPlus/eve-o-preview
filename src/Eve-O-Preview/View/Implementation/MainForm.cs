@@ -176,7 +176,12 @@ namespace EveOPreview.View
 				this.ActiveClientHighlightColorButton.BackColor = value;
 			}
 		}
-		private Color _activeClientHighlightColor;
+        public bool HideThumbnailsOnSingleClient
+		{
+            get => this.HideThumbnailsOnSingleClientCheckBox.Checked;
+            set => this.HideThumbnailsOnSingleClientCheckBox.Checked = value;
+        }
+        private Color _activeClientHighlightColor;
 
 		public new void Show()
 		{
@@ -256,10 +261,10 @@ namespace EveOPreview.View
 
 		public Action<string> ThumbnailStateChanged { get; set; }
 
-		public Action DocumentationLinkActivated { get; set; }
+		public Action DocumentationLinkActivated { get; set; }        
 
-		#region UI events
-		private void ContentTabControl_DrawItem(object sender, DrawItemEventArgs e)
+        #region UI events
+        private void ContentTabControl_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			TabControl control = (TabControl)sender;
 			TabPage page = control.TabPages[e.Index];

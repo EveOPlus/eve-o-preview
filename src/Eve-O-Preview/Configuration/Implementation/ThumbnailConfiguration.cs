@@ -53,6 +53,8 @@ namespace EveOPreview.Configuration.Implementation
 			this.EnableActiveClientHighlight = false;
 			this.ActiveClientHighlightColor = Color.GreenYellow;
 			this.ActiveClientHighlightThickness = 3;
+
+			this.HideThumbnailsOnSingleClient = false;
 		}
 
 		public bool MinimizeToTray { get; set; }
@@ -114,8 +116,9 @@ namespace EveOPreview.Configuration.Implementation
 		public bool ShowThumbnailFrames { get; set; }
 
 		public bool EnableActiveClientHighlight { get; set; }
+        public bool HideThumbnailsOnSingleClient { get; set; }
 
-		public Color ActiveClientHighlightColor { get; set; }
+        public Color ActiveClientHighlightColor { get; set; }
 
 		public int ActiveClientHighlightThickness { get; set; }
 
