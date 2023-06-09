@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Newtonsoft.Json;
 
 namespace EveOPreview.Configuration.Implementation
@@ -6,15 +7,21 @@ namespace EveOPreview.Configuration.Implementation
 	class ConfigurationStorage : IConfigurationStorage
 	{
 		private const string CONFIGURATION_FILE_NAME = "EVE-O Preview.json";
+        private const string CONFIGURATION_DIRECTORY_NAME = "EVE-O Preview";
+        private string _configurationFile;
 
-		private readonly IAppConfig _appConfig;
+        private readonly IAppConfig _appConfig;
 		private readonly IThumbnailConfiguration _thumbnailConfiguration;
 
 		public ConfigurationStorage(IAppConfig appConfig, IThumbnailConfiguration thumbnailConfiguration)
 		{
 			this._appConfig = appConfig;
-			this._thumbnailConfiguration = thumbnailConfiguration;
-		}
+            this._thumbnailConfiguration = thumbnailConfiguration;
+            //%appdata%/roaming/EVE-O Preview/EVE-O Preview.json
+            string configurationPath = Directory.CreateDirectory(
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), CONFIGURATION_DIRECTORY_NAME)).FullName;
+            _configurationFile = Path.Combine(configurationPath, CONFIGURATION_FILE_NAME);
+        }
 
 		public void Load()
 		{
@@ -50,7 +57,7 @@ namespace EveOPreview.Configuration.Implementation
 
 		private string GetConfigFileName()
 		{
-			return string.IsNullOrEmpty(this._appConfig.ConfigFileName) ? ConfigurationStorage.CONFIGURATION_FILE_NAME : this._appConfig.ConfigFileName;
+			return string.IsNullOrEmpty(this._appConfig.ConfigFileName) ? _configurationFile : this._appConfig.ConfigFileName;
 		}
 	}
 }
