@@ -1,4 +1,6 @@
-﻿namespace EveOPreview.View
+﻿using System.Drawing;
+
+namespace EveOPreview.View
 {
 	partial class ThumbnailOverlay
 	{
@@ -29,8 +31,14 @@
 		private void InitializeComponent()
 		{
 			System.Windows.Forms.PictureBox OverlayAreaPictureBox;
-			this.OverlayLabel = new System.Windows.Forms.Label();
-			OverlayAreaPictureBox = new System.Windows.Forms.PictureBox();
+            this.OverlayLabel = new System.Windows.Forms.Label();
+
+
+
+
+
+
+            OverlayAreaPictureBox = new System.Windows.Forms.PictureBox();
 			((System.ComponentModel.ISupportInitialize)(OverlayAreaPictureBox)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -65,8 +73,20 @@
 			this.BackColor = System.Drawing.Color.Black;
 			this.ClientSize = new System.Drawing.Size(284, 262);
 			this.ControlBox = false;
-			this.Controls.Add(this.OverlayLabel);
-			this.Controls.Add(OverlayAreaPictureBox);
+            this.Controls.Add(this.OverlayLabel);
+			if (true)
+			{
+
+				this.paddingL = new System.Windows.Forms.Label();
+				this.paddingT = new System.Windows.Forms.Label();
+				this.paddingR = new System.Windows.Forms.Label();
+				this.paddingB = new System.Windows.Forms.Label();
+				this.Controls.Add(this.paddingL);
+				this.Controls.Add(this.paddingT);
+				this.Controls.Add(this.paddingR);
+				this.Controls.Add(this.paddingB);
+			}
+            this.Controls.Add(OverlayAreaPictureBox);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
@@ -82,8 +102,16 @@
 
 		}
 
-		#endregion
+        #endregion
 
-		private System.Windows.Forms.Label OverlayLabel;
-	}
+        private System.Windows.Forms.Label OverlayLabel;
+
+        private System.Windows.Forms.Label paddingL;
+
+        private System.Windows.Forms.Label paddingT;
+
+        private System.Windows.Forms.Label paddingR;
+
+        private System.Windows.Forms.Label paddingB;
+    }
 }

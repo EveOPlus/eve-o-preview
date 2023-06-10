@@ -71,12 +71,13 @@ namespace EveOPreview.View
 
 			InitializeComponent();
 
-			this._overlay = new ThumbnailOverlay(this, this.MouseDown_Handler);
+            this._overlay = new ThumbnailOverlay(this, config, this.MouseDown_Handler);
 
-			this._config = config;
+            this._config = config;
 			SetDefaultBorderColor();
-			this._thumbnailManager = thumbnailManager;
-		}
+            this._thumbnailManager = thumbnailManager;
+            this._overlay.FormatLabel();
+        }
 
 		public IWindowManager WindowManager { get; }
 
@@ -89,6 +90,7 @@ namespace EveOPreview.View
 			{
 				this.Text = value;
 				this._overlay.SetOverlayLabel(value.Replace("EVE - ", ""));
+				this._overlay.FormatLabel();
 				SetDefaultBorderColor();
 			}
 		}
@@ -127,6 +129,7 @@ namespace EveOPreview.View
 
 		public void SetDefaultBorderColor()
 		{
+
 			this._myBorderColor = new Lazy<Color>(() =>
 			{
 				if (this._config.PerClientActiveClientHighlightColor.Any(x => x.Key == this.Title))
@@ -152,7 +155,7 @@ namespace EveOPreview.View
 
 			this.Refresh(true);
 
-			this.IsActive = true;
+            this.IsActive = true;
 		}
 
 		public new void Hide()
@@ -258,14 +261,18 @@ namespace EveOPreview.View
 			}
 
 			if (enabled)
-			{
+            {
+                this._overlay.highlighted = true;
+                this._overlay.FormatLabel();
 				this._isHighlightRequested = true;
 				this._highlightWidth = width;
 				this.BackColor = _myBorderColor.Value;
 			}
 			else
-			{
-				this._isHighlightRequested = false;
+            {
+				this._overlay.highlighted = false;
+                this._overlay.FormatLabel();
+                this._isHighlightRequested = false;
 				this.BackColor = SystemColors.Control;
 			}
 
@@ -370,8 +377,8 @@ namespace EveOPreview.View
 			this.RefreshThumbnail(forceRefresh);
 			this.HighlightThumbnail(forceRefresh || this._isSizeChanged);
 			this.RefreshOverlay(forceRefresh || this._isSizeChanged || this._isLocationChanged);
-
-			this._isSizeChanged = false;
+			this._overlay.FormatLabel();
+            this._isSizeChanged = false;
 		}
 
 		protected abstract void RefreshThumbnail(bool forceRefresh);
@@ -391,7 +398,7 @@ namespace EveOPreview.View
 			int baseWidth = this.ClientSize.Width;
 			int baseHeight = this.ClientSize.Height;
 
-			if (!this._isHighlightRequested)
+			if (!this._isHighlightRequested || (this._config.LabelBackground != this._config.LabelBackgroundActive) || this._config.PaddingWidthActive > 0)
 			{
 				//No highlighting enabled, so no math required
 				this.ResizeThumbnail(baseWidth, baseHeight, 0, 0, 0, 0);
@@ -411,6 +418,8 @@ namespace EveOPreview.View
 
 		private void RefreshOverlay(bool forceRefresh)
 		{
+			this._overlay.FormatLabel();
+
 			if (this._isOverlayVisible && !forceRefresh)
 			{
 				// No need to update anything. Everything is already set up
@@ -425,7 +434,7 @@ namespace EveOPreview.View
 				// Otherwise its position won't be set
 				this._overlay.Show();
 				this._isOverlayVisible = true;
-			}
+            }
 
 			Size overlaySize = this.ClientSize;
 			Point overlayLocation = this.Location;
@@ -538,7 +547,7 @@ namespace EveOPreview.View
 			this.Size = this._baseZoomSize;
 			this.MaximumSize = this._baseZoomMaximumSize;
 			this.Location = this._baseZoomLocation;
-		}
+        }
 
 		private void EnterCustomMouseMode()
 		{

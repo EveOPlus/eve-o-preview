@@ -18,6 +18,19 @@ namespace EveOPreview.Configuration.Implementation
 		{
 			this.ConfigVersion = 1;
 
+            this.LabelForeground = "#888888";
+            this.LabelBackgroundActive = "#111111";
+            this.LabelBackground = "transparent";
+            this.LabelForegroundActive = "#FFFFFF";
+            this.LabelHorizontalAlign = "Center";
+			this.LabelVerticalAlign = "Top";
+			this.PaddingWidth = 2;
+			this.PaddingWidthActive = 2;
+			this.PaddingColor = "#111111";
+			this.PaddingColorActive = "#FFFFFF";
+			this.LabelFontSize = 16;
+            this.LabelFontName = "Consolas";
+
             this.CycleGroup1ForwardHotkeys = new List<string> { "F14", "Control+F14" };
             this.CycleGroup1BackwardHotkeys = new List<string> { "F13", "Control+F13" };
             this.CycleGroup1ClientsOrder = new Dictionary<string, int>
@@ -102,10 +115,48 @@ namespace EveOPreview.Configuration.Implementation
 			this.ActiveClientHighlightThickness = 3;
 
 			this.LoginThumbnailLocation = new Point(5, 5);
-		}
+        }
 
 
-		[JsonProperty("ConfigVersion")]
+        [JsonProperty("PaddingWidth")]
+        public int PaddingWidth { get; set; }
+
+        [JsonProperty("PaddingWidthActive")]
+        public int PaddingWidthActive { get; set; }
+
+        [JsonProperty("PaddingColor")]
+        public string PaddingColor { get; set; }
+
+        [JsonProperty("PaddingColorActive")]
+        public string PaddingColorActive { get; set; }
+
+        [JsonProperty("LabelVerticalAlign")]
+        public string LabelVerticalAlign { get; set; }
+
+        [JsonProperty("LabelHorizontalAlign")]
+        public string LabelHorizontalAlign { get; set; }
+
+        [JsonProperty("LabelFontName")]
+        public string LabelFontName { get; set; }
+
+        [JsonProperty("LabelFontSize")]
+        public int LabelFontSize { get; set; }
+
+        [JsonProperty("LabelBackgroundActive")]
+        public string LabelBackgroundActive { get; set; }
+
+        [JsonProperty("LabelForegroundActive")]
+        public string LabelForegroundActive { get; set; }
+
+
+        [JsonProperty("LabelBackground")]
+        public string LabelBackground { get; set; }
+
+        [JsonProperty("LabelForeground")]
+        public string LabelForeground { get; set; }
+
+
+        [JsonProperty("ConfigVersion")]
 		public int ConfigVersion { get; set; }
 
 		[JsonProperty("CycleGroup1ForwardHotkeys")]

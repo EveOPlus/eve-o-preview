@@ -41,7 +41,22 @@ namespace EveOPreview.Configuration
 		bool HideThumbnailsOnLostFocus { get; set; }
 		int HideThumbnailsDelay { get; set; }
 
-		Size ThumbnailSize { get; set; }
+        string LabelVerticalAlign { get; set; }
+        string LabelHorizontalAlign { get; set; }
+		string LabelFontName { get; set; }
+		int LabelFontSize { get; set; }
+        string LabelBackground { get; set; }
+        string LabelForeground { get; set; }
+        string LabelBackgroundActive { get; set; }
+        string LabelForegroundActive { get; set; }
+
+
+        int PaddingWidth { get; set; }
+        int PaddingWidthActive { get; set; }
+        string PaddingColor { get; set; }
+        string PaddingColorActive { get; set; }
+
+        Size ThumbnailSize { get; set; }
 		Size ThumbnailMinimumSize { get; set; }
 		Size ThumbnailMaximumSize { get; set; }
 

@@ -1,3 +1,15 @@
+
+## Notes from Awox
+
+<div style="color:red; font-weight:bold">Please read this section carefully!!</div>
+
+* It's not yet clear if the crop feature is permissable by CCP. I don't see why it wouldn't, given it is very common for people to use ISBoxer to generate multiple cropped displays (which are even clickable). 
+* There are some bugs that I haven't figured out how to fix yet, namely:
+  * When initially launching, thumbnail labels and stylings are not applied (this is a pre-existing bug). I just deal with it and hover over each thumbnail to get the labels and styles to apply.
+  * Somewhere thumbnail sizes get messed up, I think in `ApplyRestrictions()` somewhere but I'm not really sure. For the time being I just make sure **ThumbnailSize**, **ThumbnailMinimumSize** and **ThumbnailMaximumSize** are all set to the same value.
+  
+<hr>
+
 ## Overview
 
 The purpose of this application is to provide a simple way to keep an eye on several simultaneously running EVE Online clients and to easily switch between them. While running it shows a set of live thumbnails for each of the active EVE Online clients. These thumbnails allow fast switch to the corresponding EVE Online client either using mouse or configurable hotkeys.
@@ -7,7 +19,7 @@ It's essentially a task switcher, it does not relay any keyboard/mouse events an
 The program does NOT (and will NOT ever) do the following things:
 
 * modify EVE Online interface
-* display modified EVE Online interface
+* <strike>display modified EVE Online interface</strike> <i>oops - Awox</i>
 * broadcast any keyboard or mouse events
 * anyhow interact with EVE Online except of bringing its main window to foreground or resizing/minimizing it
 
@@ -133,6 +145,16 @@ Some of the application options are not exposed in the GUI. They can be adjusted
 | **ThumbnailMaximumSize** | <div style="font-size: small">Maximum thumbnail size that can be set either via GUI or by resizing a thumbnail window. Value is written in the form "width, height"<br />The default value is **"640, 400"**.<br />For example: **"ThumbnailMaximumSize": "640, 400"**</div> |
 | **ThumbnailRefreshPeriod** | <div style="font-size: small">Thumbnail refresh period in milliseconds. This option accepts values between **300** and **1000** only.<br />The default value is **500** milliseconds.<br />For example: **"ThumbnailRefreshPeriod": 500**</div> |
 | **ClientCrop** | <div style="font-size: small">Specify cropping options for thumbnail capture.<br />This does nothing unless explicitly configured, however you can specify a global value to apply to all clients.<br />For example: **"ClientCrop": { "EVE - Awox": "45, 43, 1600, 1360" }** for just Awox, or<br>for all clients: **"ClientCrop": { "*": "45, 43, 1600, 1360" }**</div> |
+| **LabelVerticalAlign** | <div style="font-size: small">Vertical alignment of label on thumbnails<br/>The default value is <b>Top</b>. Accepted values are Top and Bottom.</div> |
+| **LabelHorizontalAlign** | <div style="font-size: small">Horizontal alignment of label on thumbnails<br/>The default value is <b>Center</b>. Accepted values are Left, Right and Center.</div> |
+| **LabelFontSize** | <div style="font-size: small">Font size to use for label on thumbnails<br/>The default value is <b>14</b>.</div> |
+| **LabelFontName** | <div style="font-size: small">Font family to use for label on thumbnails<br/>The default value is <b>Consolas</b>.</div> |
+| **LabelForeground** | <div style="font-size: small">Color of the text of the label on thumbnails<br/>The default value is <b>#000000</b>. There is also **LabelForegroundActive** which applies when the preview is highlighted. <br/>If a non hexidecimal value is supplied, a default value will be used. </div> | |
+| **LabelBackground** | <div style="font-size: small">Color of the background of the label on thumbnails<br/>The default value is <b>#000000</b>. There is also **LabelBackgroundActive** which applies when the preview is highlighted.<br/>If a non hexidecimal value is supplied, a default value will be used. </div> |
+| **PaddingWidth** | <div style="font-size: small">Border width to draw inside the window<br/>The default value is <b>2</b>. There is also **PaddingWidthActive** which applies when the preview is highlighted.</div> | |
+| **PaddingColor** | <div style="font-size: small">Color of border drawn on top of thumbnails<br/>The default value is <b>#222222</b>. There is also **PaddingColorActive** which applies when the preview is highlighted.</div> |
+
+The original thumbnail highlighting will not work if you have **PaddingWidth**/**PaddingWidthActive** set.
 
 <div style="page-break-after: always;"></div>
 
