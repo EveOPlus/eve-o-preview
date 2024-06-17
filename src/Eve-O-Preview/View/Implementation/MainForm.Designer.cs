@@ -199,7 +199,7 @@ namespace EveOPreview.View
             ContentTabControl.Multiline = true;
             ContentTabControl.Name = "ContentTabControl";
             ContentTabControl.SelectedIndex = 0;
-            ContentTabControl.Size = new System.Drawing.Size(390, 250);
+            ContentTabControl.Size = new System.Drawing.Size(390, 251);
             ContentTabControl.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
             ContentTabControl.TabIndex = 6;
             ContentTabControl.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.ContentTabControl_DrawItem);
@@ -211,7 +211,7 @@ namespace EveOPreview.View
             GeneralTabPage.Location = new System.Drawing.Point(124, 4);
             GeneralTabPage.Name = "GeneralTabPage";
             GeneralTabPage.Padding = new System.Windows.Forms.Padding(3);
-            GeneralTabPage.Size = new System.Drawing.Size(262, 253);
+            GeneralTabPage.Size = new System.Drawing.Size(262, 243);
             GeneralTabPage.TabIndex = 0;
             GeneralTabPage.Text = "General";
             // 
@@ -228,9 +228,8 @@ namespace EveOPreview.View
             GeneralSettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             GeneralSettingsPanel.Location = new System.Drawing.Point(3, 3);
             GeneralSettingsPanel.Name = "GeneralSettingsPanel";
-            GeneralSettingsPanel.Size = new System.Drawing.Size(256, 247);
+            GeneralSettingsPanel.Size = new System.Drawing.Size(256, 237);
             GeneralSettingsPanel.TabIndex = 18;
-            GeneralSettingsPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.GeneralSettingsPanel_Paint);
             // 
             // MinimizeInactiveClientsCheckBox
             // 
@@ -333,7 +332,7 @@ namespace EveOPreview.View
             this.ProfileTabPage.Location = new System.Drawing.Point(124, 4);
             this.ProfileTabPage.Name = "ProfileTabPage";
             this.ProfileTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.ProfileTabPage.Size = new System.Drawing.Size(262, 242);
+            this.ProfileTabPage.Size = new System.Drawing.Size(262, 243);
             this.ProfileTabPage.TabIndex = 6;
             this.ProfileTabPage.Text = "Profile";
             this.ProfileTabPage.UseVisualStyleBackColor = true;
@@ -443,7 +442,7 @@ namespace EveOPreview.View
             ThumbnailTabPage.Location = new System.Drawing.Point(124, 4);
             ThumbnailTabPage.Name = "ThumbnailTabPage";
             ThumbnailTabPage.Padding = new System.Windows.Forms.Padding(3);
-            ThumbnailTabPage.Size = new System.Drawing.Size(262, 253);
+            ThumbnailTabPage.Size = new System.Drawing.Size(262, 243);
             ThumbnailTabPage.TabIndex = 1;
             ThumbnailTabPage.Text = "Thumbnail";
             // 
@@ -459,7 +458,7 @@ namespace EveOPreview.View
             ThumbnailSettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             ThumbnailSettingsPanel.Location = new System.Drawing.Point(3, 3);
             ThumbnailSettingsPanel.Name = "ThumbnailSettingsPanel";
-            ThumbnailSettingsPanel.Size = new System.Drawing.Size(256, 247);
+            ThumbnailSettingsPanel.Size = new System.Drawing.Size(256, 237);
             ThumbnailSettingsPanel.TabIndex = 19;
             // 
             // HeigthLabel
@@ -561,7 +560,7 @@ namespace EveOPreview.View
             this.ZoomTabPage.Controls.Add(ZoomSettingsPanel);
             this.ZoomTabPage.Location = new System.Drawing.Point(124, 4);
             this.ZoomTabPage.Name = "ZoomTabPage";
-            this.ZoomTabPage.Size = new System.Drawing.Size(262, 253);
+            this.ZoomTabPage.Size = new System.Drawing.Size(262, 243);
             this.ZoomTabPage.TabIndex = 2;
             this.ZoomTabPage.Text = "Zoom";
             // 
@@ -576,7 +575,7 @@ namespace EveOPreview.View
             ZoomSettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             ZoomSettingsPanel.Location = new System.Drawing.Point(0, 0);
             ZoomSettingsPanel.Name = "ZoomSettingsPanel";
-            ZoomSettingsPanel.Size = new System.Drawing.Size(262, 253);
+            ZoomSettingsPanel.Size = new System.Drawing.Size(262, 243);
             ZoomSettingsPanel.TabIndex = 36;
             // 
             // ZoomFactorLabel
@@ -758,7 +757,7 @@ namespace EveOPreview.View
             OverlayTabPage.Controls.Add(OverlaySettingsPanel);
             OverlayTabPage.Location = new System.Drawing.Point(124, 4);
             OverlayTabPage.Name = "OverlayTabPage";
-            OverlayTabPage.Size = new System.Drawing.Size(262, 253);
+            OverlayTabPage.Size = new System.Drawing.Size(262, 243);
             OverlayTabPage.TabIndex = 3;
             OverlayTabPage.Text = "Overlay";
             // 
@@ -773,7 +772,7 @@ namespace EveOPreview.View
             OverlaySettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             OverlaySettingsPanel.Location = new System.Drawing.Point(0, 0);
             OverlaySettingsPanel.Name = "OverlaySettingsPanel";
-            OverlaySettingsPanel.Size = new System.Drawing.Size(262, 253);
+            OverlaySettingsPanel.Size = new System.Drawing.Size(262, 243);
             OverlaySettingsPanel.TabIndex = 25;
             // 
             // HighlightColorLabel
@@ -842,7 +841,7 @@ namespace EveOPreview.View
             ClientsTabPage.Controls.Add(ClientsPanel);
             ClientsTabPage.Location = new System.Drawing.Point(124, 4);
             ClientsTabPage.Name = "ClientsTabPage";
-            ClientsTabPage.Size = new System.Drawing.Size(262, 253);
+            ClientsTabPage.Size = new System.Drawing.Size(262, 243);
             ClientsTabPage.TabIndex = 4;
             ClientsTabPage.Text = "Active Clients";
             // 
@@ -854,7 +853,7 @@ namespace EveOPreview.View
             ClientsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             ClientsPanel.Location = new System.Drawing.Point(0, 0);
             ClientsPanel.Name = "ClientsPanel";
-            ClientsPanel.Size = new System.Drawing.Size(262, 253);
+            ClientsPanel.Size = new System.Drawing.Size(262, 243);
             ClientsPanel.TabIndex = 32;
             // 
             // ThumbnailsList
@@ -865,7 +864,7 @@ namespace EveOPreview.View
             this.ThumbnailsList.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.ThumbnailsList.FormattingEnabled = true;
             this.ThumbnailsList.IntegralHeight = false;
-            this.ThumbnailsList.Location = new System.Drawing.Point(0, 71);
+            this.ThumbnailsList.Location = new System.Drawing.Point(0, 61);
             this.ThumbnailsList.Name = "ThumbnailsList";
             this.ThumbnailsList.Size = new System.Drawing.Size(260, 180);
             this.ThumbnailsList.TabIndex = 34;
@@ -886,7 +885,7 @@ namespace EveOPreview.View
             AboutTabPage.Controls.Add(AboutPanel);
             AboutTabPage.Location = new System.Drawing.Point(124, 4);
             AboutTabPage.Name = "AboutTabPage";
-            AboutTabPage.Size = new System.Drawing.Size(262, 253);
+            AboutTabPage.Size = new System.Drawing.Size(262, 243);
             AboutTabPage.TabIndex = 5;
             AboutTabPage.Text = "About";
             // 
@@ -895,15 +894,12 @@ namespace EveOPreview.View
             AboutPanel.BackColor = System.Drawing.Color.Transparent;
             AboutPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             AboutPanel.Controls.Add(CreditMaintLabel);
-            AboutPanel.Controls.Add(DocumentationLinkLabel);
-            AboutPanel.Controls.Add(DescriptionLabel);
             AboutPanel.Controls.Add(this.VersionLabel);
-            AboutPanel.Controls.Add(NameLabel);
             AboutPanel.Controls.Add(this.DocumentationLink);
             AboutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             AboutPanel.Location = new System.Drawing.Point(0, 0);
             AboutPanel.Name = "AboutPanel";
-            AboutPanel.Size = new System.Drawing.Size(262, 253);
+            AboutPanel.Size = new System.Drawing.Size(262, 243);
             AboutPanel.TabIndex = 2;
             // 
             // CreditMaintLabel
@@ -915,6 +911,29 @@ namespace EveOPreview.View
             CreditMaintLabel.Size = new System.Drawing.Size(258, 19);
             CreditMaintLabel.TabIndex = 7;
             CreditMaintLabel.Text = "Credit to previous maintainer: Phrynohyas Tig-Rah";
+            // 
+            // VersionLabel
+            // 
+            this.VersionLabel.AutoSize = true;
+            this.VersionLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.VersionLabel.Location = new System.Drawing.Point(133, 9);
+            this.VersionLabel.Name = "VersionLabel";
+            this.VersionLabel.Size = new System.Drawing.Size(49, 20);
+            this.VersionLabel.TabIndex = 4;
+            this.VersionLabel.Text = "1.0.0";
+            // 
+            // DocumentationLink
+            // 
+            this.DocumentationLink.Location = new System.Drawing.Point(0, 177);
+            this.DocumentationLink.Margin = new System.Windows.Forms.Padding(30, 3, 3, 3);
+            this.DocumentationLink.Name = "DocumentationLink";
+            this.DocumentationLink.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
+            this.DocumentationLink.Size = new System.Drawing.Size(262, 33);
+            this.DocumentationLink.TabIndex = 2;
+            this.DocumentationLink.TabStop = true;
+            this.DocumentationLink.Text = "to be set from prresenter to be set from prresenter to be set from prresenter to " +
+    "be set from prresenter";
+            this.DocumentationLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.DocumentationLinkClicked_Handler);
             // 
             // DocumentationLinkLabel
             // 
@@ -936,16 +955,6 @@ namespace EveOPreview.View
             DescriptionLabel.TabIndex = 5;
             DescriptionLabel.Text = resources.GetString("DescriptionLabel.Text");
             // 
-            // VersionLabel
-            // 
-            this.VersionLabel.AutoSize = true;
-            this.VersionLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.VersionLabel.Location = new System.Drawing.Point(133, 9);
-            this.VersionLabel.Name = "VersionLabel";
-            this.VersionLabel.Size = new System.Drawing.Size(49, 20);
-            this.VersionLabel.TabIndex = 4;
-            this.VersionLabel.Text = "1.0.0";
-            // 
             // NameLabel
             // 
             NameLabel.AutoSize = true;
@@ -955,19 +964,6 @@ namespace EveOPreview.View
             NameLabel.Size = new System.Drawing.Size(130, 20);
             NameLabel.TabIndex = 3;
             NameLabel.Text = "EVE-O Preview";
-            // 
-            // DocumentationLink
-            // 
-            this.DocumentationLink.Location = new System.Drawing.Point(0, 177);
-            this.DocumentationLink.Margin = new System.Windows.Forms.Padding(30, 3, 3, 3);
-            this.DocumentationLink.Name = "DocumentationLink";
-            this.DocumentationLink.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            this.DocumentationLink.Size = new System.Drawing.Size(262, 33);
-            this.DocumentationLink.TabIndex = 2;
-            this.DocumentationLink.TabStop = true;
-            this.DocumentationLink.Text = "to be set from prresenter to be set from prresenter to be set from prresenter to " +
-    "be set from prresenter";
-            this.DocumentationLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.DocumentationLinkClicked_Handler);
             // 
             // NotifyIcon
             // 
@@ -997,7 +993,7 @@ namespace EveOPreview.View
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(390, 250);
+            this.ClientSize = new System.Drawing.Size(390, 251);
             this.Controls.Add(ContentTabControl);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));

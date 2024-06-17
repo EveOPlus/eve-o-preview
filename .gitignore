@@ -6,3 +6,4 @@ src/.vs/
 *.suo
 *.user
 *.DotSettings
+/.vs

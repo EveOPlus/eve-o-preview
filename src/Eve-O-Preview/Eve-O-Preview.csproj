@@ -27,6 +27,9 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
+   <PropertyGroup>
+    <RuntimeIdentifiers>win</RuntimeIdentifiers>
+ </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
