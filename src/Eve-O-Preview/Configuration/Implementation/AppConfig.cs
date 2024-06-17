@@ -5,9 +5,9 @@
 		public AppConfig()
 		{
 			// Default values
-			this.ConfigFileName = null;
+			this.ActiveProfileName = null;
 		}
 
-		public string ConfigFileName { get; set; }
+		public string ActiveProfileName { get; set; }
 	}
 }

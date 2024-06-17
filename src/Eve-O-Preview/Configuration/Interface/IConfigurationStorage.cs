@@ -4,5 +4,8 @@
 	{
 		void Load();
 		void Save();
+		void UpdateActiveProfileName(string filename);
+		string GetProfilesBaseDir();
+		bool CreateNewProfile(string profileName, IThumbnailConfiguration config);
 	}
 }

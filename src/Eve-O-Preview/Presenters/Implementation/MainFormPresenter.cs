@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using EveOPreview.Configuration;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.View;
 using MediatR;
+using System.Linq;
+using EveOPreview.Configuration.Implementation;
 
 namespace EveOPreview.Presenters
 {
@@ -18,6 +21,7 @@ namespace EveOPreview.Presenters
 		#region Private fields
 		private readonly IMediator _mediator;
 		private readonly IThumbnailConfiguration _configuration;
+		private readonly IAppConfig _appConfiguration;
 		private readonly IConfigurationStorage _configurationStorage;
 		private readonly IDictionary<string, IThumbnailDescription> _descriptionsCache;
 		private bool _suppressSizeNotifications;
@@ -25,12 +29,13 @@ namespace EveOPreview.Presenters
 		private bool _exitApplication;
 		#endregion
 
-		public MainFormPresenter(IApplicationController controller, IMainFormView view, IMediator mediator, IThumbnailConfiguration configuration, IConfigurationStorage configurationStorage)
+		public MainFormPresenter(IApplicationController controller, IMainFormView view, IMediator mediator, IAppConfig appConfiguration, IThumbnailConfiguration configuration, IConfigurationStorage configurationStorage)
 			: base(controller, view)
 		{
 			this._mediator = mediator;
 			this._configuration = configuration;
 			this._configurationStorage = configurationStorage;
+			this._appConfiguration = appConfiguration;
 
 			this._descriptionsCache = new Dictionary<string, IThumbnailDescription>();
 
@@ -45,6 +50,8 @@ namespace EveOPreview.Presenters
 			this.View.ThumbnailStateChanged = this.UpdateThumbnailState;
 			this.View.DocumentationLinkActivated = this.OpenDocumentationLink;
 			this.View.ApplicationExitRequested = this.ExitApplication;
+			this.View.ReloadApplicationWithConfig = this.UpdateConfigAndReload;
+			this.View.CreateNewProfile = this.CreateNewProfile;
 		}
 
 		private void Activate()
@@ -122,6 +129,12 @@ namespace EveOPreview.Presenters
 			this.View.ShowThumbnailFrames = this._configuration.ShowThumbnailFrames;
 			this.View.EnableActiveClientHighlight = this._configuration.EnableActiveClientHighlight;
 			this.View.ActiveClientHighlightColor = this._configuration.ActiveClientHighlightColor;
+
+			//Saving just to ensure our file exists in the system
+			this._configurationStorage.Save();
+
+			this.View.FileOptions = populateFileList();
+			this.View.CurrentProfileName = this._appConfiguration.ActiveProfileName;
 		}
 
 		private async void SaveApplicationSettings()
@@ -241,5 +254,52 @@ namespace EveOPreview.Presenters
 			this._exitApplication = true;
 			this.View.Close();
 		}
+
+		private void UpdateConfigAndReload()
+        {
+			this._configurationStorage.UpdateActiveProfileName(this.View.CurrentProfileName);
+			this.View.ApplicationSettingsChanged = null;
+			this.LoadApplicationSettings();
+			this.View.ApplicationSettingsChanged = SaveApplicationSettings;
+		}
+
+		private void CreateNewProfile()
+        {
+			string newProfileName = this.View.NewProfileName;
+
+			IThumbnailConfiguration newConfig;
+
+			if (!this.View.CopySettings)
+            {
+				newConfig = new ThumbnailConfiguration();
+
+            } else
+            {
+				newConfig = _configuration;
+            }
+			bool success = _configurationStorage.CreateNewProfile(newProfileName, newConfig);
+			if(success)
+            {
+				this.View.FileOptions = populateFileList();
+				if (this.View.MakeActive)
+				{
+					this.View.CurrentProfileName = newProfileName;
+					this._appConfiguration.ActiveProfileName = newProfileName;
+					this.UpdateConfigAndReload();
+				}
+			} else
+            {
+				this.View.NewProfileError = "Profile already exists";
+            }
+			this.View.ResetProfileOptions();
+        }
+
+		private List<String> populateFileList()
+        {
+			List<String> fileList = new List<String>();
+			fileList.Add(" - ");
+			fileList.AddRange(Directory.EnumerateFiles(this._configurationStorage.GetProfilesBaseDir(), "*.json").Select(Path.GetFileNameWithoutExtension));
+			return fileList;
+        }
 	}
 }

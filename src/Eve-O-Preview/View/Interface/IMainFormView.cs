@@ -21,6 +21,13 @@ namespace EveOPreview.View
 		bool HideThumbnailsOnLostFocus { get; set; }
 		bool EnablePerClientThumbnailLayouts { get; set; }
 
+		string CurrentProfileName { get; set; }
+		List<string> FileOptions { set; }
+		string NewProfileName { get; set; }
+		bool MakeActive { get; set; }
+		bool CopySettings { get; set; }
+		string NewProfileError { get; set; }
+
 		Size ThumbnailSize { get; set; }
 
 		bool EnableThumbnailZoom { get; set; }
@@ -42,6 +49,7 @@ namespace EveOPreview.View
 		void AddThumbnails(IList<IThumbnailDescription> thumbnails);
 		void RemoveThumbnails(IList<IThumbnailDescription> thumbnails);
 		void RefreshZoomSettings();
+		void ResetProfileOptions();
 
 		Action ApplicationExitRequested { get; set; }
 		Action FormActivated { get; set; }
@@ -51,5 +59,7 @@ namespace EveOPreview.View
 		Action ThumbnailsSizeChanged { get; set; }
 		Action<string> ThumbnailStateChanged { get; set; }
 		Action DocumentationLinkActivated { get; set; }
+		Action ReloadApplicationWithConfig { get; set; }
+		Action CreateNewProfile { get; set; }
 	}
 }

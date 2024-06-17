@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 namespace EveOPreview.View
@@ -91,6 +92,41 @@ namespace EveOPreview.View
 		{
 			get => this.EnablePerClientThumbnailsLayoutsCheckBox.Checked;
 			set => this.EnablePerClientThumbnailsLayoutsCheckBox.Checked = value;
+		}
+
+		public List<string> FileOptions 
+		{
+			set => this.SelectProfileDropdownBinding.DataSource = value;
+		}
+
+		public string CurrentProfileName
+        {
+			get => this.ActiveProfileText.Text;
+			set => this.ActiveProfileText.Text = value;
+        }
+
+		public string NewProfileName
+        {
+			get => NewProfileTextbox.Text;
+			set => NewProfileTextbox.Text = value;
+        }
+
+		public string NewProfileError
+        {
+			get => NewProfileValidationError.GetError(NewProfileTextbox);
+			set => NewProfileValidationError.SetError(NewProfileTextbox, value);
+        }
+
+		public bool MakeActive
+        {
+			get => this.MakeActiveCheckbox.Checked;
+			set => this.MakeActiveCheckbox.Checked = value;
+        }
+
+		public bool CopySettings
+        {
+			get => this.CopySettingsCheckbox.Checked;
+			set => this.CopySettingsCheckbox.Checked = value;
 		}
 
 		public Size ThumbnailSize
@@ -242,6 +278,14 @@ namespace EveOPreview.View
 			this.ZoomAnchorPanel.Enabled = enableControls;
 		}
 
+		public void ResetProfileOptions()
+        {
+			this.NewProfileName = "";
+			this.MakeActive = false;
+			this.CopySettings = false;
+			this.FileSelectionDropdown.SelectedIndex = 0;
+        }
+
 		public Action ApplicationExitRequested { get; set; }
 
 		public Action FormActivated { get; set; }
@@ -257,6 +301,8 @@ namespace EveOPreview.View
 		public Action<string> ThumbnailStateChanged { get; set; }
 
 		public Action DocumentationLinkActivated { get; set; }
+		public Action ReloadApplicationWithConfig { get; set; }
+		public Action CreateNewProfile { get; set; }
 
 		#region UI events
 		private void ContentTabControl_DrawItem(object sender, DrawItemEventArgs e)
@@ -391,5 +437,59 @@ namespace EveOPreview.View
 			this._zoomAnchorMap[ViewZoomAnchor.S] = this.ZoomAanchorSRadioButton;
 			this._zoomAnchorMap[ViewZoomAnchor.SE] = this.ZoomAanchorSERadioButton;
 		}
-	}
+
+        private void GeneralSettingsPanel_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void ReloadApp_Click(object sender, EventArgs e)
+        {
+			this.CurrentProfileName = this.FileSelectionDropdown.SelectedItem.ToString();
+			this.ReloadApplicationWithConfig.Invoke();
+			
+        }
+
+        private void CreateProfileButton_Click(object sender, EventArgs e)
+        {
+			if(ValidateNewProfileText(NewProfileTextbox.Text))
+            {
+				this.CreateNewProfile.Invoke();
+			}
+        }
+
+		private bool ValidateNewProfileText(string name)
+        {
+			string newProfileName = name;
+			if(newProfileName.Length == 0)
+            {
+				NewProfileError = "Name cannot be empty";
+				return false;
+            }
+			if(newProfileName.Length > 15)
+            {
+				NewProfileError = "Name must be 15 Chracters or less";
+            }
+			return true;
+        }
+
+        private void NewProfile_validateCharacter(object sender, KeyPressEventArgs e)
+        {
+			
+            if (!char.IsLetter(e.KeyChar) && !char.IsControl(e.KeyChar)
+			 && !char.IsSeparator(e.KeyChar) && !char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar)) {
+				e.Handled = true;
+				NewProfileError = "Name can only include letters or digits";
+            } else
+            {
+				NewProfileError = "";
+			}
+
+        }
+
+        private void FileSelectionDropdown_SelectedValueChanged(object sender, EventArgs e)
+        {
+			this.ReloadAppButton.Enabled = this.FileSelectionDropdown.SelectedIndex == 0 ? false : true;
+		}
+    }
 }

@@ -5,6 +5,6 @@
 	/// </summary>
 	public interface IAppConfig
 	{
-		string ConfigFileName { get; set; }
+		string ActiveProfileName { get; set; }
 	}
 }
