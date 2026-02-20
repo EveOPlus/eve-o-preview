@@ -4,7 +4,7 @@ using Cake.Frosting;
 
 namespace Build.Tasks
 {
-	[Dependency(typeof(Restore))]
+	[IsDependentOn(typeof(Restore))]
 	public sealed class Build : FrostingTask<Context>
 	{
 		public override void Run(Context context)

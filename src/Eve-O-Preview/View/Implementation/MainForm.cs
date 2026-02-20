@@ -1,6 +1,11 @@
+using EveOPreview.Configuration.Implementation;
+using EveOPreview.Mediator.Messages;
+using EveOPreview.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace EveOPreview.View
@@ -29,8 +34,10 @@ namespace EveOPreview.View
 
 			this.ThumbnailsList.DisplayMember = "Title";
 
-			this.InitZoomAnchorMap();
+            this.InitZoomAnchorMap();
 		}
+
+		public List<CycleGroup> CycleGroups { get; set; }
 
 		public bool MinimizeToTray
 		{
@@ -258,6 +265,8 @@ namespace EveOPreview.View
 
 		public Action DocumentationLinkActivated { get; set; }
 
+		public Func<string> GetClientNameFromInput { get; set; }
+
 		#region UI events
 		private void ContentTabControl_DrawItem(object sender, DrawItemEventArgs e)
 		{
@@ -347,16 +356,49 @@ namespace EveOPreview.View
 		}
 
 		private void MainFormResize_Handler(object sender, EventArgs e)
+        {
+            if (this.WindowState != FormWindowState.Minimized)
+            {
+                return;
+            }
+
+            RefreshCycleGroups();
+
+            this.FormMinimized?.Invoke();
+        }
+
+        private void RefreshCycleGroups()
+        {
+            selectCycleGroupComboBox.DataSource = null;
+            selectCycleGroupComboBox.DataSource = CycleGroups;
+            selectCycleGroupComboBox.DisplayMember = "Description";
+            selectCycleGroupComboBox.Update();
+			RefreshSelectedCycleGroup();
+        }
+
+		private void RefreshSelectedCycleGroup()
 		{
-			if (this.WindowState != FormWindowState.Minimized)
+			var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+
+			if (selectedGroup == null)
 			{
 				return;
 			}
 
-			this.FormMinimized?.Invoke();
-		}
+            cycleGroupDescriptionText.Text = selectedGroup.Description;
+			cycleGroupForwardHotkey1Text.Text = selectedGroup.ForwardHotkeys.FirstOrDefault();
+			cycleGroupForwardHotkey2Text.Text = selectedGroup.ForwardHotkeys.Skip(1).FirstOrDefault();
 
-		private void MainFormClosing_Handler(object sender, FormClosingEventArgs e)
+            cycleGroupBackwardHotkey1Text.Text = selectedGroup.BackwardHotkeys.FirstOrDefault();
+            cycleGroupBackwardHotkey2Text.Text = selectedGroup.BackwardHotkeys.Skip(1).FirstOrDefault();
+
+            cycleGroupClientOrderList.DataSource = null;
+            cycleGroupClientOrderList.DataSource = new BindingSource(selectedGroup.ClientsOrder, null);
+            selectCycleGroupComboBox.DisplayMember = "Value";
+            cycleGroupClientOrderList.Update();
+        }
+
+        private void MainFormClosing_Handler(object sender, FormClosingEventArgs e)
 		{
 			ViewCloseRequest request = new ViewCloseRequest();
 
@@ -391,5 +433,316 @@ namespace EveOPreview.View
 			this._zoomAnchorMap[ViewZoomAnchor.S] = this.ZoomAanchorSRadioButton;
 			this._zoomAnchorMap[ViewZoomAnchor.SE] = this.ZoomAanchorSERadioButton;
 		}
-	}
+
+        private void addClientToCycleGroupButton_Click(object sender, EventArgs e)
+        {
+			var toonToAdd = this.GetClientNameFromInput();
+
+            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+
+            if (selectedGroup == null)
+            {
+                return;
+            }
+
+			if (selectedGroup.ClientsOrder.ContainsValue(toonToAdd))
+			{
+				MessageBox.Show($"{toonToAdd} is already part of this group.");
+				return;
+			}
+
+			var nextOrderNumber = selectedGroup.ClientsOrder.Any() ? selectedGroup.ClientsOrder.Max(x => x.Key) + 1 : 1;
+			selectedGroup.ClientsOrder.Add(nextOrderNumber, toonToAdd);
+
+			RefreshSelectedCycleGroup();
+            this.ApplicationSettingsChanged?.Invoke();
+        }
+
+        private void removeClientToCycleGroupButton_Click(object sender, EventArgs e)
+        {
+            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+
+            if (selectedGroup == null)
+            {
+                return;
+            }
+
+            if (cycleGroupClientOrderList.SelectedIndex < 0)
+            {
+                return;
+            }
+
+            var KeyToRemove = ((KeyValuePair<int, string>)cycleGroupClientOrderList.SelectedItem).Key;
+            selectedGroup.ClientsOrder.Remove(KeyToRemove);
+
+            RefreshSelectedCycleGroup();
+            this.ApplicationSettingsChanged?.Invoke();
+        }
+
+        private void selectCycleGroupComboBox_SelectedValueChanged(object sender, EventArgs e)
+        {
+            RefreshSelectedCycleGroup();
+        }
+
+        private void cycleGroupMoveClientOrderUpButton_Click(object sender, EventArgs e)
+        {
+            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+
+            if (selectedGroup == null)
+            {
+                return;
+            }
+
+			if (cycleGroupClientOrderList.SelectedIndex < 0)
+			{
+				return;
+			}
+
+			var KeyToMoveUpOne = ((KeyValuePair<int, string>)cycleGroupClientOrderList.SelectedItem).Key;
+
+			int previousKey = 0;
+			foreach (var item in selectedGroup.ClientsOrder)
+			{
+                if (item.Key == KeyToMoveUpOne)
+                {
+                    break;
+                }
+
+                previousKey = item.Key;
+            }
+
+			if (previousKey == 0)
+			{
+				return;
+			}
+
+			var previousValue = selectedGroup.ClientsOrder[previousKey];
+			var valueToMoveUp = selectedGroup.ClientsOrder[KeyToMoveUpOne];
+
+			selectedGroup.ClientsOrder[previousKey] = valueToMoveUp;
+            selectedGroup.ClientsOrder[KeyToMoveUpOne] = previousValue;
+
+            RefreshSelectedCycleGroup();
+            this.ApplicationSettingsChanged?.Invoke();
+        }
+
+        private void cycleGroupDescriptionText_Leave(object sender, EventArgs e)
+        {
+            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+
+            if (selectedGroup == null)
+            {
+                return;
+            }
+
+			int groupsWithSameText = CycleGroups.Count(x => x.Description == cycleGroupDescriptionText.Text);
+			if (groupsWithSameText > 0)
+			{
+				// It's either this groups name already or already taken, either way we won't change anything.
+				return;
+			}
+
+            selectedGroup.Description = cycleGroupDescriptionText.Text;
+
+            this.ApplicationSettingsChanged?.Invoke();
+			RefreshCycleGroups();
+        }
+
+        private void addNewGroupButton_Click(object sender, EventArgs e)
+        {
+			var newName = "New Cycle Group";
+			var countGroupsWithSameName = CycleGroups.Count(x => x.Description.StartsWith(newName));
+
+			if (countGroupsWithSameName > 0)
+			{
+				newName += $"({countGroupsWithSameName + 1})";
+            }
+
+			CycleGroups.Add(new CycleGroup { Description = newName });
+
+            this.ApplicationSettingsChanged?.Invoke();
+            RefreshCycleGroups();
+        }
+
+        private void removeGroupButton_Click(object sender, EventArgs e)
+        {
+            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+
+            if (selectedGroup == null)
+            {
+                return;
+            }
+
+			CycleGroups.Remove(selectedGroup);
+
+            this.ApplicationSettingsChanged?.Invoke();
+            selectCycleGroupComboBox.SelectedItem = selectCycleGroupComboBox.Items[0];
+            RefreshCycleGroups();
+        }
+
+        private void cycleGroupForwardHotkey1Text_DoubleClick(object sender, EventArgs e)
+        {
+            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+
+            if (selectedGroup == null)
+            {
+                return;
+            }
+
+            cycleGroupForwardHotkey1Text.Text = "Listening...";
+			this.Enabled = false;
+            var lastKeyUp = WaitForNextKeyUp();
+			this.Enabled = true;
+
+			if (string.IsNullOrEmpty(lastKeyUp))
+			{ 
+				cycleGroupForwardHotkey1Text.Text = "Error";
+				return;
+            }
+
+            cycleGroupForwardHotkey1Text.Text = lastKeyUp;
+			if (!selectedGroup.ForwardHotkeys.Any())
+			{
+				selectedGroup.ForwardHotkeys.Add(lastKeyUp);
+            }
+            else
+            {
+				selectedGroup.ForwardHotkeys[0] = lastKeyUp;
+            }
+
+            this.ApplicationSettingsChanged?.Invoke();
+        }
+
+        private Keys? _capturedKeyData = null;
+
+        public string WaitForNextKeyUp()
+        {
+            _capturedKeyData = null;
+            this.KeyPreview = true;
+
+            // Use KeyData to get both the key and the modifiers (Ctrl, Alt, Shift)
+            KeyEventHandler handler = (s, e) => _capturedKeyData = e.KeyData;
+            this.KeyUp += handler;
+
+			var sw = Stopwatch.StartNew();
+            while (_capturedKeyData == null)
+            {
+                Application.DoEvents();
+                System.Threading.Thread.Sleep(10);
+
+				if (sw.ElapsedMilliseconds > 10000)
+				{
+					MessageBox.Show("Nothing captured for 10 seconds. This feature it not very reliable, especially if there is an existing conflicting hotkey. If you are having issues please close Eve-O Preview and manually modify the config json instead.");
+					return string.Empty;
+				}
+            }
+
+            this.KeyUp -= handler;
+
+            KeysConverter converter = new KeysConverter();
+            string keyString = converter.ConvertToString(_capturedKeyData);
+            MessageBox.Show("New hotkey captured. This will not take effect until you next close Eve-O Preview.");
+
+            return keyString;
+        }
+
+        private void cycleGroupForwardHotkey2Text_DoubleClick(object sender, EventArgs e)
+        {
+            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+
+            if (selectedGroup == null)
+            {
+                return;
+            }
+
+            cycleGroupForwardHotkey2Text.Text = "Listening...";
+            this.Enabled = false;
+            var lastKeyUp = WaitForNextKeyUp();
+            this.Enabled = true;
+
+            if (string.IsNullOrEmpty(lastKeyUp))
+            {
+                cycleGroupForwardHotkey2Text.Text = "Error";
+                return;
+            }
+
+            cycleGroupForwardHotkey2Text.Text = lastKeyUp;
+            if (selectedGroup.ForwardHotkeys.Count < 2)
+            {
+                selectedGroup.ForwardHotkeys.Add(lastKeyUp);
+            }
+            else
+            {
+                selectedGroup.ForwardHotkeys[1] = lastKeyUp;
+            }
+
+            this.ApplicationSettingsChanged?.Invoke();
+        }
+
+        private void cycleGroupBackwardHotkey1Text_DoubleClick(object sender, EventArgs e)
+        {
+            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+
+            if (selectedGroup == null)
+            {
+                return;
+            }
+
+            cycleGroupBackwardHotkey1Text.Text = "Listening...";
+            this.Enabled = false;
+            var lastKeyUp = WaitForNextKeyUp();
+            this.Enabled = true;
+
+            if (string.IsNullOrEmpty(lastKeyUp))
+            {
+                cycleGroupBackwardHotkey1Text.Text = "Error";
+                return;
+            }
+
+            cycleGroupBackwardHotkey1Text.Text = lastKeyUp;
+            if (!selectedGroup.BackwardHotkeys.Any())
+            {
+                selectedGroup.BackwardHotkeys.Add(lastKeyUp);
+            }
+            else
+            {
+                selectedGroup.BackwardHotkeys[0] = lastKeyUp;
+            }
+
+            this.ApplicationSettingsChanged?.Invoke();
+        }
+
+        private void cycleGroupBackwardHotkey2Text_DoubleClick(object sender, EventArgs e)
+        {
+            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+
+            if (selectedGroup == null)
+            {
+                return;
+            }
+
+            cycleGroupBackwardHotkey2Text.Text = "Listening...";
+            this.Enabled = false;
+            var lastKeyUp = WaitForNextKeyUp();
+            this.Enabled = true;
+
+            if (string.IsNullOrEmpty(lastKeyUp))
+            {
+                cycleGroupBackwardHotkey2Text.Text = "Error";
+                return;
+            }
+
+            cycleGroupBackwardHotkey2Text.Text = lastKeyUp;
+            if (selectedGroup.BackwardHotkeys.Count < 2)
+            {
+                selectedGroup.BackwardHotkeys.Add(lastKeyUp);
+            }
+            else
+            {
+                selectedGroup.BackwardHotkeys[1] = lastKeyUp;
+            }
+
+            this.ApplicationSettingsChanged?.Invoke();
+        }
+    }
 }

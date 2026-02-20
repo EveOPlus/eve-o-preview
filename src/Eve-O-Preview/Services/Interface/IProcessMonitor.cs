@@ -2,10 +2,10 @@
 
 namespace EveOPreview.Services
 {
-	public interface IProcessMonitor
-	{
-		IProcessInfo GetMainProcess();
-		ICollection<IProcessInfo> GetAllProcesses();
-		void GetUpdatedProcesses(out ICollection<IProcessInfo> addedProcesses, out ICollection<IProcessInfo> updatedProcesses, out ICollection<IProcessInfo> removedProcesses);
-	}
+    public interface IProcessMonitor
+    {
+        IProcessInfo GetMainProcess();
+        ICollection<IProcessInfo> GetAllProcesses();
+        void GetUpdatedProcesses(out ICollection<IProcessInfo> addedProcesses, out ICollection<IProcessInfo> updatedProcesses, out ICollection<IProcessInfo> removedProcesses);
+    }
 }

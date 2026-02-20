@@ -2,7 +2,7 @@
 
 namespace EveOPreview.Mediator.Messages
 {
-	sealed class StartService : IRequest
-	{
-	}
+    sealed class StartService : IRequest
+    {
+    }
 }

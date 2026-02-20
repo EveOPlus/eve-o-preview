@@ -167,49 +167,56 @@ The following hotkey is described as `modifier+key` where `modifier` can be **Co
 
 ### Cycle Clients with Hotkey Setup
 
-In a similar pattern to the per client Hotkey Setup, It is possible to set a key combinations to cycle through select Eve Windows. EVE-O Preview doesn't provide any GUI to set the these hotkeys. It should be done via editing the configuration file directly. Don't forget to make a backup copy of the file before editing it.
+In a similar pattern to the per client Hotkey Setup, It is possible to set a key combinations to cycle through select Eve Windows. EVE-O Preview has a limited GUI to set the these Cycle Groups and hotkeys but it should be used with caution. If you have any issues you will need to edit the config. Don't forget to make a backup copy of the file before editing it.
 
-If you have not run EVE-O Preview before, or since this feature was added then it is recommended to quickly open and close EVE-O Preview once to trigger the config to update with some sample values. 
+If you have not run EVE-O Preview before, or since this feature was added then it is recommended to quickly open and close EVE-O Preview once to trigger the config to update and/or migrage values. 
 
 **Note**: Don't forget to make a backup copy of the file before editing it.
 
-Open the file using any text editor. find the entries **CycleGroup1ForwardHotkeys** and **CycleGroup1BackwardHotkeys**. Most probably it will look like
+Open the file using any text editor. find the entry **CycleGroups**. If you have not setup anyting in the GUI then it will be blank, or if you have setup a shell in the GUI then it can be edited more accurately here.
 
-    "CycleGroup1ForwardHotkeys": [
-      "F14",
-      "Control+F14"
-    ],
-    "CycleGroup1BackwardHotkeys": [
-      "F13",
-      "Control+F13"
+A sample you could copy may look like this:
+
+    "CycleGroups": [
+        {
+          "Description": "Cycle Group DPS",
+          "ForwardHotkeys": [
+            "F14",
+            "Ctrl+F14"
+          ],
+          "BackwardHotkeys": [
+            "F13",
+            "Ctrl+F13"
+          ],
+          "ClientsOrder": {
+            "1": "EVE - Example DPS Toon 1",
+            "2": "EVE - Example DPS Toon 2",
+            "3": "EVE - Example DPS Toon 3"
+          }
+        },
+        {
+          "Description": "Cycle Group Logi",
+          "ForwardHotkeys": [
+            "F16",
+            "Ctrl+F16"
+          ],
+          "BackwardHotkeys": [
+            "F15",
+            "Ctrl+F15"
+          ],
+          "ClientsOrder": {
+            "1": "EVE - Example Logi Toon 1",
+            "2": "EVE - Example Logi Toon 2"
+          }
+        }
     ]
 
-**Note**: It is highly recommended to leave the Hotkey values as default and bind them with a gaming device if you can support it.
+It is highly recommended to leave the Hotkey values as default and bind them with a gaming device if you can support it.
 
-Next find the entry **CycleGroup1ForwardHotkeys**. Most probably it will look like
+There are an unlimited number of Cycle Groups that you can create. Please note:
+**Note**: Every Description must be unique or the config will be invalid. Same with the ClientsOrder, The order number must be unique in each group.
 
-    "CycleGroup1ClientsOrder": {
-      "EVE - Example DPS Toon 1": 1,
-      "EVE - Example DPS Toon 2": 2,
-      "EVE - Example DPS Toon 3": 3
-    }
-
-You should modify this entry with a list of each of your clients replacing "Example DPS Toon 1", etc with the name of your character. The numbers on the right are used to force the order in which they cycle.
-If a character appears in the list but is not currently logged in, then it will simply be skipped.
-If a character does not appear in the list, then they will never become active when cycling clients.
-
-By now you may have noticed that there are two groups. The above configuration can be followed for a second group by using the values **CycleGroup2ForwardHotkeys**, **CycleGroup2BackwardHotkeys**, and **CycleGroup2ForwardHotkeys**
 This may provide useful if you want to have one HotKey to cycle through a group of DPS characters, while another HotKey cycles through support roles such as gate scouts, or a group of logi.
-
-Alternatively you may not want to use any of these HotKeys. Please note that deleting the values in their entirety will simply result in them being automatically re-generated.
-Should you wish to remove these HotKeys completely, Simply set the values to empty, such as the example below:
-
-      "CycleGroup1ForwardHotkeys": [],
-	  "CycleGroup1BackwardHotkeys": [],
-	  "CycleGroup1ClientsOrder": {},
-	  "CycleGroup2ForwardHotkeys": [],
-	  "CycleGroup2BackwardHotkeys": [],
-	  "CycleGroup2ClientsOrder": {}
 
 **Hints** 
 * Minimise the use of modifiers or standard keys to minimise issues with the client playing up. In the default example unusual Function keys (e.g. F14) are used which are then bound to a game pad or gaming mouse.

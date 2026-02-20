@@ -1,124 +1,142 @@
-﻿using System;
+﻿using EveOPreview.Services.Interop;
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
-using EveOPreview.Services.Interop;
 
 namespace EveOPreview.Services.Implementation
 {
-	public class WindowManager : IWindowManager
-	{
-		#region Private constants
-		private const int WINDOW_SIZE_THRESHOLD = 300;
-		#endregion
+    public class WindowManager : IWindowManager
+    {
+        #region Private constants
+        private const int WINDOW_SIZE_THRESHOLD = 300;
+        #endregion
 
-		public WindowManager()
-		{
-			// Composition is always enabled for Windows 8+
-			this.IsCompositionEnabled = 
-				((Environment.OSVersion.Version.Major == 6) && (Environment.OSVersion.Version.Minor >= 2)) // Win 8 and Win 8.1
-				|| (Environment.OSVersion.Version.Major >= 10) // Win 10
-				|| DwmNativeMethods.DwmIsCompositionEnabled(); // In case of Win 7 an API call is requiredWin 7
-		}
+        public WindowManager()
+        {
+            // Composition is always enabled for Windows 8+
+            this.IsCompositionEnabled = 
+                ((Environment.OSVersion.Version.Major == 6) && (Environment.OSVersion.Version.Minor >= 2)) // Win 8 and Win 8.1
+                || (Environment.OSVersion.Version.Major >= 10) // Win 10
+                || DwmNativeMethods.DwmIsCompositionEnabled(); // In case of Win 7 an API call is requiredWin 7
+        }
 
-		public bool IsCompositionEnabled { get; }
+        public bool IsCompositionEnabled { get; }
 
-		public IntPtr GetForegroundWindowHandle()
-		{
-			return User32NativeMethods.GetForegroundWindow();
-		}
+        public IntPtr GetForegroundWindowHandle()
+        {
+            return User32NativeMethods.GetForegroundWindow();
+        }
 
-		public void ActivateWindow(IntPtr handle)
-		{
-			User32NativeMethods.SetForegroundWindow(handle);
-			User32NativeMethods.SetFocus(handle);
+        public void ActivateWindow(IntPtr handle)
+        {
+            User32NativeMethods.SetForegroundWindow(handle);
+            User32NativeMethods.SetFocus(handle);
 
-			int style = User32NativeMethods.GetWindowLong(handle, InteropConstants.GWL_STYLE);
+            // Make sure theres no bugs or issues setting to focused window by checking and trying again a few times.
+            // We should never need to call this a second time but better safe than sorry.
+            for (int i = 0; i < 3; i++)
+            {
+                var foregroundHandle = User32NativeMethods.GetForegroundWindow();
+                var focusedHandle = User32NativeMethods.GetFocus();
 
-			if ((style & InteropConstants.WS_MINIMIZE) == InteropConstants.WS_MINIMIZE)
-			{
-				User32NativeMethods.ShowWindowAsync(handle, InteropConstants.SW_RESTORE);
-			}
-		}
+                if (foregroundHandle != handle)
+                { 
+                    User32NativeMethods.SetForegroundWindow(handle);
+                }
 
-		public void MinimizeWindow(IntPtr handle, bool enableAnimation)
-		{
-			if (enableAnimation)
-			{
-				User32NativeMethods.SendMessage(handle, InteropConstants.WM_SYSCOMMAND, InteropConstants.SC_MINIMIZE, 0);
-			}
-			else
-			{
-				WINDOWPLACEMENT param = new WINDOWPLACEMENT();
-				param.length = Marshal.SizeOf(typeof(WINDOWPLACEMENT));
-				User32NativeMethods.GetWindowPlacement(handle, ref param);
-				param.showCmd = WINDOWPLACEMENT.SW_MINIMIZE;
-				User32NativeMethods.SetWindowPlacement(handle, ref param);
-			}
-		}
+                if (focusedHandle != handle)
+                {
+                    User32NativeMethods.SetFocus(handle);
+                }
+            }
 
-		public void MoveWindow(IntPtr handle, int left, int top, int width, int height)
-		{
-			User32NativeMethods.MoveWindow(handle, left, top, width, height, true);
-		}
+            int style = User32NativeMethods.GetWindowLong(handle, InteropConstants.GWL_STYLE);
 
-		public void MaximizeWindow(IntPtr handle)
-		{
-			User32NativeMethods.ShowWindowAsync(handle, InteropConstants.SW_SHOWMAXIMIZED);
-		}
+            if ((style & InteropConstants.WS_MINIMIZE) == InteropConstants.WS_MINIMIZE)
+            {
+                User32NativeMethods.ShowWindowAsync(handle, InteropConstants.SW_RESTORE);
+            }
+        }
 
-		public (int Left, int Top, int Right, int Bottom) GetWindowPosition(IntPtr handle)
-		{
-			User32NativeMethods.GetWindowRect(handle, out RECT windowRectangle);
+        public void MinimizeWindow(IntPtr handle, bool enableAnimation)
+        {
+            if (enableAnimation)
+            {
+                User32NativeMethods.SendMessage(handle, InteropConstants.WM_SYSCOMMAND, InteropConstants.SC_MINIMIZE, 0);
+            }
+            else
+            {
+                WINDOWPLACEMENT param = new WINDOWPLACEMENT();
+                param.length = Marshal.SizeOf(typeof(WINDOWPLACEMENT));
+                User32NativeMethods.GetWindowPlacement(handle, ref param);
+                param.showCmd = WINDOWPLACEMENT.SW_MINIMIZE;
+                User32NativeMethods.SetWindowPlacement(handle, ref param);
+            }
+        }
 
-			return (windowRectangle.Left, windowRectangle.Top, windowRectangle.Right, windowRectangle.Bottom);
-		}
+        public void MoveWindow(IntPtr handle, int left, int top, int width, int height)
+        {
+            User32NativeMethods.MoveWindow(handle, left, top, width, height, true);
+        }
 
-		public bool IsWindowMaximized(IntPtr handle)
-		{
-			return User32NativeMethods.IsZoomed(handle);
-		}
+        public void MaximizeWindow(IntPtr handle)
+        {
+            User32NativeMethods.ShowWindowAsync(handle, InteropConstants.SW_SHOWMAXIMIZED);
+        }
 
-		public bool IsWindowMinimized(IntPtr handle)
-		{
-			return User32NativeMethods.IsIconic(handle);
-		}
+        public (int Left, int Top, int Right, int Bottom) GetWindowPosition(IntPtr handle)
+        {
+            User32NativeMethods.GetWindowRect(handle, out RECT windowRectangle);
 
-		public IDwmThumbnail GetLiveThumbnail(IntPtr destination, IntPtr source)
-		{
-			IDwmThumbnail thumbnail = new DwmThumbnail(this);
-			thumbnail.Register(destination, source);
+            return (windowRectangle.Left, windowRectangle.Top, windowRectangle.Right, windowRectangle.Bottom);
+        }
 
-			return thumbnail;
-		}
+        public bool IsWindowMaximized(IntPtr handle)
+        {
+            return User32NativeMethods.IsZoomed(handle);
+        }
 
-		public Image GetStaticThumbnail(IntPtr source)
-		{
-			var sourceContext = User32NativeMethods.GetDC(source);
+        public bool IsWindowMinimized(IntPtr handle)
+        {
+            return User32NativeMethods.IsIconic(handle);
+        }
 
-			User32NativeMethods.GetClientRect(source, out RECT windowRect);
+        public IDwmThumbnail GetLiveThumbnail(IntPtr destination, IntPtr source)
+        {
+            IDwmThumbnail thumbnail = new DwmThumbnail(this);
+            thumbnail.Register(destination, source);
 
-			var width = windowRect.Right - windowRect.Left;
-			var height = windowRect.Bottom - windowRect.Top;
+            return thumbnail;
+        }
 
-			// Check if there is anything to make thumbnail of
-			if ((width < WINDOW_SIZE_THRESHOLD) || (height < WINDOW_SIZE_THRESHOLD))
-			{
-				return null;
-			}
+        public Image GetStaticThumbnail(IntPtr source)
+        {
+            var sourceContext = User32NativeMethods.GetDC(source);
 
-			var destContext = Gdi32NativeMethods.CreateCompatibleDC(sourceContext);
-			var bitmap = Gdi32NativeMethods.CreateCompatibleBitmap(sourceContext, width, height);
+            User32NativeMethods.GetClientRect(source, out RECT windowRect);
 
-			var oldBitmap = Gdi32NativeMethods.SelectObject(destContext, bitmap);
-			Gdi32NativeMethods.BitBlt(destContext, 0, 0, width, height, sourceContext, 0, 0, Gdi32NativeMethods.SRCCOPY);
-			Gdi32NativeMethods.SelectObject(destContext, oldBitmap);
-			Gdi32NativeMethods.DeleteDC(destContext);
-			User32NativeMethods.ReleaseDC(source, sourceContext);
+            var width = windowRect.Right - windowRect.Left;
+            var height = windowRect.Bottom - windowRect.Top;
 
-			Image image = Image.FromHbitmap(bitmap);
-			Gdi32NativeMethods.DeleteObject(bitmap);
+            // Check if there is anything to make thumbnail of
+            if ((width < WINDOW_SIZE_THRESHOLD) || (height < WINDOW_SIZE_THRESHOLD))
+            {
+                return null;
+            }
 
-			return image;
-		}
-	}
+            var destContext = Gdi32NativeMethods.CreateCompatibleDC(sourceContext);
+            var bitmap = Gdi32NativeMethods.CreateCompatibleBitmap(sourceContext, width, height);
+
+            var oldBitmap = Gdi32NativeMethods.SelectObject(destContext, bitmap);
+            Gdi32NativeMethods.BitBlt(destContext, 0, 0, width, height, sourceContext, 0, 0, Gdi32NativeMethods.SRCCOPY);
+            Gdi32NativeMethods.SelectObject(destContext, oldBitmap);
+            Gdi32NativeMethods.DeleteDC(destContext);
+            User32NativeMethods.ReleaseDC(source, sourceContext);
+
+            Image image = Image.FromHbitmap(bitmap);
+            Gdi32NativeMethods.DeleteObject(bitmap);
+
+            return image;
+        }
+    }
 }

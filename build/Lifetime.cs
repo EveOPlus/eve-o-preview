@@ -37,7 +37,7 @@ namespace Build
 			context.CopyFile(tempFile, new FilePath(Configuration.ToolsFolder + "/nuget.exe"));
 		}
 
-		public override void Setup(Context context)
+		public override void Setup(Context context, ISetupContext setup)
 		{
 			context.Information("Setting things up...");
 

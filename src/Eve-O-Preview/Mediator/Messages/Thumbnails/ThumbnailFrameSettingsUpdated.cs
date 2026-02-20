@@ -2,7 +2,7 @@
 
 namespace EveOPreview.Mediator.Messages
 {
-	sealed class ThumbnailFrameSettingsUpdated : INotification
-	{
-	}
+    sealed class ThumbnailFrameSettingsUpdated : INotification
+    {
+    }
 }

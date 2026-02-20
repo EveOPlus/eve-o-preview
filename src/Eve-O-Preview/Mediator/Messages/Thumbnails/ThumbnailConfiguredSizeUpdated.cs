@@ -2,7 +2,7 @@
 
 namespace EveOPreview.Mediator.Messages
 {
-	sealed class ThumbnailConfiguredSizeUpdated : INotification
-	{
-	}
+    sealed class ThumbnailConfiguredSizeUpdated : INotification
+    {
+    }
 }

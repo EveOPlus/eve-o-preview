@@ -6,20 +6,20 @@ using MediatR;
 
 namespace EveOPreview.Mediator.Handlers.Configuration
 {
-	sealed class SaveConfigurationHandler : IRequestHandler<SaveConfiguration>
-	{
-		private readonly IConfigurationStorage _storage;
+    sealed class SaveConfigurationHandler : IRequestHandler<SaveConfiguration>
+    {
+        private readonly IConfigurationStorage _storage;
 
-		public SaveConfigurationHandler(IConfigurationStorage storage)
-		{
-			this._storage = storage;
-		}
+        public SaveConfigurationHandler(IConfigurationStorage storage)
+        {
+            this._storage = storage;
+        }
 
-		public Task<Unit> Handle(SaveConfiguration message, CancellationToken cancellationToken)
-		{
-			this._storage.Save();
+        public Task<Unit> Handle(SaveConfiguration message, CancellationToken cancellationToken)
+        {
+            this._storage.Save();
 
-			return Unit.Task;
-		}
-	}
+            return Unit.Task;
+        }
+    }
 }

@@ -1,8 +1,8 @@
 ﻿namespace EveOPreview.Configuration
 {
-	public interface IConfigurationStorage
-	{
-		void Load();
-		void Save();
-	}
+    public interface IConfigurationStorage
+    {
+        void Load();
+        void Save();
+    }
 }

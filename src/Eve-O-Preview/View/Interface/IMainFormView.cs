@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EveOPreview.Configuration.Implementation;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 
@@ -33,6 +34,8 @@ namespace EveOPreview.View
 		bool EnableActiveClientHighlight { get; set; }
 		Color ActiveClientHighlightColor { get; set; }
 
+		List<CycleGroup> CycleGroups { get; set; }
+
 		void SetDocumentationUrl(string url);
 		void SetVersionInfo(string version);
 		void SetThumbnailSizeLimitations(Size minimumSize, Size maximumSize);
@@ -51,5 +54,6 @@ namespace EveOPreview.View
 		Action ThumbnailsSizeChanged { get; set; }
 		Action<string> ThumbnailStateChanged { get; set; }
 		Action DocumentationLinkActivated { get; set; }
+		Func<string> GetClientNameFromInput { get; set; }
 	}
 }

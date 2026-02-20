@@ -14,35 +14,35 @@ namespace EveOPreview.View
         /// </summary>
         private void InitializeComponent()
         {
-			this.SuspendLayout();
-			// 
-			// ThumbnailView
-			// 
-			this.AccessibleRole = System.Windows.Forms.AccessibleRole.None;
-			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-			this.BackColor = System.Drawing.Color.Black;
-			this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-			this.ClientSize = new System.Drawing.Size(153, 89);
-			this.ControlBox = false;
-			this.DoubleBuffered = true;
-			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
-			this.MaximizeBox = false;
-			this.MinimizeBox = false;
-			this.MinimumSize = new System.Drawing.Size(64, 64);
-			this.Name = "ThumbnailView";
-			this.Opacity = 0.1D;
-			this.ShowIcon = false;
-			this.ShowInTaskbar = false;
-			this.Text = "Preview";
-			this.TopMost = true;
-			this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.MouseDown_Handler);
-			this.MouseEnter += new System.EventHandler(this.MouseEnter_Handler);
-			this.MouseLeave += new System.EventHandler(this.MouseLeave_Handler);
-			this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MouseMove_Handler);
-			this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.MouseUp_Handler);
-			this.Move += new System.EventHandler(this.Move_Handler);
-			this.Resize += new System.EventHandler(this.Resize_Handler);
-			this.ResumeLayout(false);
+            this.SuspendLayout();
+            // 
+            // ThumbnailView
+            // 
+            this.AccessibleRole = System.Windows.Forms.AccessibleRole.None;
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.BackColor = System.Drawing.Color.Black;
+            this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.ClientSize = new System.Drawing.Size(153, 89);
+            this.ControlBox = false;
+            this.DoubleBuffered = true;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.MinimumSize = new System.Drawing.Size(64, 64);
+            this.Name = "ThumbnailView";
+            this.Opacity = 0.1D;
+            this.ShowIcon = false;
+            this.ShowInTaskbar = false;
+            this.Text = "Preview";
+            this.TopMost = true;
+            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.MouseDown_Handler);
+            this.MouseEnter += new System.EventHandler(this.MouseEnter_Handler);
+            this.MouseLeave += new System.EventHandler(this.MouseLeave_Handler);
+            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MouseMove_Handler);
+            this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.MouseUp_Handler);
+            this.Move += new System.EventHandler(this.Move_Handler);
+            this.Resize += new System.EventHandler(this.Resize_Handler);
+            this.ResumeLayout(false);
 
         }
 

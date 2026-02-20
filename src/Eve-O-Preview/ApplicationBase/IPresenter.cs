@@ -1,7 +1,7 @@
 ﻿namespace EveOPreview
 {
-	public interface IPresenter
-	{
-		void Run();
-	}
+    public interface IPresenter
+    {
+        void Run();
+    }
 }
