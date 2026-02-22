@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Threading;
 using System.Windows.Forms;
 using EveOPreview.Configuration;
@@ -12,7 +13,7 @@ namespace EveOPreview
 {
     static class Program
     {
-        private static string MUTEX_NAME = "EVE-O Preview Single Instance Mutex";
+        private const string MUTEX_NAME = "EVE-O Preview Single Instance Mutex";
 
         private static Mutex _singleInstanceMutex;
 
@@ -23,11 +24,11 @@ namespace EveOPreview
             // The very usual Mutex-based single-instance screening
             // 'token' variable is used to store reference to the instance Mutex
             // during the app lifetime
-            Program._singleInstanceMutex = Program.GetInstanceToken();
+            _singleInstanceMutex = GetInstanceToken();
 
             // If it was not possible to acquire the app token then another app instance is already running
             // Nothing to do here
-            if (Program._singleInstanceMutex == null)
+            if (_singleInstanceMutex == null)
             {
                 return;
             }
@@ -35,10 +36,30 @@ namespace EveOPreview
             ExceptionHandler handler = new ExceptionHandler();
             handler.SetupExceptionHandlers();
 
-            IApplicationController controller = Program.InitializeApplicationController();
+            IApplicationController controller = InitializeApplicationController();
 
-            Program.InitializeWinForms();
+            // ✅ 强制界面语言为简体中文（确保加载 MainForm.zh-Hans.resx 等资源）
+            SetUiCulture("zh-CN");
+
+            InitializeWinForms();
             controller.Run<MainFormPresenter>();
+        }
+
+        /// <summary>
+        /// Set UI culture (resource lookup) and culture (formatting).
+        /// Note: If your resource file is MainForm.zh-CN.resx, use "zh-CN" instead.
+        /// </summary>
+        private static void SetUiCulture(string cultureName)
+        {
+            CultureInfo ci = CultureInfo.GetCultureInfo(cultureName);
+
+            // For current thread
+            Thread.CurrentThread.CurrentUICulture = ci;
+            Thread.CurrentThread.CurrentCulture = ci;
+
+            // For threads created later (safer in apps that spawn threads)
+            CultureInfo.DefaultThreadCurrentUICulture = ci;
+            CultureInfo.DefaultThreadCurrentCulture = ci;
         }
 
         private static Mutex GetInstanceToken()
@@ -50,7 +71,7 @@ namespace EveOPreview
             // exceptions later
             try
             {
-                Mutex.OpenExisting(Program.MUTEX_NAME);
+                Mutex.OpenExisting(MUTEX_NAME);
                 // if that didn't fail then another instance is already running
                 return null;
             }
@@ -60,7 +81,7 @@ namespace EveOPreview
             }
             catch (Exception)
             {
-                Mutex token = new Mutex(true, Program.MUTEX_NAME, out var result);
+                Mutex token = new Mutex(true, MUTEX_NAME, out var result);
                 return result ? token : null;
             }
         }

@@ -117,260 +117,1134 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <metadata name="RestoreWindowMenuItem.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="ExitMenuItem.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="TitleMenuItem.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="SeparatorMenuItem.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="ContentTabControl.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="ContentTabControl.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="GeneralTabPage.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="GeneralTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="GeneralSettingsPanel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="GeneralSettingsPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="MinimizeInactiveClientsCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="EnableClientLayoutTrackingCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="HideActiveClientThumbnailCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ShowThumbnailsAlwaysOnTopCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="HideThumbnailsOnLostFocusCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="EnablePerClientThumbnailsLayoutsCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="MinimizeToTrayCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ThumbnailTabPage.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="ThumbnailTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ThumbnailSettingsPanel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="ThumbnailSettingsPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="HeigthLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="HeigthLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="WidthLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="WidthLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ThumbnailsWidthNumericEdit.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ThumbnailsHeightNumericEdit.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ThumbnailOpacityTrackBar.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="OpacityLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="OpacityLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomSettingsPanel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="ZoomSettingsPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomFactorLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="ZoomFactorLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomAnchorPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomAanchorNWRadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomAanchorNRadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomAanchorNERadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomAanchorWRadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomAanchorSERadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomAanchorCRadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomAanchorSRadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomAanchorERadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomAanchorSWRadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ZoomAnchorLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="ZoomAnchorLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="EnableThumbnailZoomCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ThumbnailZoomFactorNumericEdit.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="OverlayTabPage.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="OverlayTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="OverlaySettingsPanel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="OverlaySettingsPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="HighlightColorLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ActiveClientHighlightColorButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="EnableActiveClientHighlightCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ShowThumbnailOverlaysCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ShowThumbnailFramesCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ClientsTabPage.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="ClientsTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ClientsPanel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="ClientsPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="ThumbnailsListLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="AboutTabPage.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="AboutTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="AboutPanel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="AboutPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="CreditMaintLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="CreditMaintLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="DocumentationLinkLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="DocumentationLinkLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="DescriptionLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="DescriptionLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <data name="DescriptionLabel.Text" xml:space="preserve">
-    <value>An advanced task switcher for EVE Online clients.
-
-The program does NOT
-• modify EVE Online interface
-• display modified EVE Online interface
-• broadcast any keyboard or mouse events
-• interact with EVE Online except of;
-    - resizing or bringing it to the foreground</value>
+  <data name="&gt;&gt;VersionLabel.ZOrder" xml:space="preserve">
+    <value>3</value>
   </data>
-  <metadata name="VersionLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="NameLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="NameLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="DocumentationLink.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="CycleGroupTabPage.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
-  <metadata name="CycleGroupTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="NotifyIcon.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>17, 17</value>
-  </metadata>
-  <metadata name="TrayMenu.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>123, 17</value>
-  </metadata>
+  <data name="&gt;&gt;ThumbnailsHeightNumericEdit.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorSWRadioButton.Name" xml:space="preserve">
+    <value>ZoomAanchorSWRadioButton</value>
+  </data>
+  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="cycleGroupBackHotkeyLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>8</value>
+  </data>
+  <data name="&gt;&gt;activeClientsSplitContainer.Panel1.Parent" xml:space="preserve">
+    <value>activeClientsSplitContainer</value>
+  </data>
+  <data name="&gt;&gt;ActiveClientHighlightColorButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;EnableClientLayoutTrackingCheckBox.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;CycleGroupLabel.ZOrder" xml:space="preserve">
+    <value>14</value>
+  </data>
+  <data name="&gt;&gt;ZoomAnchorLabel.Parent" xml:space="preserve">
+    <value>ZoomSettingsPanel</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsList.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckedListBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorERadioButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;selectCycleGroupComboBox.Name" xml:space="preserve">
+    <value>selectCycleGroupComboBox</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="activeClientsSplitContainer.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="cycleGroupBackwardHotkey2Text.TabIndex" type="System.Int32, mscorlib">
+    <value>10</value>
+  </data>
+  <data name="ShowThumbnailsAlwaysOnTopCheckBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ZoomSettingsPanel.Parent" xml:space="preserve">
+    <value>ZoomTabPage</value>
+  </data>
+  <data name="&gt;&gt;VersionLabel.Parent" xml:space="preserve">
+    <value>AboutPanel</value>
+  </data>
+  <data name="ZoomAnchorPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="ZoomSettingsPanel.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="&gt;&gt;HideActiveClientThumbnailCheckBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupBackHotkeyLabel.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="OverlaySettingsPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupForwardHotkeyLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="$this.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 0</value>
+  </data>
+  <data name="ZoomAanchorNRadioButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>46, 4</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailSettingsPanel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;ClientsPanel.Parent" xml:space="preserve">
+    <value>ClientsTabPage</value>
+  </data>
+  <data name="cycleGroupForwardHotkeyLabel.Text" xml:space="preserve">
+    <value>Forward Key:</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsHeightNumericEdit.Parent" xml:space="preserve">
+    <value>ThumbnailSettingsPanel</value>
+  </data>
+  <data name="&gt;&gt;TrayMenu.Name" xml:space="preserve">
+    <value>TrayMenu</value>
+  </data>
+  <data name="EnableClientLayoutTrackingCheckBox.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;HideActiveClientThumbnailCheckBox.Name" xml:space="preserve">
+    <value>HideActiveClientThumbnailCheckBox</value>
+  </data>
+  <data name="cycleGroupClientOrderList.ItemHeight" type="System.Int32, mscorlib">
+    <value>18</value>
+  </data>
+  <data name="ZoomAanchorNWRadioButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 4</value>
+  </data>
+  <data name="WidthLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 46</value>
+  </data>
+  <data name="EnableClientLayoutTrackingCheckBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>232, 22</value>
+  </data>
+  <data name="NotifyIcon.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="ShowThumbnailFramesCheckBox.TabIndex" type="System.Int32, mscorlib">
+    <value>26</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailOpacityTrackBar.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TrackBar, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cycleGroupClientOrderLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>12</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorSWRadioButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="EnableActiveClientHighlightCheckBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>241, 22</value>
+  </data>
+  <data name="&gt;&gt;activeClientsSplitContainer.Name" xml:space="preserve">
+    <value>activeClientsSplitContainer</value>
+  </data>
+  <data name="DocumentationLinkLabel.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>12, 4, 12, 4</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorWRadioButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupForwardHotkeyLabel.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="&gt;&gt;OverlayTabPage.Parent" xml:space="preserve">
+    <value>ContentTabControl</value>
+  </data>
+  <data name="HighlightColorLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>53, 18</value>
+  </data>
+  <data name="ThumbnailsList.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ShowThumbnailsAlwaysOnTopCheckBox.Name" xml:space="preserve">
+    <value>ShowThumbnailsAlwaysOnTopCheckBox</value>
+  </data>
+  <data name="cycleGroupForwardHotkey2Text.Size" type="System.Drawing.Size, System.Drawing">
+    <value>118, 28</value>
+  </data>
+  <data name="EnableThumbnailZoomCheckBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;EnablePerClientThumbnailsLayoutsCheckBox.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="ThumbnailsWidthNumericEdit.Size" type="System.Drawing.Size, System.Drawing">
+    <value>72, 28</value>
+  </data>
+  <data name="AboutTabPage.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="NameLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 12</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupMoveClientOrderUpButton.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="NameLabel.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 12pt, style=Bold</value>
+  </data>
+  <data name="MinimizeToTrayCheckBox.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;NameLabel.Name" xml:space="preserve">
+    <value>NameLabel</value>
+  </data>
+  <data name="&gt;&gt;ZoomAnchorLabel.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="activeClientsSplitContainer.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="&gt;&gt;addClientToCycleGroupButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="EnableClientLayoutTrackingCheckBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 43</value>
+  </data>
+  <data name="ZoomAanchorSWRadioButton.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="ZoomAnchorLabel.Text" xml:space="preserve">
+    <value>Anchor</value>
+  </data>
+  <data name="EnableClientLayoutTrackingCheckBox.TabIndex" type="System.Int32, mscorlib">
+    <value>19</value>
+  </data>
+  <data name="&gt;&gt;OpacityLabel.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupBackHotkeyLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorNERadioButton.Parent" xml:space="preserve">
+    <value>ZoomAnchorPanel</value>
+  </data>
+  <data name="&gt;&gt;OverlaySettingsPanel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;HeigthLabel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupClientOrderLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupBackwardHotkey2Text.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ZoomAanchorSERadioButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>88, 76</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorNRadioButton.Name" xml:space="preserve">
+    <value>ZoomAanchorNRadioButton</value>
+  </data>
+  <data name="GeneralTabPage.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;DocumentationLinkLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupDescriptionText.ZOrder" xml:space="preserve">
+    <value>12</value>
+  </data>
+  <data name="cycleGroupMoveClientOrderUpButton.TabIndex" type="System.Int32, mscorlib">
+    <value>15</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsWidthNumericEdit.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupClientOrderLabel.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;ClientsTabPage.Name" xml:space="preserve">
+    <value>ClientsTabPage</value>
+  </data>
+  <data name="&gt;&gt;$this.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Form, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ShowThumbnailsAlwaysOnTopCheckBox.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="cycleGroupBackwardHotkey2Text.Location" type="System.Drawing.Point, System.Drawing">
+    <value>248, 143</value>
+  </data>
+  <data name="cycleGroupForwardHotkeyLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="EnableActiveClientHighlightCheckBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailOpacityTrackBar.Name" xml:space="preserve">
+    <value>ThumbnailOpacityTrackBar</value>
+  </data>
+  <data name="OverlayTabPage.Text" xml:space="preserve">
+    <value>Overlay</value>
+  </data>
+  <data name="RestoreWindowMenuItem.Text" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="NameLabel.Text" xml:space="preserve">
+    <value>EVE-O Preview</value>
+  </data>
+  <data name="MinimizeInactiveClientsCheckBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>295, 22</value>
+  </data>
+  <data name="CycleGroupLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;ClientsPanel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="CycleGroupPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;WidthLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="HeigthLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>24</value>
+  </data>
+  <data name="&gt;&gt;activeClientsSplitContainer.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="ZoomAanchorNERadioButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>88, 4</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailSettingsPanel.Parent" xml:space="preserve">
+    <value>ThumbnailTabPage</value>
+  </data>
+  <data name="&gt;&gt;ContentTabControl.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;DocumentationLink.Type" xml:space="preserve">
+    <value>System.Windows.Forms.LinkLabel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cycleGroupBackwardHotkey2Text.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="ZoomTabPage.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="ThumbnailTabPage.Location" type="System.Drawing.Point, System.Drawing">
+    <value>124, 4</value>
+  </data>
+  <data name="OverlayTabPage.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;HighlightColorLabel.Name" xml:space="preserve">
+    <value>HighlightColorLabel</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupClientOrderLabel.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="ZoomAanchorSWRadioButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 76</value>
+  </data>
+  <data name="CycleGroupLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>179, 18</value>
+  </data>
+  <data name="removeGroupButton.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 8.25pt, style=Bold</value>
+  </data>
+  <data name="ThumbnailZoomFactorNumericEdit.Location" type="System.Drawing.Point, System.Drawing">
+    <value>122, 43</value>
+  </data>
+  <data name="ZoomAanchorSERadioButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorWRadioButton.Name" xml:space="preserve">
+    <value>ZoomAanchorWRadioButton</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorNRadioButton.Parent" xml:space="preserve">
+    <value>ZoomAnchorPanel</value>
+  </data>
+  <data name="&gt;&gt;GeneralTabPage.Parent" xml:space="preserve">
+    <value>ContentTabControl</value>
+  </data>
+  <data name="selectCycleGroupComboBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="cycleGroupForwardHotkey1Text.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="addClientToCycleGroupButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="ContentTabControl.Alignment" type="System.Windows.Forms.TabAlignment, System.Windows.Forms">
+    <value>Left</value>
+  </data>
+  <data name="cycleGroupForwardHotkeyLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 111</value>
+  </data>
+  <data name="ThumbnailTabPage.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="ThumbnailZoomFactorNumericEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;CycleGroupTabPage.ZOrder" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <data name="EnableClientLayoutTrackingCheckBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="VersionLabel.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 12pt, style=Bold</value>
+  </data>
+  <data name="&gt;&gt;NameLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;activeClientsSplitContainer.Parent" xml:space="preserve">
+    <value>ClientsPanel</value>
+  </data>
+  <data name="removeClientToCycleGroupButton.Text" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="cycleGroupBackHotkeyLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>125, 18</value>
+  </data>
+  <data name="&gt;&gt;HeigthLabel.Name" xml:space="preserve">
+    <value>HeigthLabel</value>
+  </data>
+  <data name="DescriptionLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="&gt;&gt;GeneralTabPage.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ZoomAnchorLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="ShowThumbnailFramesCheckBox.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;TrayMenu.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ContextMenuStrip, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AboutTabPage.Location" type="System.Drawing.Point, System.Drawing">
+    <value>124, 4</value>
+  </data>
+  <data name="HighlightColorLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="&gt;&gt;GeneralSettingsPanel.Name" xml:space="preserve">
+    <value>GeneralSettingsPanel</value>
+  </data>
+  <data name="DescriptionLabel.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>12, 4, 12, 4</value>
+  </data>
+  <data name="ThumbnailsHeightNumericEdit.TabIndex" type="System.Int32, mscorlib">
+    <value>22</value>
+  </data>
+  <data name="&gt;&gt;$this.Name" xml:space="preserve">
+    <value>MainForm</value>
+  </data>
+  <data name="&gt;&gt;HighlightColorLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ThumbnailOpacityTrackBar.TabIndex" type="System.Int32, mscorlib">
+    <value>20</value>
+  </data>
+  <data name="NameLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;ZoomAnchorPanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ShowThumbnailFramesCheckBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupMoveClientOrderUpButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailZoomFactorNumericEdit.Name" xml:space="preserve">
+    <value>ThumbnailZoomFactorNumericEdit</value>
+  </data>
+  <data name="&gt;&gt;VersionLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ThumbnailsList.Size" type="System.Drawing.Size, System.Drawing">
+    <value>455, 248</value>
+  </data>
+  <data name="&gt;&gt;WidthLabel.Name" xml:space="preserve">
+    <value>WidthLabel</value>
+  </data>
+  <data name="cycleGroupDescriptionLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="HideActiveClientThumbnailCheckBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>331, 22</value>
+  </data>
+  <data name="&gt;&gt;ShowThumbnailOverlaysCheckBox.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="ZoomAanchorSWRadioButton.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;SeparatorMenuItem.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripSeparator, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="GeneralSettingsPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="ShowThumbnailsAlwaysOnTopCheckBox.RightToLeft" type="System.Windows.Forms.RightToLeft, System.Windows.Forms">
+    <value>No</value>
+  </data>
+  <data name="cycleGroupBackHotkeyLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 147</value>
+  </data>
+  <data name="CycleGroupTabPage.Size" type="System.Drawing.Size, System.Drawing">
+    <value>457, 353</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupClientOrderList.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ListBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ThumbnailsListLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>9, 10</value>
+  </data>
+  <data name="MinimizeInactiveClientsCheckBox.TabIndex" type="System.Int32, mscorlib">
+    <value>24</value>
+  </data>
+  <data name="EnableThumbnailZoomCheckBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 10</value>
+  </data>
+  <data name="&gt;&gt;removeClientToCycleGroupButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cycleGroupMoveClientOrderUpButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>50, 32</value>
+  </data>
+  <data name="&gt;&gt;ExitMenuItem.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="EnablePerClientThumbnailsLayoutsCheckBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="EnablePerClientThumbnailsLayoutsCheckBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 209</value>
+  </data>
+  <data name="ThumbnailSettingsPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>19</value>
+  </data>
+  <data name="CycleGroupPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="WidthLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>143, 18</value>
+  </data>
+  <data name="&gt;&gt;DocumentationLinkLabel.Parent" xml:space="preserve">
+    <value>AboutPanel</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailTabPage.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="CycleGroupLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;AboutPanel.Name" xml:space="preserve">
+    <value>AboutPanel</value>
+  </data>
+  <data name="SeparatorMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+    <value>203, 6</value>
+  </data>
+  <data name="OverlaySettingsPanel.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="&gt;&gt;AboutTabPage.Name" xml:space="preserve">
+    <value>AboutTabPage</value>
+  </data>
+  <data name="&gt;&gt;OpacityLabel.Parent" xml:space="preserve">
+    <value>ThumbnailSettingsPanel</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorNWRadioButton.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="activeClientsSplitContainer.SplitterDistance" type="System.Int32, mscorlib">
+    <value>34</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupForwardHotkey1Text.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;addClientToCycleGroupButton.ZOrder" xml:space="preserve">
+    <value>16</value>
+  </data>
+  <data name="&gt;&gt;DescriptionLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ZoomTabPage.Location" type="System.Drawing.Point, System.Drawing">
+    <value>124, 4</value>
+  </data>
+  <data name="&gt;&gt;ClientsTabPage.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="DocumentationLink.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>12, 4, 12, 4</value>
+  </data>
+  <data name="&gt;&gt;ContentTabControl.Name" xml:space="preserve">
+    <value>ContentTabControl</value>
+  </data>
+  <data name="&gt;&gt;ZoomTabPage.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="activeClientsSplitContainer.SplitterWidth" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="&gt;&gt;CreditMaintLabel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupDescriptionLabel.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="HeigthLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="ActiveClientHighlightColorButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>63, 107</value>
+  </data>
+  <data name="ThumbnailsWidthNumericEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="TitleMenuItem.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;removeClientToCycleGroupButton.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorSERadioButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="HeigthLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 79</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupForwardHotkeyLabel.Name" xml:space="preserve">
+    <value>cycleGroupForwardHotkeyLabel</value>
+  </data>
+  <data name="ZoomAanchorSRadioButton.TabIndex" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
+  <data name="ClientsTabPage.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="VersionLabel.Text" xml:space="preserve">
+    <value>1.0.0</value>
+  </data>
+  <data name="CycleGroupTabPage.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ZoomTabPage.Parent" xml:space="preserve">
+    <value>ContentTabControl</value>
+  </data>
+  <data name="ShowThumbnailsAlwaysOnTopCheckBox.TabIndex" type="System.Int32, mscorlib">
+    <value>21</value>
+  </data>
+  <data name="&gt;&gt;addClientToCycleGroupButton.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="&gt;&gt;DocumentationLinkLabel.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="cycleGroupBackwardHotkey1Text.Location" type="System.Drawing.Point, System.Drawing">
+    <value>123, 143</value>
+  </data>
+  <data name="ZoomAanchorNWRadioButton.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="ThumbnailOpacityTrackBar.Size" type="System.Drawing.Size, System.Drawing">
+    <value>286, 30</value>
+  </data>
+  <data name="&gt;&gt;removeGroupButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cycleGroupClientOrderList.TabIndex" type="System.Int32, mscorlib">
+    <value>11</value>
+  </data>
+  <data name="removeGroupButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="EnableActiveClientHighlightCheckBox.RightToLeft" type="System.Windows.Forms.RightToLeft, System.Windows.Forms">
+    <value>No</value>
+  </data>
+  <data name="&gt;&gt;CycleGroupPanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ZoomAanchorERadioButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>21, 20</value>
+  </data>
+  <data name="ThumbnailsWidthNumericEdit.TabIndex" type="System.Int32, mscorlib">
+    <value>21</value>
+  </data>
+  <data name="MinimizeToTrayCheckBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>241, 22</value>
+  </data>
+  <data name="ZoomAanchorSWRadioButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>21, 20</value>
+  </data>
+  <data name="ZoomAnchorLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>62, 18</value>
+  </data>
+  <data name="&gt;&gt;CreditMaintLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsWidthNumericEdit.Parent" xml:space="preserve">
+    <value>ThumbnailSettingsPanel</value>
+  </data>
+  <data name="cycleGroupForwardHotkeyLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>116, 18</value>
+  </data>
+  <data name="EnablePerClientThumbnailsLayoutsCheckBox.Text" xml:space="preserve">
+    <value>Unique layout for each EVE client</value>
+  </data>
+  <data name="cycleGroupDescriptionLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;ZoomSettingsPanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ZoomAanchorNRadioButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>21, 20</value>
+  </data>
+  <data name="EnableActiveClientHighlightCheckBox.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="OverlaySettingsPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>25</value>
+  </data>
+  <data name="MinimizeToTrayCheckBox.TabIndex" type="System.Int32, mscorlib">
+    <value>18</value>
+  </data>
+  <data name="ContentTabControl.ItemSize" type="System.Drawing.Size, System.Drawing">
+    <value>35, 120</value>
+  </data>
+  <data name="ZoomAanchorSRadioButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>21, 20</value>
+  </data>
+  <data name="ZoomAanchorNERadioButton.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="MinimizeToTrayCheckBox.Text" xml:space="preserve">
+    <value>Minimize to System Tray</value>
+  </data>
+  <data name="&gt;&gt;removeGroupButton.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="DocumentationLinkLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>428, 26</value>
+  </data>
+  <data name="removeClientToCycleGroupButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>33, 32</value>
+  </data>
+  <data name="addNewGroupButton.TabIndex" type="System.Int32, mscorlib">
+    <value>13</value>
+  </data>
+  <data name="&gt;&gt;MinimizeToTrayCheckBox.Parent" xml:space="preserve">
+    <value>GeneralSettingsPanel</value>
+  </data>
+  <data name="&gt;&gt;OverlaySettingsPanel.Parent" xml:space="preserve">
+    <value>OverlayTabPage</value>
+  </data>
+  <data name="ShowThumbnailOverlaysCheckBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
+    <value>9, 18</value>
+  </data>
+  <data name="ShowThumbnailFramesCheckBox.RightToLeft" type="System.Windows.Forms.RightToLeft, System.Windows.Forms">
+    <value>No</value>
+  </data>
+  <data name="cycleGroupForwardHotkey1Text.Location" type="System.Drawing.Point, System.Drawing">
+    <value>123, 107</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorSRadioButton.Name" xml:space="preserve">
+    <value>ZoomAanchorSRadioButton</value>
+  </data>
+  <data name="HideActiveClientThumbnailCheckBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="removeGroupButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>300, 30</value>
+  </data>
+  <data name="GeneralSettingsPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 4</value>
+  </data>
+  <data name="cycleGroupClientOrderLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>170, 18</value>
+  </data>
+  <data name="removeClientToCycleGroupButton.TabIndex" type="System.Int32, mscorlib">
+    <value>14</value>
+  </data>
+  <data name="ThumbnailsWidthNumericEdit.Location" type="System.Drawing.Point, System.Drawing">
+    <value>158, 43</value>
+  </data>
+  <data name="&gt;&gt;ZoomTabPage.Name" xml:space="preserve">
+    <value>ZoomTabPage</value>
+  </data>
+  <data name="&gt;&gt;addNewGroupButton.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;HighlightColorLabel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailTabPage.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="HighlightColorLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>8, 108</value>
+  </data>
+  <data name="ZoomAanchorWRadioButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ShowThumbnailFramesCheckBox.Name" xml:space="preserve">
+    <value>ShowThumbnailFramesCheckBox</value>
+  </data>
+  <data name="DescriptionLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>392, 201</value>
+  </data>
+  <data name="ThumbnailsListLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>33</value>
+  </data>
+  <data name="MinimizeInactiveClientsCheckBox.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="EnableActiveClientHighlightCheckBox.Text" xml:space="preserve">
+    <value>Highlight active client</value>
+  </data>
+  <data name="&gt;&gt;ShowThumbnailOverlaysCheckBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorERadioButton.Name" xml:space="preserve">
+    <value>ZoomAanchorERadioButton</value>
+  </data>
+  <data name="&gt;&gt;ContentTabControl.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="cycleGroupMoveClientOrderUpButton.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 8.25pt, style=Bold</value>
+  </data>
+  <data name="ThumbnailTabPage.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="ZoomFactorLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>107, 18</value>
+  </data>
+  <data name="&gt;&gt;AboutTabPage.Parent" xml:space="preserve">
+    <value>ContentTabControl</value>
+  </data>
+  <data name="&gt;&gt;CreditMaintLabel.Parent" xml:space="preserve">
+    <value>AboutPanel</value>
+  </data>
+  <data name="HeigthLabel.Text" xml:space="preserve">
+    <value>Thumbnail Heigth</value>
+  </data>
+  <data name="ThumbnailTabPage.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="ThumbnailTabPage.Text" xml:space="preserve">
+    <value>Thumbnail</value>
+  </data>
+  <data name="activeClientsSplitContainer.Size" type="System.Drawing.Size, System.Drawing">
+    <value>455, 351</value>
+  </data>
+  <data name="&gt;&gt;EnableActiveClientHighlightCheckBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="RestoreWindowMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+    <value>206, 30</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupClientOrderLabel.Name" xml:space="preserve">
+    <value>cycleGroupClientOrderLabel</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsWidthNumericEdit.Type" xml:space="preserve">
+    <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ClientsPanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ThumbnailTabPage.Size" type="System.Drawing.Size, System.Drawing">
+    <value>457, 353</value>
+  </data>
+  <data name="ZoomAnchorLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="cycleGroupForwardHotkey1Text.Size" type="System.Drawing.Size, System.Drawing">
+    <value>118, 28</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorNERadioButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ShowThumbnailsAlwaysOnTopCheckBox.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="NameLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>193, 29</value>
+  </data>
+  <data name="CreditMaintLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>473, 26</value>
+  </data>
+  <data name="&gt;&gt;EnableActiveClientHighlightCheckBox.Name" xml:space="preserve">
+    <value>EnableActiveClientHighlightCheckBox</value>
+  </data>
+  <data name="GeneralSettingsPanel.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="&gt;&gt;ShowThumbnailFramesCheckBox.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="OverlayTabPage.Size" type="System.Drawing.Size, System.Drawing">
+    <value>457, 353</value>
+  </data>
+  <data name="ClientsPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="GeneralTabPage.Location" type="System.Drawing.Point, System.Drawing">
+    <value>124, 4</value>
+  </data>
+  <data name="TitleMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+    <value>206, 30</value>
+  </data>
+  <data name="GeneralSettingsPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>18</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorSRadioButton.Parent" xml:space="preserve">
+    <value>ZoomAnchorPanel</value>
+  </data>
+  <data name="&gt;&gt;CycleGroupTabPage.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="HideThumbnailsOnLostFocusCheckBox.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="ZoomAanchorNRadioButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="ZoomAnchorPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>122, 75</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupForwardHotkey2Text.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="HideThumbnailsOnLostFocusCheckBox.Text" xml:space="preserve">
+    <value>Hide previews when EVE client is not active</value>
+  </data>
+  <data name="cycleGroupClientOrderLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 186</value>
+  </data>
+  <data name="ZoomAanchorSERadioButton.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;WidthLabel.Parent" xml:space="preserve">
+    <value>ThumbnailSettingsPanel</value>
+  </data>
+  <data name="HeigthLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>152, 18</value>
+  </data>
+  <data name="removeGroupButton.Text" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="ZoomFactorLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorSERadioButton.Parent" xml:space="preserve">
+    <value>ZoomAnchorPanel</value>
+  </data>
+  <data name="WidthLabel.Text" xml:space="preserve">
+    <value>Thumbnail Width</value>
+  </data>
+  <data name="OpacityLabel.Text" xml:space="preserve">
+    <value>Opacity</value>
+  </data>
+  <data name="&gt;&gt;RestoreWindowMenuItem.Name" xml:space="preserve">
+    <value>RestoreWindowMenuItem</value>
+  </data>
+  <data name="EnableThumbnailZoomCheckBox.RightToLeft" type="System.Windows.Forms.RightToLeft, System.Windows.Forms">
+    <value>No</value>
+  </data>
+  <data name="HeigthLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="cycleGroupBackwardHotkey1Text.TabIndex" type="System.Int32, mscorlib">
+    <value>9</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupBackwardHotkey1Text.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="removeGroupButton.TabIndex" type="System.Int32, mscorlib">
+    <value>16</value>
+  </data>
+  <data name="GeneralTabPage.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorCRadioButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="removeGroupButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>36, 32</value>
+  </data>
+  <data name="EnableThumbnailZoomCheckBox.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorERadioButton.ZOrder" xml:space="preserve">
+    <value>7</value>
+  </data>
+  <data name="&gt;&gt;AboutPanel.Parent" xml:space="preserve">
+    <value>AboutTabPage</value>
+  </data>
+  <data name="ShowThumbnailOverlaysCheckBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>142, 22</value>
+  </data>
+  <data name="ZoomAanchorSWRadioButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="ShowThumbnailOverlaysCheckBox.RightToLeft" type="System.Windows.Forms.RightToLeft, System.Windows.Forms">
+    <value>No</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupForwardHotkey1Text.ZOrder" xml:space="preserve">
+    <value>10</value>
+  </data>
+  <data name="DocumentationLink.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>45, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;HideThumbnailsOnLostFocusCheckBox.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;MinimizeInactiveClientsCheckBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ZoomAanchorERadioButton.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="activeClientsSplitContainer.TabIndex" type="System.Int32, mscorlib">
+    <value>35</value>
+  </data>
+  <data name="cycleGroupClientOrderList.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;EnableThumbnailZoomCheckBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;GeneralSettingsPanel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;CycleGroupPanel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
+    <value>585, 361</value>
+  </data>
+  <data name="&gt;&gt;removeClientToCycleGroupButton.Name" xml:space="preserve">
+    <value>removeClientToCycleGroupButton</value>
+  </data>
+  <data name="&gt;&gt;ZoomSettingsPanel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="CreditMaintLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="cycleGroupDescriptionText.Location" type="System.Drawing.Point, System.Drawing">
+    <value>123, 71</value>
+  </data>
+  <data name="&gt;&gt;EnableThumbnailZoomCheckBox.Name" xml:space="preserve">
+    <value>EnableThumbnailZoomCheckBox</value>
+  </data>
+  <data name="addClientToCycleGroupButton.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;ActiveClientHighlightColorButton.Name" xml:space="preserve">
+    <value>ActiveClientHighlightColorButton</value>
+  </data>
+  <data name="addNewGroupButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>334, 30</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorSWRadioButton.Parent" xml:space="preserve">
+    <value>ZoomAnchorPanel</value>
+  </data>
+  <data name="&gt;&gt;DocumentationLinkLabel.Name" xml:space="preserve">
+    <value>DocumentationLinkLabel</value>
+  </data>
+  <data name="activeClientsSplitContainer.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="ThumbnailsListLabel.Text" xml:space="preserve">
+    <value>Thumbnails (check to force hide)</value>
+  </data>
+  <data name="ZoomAanchorNWRadioButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>21, 20</value>
+  </data>
+  <data name="&gt;&gt;ZoomAnchorPanel.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="ZoomAanchorCRadioButton.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="ZoomAanchorNERadioButton.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;DocumentationLink.Parent" xml:space="preserve">
+    <value>AboutPanel</value>
+  </data>
+  <data name="OpacityLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="ClientsTabPage.Text" xml:space="preserve">
+    <value>Active Clients</value>
+  </data>
+  <data name="ZoomAanchorWRadioButton.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="addNewGroupButton.Text" xml:space="preserve">
+    <value>+</value>
+  </data>
+  <data name="&gt;&gt;activeClientsSplitContainer.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ActiveClientHighlightColorButton.TabIndex" type="System.Int32, mscorlib">
+    <value>28</value>
+  </data>
+  <data name="$this.Text" xml:space="preserve">
+    <value>EVE-O Preview</value>
+  </data>
+  <data name="cycleGroupBackHotkeyLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;activeClientsSplitContainer.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="ActiveClientHighlightColorButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="EnableThumbnailZoomCheckBox.TabIndex" type="System.Int32, mscorlib">
+    <value>36</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupClientOrderList.Name" xml:space="preserve">
+    <value>cycleGroupClientOrderList</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupBackwardHotkey1Text.ZOrder" xml:space="preserve">
+    <value>7</value>
+  </data>
+  <data name="&gt;&gt;MinimizeInactiveClientsCheckBox.Name" xml:space="preserve">
+    <value>MinimizeInactiveClientsCheckBox</value>
+  </data>
+  <data name="DocumentationLinkLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="EnableThumbnailZoomCheckBox.Text" xml:space="preserve">
+    <value>Zoom on hover</value>
+  </data>
+  <data name="&gt;&gt;CycleGroupTabPage.Parent" xml:space="preserve">
+    <value>ContentTabControl</value>
+  </data>
+  <data name="CreditMaintLabel.Text" xml:space="preserve">
+    <value>Credit to previous maintainer: Phrynohyas Tig-Rah</value>
+  </data>
   <data name="NotifyIcon.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         AAABAAQAEBAAAAEAIABoBAAARgAAACAgAAABACAAqBAAAK4EAAAwMAAAAQAgAKglAABWFQAAQEAAAAEA
@@ -909,12 +1783,178 @@ The program does NOT
         Af//4AAAAAAH///wAAAAAA////gAAAAAH////gAAAAB/////AAAAAP/////AAAAD/////+AAAAf//w==
 </value>
   </data>
-  <metadata name="$this.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+  <data name="ThumbnailSettingsPanel.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="ZoomAanchorSERadioButton.TabIndex" type="System.Int32, mscorlib">
+    <value>8</value>
+  </data>
+  <data name="HideThumbnailsOnLostFocusCheckBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>421, 22</value>
+  </data>
+  <data name="ClientsPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>32</value>
+  </data>
+  <data name="cycleGroupForwardHotkey1Text.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="ThumbnailSettingsPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>449, 345</value>
+  </data>
+  <data name="&gt;&gt;HideThumbnailsOnLostFocusCheckBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ThumbnailsHeightNumericEdit.Size" type="System.Drawing.Size, System.Drawing">
+    <value>72, 28</value>
+  </data>
+  <data name="ContentTabControl.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="&gt;&gt;OverlaySettingsPanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ExitMenuItem.Name" xml:space="preserve">
+    <value>ExitMenuItem</value>
+  </data>
+  <data name="&gt;&gt;ShowThumbnailFramesCheckBox.Parent" xml:space="preserve">
+    <value>OverlaySettingsPanel</value>
+  </data>
+  <data name="ThumbnailsHeightNumericEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsList.Parent" xml:space="preserve">
+    <value>activeClientsSplitContainer.Panel2</value>
+  </data>
+  <data name="&gt;&gt;AboutTabPage.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="CycleGroupPanel.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="ZoomAanchorERadioButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>88, 40</value>
+  </data>
+  <data name="&gt;&gt;NameLabel.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="AboutTabPage.Text" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="&gt;&gt;DescriptionLabel.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupBackwardHotkey2Text.Name" xml:space="preserve">
+    <value>cycleGroupBackwardHotkey2Text</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailTabPage.Parent" xml:space="preserve">
+    <value>ContentTabControl</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorNWRadioButton.Parent" xml:space="preserve">
+    <value>ZoomAnchorPanel</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupMoveClientOrderUpButton.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;MinimizeToTrayCheckBox.Name" xml:space="preserve">
+    <value>MinimizeToTrayCheckBox</value>
+  </data>
+  <data name="OpacityLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>19</value>
+  </data>
+  <data name="&gt;&gt;ZoomFactorLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="DocumentationLink.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 245</value>
+  </data>
+  <data name="addClientToCycleGroupButton.Text" xml:space="preserve">
+    <value>+</value>
+  </data>
+  <data name="MinimizeInactiveClientsCheckBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="ClientsPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="HighlightColorLabel.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
-  </metadata>
-  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>36</value>
-  </metadata>
+  </data>
+  <data name="EnableActiveClientHighlightCheckBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 76</value>
+  </data>
+  <data name="&gt;&gt;ZoomAnchorLabel.Name" xml:space="preserve">
+    <value>ZoomAnchorLabel</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailZoomFactorNumericEdit.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="AboutTabPage.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupClientOrderList.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="&gt;&gt;MinimizeToTrayCheckBox.ZOrder" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <data name="GeneralTabPage.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="DocumentationLink.Size" type="System.Drawing.Size, System.Drawing">
+    <value>393, 46</value>
+  </data>
+  <data name="&gt;&gt;EnableClientLayoutTrackingCheckBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;OverlaySettingsPanel.Name" xml:space="preserve">
+    <value>OverlaySettingsPanel</value>
+  </data>
+  <data name="TrayMenu.Size" type="System.Drawing.Size, System.Drawing">
+    <value>207, 100</value>
+  </data>
+  <data name="DocumentationLinkLabel.Text" xml:space="preserve">
+    <value>For more information visit the forum thread:</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupBackwardHotkey1Text.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="DescriptionLabel.Text" xml:space="preserve">
+    <value>An advanced task switcher for EVE Online clients.
+
+The program does NOT
+• modify EVE Online interface
+• display modified EVE Online interface
+• broadcast any keyboard or mouse events
+• interact with EVE Online except of;
+    - resizing or bringing it to the foreground</value>
+  </data>
+  <data name="VersionLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>200, 12</value>
+  </data>
+  <data name="&gt;&gt;ZoomAnchorLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;DescriptionLabel.Parent" xml:space="preserve">
+    <value>AboutPanel</value>
+  </data>
+  <data name="&gt;&gt;DescriptionLabel.Name" xml:space="preserve">
+    <value>DescriptionLabel</value>
+  </data>
+  <data name="ShowThumbnailOverlaysCheckBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 10</value>
+  </data>
+  <data name="ShowThumbnailsAlwaysOnTopCheckBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 143</value>
+  </data>
+  <data name="&gt;&gt;ZoomSettingsPanel.Name" xml:space="preserve">
+    <value>ZoomSettingsPanel</value>
+  </data>
+  <data name="&gt;&gt;CycleGroupLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ZoomTabPage.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         AAABAAQAEBAAAAEAIABoBAAARgAAACAgAAABACAAqBAAAK4EAAAwMAAAAQAgAKglAABWFQAAQEAAAAEA
@@ -1453,4 +2493,1171 @@ The program does NOT
         Af//4AAAAAAH///wAAAAAA////gAAAAAH////gAAAAB/////AAAAAP/////AAAAD/////+AAAAf//w==
 </value>
   </data>
+  <data name="cycleGroupClientOrderLabel.Text" xml:space="preserve">
+    <value>Clients and Order:</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsList.Name" xml:space="preserve">
+    <value>ThumbnailsList</value>
+  </data>
+  <data name="&gt;&gt;SeparatorMenuItem.Name" xml:space="preserve">
+    <value>SeparatorMenuItem</value>
+  </data>
+  <data name="cycleGroupDescriptionLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>116, 18</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupForwardHotkey2Text.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupDescriptionLabel.ZOrder" xml:space="preserve">
+    <value>13</value>
+  </data>
+  <data name="EnableActiveClientHighlightCheckBox.TabIndex" type="System.Int32, mscorlib">
+    <value>27</value>
+  </data>
+  <data name="OpacityLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="ZoomAanchorNRadioButton.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;DocumentationLink.Name" xml:space="preserve">
+    <value>DocumentationLink</value>
+  </data>
+  <data name="&gt;&gt;EnableActiveClientHighlightCheckBox.Parent" xml:space="preserve">
+    <value>OverlaySettingsPanel</value>
+  </data>
+  <data name="&gt;&gt;CycleGroupLabel.Name" xml:space="preserve">
+    <value>CycleGroupLabel</value>
+  </data>
+  <data name="ZoomAanchorCRadioButton.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;CycleGroupPanel.Parent" xml:space="preserve">
+    <value>CycleGroupTabPage</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsList.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="ThumbnailZoomFactorNumericEdit.TabIndex" type="System.Int32, mscorlib">
+    <value>37</value>
+  </data>
+  <data name="&gt;&gt;CreditMaintLabel.Name" xml:space="preserve">
+    <value>CreditMaintLabel</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailZoomFactorNumericEdit.Type" xml:space="preserve">
+    <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ClientsPanel.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupBackwardHotkey2Text.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="HighlightColorLabel.Text" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="GeneralTabPage.Size" type="System.Drawing.Size, System.Drawing">
+    <value>457, 353</value>
+  </data>
+  <data name="cycleGroupDescriptionText.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;DocumentationLink.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="cycleGroupMoveClientOrderUpButton.Text" xml:space="preserve">
+    <value>Up</value>
+  </data>
+  <data name="&gt;&gt;ClientsTabPage.Parent" xml:space="preserve">
+    <value>ContentTabControl</value>
+  </data>
+  <data name="OverlaySettingsPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>457, 353</value>
+  </data>
+  <data name="CycleGroupLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="removeClientToCycleGroupButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="NotifyIcon.Text" xml:space="preserve">
+    <value>EVE-O Preview</value>
+  </data>
+  <data name="&gt;&gt;removeClientToCycleGroupButton.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="&gt;&gt;ShowThumbnailOverlaysCheckBox.Parent" xml:space="preserve">
+    <value>OverlaySettingsPanel</value>
+  </data>
+  <data name="&gt;&gt;ZoomAnchorPanel.Name" xml:space="preserve">
+    <value>ZoomAnchorPanel</value>
+  </data>
+  <data name="ShowThumbnailOverlaysCheckBox.Text" xml:space="preserve">
+    <value>Show overlay</value>
+  </data>
+  <data name="activeClientsSplitContainer.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorNWRadioButton.Name" xml:space="preserve">
+    <value>ZoomAanchorNWRadioButton</value>
+  </data>
+  <data name="WidthLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>23</value>
+  </data>
+  <data name="ContentTabControl.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="cycleGroupDescriptionText.Size" type="System.Drawing.Size, System.Drawing">
+    <value>242, 28</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorSRadioButton.ZOrder" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsHeightNumericEdit.Type" xml:space="preserve">
+    <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ThumbnailsList.IntegralHeight" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorCRadioButton.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="OverlaySettingsPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ClientsTabPage.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ThumbnailOpacityTrackBar.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="addClientToCycleGroupButton.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 8.25pt, style=Bold</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupDescriptionText.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;CycleGroupLabel.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="ZoomAanchorNERadioButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailOpacityTrackBar.Parent" xml:space="preserve">
+    <value>ThumbnailSettingsPanel</value>
+  </data>
+  <data name="AboutPanel.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="OpacityLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 12</value>
+  </data>
+  <data name="&gt;&gt;activeClientsSplitContainer.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;EnableThumbnailZoomCheckBox.Parent" xml:space="preserve">
+    <value>ZoomSettingsPanel</value>
+  </data>
+  <data name="&gt;&gt;activeClientsSplitContainer.Panel2.Name" xml:space="preserve">
+    <value>activeClientsSplitContainer.Panel2</value>
+  </data>
+  <data name="ZoomAnchorPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>114, 100</value>
+  </data>
+  <data name="removeClientToCycleGroupButton.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 8.25pt, style=Bold</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupDescriptionLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsWidthNumericEdit.Name" xml:space="preserve">
+    <value>ThumbnailsWidthNumericEdit</value>
+  </data>
+  <data name="&gt;&gt;ZoomFactorLabel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorSERadioButton.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;OpacityLabel.Name" xml:space="preserve">
+    <value>OpacityLabel</value>
+  </data>
+  <data name="ZoomAanchorCRadioButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="ThumbnailOpacityTrackBar.AutoSize" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="VersionLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupForwardHotkey1Text.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsListLabel.Parent" xml:space="preserve">
+    <value>activeClientsSplitContainer.Panel1</value>
+  </data>
+  <data name="&gt;&gt;VersionLabel.Name" xml:space="preserve">
+    <value>VersionLabel</value>
+  </data>
+  <data name="&gt;&gt;activeClientsSplitContainer.Panel1.Name" xml:space="preserve">
+    <value>activeClientsSplitContainer.Panel1</value>
+  </data>
+  <data name="ZoomSettingsPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;HighlightColorLabel.Parent" xml:space="preserve">
+    <value>OverlaySettingsPanel</value>
+  </data>
+  <data name="MinimizeInactiveClientsCheckBox.Text" xml:space="preserve">
+    <value>Minimize inactive EVE clients</value>
+  </data>
+  <data name="&gt;&gt;HeigthLabel.Parent" xml:space="preserve">
+    <value>ThumbnailSettingsPanel</value>
+  </data>
+  <data name="ShowThumbnailFramesCheckBox.Text" xml:space="preserve">
+    <value>Show frames</value>
+  </data>
+  <data name="&gt;&gt;TitleMenuItem.Name" xml:space="preserve">
+    <value>TitleMenuItem</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorERadioButton.Parent" xml:space="preserve">
+    <value>ZoomAnchorPanel</value>
+  </data>
+  <data name="HideThumbnailsOnLostFocusCheckBox.TabIndex" type="System.Int32, mscorlib">
+    <value>22</value>
+  </data>
+  <data name="ZoomAanchorSERadioButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>21, 20</value>
+  </data>
+  <data name="&gt;&gt;ZoomAnchorPanel.Parent" xml:space="preserve">
+    <value>ZoomSettingsPanel</value>
+  </data>
+  <data name="ZoomAanchorSRadioButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>46, 76</value>
+  </data>
+  <data name="&gt;&gt;GeneralSettingsPanel.Parent" xml:space="preserve">
+    <value>GeneralTabPage</value>
+  </data>
+  <data name="ZoomAanchorSRadioButton.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="AboutPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="cycleGroupForwardHotkeyLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="AboutPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="&gt;&gt;addNewGroupButton.Name" xml:space="preserve">
+    <value>addNewGroupButton</value>
+  </data>
+  <data name="DocumentationLinkLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="ZoomTabPage.Size" type="System.Drawing.Size, System.Drawing">
+    <value>457, 353</value>
+  </data>
+  <data name="&gt;&gt;WidthLabel.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorNRadioButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="DocumentationLinkLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 226</value>
+  </data>
+  <data name="CycleGroupLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 10</value>
+  </data>
+  <data name="ContentTabControl.Size" type="System.Drawing.Size, System.Drawing">
+    <value>585, 361</value>
+  </data>
+  <data name="cycleGroupDescriptionText.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="ClientsTabPage.Location" type="System.Drawing.Point, System.Drawing">
+    <value>124, 4</value>
+  </data>
+  <data name="AboutPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>457, 353</value>
+  </data>
+  <data name="&gt;&gt;ZoomFactorLabel.Parent" xml:space="preserve">
+    <value>ZoomSettingsPanel</value>
+  </data>
+  <data name="ShowThumbnailsAlwaysOnTopCheckBox.Text" xml:space="preserve">
+    <value>Previews always on top</value>
+  </data>
+  <data name="EnableThumbnailZoomCheckBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>151, 22</value>
+  </data>
+  <data name="ClientsPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>457, 353</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupDescriptionLabel.Name" xml:space="preserve">
+    <value>cycleGroupDescriptionLabel</value>
+  </data>
+  <data name="ThumbnailSettingsPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 4</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupBackHotkeyLabel.ZOrder" xml:space="preserve">
+    <value>8</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupDescriptionText.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="&gt;&gt;selectCycleGroupComboBox.ZOrder" xml:space="preserve">
+    <value>15</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupForwardHotkey1Text.Name" xml:space="preserve">
+    <value>cycleGroupForwardHotkey1Text</value>
+  </data>
+  <data name="selectCycleGroupComboBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>286, 26</value>
+  </data>
+  <data name="&gt;&gt;MinimizeInactiveClientsCheckBox.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;NotifyIcon.Name" xml:space="preserve">
+    <value>NotifyIcon</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorNRadioButton.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="CycleGroupTabPage.Text" xml:space="preserve">
+    <value>Cycle Groups</value>
+  </data>
+  <data name="ZoomAanchorSRadioButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorSERadioButton.Name" xml:space="preserve">
+    <value>ZoomAanchorSERadioButton</value>
+  </data>
+  <data name="&gt;&gt;EnableActiveClientHighlightCheckBox.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="ThumbnailOpacityTrackBar.Location" type="System.Drawing.Point, System.Drawing">
+    <value>92, 8</value>
+  </data>
+  <data name="OverlayTabPage.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="ZoomAanchorWRadioButton.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;HideActiveClientThumbnailCheckBox.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="OpacityLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>71, 18</value>
+  </data>
+  <data name="ZoomFactorLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="ThumbnailsListLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>296, 18</value>
+  </data>
+  <data name="&gt;&gt;RestoreWindowMenuItem.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="VersionLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>69, 29</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorCRadioButton.Name" xml:space="preserve">
+    <value>ZoomAanchorCRadioButton</value>
+  </data>
+  <data name="cycleGroupClientOrderList.Location" type="System.Drawing.Point, System.Drawing">
+    <value>9, 212</value>
+  </data>
+  <data name="cycleGroupDescriptionLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 75</value>
+  </data>
+  <data name="&gt;&gt;EnablePerClientThumbnailsLayoutsCheckBox.Parent" xml:space="preserve">
+    <value>GeneralSettingsPanel</value>
+  </data>
+  <data name="&gt;&gt;GeneralSettingsPanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ShowThumbnailsAlwaysOnTopCheckBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>232, 22</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorCRadioButton.Parent" xml:space="preserve">
+    <value>ZoomAnchorPanel</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsListLabel.Name" xml:space="preserve">
+    <value>ThumbnailsListLabel</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupClientOrderList.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailTabPage.Name" xml:space="preserve">
+    <value>ThumbnailTabPage</value>
+  </data>
+  <data name="&gt;&gt;EnableThumbnailZoomCheckBox.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="ZoomFactorLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>39</value>
+  </data>
+  <data name="&gt;&gt;removeGroupButton.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorWRadioButton.Parent" xml:space="preserve">
+    <value>ZoomAnchorPanel</value>
+  </data>
+  <data name="&gt;&gt;activeClientsSplitContainer.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;removeGroupButton.Name" xml:space="preserve">
+    <value>removeGroupButton</value>
+  </data>
+  <data name="ShowThumbnailFramesCheckBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="HideActiveClientThumbnailCheckBox.Text" xml:space="preserve">
+    <value>Hide preview of active EVE client</value>
+  </data>
+  <data name="ThumbnailsListLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;ShowThumbnailOverlaysCheckBox.Name" xml:space="preserve">
+    <value>ShowThumbnailOverlaysCheckBox</value>
+  </data>
+  <data name="ZoomFactorLabel.Text" xml:space="preserve">
+    <value>Zoom Factor</value>
+  </data>
+  <data name="AboutPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="ZoomAanchorWRadioButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>21, 20</value>
+  </data>
+  <data name="ZoomAanchorWRadioButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 40</value>
+  </data>
+  <data name="addNewGroupButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>36, 32</value>
+  </data>
+  <data name="&gt;&gt;NameLabel.Parent" xml:space="preserve">
+    <value>AboutPanel</value>
+  </data>
+  <data name="DescriptionLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="MinimizeToTrayCheckBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;HeigthLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;addNewGroupButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;NotifyIcon.Type" xml:space="preserve">
+    <value>System.Windows.Forms.NotifyIcon, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="AboutTabPage.Size" type="System.Drawing.Size, System.Drawing">
+    <value>457, 353</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailZoomFactorNumericEdit.Parent" xml:space="preserve">
+    <value>ZoomSettingsPanel</value>
+  </data>
+  <data name="&gt;&gt;OpacityLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="CycleGroupTabPage.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupBackwardHotkey2Text.ZOrder" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <data name="&gt;&gt;CycleGroupTabPage.Name" xml:space="preserve">
+    <value>CycleGroupTabPage</value>
+  </data>
+  <data name="ZoomAanchorCRadioButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>46, 40</value>
+  </data>
+  <data name="DocumentationLink.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="OverlayTabPage.Location" type="System.Drawing.Point, System.Drawing">
+    <value>124, 4</value>
+  </data>
+  <data name="cycleGroupDescriptionLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="CycleGroupPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>457, 353</value>
+  </data>
+  <data name="ShowThumbnailOverlaysCheckBox.TabIndex" type="System.Int32, mscorlib">
+    <value>25</value>
+  </data>
+  <data name="ClientsTabPage.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsListLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorNERadioButton.Name" xml:space="preserve">
+    <value>ZoomAanchorNERadioButton</value>
+  </data>
+  <data name="&gt;&gt;ShowThumbnailsAlwaysOnTopCheckBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="HideActiveClientThumbnailCheckBox.TabIndex" type="System.Int32, mscorlib">
+    <value>20</value>
+  </data>
+  <data name="cycleGroupMoveClientOrderUpButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>248, 179</value>
+  </data>
+  <data name="&gt;&gt;HideThumbnailsOnLostFocusCheckBox.Parent" xml:space="preserve">
+    <value>GeneralSettingsPanel</value>
+  </data>
+  <data name="&gt;&gt;AboutTabPage.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsHeightNumericEdit.Name" xml:space="preserve">
+    <value>ThumbnailsHeightNumericEdit</value>
+  </data>
+  <data name="MinimizeToTrayCheckBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 10</value>
+  </data>
+  <data name="&gt;&gt;CycleGroupPanel.Name" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="&gt;&gt;activeClientsSplitContainer.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;OverlayTabPage.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;OverlayTabPage.Name" xml:space="preserve">
+    <value>OverlayTabPage</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorSRadioButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupMoveClientOrderUpButton.Name" xml:space="preserve">
+    <value>cycleGroupMoveClientOrderUpButton</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailSettingsPanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorNWRadioButton.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="EnablePerClientThumbnailsLayoutsCheckBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>331, 22</value>
+  </data>
+  <data name="ZoomAnchorPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>38</value>
+  </data>
+  <data name="EnableClientLayoutTrackingCheckBox.Text" xml:space="preserve">
+    <value>Track client locations</value>
+  </data>
+  <data name="&gt;&gt;MinimizeToTrayCheckBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cycleGroupForwardHotkey2Text.Location" type="System.Drawing.Point, System.Drawing">
+    <value>248, 107</value>
+  </data>
+  <data name="ClientsTabPage.Size" type="System.Drawing.Size, System.Drawing">
+    <value>457, 353</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupBackHotkeyLabel.Name" xml:space="preserve">
+    <value>cycleGroupBackHotkeyLabel</value>
+  </data>
+  <data name="cycleGroupBackHotkeyLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="ContentTabControl.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="HighlightColorLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>29</value>
+  </data>
+  <data name="cycleGroupForwardHotkey2Text.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="cycleGroupClientOrderLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="removeClientToCycleGroupButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>300, 179</value>
+  </data>
+  <data name="ZoomAanchorERadioButton.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="ZoomAanchorCRadioButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>21, 20</value>
+  </data>
+  <data name="ShowThumbnailOverlaysCheckBox.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="ThumbnailZoomFactorNumericEdit.Size" type="System.Drawing.Size, System.Drawing">
+    <value>57, 28</value>
+  </data>
+  <data name="&gt;&gt;HideActiveClientThumbnailCheckBox.Parent" xml:space="preserve">
+    <value>GeneralSettingsPanel</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupForwardHotkey2Text.ZOrder" xml:space="preserve">
+    <value>9</value>
+  </data>
+  <data name="&gt;&gt;AboutPanel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;ActiveClientHighlightColorButton.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;addNewGroupButton.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="&gt;&gt;ZoomFactorLabel.Name" xml:space="preserve">
+    <value>ZoomFactorLabel</value>
+  </data>
+  <data name="ThumbnailsHeightNumericEdit.Location" type="System.Drawing.Point, System.Drawing">
+    <value>158, 76</value>
+  </data>
+  <data name="GeneralSettingsPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>449, 345</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailOpacityTrackBar.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="ZoomSettingsPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="ZoomTabPage.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="WidthLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="ZoomAanchorNWRadioButton.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="ZoomAnchorLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 79</value>
+  </data>
+  <data name="ActiveClientHighlightColorButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>138, 23</value>
+  </data>
+  <data name="&gt;&gt;MinimizeInactiveClientsCheckBox.Parent" xml:space="preserve">
+    <value>GeneralSettingsPanel</value>
+  </data>
+  <data name="DocumentationLink.Text" xml:space="preserve">
+    <value>to be set from prresenter to be set from prresenter to be set from prresenter to be set from prresenter</value>
+  </data>
+  <data name="&gt;&gt;TitleMenuItem.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="ThumbnailsListLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="CreditMaintLabel.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>12, 4, 12, 4</value>
+  </data>
+  <data name="&gt;&gt;EnablePerClientThumbnailsLayoutsCheckBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cycleGroupForwardHotkey2Text.TabIndex" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
+  <data name="&gt;&gt;activeClientsSplitContainer.Panel2.Parent" xml:space="preserve">
+    <value>activeClientsSplitContainer</value>
+  </data>
+  <data name="VersionLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="ZoomAanchorNERadioButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>21, 20</value>
+  </data>
+  <data name="HideThumbnailsOnLostFocusCheckBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailSettingsPanel.Name" xml:space="preserve">
+    <value>ThumbnailSettingsPanel</value>
+  </data>
+  <data name="cycleGroupClientOrderList.Size" type="System.Drawing.Size, System.Drawing">
+    <value>356, 130</value>
+  </data>
+  <data name="addNewGroupButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ShowThumbnailsAlwaysOnTopCheckBox.Parent" xml:space="preserve">
+    <value>GeneralSettingsPanel</value>
+  </data>
+  <data name="ThumbnailsList.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="HideActiveClientThumbnailCheckBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 76</value>
+  </data>
+  <data name="&gt;&gt;ActiveClientHighlightColorButton.Parent" xml:space="preserve">
+    <value>OverlaySettingsPanel</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupForwardHotkey2Text.Name" xml:space="preserve">
+    <value>cycleGroupForwardHotkey2Text</value>
+  </data>
+  <data name="HideActiveClientThumbnailCheckBox.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="NameLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="CreditMaintLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 198</value>
+  </data>
+  <data name="&gt;&gt;ContentTabControl.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabControl, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;GeneralTabPage.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupDescriptionText.Name" xml:space="preserve">
+    <value>cycleGroupDescriptionText</value>
+  </data>
+  <data name="ZoomSettingsPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>457, 353</value>
+  </data>
+  <data name="NameLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="ZoomTabPage.Text" xml:space="preserve">
+    <value>Zoom</value>
+  </data>
+  <data name="&gt;&gt;EnableClientLayoutTrackingCheckBox.Parent" xml:space="preserve">
+    <value>GeneralSettingsPanel</value>
+  </data>
+  <data name="MinimizeInactiveClientsCheckBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 109</value>
+  </data>
+  <data name="ZoomFactorLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 46</value>
+  </data>
+  <data name="ZoomAnchorLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>40</value>
+  </data>
+  <data name="selectCycleGroupComboBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>9, 32</value>
+  </data>
+  <data name="ExitMenuItem.Text" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="HideThumbnailsOnLostFocusCheckBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 176</value>
+  </data>
+  <data name="CycleGroupLabel.Text" xml:space="preserve">
+    <value>Select Cycle Group:</value>
+  </data>
+  <data name="ThumbnailSettingsPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;GeneralTabPage.Name" xml:space="preserve">
+    <value>GeneralTabPage</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorNERadioButton.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="ThumbnailsList.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="&gt;&gt;ThumbnailsListLabel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="cycleGroupMoveClientOrderUpButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="TitleMenuItem.Text" xml:space="preserve">
+    <value>EVE-O Preview</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorWRadioButton.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;selectCycleGroupComboBox.Parent" xml:space="preserve">
+    <value>CycleGroupPanel</value>
+  </data>
+  <data name="ContentTabControl.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="ZoomAanchorNRadioButton.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="addClientToCycleGroupButton.Size" type="System.Drawing.Size, System.Drawing">
+    <value>33, 32</value>
+  </data>
+  <data name="DescriptionLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 40</value>
+  </data>
+  <data name="ShowThumbnailFramesCheckBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>133, 22</value>
+  </data>
+  <data name="selectCycleGroupComboBox.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="VersionLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;addClientToCycleGroupButton.Name" xml:space="preserve">
+    <value>addClientToCycleGroupButton</value>
+  </data>
+  <data name="addClientToCycleGroupButton.Location" type="System.Drawing.Point, System.Drawing">
+    <value>334, 179</value>
+  </data>
+  <data name="ExitMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+    <value>206, 30</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupBackwardHotkey1Text.Name" xml:space="preserve">
+    <value>cycleGroupBackwardHotkey1Text</value>
+  </data>
+  <data name="&gt;&gt;cycleGroupForwardHotkeyLabel.ZOrder" xml:space="preserve">
+    <value>11</value>
+  </data>
+  <data name="DocumentationLinkLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="cycleGroupBackwardHotkey2Text.Size" type="System.Drawing.Size, System.Drawing">
+    <value>118, 28</value>
+  </data>
+  <data name="ThumbnailsList.TabIndex" type="System.Int32, mscorlib">
+    <value>34</value>
+  </data>
+  <data name="ZoomAanchorNWRadioButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="addNewGroupButton.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 8.25pt, style=Bold</value>
+  </data>
+  <data name="&gt;&gt;AboutPanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="EnablePerClientThumbnailsLayoutsCheckBox.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="cycleGroupClientOrderLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
+  <data name="EnablePerClientThumbnailsLayoutsCheckBox.TabIndex" type="System.Int32, mscorlib">
+    <value>23</value>
+  </data>
+  <data name="ZoomSettingsPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>36</value>
+  </data>
+  <data name="CreditMaintLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
+  <data name="&gt;&gt;HideThumbnailsOnLostFocusCheckBox.Name" xml:space="preserve">
+    <value>HideThumbnailsOnLostFocusCheckBox</value>
+  </data>
+  <data name="&gt;&gt;ClientsPanel.Name" xml:space="preserve">
+    <value>ClientsPanel</value>
+  </data>
+  <data name="cycleGroupDescriptionLabel.Text" xml:space="preserve">
+    <value>Description:</value>
+  </data>
+  <data name="CycleGroupTabPage.Location" type="System.Drawing.Point, System.Drawing">
+    <value>124, 4</value>
+  </data>
+  <data name="&gt;&gt;selectCycleGroupComboBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ComboBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;EnableClientLayoutTrackingCheckBox.Name" xml:space="preserve">
+    <value>EnableClientLayoutTrackingCheckBox</value>
+  </data>
+  <data name="&gt;&gt;OverlayTabPage.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cycleGroupForwardHotkeyLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="CreditMaintLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;EnablePerClientThumbnailsLayoutsCheckBox.Name" xml:space="preserve">
+    <value>EnablePerClientThumbnailsLayoutsCheckBox</value>
+  </data>
+  <data name="ShowThumbnailFramesCheckBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 43</value>
+  </data>
+  <data name="CycleGroupPanel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="cycleGroupBackwardHotkey1Text.Size" type="System.Drawing.Size, System.Drawing">
+    <value>118, 28</value>
+  </data>
+  <data name="GeneralTabPage.Text" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="cycleGroupBackwardHotkey1Text.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="WidthLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="cycleGroupBackHotkeyLabel.Text" xml:space="preserve">
+    <value>Backward Key:</value>
+  </data>
+  <data name="ZoomAanchorERadioButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 4, 4, 4</value>
+  </data>
+  <data name="&gt;&gt;ZoomAanchorSWRadioButton.ZOrder" xml:space="preserve">
+    <value>8</value>
+  </data>
+  <metadata name="ZoomAanchorNRadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="DescriptionLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ZoomFactorLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="DescriptionLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="ThumbnailSettingsPanel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="GeneralTabPage.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="DocumentationLinkLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="CycleGroupTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ClientsPanel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="ActiveClientHighlightColorButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ThumbnailTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="OverlayTabPage.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="WidthLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="ZoomFactorLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ZoomAanchorERadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="HeigthLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="NameLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ShowThumbnailOverlaysCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="AboutPanel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="NameLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="ClientsTabPage.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="ZoomAanchorNWRadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="$this.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ZoomAnchorPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="NotifyIcon.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <metadata name="ExitMenuItem.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="EnableActiveClientHighlightCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ThumbnailsHeightNumericEdit.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="GeneralTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="DocumentationLinkLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="OverlaySettingsPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="HideActiveClientThumbnailCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="TrayMenu.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>123, 17</value>
+  </metadata>
+  <metadata name="ZoomAanchorSERadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="OpacityLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="SeparatorMenuItem.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="OpacityLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ZoomAanchorCRadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="GeneralSettingsPanel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="HeigthLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="AboutPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="AboutTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ThumbnailTabPage.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="ZoomAnchorLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="ZoomSettingsPanel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="HighlightColorLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ZoomAanchorSRadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="EnableThumbnailZoomCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ContentTabControl.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="HideThumbnailsOnLostFocusCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ThumbnailsWidthNumericEdit.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ShowThumbnailFramesCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ThumbnailZoomFactorNumericEdit.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ZoomSettingsPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="OverlayTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="CycleGroupTabPage.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="ThumbnailSettingsPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="OverlaySettingsPanel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="WidthLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="CreditMaintLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ThumbnailOpacityTrackBar.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>36</value>
+  </metadata>
+  <metadata name="MinimizeToTrayCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="EnablePerClientThumbnailsLayoutsCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="DocumentationLink.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="TitleMenuItem.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="GeneralSettingsPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="MinimizeInactiveClientsCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ZoomTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ShowThumbnailsAlwaysOnTopCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ZoomAanchorWRadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ZoomAanchorSWRadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="RestoreWindowMenuItem.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="ThumbnailsListLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="EnableClientLayoutTrackingCheckBox.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="$this.Language" type="System.Globalization.CultureInfo, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>zh-CN</value>
+  </metadata>
+  <metadata name="VersionLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ZoomAanchorNERadioButton.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="CreditMaintLabel.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="AboutTabPage.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="ClientsPanel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ClientsTabPage.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ContentTabControl.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ZoomAnchorLabel.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
 </root>
