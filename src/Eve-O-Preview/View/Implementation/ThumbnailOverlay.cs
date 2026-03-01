@@ -1,7 +1,6 @@
 ﻿using EveOPreview.Services;
 using System;
 using System.Drawing;
-using System.Reflection.Emit;
 using System.Windows.Forms;
 using EveOPreview.Configuration.Implementation;
 
