@@ -3,7 +3,7 @@
 This software is no longer licensed under the MIT License.
 
 ## Join us on Discord
-Chat with the devs and eachother here on Eve-O Plus Discord https://discord.gg/jTECWtyT
+Chat with the devs and eachother here on Eve-O Plus Discord https://discord.gg/HzQHBtTEcB
 
 ## Overview
 

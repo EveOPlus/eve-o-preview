@@ -213,8 +213,8 @@ namespace EveOPreview.View
             ContentTabControl.Controls.Add(this.ZoomTabPage);
             ContentTabControl.Controls.Add(OverlayTabPage);
             ContentTabControl.Controls.Add(ClientsTabPage);
-            ContentTabControl.Controls.Add(AboutTabPage);
             ContentTabControl.Controls.Add(CycleGroupTabPage);
+            ContentTabControl.Controls.Add(AboutTabPage);
             ContentTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
             ContentTabControl.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
             ContentTabControl.ItemSize = new System.Drawing.Size(35, 120);
@@ -224,7 +224,7 @@ namespace EveOPreview.View
             ContentTabControl.SelectedIndex = 0;
             ContentTabControl.Size = new System.Drawing.Size(390, 261);
             ContentTabControl.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
-            ContentTabControl.TabIndex = 6;
+            ContentTabControl.TabIndex = 7;
             ContentTabControl.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.ContentTabControl_DrawItem);
             // 
             // GeneralTabPage
@@ -963,9 +963,9 @@ namespace EveOPreview.View
             DocumentationLinkLabel.Location = new System.Drawing.Point(0, 163);
             DocumentationLinkLabel.Name = "DocumentationLinkLabel";
             DocumentationLinkLabel.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            DocumentationLinkLabel.Size = new System.Drawing.Size(222, 19);
+            DocumentationLinkLabel.Size = new System.Drawing.Size(197, 19);
             DocumentationLinkLabel.TabIndex = 6;
-            DocumentationLinkLabel.Text = "For more information visit the forum thread:";
+            DocumentationLinkLabel.Text = "For more information visit our discord:";
             // 
             // DescriptionLabel
             // 
