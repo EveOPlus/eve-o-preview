@@ -1,4 +1,7 @@
-﻿namespace EveOPreview.View
+﻿using System.Drawing;
+using EveOPreview.View.CustomControl;
+
+namespace EveOPreview.View
 {
     partial class ThumbnailOverlay
     {
@@ -29,7 +32,7 @@
         private void InitializeComponent()
         {
             System.Windows.Forms.PictureBox OverlayAreaPictureBox;
-            this.OverlayLabel = new System.Windows.Forms.Label();
+            this.OverlayLabel = new EveOPreview.View.CustomControl.OutlinedLabel();
             OverlayAreaPictureBox = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(OverlayAreaPictureBox)).BeginInit();
             this.SuspendLayout();
@@ -54,19 +57,21 @@
             this.OverlayLabel.ForeColor = System.Drawing.Color.DarkGray;
             this.OverlayLabel.Location = new System.Drawing.Point(8, 8);
             this.OverlayLabel.Name = "OverlayLabel";
+            this.OverlayLabel.OutlineColor = System.Drawing.Color.White;
+            this.OverlayLabel.OutlineWidth = 1F;
             this.OverlayLabel.Size = new System.Drawing.Size(25, 13);
             this.OverlayLabel.TabIndex = 1;
             this.OverlayLabel.Text = "...";
             // 
             // ThumbnailOverlay
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.BackColor = System.Drawing.Color.Black;
+            this.BackColor = System.Drawing.Color.Fuchsia;
             this.ClientSize = new System.Drawing.Size(284, 262);
             this.ControlBox = false;
             this.Controls.Add(this.OverlayLabel);
             this.Controls.Add(OverlayAreaPictureBox);
+            this.ForeColor = System.Drawing.Color.Fuchsia;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -75,7 +80,7 @@
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Text = "PreviewOverlay";
-            this.TransparencyKey = System.Drawing.Color.Black;
+            this.TransparencyKey = System.Drawing.Color.Fuchsia;
             ((System.ComponentModel.ISupportInitialize)(OverlayAreaPictureBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -84,6 +89,6 @@
 
         #endregion
 
-        private System.Windows.Forms.Label OverlayLabel;
+        private OutlinedLabel OverlayLabel;
     }
 }

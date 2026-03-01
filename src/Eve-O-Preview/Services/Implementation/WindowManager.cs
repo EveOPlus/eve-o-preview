@@ -10,7 +10,7 @@ namespace EveOPreview.Services.Implementation
         #region Private constants
         private const int WINDOW_SIZE_THRESHOLD = 300;
         #endregion
-
+        
         public WindowManager()
         {
             // Composition is always enabled for Windows 8+
@@ -21,6 +21,11 @@ namespace EveOPreview.Services.Implementation
         }
 
         public bool IsCompositionEnabled { get; }
+        
+        /// <summary>
+        /// Track the state if the manager is part way through switching a client at the moment.
+        /// </summary>
+        public bool IsCurrentlySwitching { get; set; } = false;
 
         public IntPtr GetForegroundWindowHandle()
         {
@@ -29,32 +34,40 @@ namespace EveOPreview.Services.Implementation
 
         public void ActivateWindow(IntPtr handle)
         {
-            User32NativeMethods.SetForegroundWindow(handle);
-            User32NativeMethods.SetFocus(handle);
-
-            // Make sure theres no bugs or issues setting to focused window by checking and trying again a few times.
-            // We should never need to call this a second time but better safe than sorry.
-            for (int i = 0; i < 3; i++)
+            try
             {
-                var foregroundHandle = User32NativeMethods.GetForegroundWindow();
-                var focusedHandle = User32NativeMethods.GetFocus();
+                IsCurrentlySwitching = true;
+                User32NativeMethods.SetForegroundWindow(handle);
+                User32NativeMethods.SetFocus(handle);
 
-                if (foregroundHandle != handle)
-                { 
-                    User32NativeMethods.SetForegroundWindow(handle);
+                // Make sure theres no bugs or issues setting to focused window by checking and trying again a few times.
+                // We should never need to call this a second time but better safe than sorry.
+                for (int i = 0; i < 3; i++)
+                {
+                    var foregroundHandle = User32NativeMethods.GetForegroundWindow();
+                    var focusedHandle = User32NativeMethods.GetFocus();
+
+                    if (foregroundHandle != handle)
+                    {
+                        User32NativeMethods.SetForegroundWindow(handle);
+                    }
+
+                    if (focusedHandle != handle)
+                    {
+                        User32NativeMethods.SetFocus(handle);
+                    }
                 }
 
-                if (focusedHandle != handle)
+                int style = User32NativeMethods.GetWindowLong(handle, InteropConstants.GWL_STYLE);
+
+                if ((style & InteropConstants.WS_MINIMIZE) == InteropConstants.WS_MINIMIZE)
                 {
-                    User32NativeMethods.SetFocus(handle);
+                    User32NativeMethods.ShowWindowAsync(handle, InteropConstants.SW_RESTORE);
                 }
             }
-
-            int style = User32NativeMethods.GetWindowLong(handle, InteropConstants.GWL_STYLE);
-
-            if ((style & InteropConstants.WS_MINIMIZE) == InteropConstants.WS_MINIMIZE)
+            finally
             {
-                User32NativeMethods.ShowWindowAsync(handle, InteropConstants.SW_RESTORE);
+                IsCurrentlySwitching = false;
             }
         }
 

@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Windows.Forms;
+using EveOPreview.View.CustomControl;
 
 namespace EveOPreview.View
 {
@@ -83,6 +84,17 @@ namespace EveOPreview.View
             this.ZoomAanchorSWRadioButton = new System.Windows.Forms.RadioButton();
             this.EnableThumbnailZoomCheckBox = new System.Windows.Forms.CheckBox();
             this.ThumbnailZoomFactorNumericEdit = new System.Windows.Forms.NumericUpDown();
+            this.groupBoxOverlayFont = new System.Windows.Forms.GroupBox();
+            this.lblTitleOffsetTop = new System.Windows.Forms.Label();
+            this.txtTitleOffsetTop = new System.Windows.Forms.TextBox();
+            this.lblTitleOffsetLeft = new System.Windows.Forms.Label();
+            this.txtTitleOffsetLeft = new System.Windows.Forms.TextBox();
+            this.lblTitleBorderWidth = new System.Windows.Forms.Label();
+            this.txtFontOutlineWidth = new System.Windows.Forms.TextBox();
+            this.btnFontOutlineColor = new System.Windows.Forms.Button();
+            this.btnSetOverlayFontColor = new System.Windows.Forms.Button();
+            this.lblDisplaySampleFont = new EveOPreview.View.CustomControl.OutlinedLabel();
+            this.btnSetOverlayFont = new System.Windows.Forms.Button();
             this.HighlightColorLabel = new System.Windows.Forms.Label();
             this.ActiveClientHighlightColorButton = new System.Windows.Forms.Panel();
             this.EnableActiveClientHighlightCheckBox = new System.Windows.Forms.CheckBox();
@@ -153,6 +165,7 @@ namespace EveOPreview.View
             ((System.ComponentModel.ISupportInitialize)(this.ThumbnailZoomFactorNumericEdit)).BeginInit();
             OverlayTabPage.SuspendLayout();
             OverlaySettingsPanel.SuspendLayout();
+            this.groupBoxOverlayFont.SuspendLayout();
             ClientsTabPage.SuspendLayout();
             ClientsPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.activeClientsSplitContainer)).BeginInit();
@@ -656,6 +669,7 @@ namespace EveOPreview.View
             // OverlaySettingsPanel
             // 
             OverlaySettingsPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            OverlaySettingsPanel.Controls.Add(this.groupBoxOverlayFont);
             OverlaySettingsPanel.Controls.Add(this.HighlightColorLabel);
             OverlaySettingsPanel.Controls.Add(this.ActiveClientHighlightColorButton);
             OverlaySettingsPanel.Controls.Add(this.EnableActiveClientHighlightCheckBox);
@@ -666,6 +680,125 @@ namespace EveOPreview.View
             OverlaySettingsPanel.Name = "OverlaySettingsPanel";
             OverlaySettingsPanel.Size = new System.Drawing.Size(262, 253);
             OverlaySettingsPanel.TabIndex = 25;
+            // 
+            // groupBoxOverlayFont
+            // 
+            this.groupBoxOverlayFont.Controls.Add(this.lblTitleOffsetTop);
+            this.groupBoxOverlayFont.Controls.Add(this.txtTitleOffsetTop);
+            this.groupBoxOverlayFont.Controls.Add(this.lblTitleOffsetLeft);
+            this.groupBoxOverlayFont.Controls.Add(this.txtTitleOffsetLeft);
+            this.groupBoxOverlayFont.Controls.Add(this.lblTitleBorderWidth);
+            this.groupBoxOverlayFont.Controls.Add(this.txtFontOutlineWidth);
+            this.groupBoxOverlayFont.Controls.Add(this.btnFontOutlineColor);
+            this.groupBoxOverlayFont.Controls.Add(this.btnSetOverlayFontColor);
+            this.groupBoxOverlayFont.Controls.Add(this.lblDisplaySampleFont);
+            this.groupBoxOverlayFont.Controls.Add(this.btnSetOverlayFont);
+            this.groupBoxOverlayFont.Location = new System.Drawing.Point(8, 112);
+            this.groupBoxOverlayFont.Name = "groupBoxOverlayFont";
+            this.groupBoxOverlayFont.Size = new System.Drawing.Size(245, 132);
+            this.groupBoxOverlayFont.TabIndex = 33;
+            this.groupBoxOverlayFont.TabStop = false;
+            this.groupBoxOverlayFont.Text = "Title Font";
+            // 
+            // lblTitleOffsetTop
+            // 
+            this.lblTitleOffsetTop.AutoSize = true;
+            this.lblTitleOffsetTop.Location = new System.Drawing.Point(105, 51);
+            this.lblTitleOffsetTop.Name = "lblTitleOffsetTop";
+            this.lblTitleOffsetTop.Size = new System.Drawing.Size(26, 13);
+            this.lblTitleOffsetTop.TabIndex = 39;
+            this.lblTitleOffsetTop.Text = "Top";
+            // 
+            // txtTitleOffsetTop
+            // 
+            this.txtTitleOffsetTop.Location = new System.Drawing.Point(137, 48);
+            this.txtTitleOffsetTop.Name = "txtTitleOffsetTop";
+            this.txtTitleOffsetTop.Size = new System.Drawing.Size(26, 20);
+            this.txtTitleOffsetTop.TabIndex = 38;
+            this.txtTitleOffsetTop.Text = "1";
+            this.txtTitleOffsetTop.Enter += new System.EventHandler(this.txtTitleOffsetTop_Enter);
+            this.txtTitleOffsetTop.Leave += new System.EventHandler(this.txtTitleOffsetTop_Leave);
+            // 
+            // lblTitleOffsetLeft
+            // 
+            this.lblTitleOffsetLeft.AutoSize = true;
+            this.lblTitleOffsetLeft.Location = new System.Drawing.Point(11, 51);
+            this.lblTitleOffsetLeft.Name = "lblTitleOffsetLeft";
+            this.lblTitleOffsetLeft.Size = new System.Drawing.Size(56, 13);
+            this.lblTitleOffsetLeft.TabIndex = 37;
+            this.lblTitleOffsetLeft.Text = "Offset Left";
+            // 
+            // txtTitleOffsetLeft
+            // 
+            this.txtTitleOffsetLeft.Location = new System.Drawing.Point(73, 48);
+            this.txtTitleOffsetLeft.Name = "txtTitleOffsetLeft";
+            this.txtTitleOffsetLeft.Size = new System.Drawing.Size(26, 20);
+            this.txtTitleOffsetLeft.TabIndex = 36;
+            this.txtTitleOffsetLeft.Text = "1";
+            this.txtTitleOffsetLeft.Enter += new System.EventHandler(this.txtTitleOffsetLeft_Enter);
+            this.txtTitleOffsetLeft.Leave += new System.EventHandler(this.txtTitleOffsetLeft_Leave);
+            // 
+            // lblTitleBorderWidth
+            // 
+            this.lblTitleBorderWidth.AutoSize = true;
+            this.lblTitleBorderWidth.Location = new System.Drawing.Point(169, 51);
+            this.lblTitleBorderWidth.Name = "lblTitleBorderWidth";
+            this.lblTitleBorderWidth.Size = new System.Drawing.Size(40, 13);
+            this.lblTitleBorderWidth.TabIndex = 35;
+            this.lblTitleBorderWidth.Text = "Outline";
+            // 
+            // txtFontOutlineWidth
+            // 
+            this.txtFontOutlineWidth.Location = new System.Drawing.Point(215, 48);
+            this.txtFontOutlineWidth.Name = "txtFontOutlineWidth";
+            this.txtFontOutlineWidth.Size = new System.Drawing.Size(26, 20);
+            this.txtFontOutlineWidth.TabIndex = 34;
+            this.txtFontOutlineWidth.Text = "0";
+            this.txtFontOutlineWidth.Enter += new System.EventHandler(this.txtFontOutlineWidth_Enter);
+            this.txtFontOutlineWidth.Leave += new System.EventHandler(this.txtFontOutlineWidth_Leave);
+            // 
+            // btnFontOutlineColor
+            // 
+            this.btnFontOutlineColor.Location = new System.Drawing.Point(163, 19);
+            this.btnFontOutlineColor.Name = "btnFontOutlineColor";
+            this.btnFontOutlineColor.Size = new System.Drawing.Size(76, 23);
+            this.btnFontOutlineColor.TabIndex = 33;
+            this.btnFontOutlineColor.Text = "Outline Color";
+            this.btnFontOutlineColor.UseVisualStyleBackColor = true;
+            this.btnFontOutlineColor.Click += new System.EventHandler(this.btnFontOutlineColor_Click);
+            // 
+            // btnSetOverlayFontColor
+            // 
+            this.btnSetOverlayFontColor.Location = new System.Drawing.Point(84, 19);
+            this.btnSetOverlayFontColor.Name = "btnSetOverlayFontColor";
+            this.btnSetOverlayFontColor.Size = new System.Drawing.Size(59, 23);
+            this.btnSetOverlayFontColor.TabIndex = 31;
+            this.btnSetOverlayFontColor.Text = "Forecolor";
+            this.btnSetOverlayFontColor.UseVisualStyleBackColor = true;
+            this.btnSetOverlayFontColor.Click += new System.EventHandler(this.btnSetOverlayFontColor_Click);
+            // 
+            // lblDisplaySampleFont
+            // 
+            this.lblDisplaySampleFont.AutoSize = true;
+            this.lblDisplaySampleFont.BackColor = System.Drawing.SystemColors.Control;
+            this.lblDisplaySampleFont.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
+            this.lblDisplaySampleFont.Location = new System.Drawing.Point(6, 76);
+            this.lblDisplaySampleFont.Name = "lblDisplaySampleFont";
+            this.lblDisplaySampleFont.OutlineColor = System.Drawing.Color.White;
+            this.lblDisplaySampleFont.OutlineWidth = 1F;
+            this.lblDisplaySampleFont.Size = new System.Drawing.Size(45, 13);
+            this.lblDisplaySampleFont.TabIndex = 32;
+            this.lblDisplaySampleFont.Text = "Sample.";
+            // 
+            // btnSetOverlayFont
+            // 
+            this.btnSetOverlayFont.Location = new System.Drawing.Point(6, 19);
+            this.btnSetOverlayFont.Name = "btnSetOverlayFont";
+            this.btnSetOverlayFont.Size = new System.Drawing.Size(56, 23);
+            this.btnSetOverlayFont.TabIndex = 30;
+            this.btnSetOverlayFont.Text = "Set Font";
+            this.btnSetOverlayFont.UseVisualStyleBackColor = true;
+            this.btnSetOverlayFont.Click += new System.EventHandler(this.btnSetOverlayFont_Click);
             // 
             // HighlightColorLabel
             // 
@@ -1132,6 +1265,8 @@ namespace EveOPreview.View
             OverlayTabPage.ResumeLayout(false);
             OverlaySettingsPanel.ResumeLayout(false);
             OverlaySettingsPanel.PerformLayout();
+            this.groupBoxOverlayFont.ResumeLayout(false);
+            this.groupBoxOverlayFont.PerformLayout();
             ClientsTabPage.ResumeLayout(false);
             ClientsPanel.ResumeLayout(false);
             this.activeClientsSplitContainer.Panel1.ResumeLayout(false);
@@ -1203,5 +1338,16 @@ namespace EveOPreview.View
         private ComboBox selectCycleGroupComboBox;
         private SplitContainer activeClientsSplitContainer;
         private Button removeGroupButton;
+        private Button btnSetOverlayFont;
+        private OutlinedLabel lblDisplaySampleFont;
+        private GroupBox groupBoxOverlayFont;
+        private Button btnSetOverlayFontColor;
+        private TextBox txtFontOutlineWidth;
+        private Button btnFontOutlineColor;
+        private Label lblTitleOffsetTop;
+        private TextBox txtTitleOffsetTop;
+        private Label lblTitleOffsetLeft;
+        private TextBox txtTitleOffsetLeft;
+        private Label lblTitleBorderWidth;
     }
 }

@@ -49,10 +49,15 @@ namespace EveOPreview
                 }
             }
         }
-
+        
         public void Register<TService>()
         {
             this.Register(typeof(TService), typeof(TService).Assembly);
+        }
+        public void RegisterSingleton<TService, TImplementation>()
+            where TImplementation : TService
+        {
+            this._container.RegisterSingleton<TService, TImplementation>();
         }
 
         public void Register<TService, TImplementation>()

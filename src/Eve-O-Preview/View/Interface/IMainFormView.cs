@@ -33,8 +33,9 @@ namespace EveOPreview.View
 
 		bool EnableActiveClientHighlight { get; set; }
 		Color ActiveClientHighlightColor { get; set; }
+        FontSettings TitleFontSettings { get; set; }
 
-		List<CycleGroup> CycleGroups { get; set; }
+        List<CycleGroup> CycleGroups { get; set; }
 
 		void SetDocumentationUrl(string url);
 		void SetVersionInfo(string version);

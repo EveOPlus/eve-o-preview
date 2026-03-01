@@ -6,6 +6,7 @@ namespace EveOPreview.Services
     public interface IWindowManager
     {
         bool IsCompositionEnabled { get; }
+        bool IsCurrentlySwitching { get; set; }
 
         IntPtr GetForegroundWindowHandle();
         void ActivateWindow(IntPtr handle);

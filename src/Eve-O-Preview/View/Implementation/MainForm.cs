@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -185,7 +186,40 @@ namespace EveOPreview.View
 		}
 		private Color _activeClientHighlightColor;
 
-		public new void Show()
+        public FontSettings TitleFontSettings
+        {
+            get
+            {
+                var result = new FontSettings();
+                result.Name = lblDisplaySampleFont.Font.FontFamily.Name;
+                result.Size = lblDisplaySampleFont.Font.Size;
+				result.Style = lblDisplaySampleFont.Font.Style;
+                result.ForeColor = lblDisplaySampleFont.ForeColor;
+                result.OutlineColor = lblDisplaySampleFont.OutlineColor;
+                result.OutlineWidth = lblDisplaySampleFont.OutlineWidth;
+                result.PositionOffsetFromLeft = int.Parse(txtTitleOffsetLeft.Text);
+                result.PositionOffsetFromTop = int.Parse(txtTitleOffsetTop.Text);
+
+                return result;
+            }
+            set
+            {
+                if (value?.Name == null || value?.Size < 0)
+                {
+					return;
+                }
+
+                lblDisplaySampleFont.OutlineColor = value.OutlineColor;
+                lblDisplaySampleFont.OutlineWidth = value.OutlineWidth;
+                lblDisplaySampleFont.Font = new Font(value.Name, value.Size, value.Style);
+                lblDisplaySampleFont.ForeColor = value.ForeColor;
+                txtFontOutlineWidth.Text = value.OutlineWidth.ToString(CultureInfo.InvariantCulture);
+                txtTitleOffsetLeft.Text = value.PositionOffsetFromLeft.ToString();
+                txtTitleOffsetTop.Text = value.PositionOffsetFromTop.ToString();
+            }
+        }
+
+        public new void Show()
 		{
 			// Registers the current instance as the application's Main Form
 			this._context.MainForm = this;
@@ -743,6 +777,100 @@ namespace EveOPreview.View
             }
 
             this.ApplicationSettingsChanged?.Invoke();
+        }
+
+        private void btnSetOverlayFont_Click(object sender, EventArgs e)
+        {
+            FontDialog fontDialog = new FontDialog();
+            fontDialog.Font = lblDisplaySampleFont.Font;
+
+            if (fontDialog.ShowDialog() == DialogResult.OK)
+            {
+                lblDisplaySampleFont.Font = fontDialog.Font;
+
+                this.ApplicationSettingsChanged?.Invoke();
+            }
+        }
+
+        private void btnSetOverlayFontColor_Click(object sender, EventArgs e)
+        {
+            ColorDialog colorDialog = new ColorDialog();
+            colorDialog.Color = lblDisplaySampleFont.ForeColor;
+
+            if (colorDialog.ShowDialog() == DialogResult.OK)
+            {
+                lblDisplaySampleFont.ForeColor = colorDialog.Color;
+                this.ApplicationSettingsChanged?.Invoke();
+            }
+        }
+
+        private void btnFontOutlineColor_Click(object sender, EventArgs e)
+        {
+            ColorDialog colorDialog = new ColorDialog();
+            colorDialog.Color = lblDisplaySampleFont.OutlineColor;
+
+            if (colorDialog.ShowDialog() == DialogResult.OK)
+            {
+                lblDisplaySampleFont.OutlineColor = colorDialog.Color;
+                this.ApplicationSettingsChanged?.Invoke();
+            }
+        }
+
+        private void UpdateFontOutlineWidth()
+        {
+            var newValue = new string(txtFontOutlineWidth.Text.TakeWhile(char.IsNumber).ToArray());
+            txtFontOutlineWidth.Text = newValue;
+
+            var newFloatValue = float.Parse(newValue);
+
+            lblDisplaySampleFont.OutlineWidth = newFloatValue;
+            this.ApplicationSettingsChanged?.Invoke();
+        }
+
+        private void UpdateTitleOffset()
+        {
+			var cleanOffsetLeft = new string(txtTitleOffsetLeft.Text.TakeWhile(char.IsNumber).ToArray());
+			var cleanOffsetTop = new string(txtTitleOffsetTop.Text.TakeWhile(char.IsNumber).ToArray());
+
+            txtTitleOffsetLeft.Text = cleanOffsetLeft;
+            txtTitleOffsetTop.Text = cleanOffsetTop;
+
+            var offsetLeft = int.Parse(cleanOffsetLeft);
+            var offsetTop = int.Parse(cleanOffsetTop);
+
+            this.TitleFontSettings.PositionOffsetFromLeft = offsetLeft;
+            this.TitleFontSettings.PositionOffsetFromTop = offsetTop;
+            this.ApplicationSettingsChanged?.Invoke();
+        }
+
+        private void txtTitleOffsetLeft_Leave(object sender, EventArgs e)
+        {
+            UpdateTitleOffset();
+        }
+
+        private void txtTitleOffsetLeft_Enter(object sender, EventArgs e)
+        {
+            UpdateTitleOffset();
+        }
+
+        private void txtTitleOffsetTop_Leave(object sender, EventArgs e)
+        {
+            UpdateTitleOffset();
+        }
+
+        private void txtTitleOffsetTop_Enter(object sender, EventArgs e)
+        {
+            UpdateTitleOffset();
+        }
+
+        private void txtFontOutlineWidth_Leave(object sender, EventArgs e)
+        {
+            UpdateFontOutlineWidth();
+        }
+
+        private void txtFontOutlineWidth_Enter(object sender, EventArgs e)
+        {
+            UpdateFontOutlineWidth();
         }
     }
 }

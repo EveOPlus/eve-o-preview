@@ -12,6 +12,8 @@ namespace EveOPreview
     {
         void Register<TService, TImplementation>()
             where TImplementation : TService;
+        void RegisterSingleton<TService, TImplementation>()
+            where TImplementation : TService;
         void Register(Type serviceType, Assembly container);
         void Register<TService>();
         void Register<TService>(Expression<Func<TService>> factory);

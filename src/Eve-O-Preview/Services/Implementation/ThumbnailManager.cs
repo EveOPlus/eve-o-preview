@@ -176,23 +176,35 @@ namespace EveOPreview.Services
 
         internal void RegisterCycleClientHotkey(IEnumerable<Keys> keys, bool isForwards, SortedDictionary<int, string> cycleOrder)
         {
-            foreach (var hotkey in keys)
+            _keyboardMouseEvents.KeyDown += (sender, e) =>
             {
-                if (hotkey == Keys.None)
+                foreach (var hotkey in keys)
                 {
-                    return;
+                    if (e.KeyCode == hotkey)
+                    {
+                        if (this._windowManager.IsCurrentlySwitching)
+                        {
+                            return;
+                        }
+
+                        this.CycleNextClient(isForwards, cycleOrder);
+                        e.Handled = true;
+                        return;
+                    }
                 }
-
-                var newHandler = new HotkeyHandler(default(IntPtr), hotkey);
-                newHandler.Pressed += (object s, HandledEventArgs e) =>
+            };
+            
+            _keyboardMouseEvents.KeyUp += (sender, e) =>
+            {
+                foreach (var hotkey in keys)
                 {
-                    this.CycleNextClient(isForwards, cycleOrder);
-                    e.Handled = true;
-                };
-
-                newHandler.Register();
-                this._cycleClientHotkeyHandlers.Add(newHandler);
-            }
+                    if (e.KeyCode == hotkey)
+                    {
+                        e.Handled = true;
+                        return;
+                    }
+                }
+            };
         }
 
         public void Start()
@@ -242,7 +254,6 @@ namespace EveOPreview.Services
                 view.ThumbnailLostFocus = this.ThumbnailViewLostFocus;
                 view.ThumbnailActivated = this.ThumbnailActivated;
                 view.ThumbnailDeactivated = this.ThumbnailDeactivated;
-
                 view.RegisterHotkey(this._configuration.GetClientHotkey(view.Title));
 
                 this.ApplyClientLayout(view.Id, view.Title);
@@ -464,7 +475,7 @@ namespace EveOPreview.Services
 
             this.EnableViewEvents();
         }
-
+        
         public void UpdateThumbnailFrames()
         {
             this.DisableViewEvents();
@@ -472,6 +483,18 @@ namespace EveOPreview.Services
             foreach (KeyValuePair<IntPtr, IThumbnailView> entry in this._thumbnailViews)
             {
                 entry.Value.SetFrames(this._configuration.ShowThumbnailFrames);
+            }
+
+            this.EnableViewEvents();
+        }
+
+        public void UpdateThumbnailTitleFont()
+        {
+            this.DisableViewEvents();
+
+            foreach (KeyValuePair<IntPtr, IThumbnailView> entry in this._thumbnailViews)
+            {
+                entry.Value.TitleFontSettings = this._configuration.TitleFontSettings;
             }
 
             this.EnableViewEvents();

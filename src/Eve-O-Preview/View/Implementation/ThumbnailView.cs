@@ -1,11 +1,14 @@
+using EveOPreview.Configuration;
+using EveOPreview.Services;
+using EveOPreview.UI.Hotkeys;
 using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows.Forms;
-using EveOPreview.Configuration;
-using EveOPreview.Services;
-using EveOPreview.UI.Hotkeys;
+using EveOPreview.Configuration.Implementation;
 
 namespace EveOPreview.View
 {
@@ -77,7 +80,7 @@ namespace EveOPreview.View
             SetDefaultBorderColor();
             this._thumbnailManager = thumbnailManager;
         }
-
+        
         public IWindowManager WindowManager { get; }
 
         public IntPtr Id { get; set; }
@@ -90,6 +93,17 @@ namespace EveOPreview.View
                 this.Text = value;
                 this._overlay.SetOverlayLabel(value.Replace("EVE - ", ""));
                 SetDefaultBorderColor();
+            }
+        }
+
+        private FontSettings _titleFontSettings;
+        public FontSettings TitleFontSettings
+        {
+            get => _titleFontSettings;
+            set
+            {
+                _titleFontSettings = value;
+                this._overlay.SetOverlayFont(value);
             }
         }
 

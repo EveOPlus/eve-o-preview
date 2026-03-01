@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using EveOPreview.Configuration;
+using EveOPreview.Configuration.Implementation;
 
 namespace EveOPreview.View
 {
@@ -8,11 +9,13 @@ namespace EveOPreview.View
     {
         private readonly IApplicationController _controller;
         private readonly bool _isCompatibilityModeEnabled;
+        private readonly FontSettings _titleFontSettings;
 
         public ThumbnailViewFactory(IApplicationController controller, IThumbnailConfiguration configuration)
         {
             this._controller = controller;
             this._isCompatibilityModeEnabled = configuration.EnableCompatibilityMode;
+            this._titleFontSettings = configuration.TitleFontSettings;
         }
 
         public IThumbnailView Create(IntPtr id, string title, Size size)
@@ -24,6 +27,7 @@ namespace EveOPreview.View
             view.Id = id;
             view.Title = title;
             view.ThumbnailSize = size;
+            view.TitleFontSettings = this._titleFontSettings;
 
             return view;
         }

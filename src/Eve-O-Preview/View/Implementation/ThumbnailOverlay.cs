@@ -1,6 +1,9 @@
-﻿using System;
+﻿using EveOPreview.Services;
+using System;
+using System.Drawing;
+using System.Reflection.Emit;
 using System.Windows.Forms;
-using EveOPreview.Services;
+using EveOPreview.Configuration.Implementation;
 
 namespace EveOPreview.View
 {
@@ -26,6 +29,16 @@ namespace EveOPreview.View
         public void SetOverlayLabel(string label)
         {
             this.OverlayLabel.Text = label;
+        }
+        
+        public void SetOverlayFont(FontSettings fontSettings)
+        {
+            this.OverlayLabel.Font = new Font(fontSettings.Name, fontSettings.Size, fontSettings.Style);
+            this.OverlayLabel.ForeColor = fontSettings.ForeColor;
+            this.OverlayLabel.OutlineColor = fontSettings.OutlineColor;
+            this.OverlayLabel.OutlineWidth = fontSettings.OutlineWidth;
+            this.OverlayLabel.Top = fontSettings.PositionOffsetFromTop;
+            this.OverlayLabel.Left = fontSettings.PositionOffsetFromLeft;
         }
 
         public void EnableOverlayLabel(bool enable)

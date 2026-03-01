@@ -1,7 +1,8 @@
-﻿using System;
+﻿using EveOPreview.Configuration.Implementation;
+using EveOPreview.Services;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
-using EveOPreview.Services;
 
 namespace EveOPreview.View
 {
@@ -9,7 +10,7 @@ namespace EveOPreview.View
     {
         IntPtr Id { get; set; }
         string Title { get; set; }
-
+        FontSettings TitleFontSettings { get; set; }
         bool IsActive { get; set; }
         Point ThumbnailLocation { get; set; }
         Size ThumbnailSize { get; set; }

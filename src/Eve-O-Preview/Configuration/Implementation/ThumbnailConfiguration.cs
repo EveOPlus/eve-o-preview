@@ -64,6 +64,16 @@ namespace EveOPreview.Configuration.Implementation
             this.EnableActiveClientHighlight = false;
             this.ActiveClientHighlightColor = Color.GreenYellow;
             this.ActiveClientHighlightThickness = 3;
+            
+            this.TitleFontSettings = new FontSettings();
+            this.TitleFontSettings.Name = "Arial";
+            this.TitleFontSettings.Size = 14.25f;
+            this.TitleFontSettings.ForeColor = Color.FromArgb(255,255,165,0);
+            this.TitleFontSettings.Style = FontStyle.Regular;
+            this.TitleFontSettings.OutlineColor = Color.Black;
+            this.TitleFontSettings.OutlineWidth = 3.0f;
+            this.TitleFontSettings.PositionOffsetFromLeft = 10;
+            this.TitleFontSettings.PositionOffsetFromLeft = 5;
 
             this.LoginThumbnailLocation = new Point(5, 5);
         }
@@ -141,6 +151,8 @@ namespace EveOPreview.Configuration.Implementation
         public Color ActiveClientHighlightColor { get; set; }
 
         public int ActiveClientHighlightThickness { get; set; }
+
+        public FontSettings TitleFontSettings { get; set; }
 
         [JsonProperty("LoginThumbnailLocation")]
         public Point LoginThumbnailLocation { get; set; }

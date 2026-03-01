@@ -112,13 +112,16 @@
     <Compile Include="Configuration\Implementation\AppConfig.cs" />
     <Compile Include="Configuration\Implementation\ConfigurationStorage.cs" />
     <Compile Include="Configuration\Implementation\CycleGroup.cs" />
+    <Compile Include="Configuration\Implementation\FontSettings.cs" />
     <Compile Include="Configuration\Interface\IAppConfig.cs" />
     <Compile Include="Configuration\Interface\IThumbnailConfiguration.cs" />
     <Compile Include="Configuration\Interface\ZoomAnchor.cs" />
     <Compile Include="Mediator\Handlers\Configuration\SaveConfigurationHandler.cs" />
+    <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailTitleFontSettingsUpdatedHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailFrameSettingsUpdatedHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailConfiguredSizeUpdatedHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailListUpdatedHandler.cs" />
+    <Compile Include="Mediator\Messages\Thumbnails\ThumbnailFontTitleSettingsUpdated.cs" />
     <Compile Include="Mediator\Messages\Thumbnails\ThumbnailFrameSettingsUpdated.cs" />
     <Compile Include="Mediator\Messages\Thumbnails\ThumbnailConfiguredSizeUpdated.cs" />
     <Compile Include="Mediator\Messages\Thumbnails\ThumbnailListUpdated.cs" />
@@ -154,6 +157,9 @@
     <Compile Include="Presenters\Interface\ViewCloseRequest.cs" />
     <Compile Include="Presenters\Implementation\ViewZoomAnchorConverter.cs" />
     <Compile Include="Services\Interop\WINDOWPLACEMENT.cs" />
+    <Compile Include="View\CustomControl\OutlinedLabel.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="View\Implementation\ClientNameInputBox.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -263,6 +269,7 @@
       <Version>4.5.0</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

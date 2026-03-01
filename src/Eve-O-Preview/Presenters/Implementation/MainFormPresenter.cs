@@ -126,6 +126,7 @@ namespace EveOPreview.Presenters
             this.View.ShowThumbnailFrames = this._configuration.ShowThumbnailFrames;
             this.View.EnableActiveClientHighlight = this._configuration.EnableActiveClientHighlight;
             this.View.ActiveClientHighlightColor = this._configuration.ActiveClientHighlightColor;
+            this.View.TitleFontSettings = this._configuration.TitleFontSettings;
         }
 
         private async void SaveApplicationSettings()
@@ -162,6 +163,9 @@ namespace EveOPreview.Presenters
             this._configurationStorage.Save();
 
             this.View.RefreshZoomSettings();
+
+            this._configuration.TitleFontSettings = this.View.TitleFontSettings;
+            await this._mediator.Publish(new ThumbnailFontTitleSettingsUpdated());
 
             await this._mediator.Send(new SaveConfiguration());
         }

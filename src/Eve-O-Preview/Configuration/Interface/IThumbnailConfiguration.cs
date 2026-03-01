@@ -43,6 +43,7 @@ namespace EveOPreview.Configuration
         bool EnableActiveClientHighlight { get; set; }
         Color ActiveClientHighlightColor { get; set; }
         int ActiveClientHighlightThickness { get; set; }
+        FontSettings TitleFontSettings { get; set; }
 
         Point LoginThumbnailLocation { get; set; }
 
