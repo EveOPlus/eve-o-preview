@@ -1,7 +1,10 @@
 ﻿using EveOPreview.Services.Interop;
 using System;
 using System.Drawing;
+using System.IO;
+using System.IO.Pipes;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace EveOPreview.Services.Implementation
 {
@@ -32,8 +35,47 @@ namespace EveOPreview.Services.Implementation
             return User32NativeMethods.GetForegroundWindow();
         }
 
+        public void TrySendGiveFocusViaFpsLimiterNamedPipe(IntPtr handle)
+        {
+            if (!Global.IsFpsThrottlingEnabled)
+            {
+                return;
+            }
+            
+            // Fire and forget
+            Task.Run(() =>
+            {
+                try
+                {
+                    var fpsLimiterNamedPipeForThisClient = $"FpsLimiter_{handle}";
+
+                    using (var client = new NamedPipeClientStream(".", fpsLimiterNamedPipeForThisClient,
+                               PipeDirection.InOut, PipeOptions.None))
+                    {
+                        client.Connect(100);
+                        using (var writer = new BinaryWriter(client))
+                        {
+                            writer.Write((byte)0xA3);
+                            writer.Write((byte)0xB1);
+                            writer.Flush();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Just be silent and don't block anything else.
+                }
+            });
+        }
+
         public void ActivateWindow(IntPtr handle)
         {
+            TrySendGiveFocusViaFpsLimiterNamedPipe(handle);
+
+            // Make sure this process is allowed to set the foreground windows of another process.
+            User32NativeMethods.keybd_event(0x12, 0, 0, 0); // Alt down
+            User32NativeMethods.keybd_event(0x12, 0, 2, 0);  // Alt up
+
             try
             {
                 IsCurrentlySwitching = true;
