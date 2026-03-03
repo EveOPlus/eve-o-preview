@@ -7,3 +7,5 @@ src/.vs/
 *.user
 *.DotSettings
 /src/Eve-O-Preview/.vs
+/temp/**
+/src/pakcages/**
