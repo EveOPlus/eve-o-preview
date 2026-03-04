@@ -26,6 +26,7 @@
     <Prefer32Bit>false</Prefer32Bit>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <RunCodeAnalysis>false</RunCodeAnalysis>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -143,11 +144,13 @@
     <Compile Include="Services\Implementation\DwmThumbnail.cs" />
     <Compile Include="Services\Interface\IDwmThumbnail.cs" />
     <Compile Include="Services\Interface\InteropConstants.cs" />
+    <Compile Include="Services\Implementation\DebuggerSidecar.cs" />
     <Compile Include="Services\Interop\DWM_BLURBEHIND.cs" />
     <Compile Include="Services\Interop\DWM_THUMBNAIL_PROPERTIES.cs" />
     <Compile Include="Services\Interop\DWM_TNP_CONSTANTS.cs" />
     <Compile Include="Services\Interface\IWindowManager.cs" />
     <Compile Include="Services\Interop\Gdi32NativeMethods.cs" />
+    <Compile Include="Services\Interop\KernelNativeMethods.cs" />
     <Compile Include="Services\Interop\MARGINS.cs" />
     <Compile Include="Services\Interop\RECT.cs" />
     <Compile Include="Configuration\Interface\ClientLayout.cs" />

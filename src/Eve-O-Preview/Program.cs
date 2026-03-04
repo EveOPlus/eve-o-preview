@@ -1,12 +1,15 @@
-using System;
-using System.Threading;
-using System.Windows.Forms;
 using EveOPreview.Configuration;
 using EveOPreview.Presenters;
 using EveOPreview.Services;
+using EveOPreview.Services.Interop;
 using EveOPreview.View;
 using Gma.System.MouseKeyHook;
 using MediatR;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Windows.Forms;
+using EveOPreview.Services.Implementation;
 
 namespace EveOPreview
 {
@@ -18,27 +21,36 @@ namespace EveOPreview
 
         /// <summary>The main entry point for the application.</summary>
         [STAThread]
-        static void Main()
+        static void Main(params string[] args)
         {
-            // The very usual Mutex-based single-instance screening
-            // 'token' variable is used to store reference to the instance Mutex
-            // during the app lifetime
-            Program._singleInstanceMutex = Program.GetInstanceToken();
-
-            // If it was not possible to acquire the app token then another app instance is already running
-            // Nothing to do here
-            if (Program._singleInstanceMutex == null)
+            if (args?.Any(x => x == "--attach-debug-sidecar") == true)
             {
-                return;
+                DebuggerSidecar.RunAsTheSideCar(args);
             }
+            else
+            {
+                // The very usual Mutex-based single-instance screening
+                // 'token' variable is used to store reference to the instance Mutex
+                // during the app lifetime
+                Program._singleInstanceMutex = Program.GetInstanceToken();
 
-            ExceptionHandler handler = new ExceptionHandler();
-            handler.SetupExceptionHandlers();
+                // If it was not possible to acquire the app token then another app instance is already running
+                // Nothing to do here
+                if (Program._singleInstanceMutex == null)
+                {
+                    return;
+                }
 
-            IApplicationController controller = Program.InitializeApplicationController();
+                ExceptionHandler handler = new ExceptionHandler();
+                handler.SetupExceptionHandlers();
 
-            Program.InitializeWinForms();
-            controller.Run<MainFormPresenter>();
+                IApplicationController controller = Program.InitializeApplicationController();
+
+                Program.InitializeWinForms();
+                DebuggerSidecar.LaunchTheSideCar();
+
+                controller.Run<MainFormPresenter>();
+            }
         }
 
         private static Mutex GetInstanceToken()

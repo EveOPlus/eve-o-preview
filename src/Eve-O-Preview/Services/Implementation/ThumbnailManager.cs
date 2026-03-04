@@ -108,9 +108,6 @@ namespace EveOPreview.Services
 
             newClient.Value.SetHighlight();
             newClient.Value.Refresh(true);
-
-            this.UpdateClientLayouts();
-            this.RefreshThumbnails();
         }
 
         public void CycleNextClient(bool isForwards, SortedDictionary<int, string> cycleOrder)

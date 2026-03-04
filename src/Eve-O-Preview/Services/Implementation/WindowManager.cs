@@ -68,37 +68,28 @@ namespace EveOPreview.Services.Implementation
             });
         }
 
+        public void MakeApiCallsToSetForegroundAndFocus(IntPtr handle)
+        {
+            try
+            {
+                User32NativeMethods.SwitchToThisWindow(handle, false);
+                User32NativeMethods.SetFocus(handle);
+            }
+            catch
+            {
+                User32NativeMethods.SetForegroundWindow(handle);
+                User32NativeMethods.SetFocus(handle);
+            }
+        }
+
         public void ActivateWindow(IntPtr handle)
         {
             TrySendGiveFocusViaFpsLimiterNamedPipe(handle);
-
-            // Make sure this process is allowed to set the foreground windows of another process.
-            User32NativeMethods.keybd_event(0x12, 0, 0, 0); // Alt down
-            User32NativeMethods.keybd_event(0x12, 0, 2, 0);  // Alt up
-
+            
             try
             {
                 IsCurrentlySwitching = true;
-                User32NativeMethods.SetForegroundWindow(handle);
-                User32NativeMethods.SetFocus(handle);
-
-                // Make sure theres no bugs or issues setting to focused window by checking and trying again a few times.
-                // We should never need to call this a second time but better safe than sorry.
-                for (int i = 0; i < 3; i++)
-                {
-                    var foregroundHandle = User32NativeMethods.GetForegroundWindow();
-                    var focusedHandle = User32NativeMethods.GetFocus();
-
-                    if (foregroundHandle != handle)
-                    {
-                        User32NativeMethods.SetForegroundWindow(handle);
-                    }
-
-                    if (focusedHandle != handle)
-                    {
-                        User32NativeMethods.SetFocus(handle);
-                    }
-                }
+                MakeApiCallsToSetForegroundAndFocus(handle);
 
                 int style = User32NativeMethods.GetWindowLong(handle, InteropConstants.GWL_STYLE);
 
