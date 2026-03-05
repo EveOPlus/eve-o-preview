@@ -1,21 +1,22 @@
 ﻿using EveOPreview.Services.Interop;
 using System;
 using System.Drawing;
-using System.IO;
-using System.IO.Pipes;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
+using EveOPreview.Services.Interface;
 
 namespace EveOPreview.Services.Implementation
 {
     public class WindowManager : IWindowManager
     {
+        private readonly IFpsLimiterService _fpsLimiterService;
+
         #region Private constants
         private const int WINDOW_SIZE_THRESHOLD = 300;
         #endregion
         
-        public WindowManager()
+        public WindowManager(IFpsLimiterService fpsLimiterService)
         {
+            _fpsLimiterService = fpsLimiterService;
             // Composition is always enabled for Windows 8+
             this.IsCompositionEnabled = 
                 ((Environment.OSVersion.Version.Major == 6) && (Environment.OSVersion.Version.Minor >= 2)) // Win 8 and Win 8.1
@@ -35,56 +36,20 @@ namespace EveOPreview.Services.Implementation
             return User32NativeMethods.GetForegroundWindow();
         }
 
-        public void TrySendGiveFocusViaFpsLimiterNamedPipe(IntPtr handle)
-        {
-            if (!Global.IsFpsThrottlingEnabled)
-            {
-                return;
-            }
-            
-            // Fire and forget
-            Task.Run(() =>
-            {
-                try
-                {
-                    var fpsLimiterNamedPipeForThisClient = $"FpsLimiter_{handle}";
-
-                    using (var client = new NamedPipeClientStream(".", fpsLimiterNamedPipeForThisClient,
-                               PipeDirection.InOut, PipeOptions.None))
-                    {
-                        client.Connect(100);
-                        using (var writer = new BinaryWriter(client))
-                        {
-                            writer.Write((byte)0xA3);
-                            writer.Write((byte)0xB1);
-                            writer.Flush();
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Just be silent and don't block anything else.
-                }
-            });
-        }
-
         public void MakeApiCallsToSetForegroundAndFocus(IntPtr handle)
         {
-            try
+            bool success = User32NativeMethods.SetForegroundWindow(handle);
+            User32NativeMethods.SetFocus(handle);
+
+            if (!success)
             {
                 User32NativeMethods.SwitchToThisWindow(handle, false);
-                User32NativeMethods.SetFocus(handle);
-            }
-            catch
-            {
-                User32NativeMethods.SetForegroundWindow(handle);
-                User32NativeMethods.SetFocus(handle);
             }
         }
 
         public void ActivateWindow(IntPtr handle)
         {
-            TrySendGiveFocusViaFpsLimiterNamedPipe(handle);
+            _ = _fpsLimiterService.TellEveClientFocusIsComingAsync(handle);
             
             try
             {
@@ -183,6 +148,11 @@ namespace EveOPreview.Services.Implementation
             Gdi32NativeMethods.DeleteObject(bitmap);
 
             return image;
+        }
+
+        public void PredictUpcomingClient(IntPtr upcomingHandle)
+        {
+            _fpsLimiterService.TellEveClientFocusIsMaybeComingSoonAsync(upcomingHandle);
         }
     }
 }

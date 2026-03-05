@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using EveOPreview.Services.Implementation;
+using EveOPreview.Services.Interface;
 
 namespace EveOPreview
 {
@@ -92,7 +93,9 @@ namespace EveOPreview
             // Singleton registration is used for services
             // Low-level services
             container.Register<IWindowManager>();
+            container.Register<IFpsLimiterService>();
             container.Register<IProcessMonitor>();
+            container.Register<IPremiumService>();
 
             // MediatR
             container.Register<IMediator, MediatR.Mediator>();

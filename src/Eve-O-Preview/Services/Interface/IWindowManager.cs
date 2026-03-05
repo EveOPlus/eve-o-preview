@@ -18,5 +18,6 @@ namespace EveOPreview.Services
         bool IsWindowMinimized(IntPtr handle);
         IDwmThumbnail GetLiveThumbnail(IntPtr destination, IntPtr source);
         Image GetStaticThumbnail(IntPtr source);
+        void PredictUpcomingClient(IntPtr upcomingHandle);
     }
 }

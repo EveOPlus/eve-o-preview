@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using EveOPreview.Helper;
 
 namespace EveOPreview.Services.Implementation
 {
@@ -12,17 +14,18 @@ namespace EveOPreview.Services.Implementation
         #endregion
 
         #region Private fields
-        private readonly IDictionary<IntPtr, string> _processCache;
+        private readonly object _lockObj = new object();
+        private readonly IDictionary<IntPtr, IProcessInfo> _processCache;
         private IProcessInfo _currentProcessInfo;
         #endregion
 
         public ProcessMonitor()
         {
-            this._processCache = new Dictionary<IntPtr, string>(512);
+            this._processCache = new Dictionary<IntPtr, IProcessInfo>(512);
             
             // This field cannot be initialized properly in constructor
             // At the moment this code is executed the main application window is not yet initialized
-            this._currentProcessInfo = new ProcessInfo(IntPtr.Zero, "");
+            this._currentProcessInfo = new ProcessInfo(IntPtr.Zero, 0, "");
         }
 
         private bool IsMonitoredProcess(string processName)
@@ -34,7 +37,7 @@ namespace EveOPreview.Services.Implementation
         private IProcessInfo GetCurrentProcessInfo()
         {
             var currentProcess = Process.GetCurrentProcess();
-            return new ProcessInfo(currentProcess.MainWindowHandle, currentProcess.MainWindowTitle);
+            return new ProcessInfo(currentProcess.MainWindowHandle, currentProcess.Id, currentProcess.MainWindowTitle);
         }
 
         public IProcessInfo GetMainProcess()
@@ -55,15 +58,20 @@ namespace EveOPreview.Services.Implementation
 
         public ICollection<IProcessInfo> GetAllProcesses()
         {
-            ICollection<IProcessInfo> result = new List<IProcessInfo>(this._processCache.Count);
-
-            // TODO Lock list here just in case
-            foreach (KeyValuePair<IntPtr, string> entry in this._processCache)
+            lock (_lockObj)
             {
-                result.Add(new ProcessInfo(entry.Key, entry.Value));
+                return this._processCache.Values.ToList();
             }
+            
+            //ICollection<IProcessInfo> result = new List<IProcessInfo>(this._processCache.Count);
+            //
+            //// TODO Lock list here just in case
+            //foreach (KeyValuePair<IntPtr, IProcessInfo> entry in this._processCache)
+            //{
+            //    result.Add(new ProcessInfo(entry.Key, entry.Value.ProcessId, entry.Value.Title));
+            //}
 
-            return result;
+            //return result;
         }
 
         public void GetUpdatedProcesses(out ICollection<IProcessInfo> addedProcesses, out ICollection<IProcessInfo> updatedProcesses, out ICollection<IProcessInfo> removedProcesses)
@@ -88,22 +96,22 @@ namespace EveOPreview.Services.Implementation
                     continue; // No need to monitor non-visual processes
                 }
 
-                string mainWindowTitle = process.MainWindowTitle;
-                this._processCache.TryGetValue(mainWindowHandle, out string cachedTitle);
+                var processInfo = process.ToProcessInfo();
+                this._processCache.TryGetValue(mainWindowHandle, out IProcessInfo cachedProcess);
 
-                if (cachedTitle == null)
+                if (cachedProcess?.Title == null)
                 {
                     // This is a new process in the list
-                    this._processCache.Add(mainWindowHandle, mainWindowTitle);
-                    addedProcesses.Add(new ProcessInfo(mainWindowHandle, mainWindowTitle));
+                    this._processCache.Add(mainWindowHandle, processInfo);
+                    addedProcesses.Add(processInfo);
                 }
                 else
                 {
                     // This is an already known process
-                    if (cachedTitle != mainWindowTitle)
+                    if (cachedProcess.Title != processInfo.Title)
                     {
-                        this._processCache[mainWindowHandle] = mainWindowTitle;
-                        updatedProcesses.Add(new ProcessInfo(mainWindowHandle, mainWindowTitle));
+                        this._processCache[mainWindowHandle] = processInfo;
+                        updatedProcesses.Add(new ProcessInfo(mainWindowHandle, processInfo.ProcessId, processInfo.Title));
                     }
 
                     knownProcesses.Remove(mainWindowHandle);
@@ -112,8 +120,8 @@ namespace EveOPreview.Services.Implementation
 
             foreach (IntPtr index in knownProcesses)
             {
-                string title = this._processCache[index];
-                removedProcesses.Add(new ProcessInfo(index, title));
+                var cachedProcess = this._processCache[index];
+                removedProcesses.Add(new ProcessInfo(index, cachedProcess.ProcessId, cachedProcess.Title));
                 this._processCache.Remove(index);
             }
         }

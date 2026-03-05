@@ -219,6 +219,48 @@ namespace EveOPreview.View
             }
         }
 
+        private FpsLimiterSettings _fpsLimiterSettings;
+
+        public FpsLimiterSettings FpsLimiterSettings
+        {
+            get
+            {
+                return _fpsLimiterSettings;
+            }
+            set
+            {
+                _fpsLimiterSettings = value;
+                numericFpsForegroundLimit.Value = value.FpsFocused;
+                numericFpsBackgroundLimit.Value = value.FpsBackground;
+                numericFpsPredictedLimit.Value = value.FpsPredictingFocus;
+                chbIsFpsThrottlingEnabled.Checked = value.IsEnabled;
+            }
+        }
+
+        private bool _isPremium;
+
+        public bool IsPremium
+        {
+            get
+            {
+                return _isPremium;
+            }
+            set
+            {
+                _isPremium = value;
+                
+                if (!value)
+                {
+                    numericFpsForegroundLimit.Enabled = false;
+                    numericFpsBackgroundLimit.Enabled = false;
+                    numericFpsPredictedLimit.Enabled = false;
+                    chbIsFpsThrottlingEnabled.Enabled = false;
+                    chbIsFpsThrottlingEnabled.Checked = false;
+                    lblFpsFeatureExpired.Visible = true;
+                }
+            }
+        }
+
         public new void Show()
 		{
 			// Registers the current instance as the application's Main Form
@@ -300,9 +342,11 @@ namespace EveOPreview.View
 		public Action DocumentationLinkActivated { get; set; }
 
 		public Func<string> GetClientNameFromInput { get; set; }
+        public Action FpsLimiterChanged { get; set; }
+        public Action FpsLimiterEnabledChanged { get; set; }
 
-		#region UI events
-		private void ContentTabControl_DrawItem(object sender, DrawItemEventArgs e)
+        #region UI events
+        private void ContentTabControl_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			TabControl control = (TabControl)sender;
 			TabPage page = control.TabPages[e.Index];
@@ -871,6 +915,34 @@ namespace EveOPreview.View
         private void txtFontOutlineWidth_Enter(object sender, EventArgs e)
         {
             UpdateFontOutlineWidth();
+        }
+
+        private void chbIsFpsThrottlingEnabled_CheckedChanged(object sender, EventArgs e)
+        {
+            FpsLimiterSettings.IsEnabled = chbIsFpsThrottlingEnabled.Checked;
+            this.ApplicationSettingsChanged?.Invoke();
+            this.FpsLimiterEnabledChanged?.Invoke();
+        }
+
+        private void numericFpsForegroundLimit_Leave(object sender, EventArgs e)
+        {
+            FpsLimiterSettings.FpsFocused = (int)numericFpsForegroundLimit.Value;
+            this.ApplicationSettingsChanged?.Invoke();
+            this.FpsLimiterChanged?.Invoke();
+        }
+
+        private void numericFpsBackgroundLimit_Leave(object sender, EventArgs e)
+        {
+            FpsLimiterSettings.FpsBackground = (int)numericFpsBackgroundLimit.Value;
+            this.ApplicationSettingsChanged?.Invoke();
+            this.FpsLimiterChanged?.Invoke();
+        }
+
+        private void numericFpsPredictedLimit_Leave(object sender, EventArgs e)
+        {
+            FpsLimiterSettings.FpsPredictingFocus = (int)numericFpsPredictedLimit.Value;
+            this.ApplicationSettingsChanged?.Invoke();
+            this.FpsLimiterChanged?.Invoke();
         }
     }
 }

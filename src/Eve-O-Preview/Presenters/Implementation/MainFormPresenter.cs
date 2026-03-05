@@ -47,6 +47,8 @@ namespace EveOPreview.Presenters
             this.View.DocumentationLinkActivated = this.OpenDocumentationLink;
             this.View.ApplicationExitRequested = this.ExitApplication;
             this.View.GetClientNameFromInput = this.GetClientDescriptionFromInputBox;
+            this.View.FpsLimiterChanged = this.TriggerSetFpsLimiter;
+            this.View.FpsLimiterEnabledChanged = TriggerSetFpsLimiterEnabled;
         }
 
         private void Activate()
@@ -127,6 +129,9 @@ namespace EveOPreview.Presenters
             this.View.EnableActiveClientHighlight = this._configuration.EnableActiveClientHighlight;
             this.View.ActiveClientHighlightColor = this._configuration.ActiveClientHighlightColor;
             this.View.TitleFontSettings = this._configuration.TitleFontSettings;
+            this.View.FpsLimiterSettings = this._configuration.FpsLimiterSettings;
+
+            this.View.IsPremium = this._configuration.IsPremium;
         }
 
         private async void SaveApplicationSettings()
@@ -166,10 +171,9 @@ namespace EveOPreview.Presenters
 
             this._configuration.TitleFontSettings = this.View.TitleFontSettings;
             await this._mediator.Publish(new ThumbnailFontTitleSettingsUpdated());
-
+            
             await this._mediator.Send(new SaveConfiguration());
         }
-
 
         public void AddThumbnails(IList<string> thumbnailTitles)
         {
@@ -253,6 +257,16 @@ namespace EveOPreview.Presenters
         {
             Version version = System.Reflection.Assembly.GetEntryAssembly().GetName().Version;
             return $"{version.Major}.{version.Minor}.{version.Build}";
+        }
+
+        private void TriggerSetFpsLimiter()
+        {
+            this._mediator.Send(new SetFpsLimiter());
+        }
+
+        private void TriggerSetFpsLimiterEnabled()
+        {
+            this._mediator.Send(new SetFpsLimiterEnabled());
         }
 
         private void ExitApplication()

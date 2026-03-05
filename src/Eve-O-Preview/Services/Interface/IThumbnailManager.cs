@@ -1,4 +1,6 @@
 ﻿using EveOPreview.View;
+using System;
+using System.Collections.Generic;
 
 namespace EveOPreview.Services
 {
@@ -14,5 +16,6 @@ namespace EveOPreview.Services
         IThumbnailView GetClientByTitle(string title);
         IThumbnailView GetClientByPointer(System.IntPtr ptr);
         IThumbnailView GetActiveClient();
+        Dictionary<IntPtr, IThumbnailView> GetAllKnownClients();
     }
 }

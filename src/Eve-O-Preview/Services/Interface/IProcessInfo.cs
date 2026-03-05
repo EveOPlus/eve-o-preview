@@ -6,5 +6,6 @@ namespace EveOPreview.Services
     {
         IntPtr Handle { get; }
         string Title { get; }
+        int ProcessId { get; }
     }
 }

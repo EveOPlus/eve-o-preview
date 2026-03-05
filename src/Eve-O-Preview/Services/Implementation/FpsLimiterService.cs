@@ -1,0 +1,316 @@
+﻿using EveOPreview.Configuration;
+using EveOPreview.Services.Interface;
+using EveOPreview.Services.Interop;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Pipes;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace EveOPreview.Services.Implementation
+{
+    public class FpsLimiterService : IFpsLimiterService
+    {
+        private readonly IThumbnailConfiguration _configuration;
+        
+        public FpsLimiterService(IThumbnailConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        
+        public bool Ping(IntPtr handle)
+        {
+            try
+            {
+                // Ping request is 0xA1 0xB2, Expect a 0x01 response.
+                using (var client = GetClientsNamedPipe(handle, PipeDirection.InOut))
+                {
+                    client.Connect(100);
+                    using (var writer = new BinaryWriter(client))
+                    using (var reader = new BinaryReader(client))
+                    {
+                        writer.Write((byte)0xA1);
+                        writer.Write((byte)0xB2);
+                        writer.Flush();
+
+                        var response = reader.ReadByte();
+
+                        return response == (byte)0x01;
+                    }
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        
+        public async Task TellEveClientFocusIsComingAsync(IntPtr handle)
+        {
+            if (!CanAccessFpsLimiter())
+            {
+                return;
+            }
+            
+            await Task.Run(() =>
+            {
+                // Fire and forget
+                try
+                {
+                    using (var client = GetClientsNamedPipe(handle, PipeDirection.Out))
+                    {
+                        client.Connect(100);
+                        using (var writer = new BinaryWriter(client))
+                        {
+                            writer.Write((byte)0xA3);
+                            writer.Write((byte)0xB1);
+                            writer.Flush();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    KernelNativeMethods.OutputDebug($"Error while calling TellEveClientFocusIsComing: {ex}", handle);
+                    // Just be silent and don't block anything else.
+                }
+            });
+        }
+        
+        public async Task TellEveClientFocusIsMaybeComingSoonAsync(IntPtr handle, int timeoutMs = 5000)
+        {
+            if (!CanAccessFpsLimiter())
+            {
+                return;
+            }
+
+            await Task.Run(() =>
+            {
+                // Fire and forget
+                try
+                {
+                    using (var client = GetClientsNamedPipe(handle, PipeDirection.Out))
+                    {
+                        client.Connect(100);
+                        using (var writer = new BinaryWriter(client))
+                        {
+                            writer.Write((byte)0xA3);
+                            writer.Write((byte)0xB3);
+                            writer.Write(timeoutMs); // How long to wait before for focus before return to normal.
+                            writer.Flush();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    KernelNativeMethods.OutputDebug($"Error while calling TellEveClientFocusIsMaybeBeComingSoon: {ex}", handle);
+                    // Just be silent and don't block anything else.
+                }
+            });
+        }
+
+        public async Task<bool> UpdateTargetFpsAsync(IntPtr handle)
+        {
+            if (!CanAccessFpsLimiter())
+            {
+                return false;
+            }
+
+            var fpsSettings = _configuration.FpsLimiterSettings;
+            int foregroundFps = fpsSettings.IsEnabled ? fpsSettings.FpsFocused : 0;
+            int backgroundFps = fpsSettings.IsEnabled ? fpsSettings.FpsBackground : 0;
+            int predictiveFps = fpsSettings.IsEnabled ? fpsSettings.FpsPredictingFocus : 0;
+
+            return await SetExactTargetFpsAsync(handle, foregroundFps, backgroundFps, predictiveFps);
+        }
+
+        public async Task<bool> DisableFpsLimiterAsync(IntPtr handle)
+        {
+            return await SetExactTargetFpsAsync(handle, 0, 0, 0).ConfigureAwait(false);
+        }
+
+        public async Task TryInstallFpsLimiterIntoClientAsync(IProcessInfo procInfo)
+        {
+            if (!CanAccessFpsLimiter())
+            {
+                return;
+            }
+            
+            await Task.Run(() =>
+            {
+                try
+                {
+                    if (Ping(procInfo.Handle))
+                    {
+                        // Already installed, as the pipe is active and responding. Don't try to install another hook.
+                    }
+                    else
+                    {
+                        var basePath = AppContext.BaseDirectory;
+                        var dllPath = Path.Combine(basePath, "FPSLimiter.Hook.dll");
+                        if (!File.Exists(dllPath)) throw new Exception($"Unable to find FPSLimiter.Hook.dll at: {dllPath}");
+                        
+                        var proc = Process.GetProcessById(procInfo.ProcessId);
+
+                        KernelNativeMethods.OutputDebug($"Working on {proc.MainWindowHandle}");
+                        IntPtr hProc = KernelNativeMethods.OpenProcess(KernelNativeMethods.PROCESS_ALL_ACCESS, false, proc.Id);
+                        if (hProc == IntPtr.Zero) throw new Exception("Failed to open process.");
+
+                        string fullPath = Path.GetFullPath(dllPath);
+                        byte[] pathBytes = Encoding.ASCII.GetBytes(fullPath + "\0");
+
+                        KernelNativeMethods.OutputDebug($"Allocate memory for DLL path string");
+                        IntPtr remoteAddr = KernelNativeMethods.VirtualAllocEx(hProc, IntPtr.Zero, (uint)pathBytes.Length, KernelNativeMethods.MEM_COMMIT_RESERVE, KernelNativeMethods.PAGE_EXECUTE_READWRITE);
+                        if (remoteAddr == IntPtr.Zero) throw new Exception("Memory allocation failed.");
+
+                        KernelNativeMethods.OutputDebug($"Write DLL path to target process");
+                        if (!KernelNativeMethods.WriteProcessMemory(hProc, remoteAddr, pathBytes, (uint)pathBytes.Length, out _))
+                            throw new Exception("Failed to write to memory.");
+
+                        KernelNativeMethods.OutputDebug($"Call LoadLibraryA in target process");
+                        IntPtr loadLibAddr = KernelNativeMethods.GetProcAddress(KernelNativeMethods.GetModuleHandle("kernel32.dll"), "LoadLibraryA");
+                        IntPtr hThread = KernelNativeMethods.CreateRemoteThread(hProc, IntPtr.Zero, 0, loadLibAddr, remoteAddr, 0, IntPtr.Zero);
+
+                        if (hThread == IntPtr.Zero) throw new Exception("CreateRemoteThread for LoadLibrary failed.");
+
+                        System.Threading.Thread.Sleep(2000); // Wait for module to load
+
+                        KernelNativeMethods.OutputDebug($"Verify and find 'Initialize' export offset");
+                        proc.Refresh();
+                        var loadedModule = proc.Modules.Cast<ProcessModule>().FirstOrDefault(m => m.FileName.Contains("FPSLimiter"));
+                        if (loadedModule == null) throw new Exception("DLL was not loaded into the target process.");
+
+                        IntPtr localModule = KernelNativeMethods.LoadLibrary(fullPath);
+                        IntPtr localInitAddr = KernelNativeMethods.GetProcAddress(localModule, "Initialize");
+                        if (localInitAddr == IntPtr.Zero) throw new Exception("Could not find 'Initialize' export in DLL.");
+
+                        // Calculate remote address: (Target Base + (Local Init - Local Base))
+                        long offset = localInitAddr.ToInt64() - localModule.ToInt64();
+                        IntPtr remoteInitAddr = new IntPtr(loadedModule.BaseAddress.ToInt64() + offset);
+
+                        // Execute 'Initialize' in target process
+                        KernelNativeMethods.OutputDebug($"Execute 'Initialize' in target process");
+                        KernelNativeMethods.CreateRemoteThread(hProc, IntPtr.Zero, 0, remoteInitAddr, IntPtr.Zero, 0, IntPtr.Zero);
+
+                        KernelNativeMethods.OutputDebug($"Successfully injected and initialized at: {remoteInitAddr}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    KernelNativeMethods.OutputDebug($"Unhandled exception in {nameof(TryInstallFpsLimiterIntoClientAsync)}", procInfo.Handle);
+                }
+            });
+
+            // Make sure it has a moment to initialize, just to be safe.
+            await Task.Delay(1000);
+            
+            // Take ownership of the currently running hook.
+            await SendTakeOwnershipCommand(procInfo.Handle, Process.GetCurrentProcess().Id);
+
+            // Regardless if we just installed it, or it was already installed, set the FPS to our target
+            await UpdateTargetFpsAsync(procInfo.Handle);
+        }
+
+        private async Task<bool> SendTakeOwnershipCommand(IntPtr handle, int newOwnerProcessId)
+        {
+            if (!CanAccessFpsLimiter())
+            {
+                return false;
+            }
+
+            return await Task.Run<bool>(() =>
+            {
+                try
+                {
+                    // Take ownership is 0xA2 0xB4 (int)ownerProcessId, Expect a 0x01 response.
+                    using (var client = GetClientsNamedPipe(handle, PipeDirection.InOut))
+                    {
+                        client.Connect(100);
+                        using (var writer = new BinaryWriter(client))
+                        using (var reader = new BinaryReader(client))
+                        {
+                            writer.Write((byte)0xA2);
+                            writer.Write((byte)0xB4);
+                            writer.Write(newOwnerProcessId);
+                            writer.Flush();
+
+                            var response = reader.ReadByte();
+
+                            return response == (byte)0x01;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    KernelNativeMethods.OutputDebug($"Unhandled exception during {nameof(SendTakeOwnershipCommand)}", handle);
+                    return false;
+                }
+            });
+        }
+
+        private async Task<bool> SetExactTargetFpsAsync(IntPtr handle, int foregroundFps, int backgroundFps, int predictiveFps)
+        {
+            return await Task.Run<bool>(() =>
+            {
+                try
+                {
+                    return MakeThePipeCallToSetFps(handle, foregroundFps, backgroundFps, predictiveFps);
+                }
+                catch (Exception ex)
+                {
+                    KernelNativeMethods.OutputDebug($"Unhandled exception during {nameof(SetExactTargetFpsAsync)}", handle);
+                    return false;
+                }
+            }).ConfigureAwait(false);
+        }
+
+        private bool MakeThePipeCallToSetFps(IntPtr handle, int foregroundFps, int backgroundFps, int predictiveFps)
+        {
+            try
+            {
+                // Update FPS is 0xA2 0xF1 (int)foreground 0xF2 (int)background 0xF3 (int)predictive, Expect a 0x01 response.
+                using (var client = GetClientsNamedPipe(handle, PipeDirection.InOut))
+                {
+                    client.Connect(100);
+                    using (var writer = new BinaryWriter(client))
+                    using (var reader = new BinaryReader(client))
+                    {
+                        writer.Write((byte)0xA2);
+                        writer.Write((byte)0xF1);
+                        writer.Write(foregroundFps);
+                        writer.Write((byte)0xF2);
+                        writer.Write(backgroundFps);
+                        writer.Write((byte)0xF3);
+                        writer.Write(predictiveFps);
+                        writer.Flush();
+
+                        var response = reader.ReadByte();
+
+                        return response == (byte)0x01;
+                    }
+                }
+            }
+            catch
+            {
+                KernelNativeMethods.OutputDebug($"Unhandled exception during {nameof(MakeThePipeCallToSetFps)}", handle);
+                return false;
+            }
+        }
+
+        private NamedPipeClientStream GetClientsNamedPipe(IntPtr handle, PipeDirection direction)
+        {
+            return new NamedPipeClientStream(".", GetClientsPipeName(handle), direction, PipeOptions.None);
+        }
+
+        private string GetClientsPipeName(IntPtr handle)
+        {
+            return $"FpsLimiter_{handle}";
+        }
+
+        private bool CanAccessFpsLimiter()
+        {
+            return _configuration.IsPremium && _configuration.FpsLimiterSettings.IsEnabled;
+        }
+    }
+}

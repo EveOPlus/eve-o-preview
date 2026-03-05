@@ -1,18 +1,20 @@
-﻿using System;
+﻿using EveOPreview.Configuration;
+using EveOPreview.Configuration.Implementation;
+using EveOPreview.Mediator.Messages;
+using EveOPreview.Services.Interface;
+using EveOPreview.UI.Hotkeys;
+using EveOPreview.View;
+using Gma.System.MouseKeyHook;
+using MediatR;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Threading;
-using EveOPreview.Configuration;
-using EveOPreview.Configuration.Implementation;
-using EveOPreview.Mediator.Messages;
-using EveOPreview.UI.Hotkeys;
-using EveOPreview.View;
-using Gma.System.MouseKeyHook;
-using MediatR;
 
 namespace EveOPreview.Services
 {
@@ -37,6 +39,7 @@ namespace EveOPreview.Services
         private readonly IThumbnailViewFactory _thumbnailViewFactory;
         private readonly Dictionary<IntPtr, IThumbnailView> _thumbnailViews;
         private IKeyboardMouseEvents _keyboardMouseEvents;
+        private readonly IFpsLimiterService _fpsLimiterService;
 
         private (IntPtr Handle, string Title) _activeClient;
         private IntPtr _externalApplication;
@@ -53,7 +56,7 @@ namespace EveOPreview.Services
         private List<HotkeyHandler> _cycleClientHotkeyHandlers = new List<HotkeyHandler>();
         #endregion
 
-        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents)
+        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents, IFpsLimiterService fpsLimiterService)
         {
             this._mediator = mediator;
             this._processMonitor = processMonitor;
@@ -61,7 +64,7 @@ namespace EveOPreview.Services
             this._configuration = configuration;
             this._thumbnailViewFactory = factory;
             this._keyboardMouseEvents = keyboardMouseEvents;
-
+            _fpsLimiterService = fpsLimiterService;
 
             this._activeClient = (IntPtr.Zero, ThumbnailManager.DEFAULT_CLIENT_TITLE);
 
@@ -99,6 +102,11 @@ namespace EveOPreview.Services
             return GetClientByPointer(this._activeClient.Handle);
         }
 
+        public Dictionary<IntPtr, IThumbnailView> GetAllKnownClients()
+        {
+            return _thumbnailViews;
+        }
+
         public void SetActive(KeyValuePair<IntPtr, IThumbnailView> newClient)
         {
             this.GetActiveClient()?.ClearBorder();
@@ -112,52 +120,25 @@ namespace EveOPreview.Services
 
         public void CycleNextClient(bool isForwards, SortedDictionary<int, string> cycleOrder)
         {
-            IOrderedEnumerable<KeyValuePair<int, string>> clientOrder;
-            if (isForwards)
-            {
-                clientOrder = cycleOrder.OrderBy(x => x.Key);
-            }
-            else
-            {
-                clientOrder = cycleOrder.OrderByDescending(x => x.Key);
-            }
+            var nextClientTitle = FindNextClientInCycleGroup(isForwards, _activeClient.Title, cycleOrder);
+            var nextNextClientTitle = FindNextClientInCycleGroup(isForwards, nextClientTitle, cycleOrder);
 
-            bool setNextClient = false;
-            IThumbnailView lastClient = null;
+            var nextClient = _thumbnailViews.First(x => x.Value.Title == nextClientTitle);
+            var nextNextClient = _thumbnailViews.First(x => x.Value.Title == nextNextClientTitle);
+            var lastClient = _activeClient;
 
-            foreach (var t in clientOrder)
-            {
-                if (t.Value == _activeClient.Title)
-                {
-                    setNextClient = true;
-                    lastClient = _thumbnailViews.FirstOrDefault(x => x.Value.Title == t.Value).Value;
-                    continue;
-                }
+            SetActive(nextClient);
+            this._windowManager.PredictUpcomingClient(nextNextClient.Key);
+        }
 
-                if (!setNextClient)
-                {
-                    continue;
-                }
-
-                if (_thumbnailViews.Any(x => x.Value.Title == t.Value))
-                {
-                    var ptr = _thumbnailViews.First(x => x.Value.Title == t.Value);
-                    SetActive(ptr);
-                    return;
-                }
-            }
-
-            // we didn't get a next one. just get the first one from the start.
-            foreach (var t in clientOrder)
-            {
-                if (_thumbnailViews.Any(x => x.Value.Title == t.Value))
-                {
-                    var ptr = _thumbnailViews.First(x => x.Value.Title == t.Value);
-                    SetActive(ptr);
-                    _activeClient = (ptr.Key, t.Value);
-                    return;
-                }
-            }
+        private string FindNextClientInCycleGroup(bool isForwards, string findThisTitleFirst, SortedDictionary<int, string> cycleOrder)
+        {
+            // Remove all clients in the cycle group that are not running right now.
+            var filteredTitles = cycleOrder.Where(co => _thumbnailViews.Any(tv => tv.Value.Title == co.Value));
+            var orderedTitles = isForwards ? filteredTitles.OrderBy(x => x.Key).ToList() : filteredTitles.OrderByDescending(x => x.Key).ToList();
+            var remainingClients = orderedTitles.SkipWhile(x => x.Value != findThisTitleFirst).Skip(1).ToList();
+        
+            return remainingClients.Any() ? remainingClients.First().Value : orderedTitles.FirstOrDefault().Value;
         }
 
         public void RegisterAllHotkeys(List<CycleGroup> cycleGroups)
@@ -263,6 +244,8 @@ namespace EveOPreview.Services
                 {
                     viewsAdded.Add(view.Title);
                 }
+
+                _ = _fpsLimiterService.TryInstallFpsLimiterIntoClientAsync(process);
             }
 
             foreach (IProcessInfo process in updatedProcesses)

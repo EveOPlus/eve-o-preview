@@ -35,6 +35,8 @@ namespace EveOPreview.View
 		Color ActiveClientHighlightColor { get; set; }
         FontSettings TitleFontSettings { get; set; }
 
+        FpsLimiterSettings FpsLimiterSettings { get; set; }
+
         List<CycleGroup> CycleGroups { get; set; }
 
 		void SetDocumentationUrl(string url);
@@ -56,5 +58,8 @@ namespace EveOPreview.View
 		Action<string> ThumbnailStateChanged { get; set; }
 		Action DocumentationLinkActivated { get; set; }
 		Func<string> GetClientNameFromInput { get; set; }
-	}
+        Action FpsLimiterChanged { get; set; }
+        Action FpsLimiterEnabledChanged { get; set; }
+        bool IsPremium { get; set; }
+    }
 }

@@ -76,8 +76,11 @@ namespace EveOPreview.Configuration.Implementation
             this.TitleFontSettings.PositionOffsetFromLeft = 5;
 
             this.LoginThumbnailLocation = new Point(5, 5);
-        }
 
+            this.FpsLimiterSettings = new FpsLimiterSettings();
+            this.PremiumLicenseKey = "1|Experimental|2026-06-04.UPA8aM6c39acLmzl10YBjFBDKjvdd6U4lxc7LH2TGtN6fVGQFLzvLbSkBpD8IDICWAODAVjWPmtkY2RItw9VpA==";
+            this.IsPremium = false;
+        }
 
         [JsonProperty("ConfigVersion")]
         public int ConfigVersion { get; set; }
@@ -156,6 +159,14 @@ namespace EveOPreview.Configuration.Implementation
 
         [JsonProperty("LoginThumbnailLocation")]
         public Point LoginThumbnailLocation { get; set; }
+
+        public FpsLimiterSettings FpsLimiterSettings { get; set; }
+        
+        public string PremiumLicenseKey { get; set; }
+
+        [JsonIgnore]
+        public bool IsPremium { get; set; }
+
 
         [JsonProperty]
         private Dictionary<string, Dictionary<string, Point>> PerClientLayout { get; set; }

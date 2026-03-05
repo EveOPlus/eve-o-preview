@@ -53,14 +53,19 @@ namespace EveOPreview.View
             System.Windows.Forms.TabPage ClientsTabPage;
             System.Windows.Forms.Panel ClientsPanel;
             System.Windows.Forms.Label ThumbnailsListLabel;
+            System.Windows.Forms.TabPage CycleGroupTabPage;
+            System.Windows.Forms.Label label1;
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+            System.Windows.Forms.Label lblFpsPredictiveLimit;
+            System.Windows.Forms.Label lblFpsBackgroundLimit;
+            System.Windows.Forms.Label lblFpsForegroundLimit;
             System.Windows.Forms.TabPage AboutTabPage;
             System.Windows.Forms.Panel AboutPanel;
+            System.Windows.Forms.Label lblLiabilityDisclaimer;
             System.Windows.Forms.Label CreditMaintLabel;
             System.Windows.Forms.Label DocumentationLinkLabel;
             System.Windows.Forms.Label DescriptionLabel;
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             System.Windows.Forms.Label NameLabel;
-            System.Windows.Forms.TabPage CycleGroupTabPage;
             this.MinimizeInactiveClientsCheckBox = new System.Windows.Forms.CheckBox();
             this.EnableClientLayoutTrackingCheckBox = new System.Windows.Forms.CheckBox();
             this.HideActiveClientThumbnailCheckBox = new System.Windows.Forms.CheckBox();
@@ -102,8 +107,6 @@ namespace EveOPreview.View
             this.ShowThumbnailFramesCheckBox = new System.Windows.Forms.CheckBox();
             this.activeClientsSplitContainer = new System.Windows.Forms.SplitContainer();
             this.ThumbnailsList = new System.Windows.Forms.CheckedListBox();
-            this.VersionLabel = new System.Windows.Forms.Label();
-            this.DocumentationLink = new System.Windows.Forms.LinkLabel();
             this.CycleGroupPanel = new System.Windows.Forms.Panel();
             this.removeGroupButton = new System.Windows.Forms.Button();
             this.cycleGroupMoveClientOrderUpButton = new System.Windows.Forms.Button();
@@ -122,8 +125,22 @@ namespace EveOPreview.View
             this.CycleGroupLabel = new System.Windows.Forms.Label();
             this.selectCycleGroupComboBox = new System.Windows.Forms.ComboBox();
             this.addClientToCycleGroupButton = new System.Windows.Forms.Button();
+            this.FpsLimiterTabPage = new System.Windows.Forms.TabPage();
+            this.fpsMainLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
+            this.fpsTopPanel = new System.Windows.Forms.Panel();
+            this.fpsBottomPanel = new System.Windows.Forms.Panel();
+            this.lblFpsFeatureExpired = new System.Windows.Forms.Label();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.btnDummyFpsSave = new System.Windows.Forms.Button();
+            this.numericFpsPredictedLimit = new System.Windows.Forms.NumericUpDown();
+            this.numericFpsBackgroundLimit = new System.Windows.Forms.NumericUpDown();
+            this.numericFpsForegroundLimit = new System.Windows.Forms.NumericUpDown();
+            this.chbIsFpsThrottlingEnabled = new System.Windows.Forms.CheckBox();
+            this.VersionLabel = new System.Windows.Forms.Label();
+            this.DocumentationLink = new System.Windows.Forms.LinkLabel();
             this.NotifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.TrayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             RestoreWindowMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ExitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             TitleMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -144,13 +161,18 @@ namespace EveOPreview.View
             ClientsTabPage = new System.Windows.Forms.TabPage();
             ClientsPanel = new System.Windows.Forms.Panel();
             ThumbnailsListLabel = new System.Windows.Forms.Label();
+            CycleGroupTabPage = new System.Windows.Forms.TabPage();
+            label1 = new System.Windows.Forms.Label();
+            lblFpsPredictiveLimit = new System.Windows.Forms.Label();
+            lblFpsBackgroundLimit = new System.Windows.Forms.Label();
+            lblFpsForegroundLimit = new System.Windows.Forms.Label();
             AboutTabPage = new System.Windows.Forms.TabPage();
             AboutPanel = new System.Windows.Forms.Panel();
+            lblLiabilityDisclaimer = new System.Windows.Forms.Label();
             CreditMaintLabel = new System.Windows.Forms.Label();
             DocumentationLinkLabel = new System.Windows.Forms.Label();
             DescriptionLabel = new System.Windows.Forms.Label();
             NameLabel = new System.Windows.Forms.Label();
-            CycleGroupTabPage = new System.Windows.Forms.TabPage();
             ContentTabControl.SuspendLayout();
             GeneralTabPage.SuspendLayout();
             GeneralSettingsPanel.SuspendLayout();
@@ -172,10 +194,18 @@ namespace EveOPreview.View
             this.activeClientsSplitContainer.Panel1.SuspendLayout();
             this.activeClientsSplitContainer.Panel2.SuspendLayout();
             this.activeClientsSplitContainer.SuspendLayout();
-            AboutTabPage.SuspendLayout();
-            AboutPanel.SuspendLayout();
             CycleGroupTabPage.SuspendLayout();
             this.CycleGroupPanel.SuspendLayout();
+            this.FpsLimiterTabPage.SuspendLayout();
+            this.fpsMainLayoutPanel.SuspendLayout();
+            this.fpsTopPanel.SuspendLayout();
+            this.fpsBottomPanel.SuspendLayout();
+            this.groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericFpsPredictedLimit)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericFpsBackgroundLimit)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericFpsForegroundLimit)).BeginInit();
+            AboutTabPage.SuspendLayout();
+            AboutPanel.SuspendLayout();
             this.TrayMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -214,6 +244,7 @@ namespace EveOPreview.View
             ContentTabControl.Controls.Add(OverlayTabPage);
             ContentTabControl.Controls.Add(ClientsTabPage);
             ContentTabControl.Controls.Add(CycleGroupTabPage);
+            ContentTabControl.Controls.Add(this.FpsLimiterTabPage);
             ContentTabControl.Controls.Add(AboutTabPage);
             ContentTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
             ContentTabControl.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
@@ -222,7 +253,7 @@ namespace EveOPreview.View
             ContentTabControl.Multiline = true;
             ContentTabControl.Name = "ContentTabControl";
             ContentTabControl.SelectedIndex = 0;
-            ContentTabControl.Size = new System.Drawing.Size(390, 261);
+            ContentTabControl.Size = new System.Drawing.Size(390, 361);
             ContentTabControl.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
             ContentTabControl.TabIndex = 7;
             ContentTabControl.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.ContentTabControl_DrawItem);
@@ -234,7 +265,7 @@ namespace EveOPreview.View
             GeneralTabPage.Location = new System.Drawing.Point(124, 4);
             GeneralTabPage.Name = "GeneralTabPage";
             GeneralTabPage.Padding = new System.Windows.Forms.Padding(3);
-            GeneralTabPage.Size = new System.Drawing.Size(262, 253);
+            GeneralTabPage.Size = new System.Drawing.Size(262, 353);
             GeneralTabPage.TabIndex = 0;
             GeneralTabPage.Text = "General";
             // 
@@ -251,7 +282,7 @@ namespace EveOPreview.View
             GeneralSettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             GeneralSettingsPanel.Location = new System.Drawing.Point(3, 3);
             GeneralSettingsPanel.Name = "GeneralSettingsPanel";
-            GeneralSettingsPanel.Size = new System.Drawing.Size(256, 247);
+            GeneralSettingsPanel.Size = new System.Drawing.Size(256, 347);
             GeneralSettingsPanel.TabIndex = 18;
             // 
             // MinimizeInactiveClientsCheckBox
@@ -347,7 +378,7 @@ namespace EveOPreview.View
             ThumbnailTabPage.Location = new System.Drawing.Point(124, 4);
             ThumbnailTabPage.Name = "ThumbnailTabPage";
             ThumbnailTabPage.Padding = new System.Windows.Forms.Padding(3);
-            ThumbnailTabPage.Size = new System.Drawing.Size(262, 253);
+            ThumbnailTabPage.Size = new System.Drawing.Size(262, 353);
             ThumbnailTabPage.TabIndex = 1;
             ThumbnailTabPage.Text = "Thumbnail";
             // 
@@ -363,7 +394,7 @@ namespace EveOPreview.View
             ThumbnailSettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             ThumbnailSettingsPanel.Location = new System.Drawing.Point(3, 3);
             ThumbnailSettingsPanel.Name = "ThumbnailSettingsPanel";
-            ThumbnailSettingsPanel.Size = new System.Drawing.Size(256, 247);
+            ThumbnailSettingsPanel.Size = new System.Drawing.Size(256, 347);
             ThumbnailSettingsPanel.TabIndex = 19;
             // 
             // HeigthLabel
@@ -465,7 +496,7 @@ namespace EveOPreview.View
             this.ZoomTabPage.Controls.Add(ZoomSettingsPanel);
             this.ZoomTabPage.Location = new System.Drawing.Point(124, 4);
             this.ZoomTabPage.Name = "ZoomTabPage";
-            this.ZoomTabPage.Size = new System.Drawing.Size(262, 253);
+            this.ZoomTabPage.Size = new System.Drawing.Size(262, 353);
             this.ZoomTabPage.TabIndex = 2;
             this.ZoomTabPage.Text = "Zoom";
             // 
@@ -480,7 +511,7 @@ namespace EveOPreview.View
             ZoomSettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             ZoomSettingsPanel.Location = new System.Drawing.Point(0, 0);
             ZoomSettingsPanel.Name = "ZoomSettingsPanel";
-            ZoomSettingsPanel.Size = new System.Drawing.Size(262, 253);
+            ZoomSettingsPanel.Size = new System.Drawing.Size(262, 353);
             ZoomSettingsPanel.TabIndex = 36;
             // 
             // ZoomFactorLabel
@@ -662,7 +693,7 @@ namespace EveOPreview.View
             OverlayTabPage.Controls.Add(OverlaySettingsPanel);
             OverlayTabPage.Location = new System.Drawing.Point(124, 4);
             OverlayTabPage.Name = "OverlayTabPage";
-            OverlayTabPage.Size = new System.Drawing.Size(262, 253);
+            OverlayTabPage.Size = new System.Drawing.Size(262, 353);
             OverlayTabPage.TabIndex = 3;
             OverlayTabPage.Text = "Overlay";
             // 
@@ -678,7 +709,7 @@ namespace EveOPreview.View
             OverlaySettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             OverlaySettingsPanel.Location = new System.Drawing.Point(0, 0);
             OverlaySettingsPanel.Name = "OverlaySettingsPanel";
-            OverlaySettingsPanel.Size = new System.Drawing.Size(262, 253);
+            OverlaySettingsPanel.Size = new System.Drawing.Size(262, 353);
             OverlaySettingsPanel.TabIndex = 25;
             // 
             // groupBoxOverlayFont
@@ -866,7 +897,7 @@ namespace EveOPreview.View
             ClientsTabPage.Controls.Add(ClientsPanel);
             ClientsTabPage.Location = new System.Drawing.Point(124, 4);
             ClientsTabPage.Name = "ClientsTabPage";
-            ClientsTabPage.Size = new System.Drawing.Size(262, 253);
+            ClientsTabPage.Size = new System.Drawing.Size(262, 353);
             ClientsTabPage.TabIndex = 4;
             ClientsTabPage.Text = "Active Clients";
             // 
@@ -877,7 +908,7 @@ namespace EveOPreview.View
             ClientsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             ClientsPanel.Location = new System.Drawing.Point(0, 0);
             ClientsPanel.Name = "ClientsPanel";
-            ClientsPanel.Size = new System.Drawing.Size(262, 253);
+            ClientsPanel.Size = new System.Drawing.Size(262, 353);
             ClientsPanel.TabIndex = 32;
             // 
             // activeClientsSplitContainer
@@ -894,8 +925,8 @@ namespace EveOPreview.View
             // activeClientsSplitContainer.Panel2
             // 
             this.activeClientsSplitContainer.Panel2.Controls.Add(this.ThumbnailsList);
-            this.activeClientsSplitContainer.Size = new System.Drawing.Size(260, 251);
-            this.activeClientsSplitContainer.SplitterDistance = 25;
+            this.activeClientsSplitContainer.Size = new System.Drawing.Size(260, 351);
+            this.activeClientsSplitContainer.SplitterDistance = 34;
             this.activeClientsSplitContainer.TabIndex = 35;
             // 
             // ThumbnailsListLabel
@@ -917,105 +948,16 @@ namespace EveOPreview.View
             this.ThumbnailsList.IntegralHeight = false;
             this.ThumbnailsList.Location = new System.Drawing.Point(0, 0);
             this.ThumbnailsList.Name = "ThumbnailsList";
-            this.ThumbnailsList.Size = new System.Drawing.Size(260, 180);
+            this.ThumbnailsList.Size = new System.Drawing.Size(260, 306);
             this.ThumbnailsList.TabIndex = 34;
             this.ThumbnailsList.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.ThumbnailsList_ItemCheck_Handler);
-            // 
-            // AboutTabPage
-            // 
-            AboutTabPage.BackColor = System.Drawing.SystemColors.Control;
-            AboutTabPage.Controls.Add(AboutPanel);
-            AboutTabPage.Location = new System.Drawing.Point(124, 4);
-            AboutTabPage.Name = "AboutTabPage";
-            AboutTabPage.Size = new System.Drawing.Size(262, 253);
-            AboutTabPage.TabIndex = 5;
-            AboutTabPage.Text = "About";
-            // 
-            // AboutPanel
-            // 
-            AboutPanel.BackColor = System.Drawing.Color.Transparent;
-            AboutPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            AboutPanel.Controls.Add(CreditMaintLabel);
-            AboutPanel.Controls.Add(DocumentationLinkLabel);
-            AboutPanel.Controls.Add(DescriptionLabel);
-            AboutPanel.Controls.Add(this.VersionLabel);
-            AboutPanel.Controls.Add(NameLabel);
-            AboutPanel.Controls.Add(this.DocumentationLink);
-            AboutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            AboutPanel.Location = new System.Drawing.Point(0, 0);
-            AboutPanel.Name = "AboutPanel";
-            AboutPanel.Size = new System.Drawing.Size(262, 253);
-            AboutPanel.TabIndex = 2;
-            // 
-            // CreditMaintLabel
-            // 
-            CreditMaintLabel.AutoSize = true;
-            CreditMaintLabel.Location = new System.Drawing.Point(0, 143);
-            CreditMaintLabel.Name = "CreditMaintLabel";
-            CreditMaintLabel.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            CreditMaintLabel.Size = new System.Drawing.Size(258, 19);
-            CreditMaintLabel.TabIndex = 7;
-            CreditMaintLabel.Text = "Credit to previous maintainer: Phrynohyas Tig-Rah";
-            // 
-            // DocumentationLinkLabel
-            // 
-            DocumentationLinkLabel.AutoSize = true;
-            DocumentationLinkLabel.Location = new System.Drawing.Point(0, 163);
-            DocumentationLinkLabel.Name = "DocumentationLinkLabel";
-            DocumentationLinkLabel.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            DocumentationLinkLabel.Size = new System.Drawing.Size(197, 19);
-            DocumentationLinkLabel.TabIndex = 6;
-            DocumentationLinkLabel.Text = "For more information visit our discord:";
-            // 
-            // DescriptionLabel
-            // 
-            DescriptionLabel.BackColor = System.Drawing.Color.Transparent;
-            DescriptionLabel.Location = new System.Drawing.Point(0, 29);
-            DescriptionLabel.Name = "DescriptionLabel";
-            DescriptionLabel.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            DescriptionLabel.Size = new System.Drawing.Size(261, 145);
-            DescriptionLabel.TabIndex = 5;
-            DescriptionLabel.Text = resources.GetString("DescriptionLabel.Text");
-            // 
-            // VersionLabel
-            // 
-            this.VersionLabel.AutoSize = true;
-            this.VersionLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.VersionLabel.Location = new System.Drawing.Point(133, 9);
-            this.VersionLabel.Name = "VersionLabel";
-            this.VersionLabel.Size = new System.Drawing.Size(49, 20);
-            this.VersionLabel.TabIndex = 4;
-            this.VersionLabel.Text = "1.0.0";
-            // 
-            // NameLabel
-            // 
-            NameLabel.AutoSize = true;
-            NameLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            NameLabel.Location = new System.Drawing.Point(4, 9);
-            NameLabel.Name = "NameLabel";
-            NameLabel.Size = new System.Drawing.Size(130, 20);
-            NameLabel.TabIndex = 3;
-            NameLabel.Text = "EVE-O Preview";
-            // 
-            // DocumentationLink
-            // 
-            this.DocumentationLink.Location = new System.Drawing.Point(0, 177);
-            this.DocumentationLink.Margin = new System.Windows.Forms.Padding(30, 3, 3, 3);
-            this.DocumentationLink.Name = "DocumentationLink";
-            this.DocumentationLink.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            this.DocumentationLink.Size = new System.Drawing.Size(262, 33);
-            this.DocumentationLink.TabIndex = 2;
-            this.DocumentationLink.TabStop = true;
-            this.DocumentationLink.Text = "to be set from prresenter to be set from prresenter to be set from prresenter to " +
-    "be set from prresenter";
-            this.DocumentationLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.DocumentationLinkClicked_Handler);
             // 
             // CycleGroupTabPage
             // 
             CycleGroupTabPage.Controls.Add(this.CycleGroupPanel);
             CycleGroupTabPage.Location = new System.Drawing.Point(124, 4);
             CycleGroupTabPage.Name = "CycleGroupTabPage";
-            CycleGroupTabPage.Size = new System.Drawing.Size(262, 253);
+            CycleGroupTabPage.Size = new System.Drawing.Size(262, 353);
             CycleGroupTabPage.TabIndex = 6;
             CycleGroupTabPage.Text = "Cycle Groups";
             // 
@@ -1041,7 +983,7 @@ namespace EveOPreview.View
             this.CycleGroupPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.CycleGroupPanel.Location = new System.Drawing.Point(0, 0);
             this.CycleGroupPanel.Name = "CycleGroupPanel";
-            this.CycleGroupPanel.Size = new System.Drawing.Size(262, 253);
+            this.CycleGroupPanel.Size = new System.Drawing.Size(262, 353);
             this.CycleGroupPanel.TabIndex = 0;
             // 
             // removeGroupButton
@@ -1102,7 +1044,7 @@ namespace EveOPreview.View
             this.cycleGroupClientOrderList.FormattingEnabled = true;
             this.cycleGroupClientOrderList.Location = new System.Drawing.Point(6, 153);
             this.cycleGroupClientOrderList.Name = "cycleGroupClientOrderList";
-            this.cycleGroupClientOrderList.Size = new System.Drawing.Size(239, 95);
+            this.cycleGroupClientOrderList.Size = new System.Drawing.Size(239, 186);
             this.cycleGroupClientOrderList.TabIndex = 11;
             // 
             // cycleGroupBackwardHotkey2Text
@@ -1209,6 +1151,298 @@ namespace EveOPreview.View
             this.addClientToCycleGroupButton.UseVisualStyleBackColor = true;
             this.addClientToCycleGroupButton.Click += new System.EventHandler(this.addClientToCycleGroupButton_Click);
             // 
+            // FpsLimiterTabPage
+            // 
+            this.FpsLimiterTabPage.Controls.Add(this.fpsMainLayoutPanel);
+            this.FpsLimiterTabPage.Location = new System.Drawing.Point(124, 4);
+            this.FpsLimiterTabPage.Name = "FpsLimiterTabPage";
+            this.FpsLimiterTabPage.Size = new System.Drawing.Size(262, 353);
+            this.FpsLimiterTabPage.TabIndex = 7;
+            this.FpsLimiterTabPage.Text = "FPS Limiter";
+            this.FpsLimiterTabPage.UseVisualStyleBackColor = true;
+            // 
+            // fpsMainLayoutPanel
+            // 
+            this.fpsMainLayoutPanel.ColumnCount = 1;
+            this.fpsMainLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 262F));
+            this.fpsMainLayoutPanel.Controls.Add(this.fpsTopPanel, 0, 0);
+            this.fpsMainLayoutPanel.Controls.Add(this.fpsBottomPanel, 0, 1);
+            this.fpsMainLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.fpsMainLayoutPanel.Location = new System.Drawing.Point(0, 0);
+            this.fpsMainLayoutPanel.Name = "fpsMainLayoutPanel";
+            this.fpsMainLayoutPanel.RowCount = 2;
+            this.fpsMainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 109F));
+            this.fpsMainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.fpsMainLayoutPanel.Size = new System.Drawing.Size(262, 353);
+            this.fpsMainLayoutPanel.TabIndex = 0;
+            // 
+            // fpsTopPanel
+            // 
+            this.fpsTopPanel.Controls.Add(label1);
+            this.fpsTopPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.fpsTopPanel.Location = new System.Drawing.Point(3, 3);
+            this.fpsTopPanel.Name = "fpsTopPanel";
+            this.fpsTopPanel.Size = new System.Drawing.Size(256, 103);
+            this.fpsTopPanel.TabIndex = 0;
+            // 
+            // label1
+            // 
+            label1.BackColor = System.Drawing.Color.Transparent;
+            label1.Location = new System.Drawing.Point(-2, -2);
+            label1.Name = "label1";
+            label1.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
+            label1.Size = new System.Drawing.Size(261, 145);
+            label1.TabIndex = 6;
+            label1.Text = resources.GetString("label1.Text");
+            // 
+            // fpsBottomPanel
+            // 
+            this.fpsBottomPanel.Controls.Add(this.lblFpsFeatureExpired);
+            this.fpsBottomPanel.Controls.Add(this.groupBox1);
+            this.fpsBottomPanel.Controls.Add(this.chbIsFpsThrottlingEnabled);
+            this.fpsBottomPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.fpsBottomPanel.Location = new System.Drawing.Point(3, 112);
+            this.fpsBottomPanel.Name = "fpsBottomPanel";
+            this.fpsBottomPanel.Size = new System.Drawing.Size(256, 238);
+            this.fpsBottomPanel.TabIndex = 1;
+            // 
+            // lblFpsFeatureExpired
+            // 
+            this.lblFpsFeatureExpired.Location = new System.Drawing.Point(21, 168);
+            this.lblFpsFeatureExpired.Name = "lblFpsFeatureExpired";
+            this.lblFpsFeatureExpired.Size = new System.Drawing.Size(224, 68);
+            this.lblFpsFeatureExpired.TabIndex = 24;
+            this.lblFpsFeatureExpired.Text = "This experimental feature has expired.\r\nIf this is the first time running, please" +
+    " try closing and re-starting, or alternatively please update to the latest versi" +
+    "on.\r\n";
+            this.lblFpsFeatureExpired.Visible = false;
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.btnDummyFpsSave);
+            this.groupBox1.Controls.Add(lblFpsPredictiveLimit);
+            this.groupBox1.Controls.Add(this.numericFpsPredictedLimit);
+            this.groupBox1.Controls.Add(lblFpsBackgroundLimit);
+            this.groupBox1.Controls.Add(this.numericFpsBackgroundLimit);
+            this.groupBox1.Controls.Add(lblFpsForegroundLimit);
+            this.groupBox1.Controls.Add(this.numericFpsForegroundLimit);
+            this.groupBox1.Location = new System.Drawing.Point(10, 37);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(241, 114);
+            this.groupBox1.TabIndex = 22;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "FPS Limits";
+            // 
+            // btnDummyFpsSave
+            // 
+            this.btnDummyFpsSave.Location = new System.Drawing.Point(205, 76);
+            this.btnDummyFpsSave.Name = "btnDummyFpsSave";
+            this.btnDummyFpsSave.Size = new System.Drawing.Size(30, 23);
+            this.btnDummyFpsSave.TabIndex = 30;
+            this.btnDummyFpsSave.Text = "Go";
+            this.btnDummyFpsSave.UseVisualStyleBackColor = true;
+            // 
+            // lblFpsPredictiveLimit
+            // 
+            lblFpsPredictiveLimit.AutoSize = true;
+            lblFpsPredictiveLimit.Location = new System.Drawing.Point(11, 81);
+            lblFpsPredictiveLimit.Name = "lblFpsPredictiveLimit";
+            lblFpsPredictiveLimit.Size = new System.Drawing.Size(81, 13);
+            lblFpsPredictiveLimit.TabIndex = 29;
+            lblFpsPredictiveLimit.Text = "Predicted Client";
+            // 
+            // numericFpsPredictedLimit
+            // 
+            this.numericFpsPredictedLimit.BackColor = System.Drawing.SystemColors.Window;
+            this.numericFpsPredictedLimit.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.numericFpsPredictedLimit.CausesValidation = false;
+            this.numericFpsPredictedLimit.Location = new System.Drawing.Point(108, 79);
+            this.numericFpsPredictedLimit.Maximum = new decimal(new int[] {
+            500,
+            0,
+            0,
+            0});
+            this.numericFpsPredictedLimit.Name = "numericFpsPredictedLimit";
+            this.numericFpsPredictedLimit.Size = new System.Drawing.Size(48, 20);
+            this.numericFpsPredictedLimit.TabIndex = 28;
+            this.numericFpsPredictedLimit.Value = new decimal(new int[] {
+            30,
+            0,
+            0,
+            0});
+            this.numericFpsPredictedLimit.Leave += new System.EventHandler(this.numericFpsPredictedLimit_Leave);
+            // 
+            // lblFpsBackgroundLimit
+            // 
+            lblFpsBackgroundLimit.AutoSize = true;
+            lblFpsBackgroundLimit.Location = new System.Drawing.Point(11, 50);
+            lblFpsBackgroundLimit.Name = "lblFpsBackgroundLimit";
+            lblFpsBackgroundLimit.Size = new System.Drawing.Size(79, 13);
+            lblFpsBackgroundLimit.TabIndex = 27;
+            lblFpsBackgroundLimit.Text = "Inactive Clients";
+            // 
+            // numericFpsBackgroundLimit
+            // 
+            this.numericFpsBackgroundLimit.BackColor = System.Drawing.SystemColors.Window;
+            this.numericFpsBackgroundLimit.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.numericFpsBackgroundLimit.CausesValidation = false;
+            this.numericFpsBackgroundLimit.Location = new System.Drawing.Point(108, 48);
+            this.numericFpsBackgroundLimit.Maximum = new decimal(new int[] {
+            500,
+            0,
+            0,
+            0});
+            this.numericFpsBackgroundLimit.Name = "numericFpsBackgroundLimit";
+            this.numericFpsBackgroundLimit.Size = new System.Drawing.Size(48, 20);
+            this.numericFpsBackgroundLimit.TabIndex = 26;
+            this.numericFpsBackgroundLimit.Value = new decimal(new int[] {
+            60,
+            0,
+            0,
+            0});
+            this.numericFpsBackgroundLimit.Leave += new System.EventHandler(this.numericFpsBackgroundLimit_Leave);
+            // 
+            // lblFpsForegroundLimit
+            // 
+            lblFpsForegroundLimit.AutoSize = true;
+            lblFpsForegroundLimit.Location = new System.Drawing.Point(11, 21);
+            lblFpsForegroundLimit.Name = "lblFpsForegroundLimit";
+            lblFpsForegroundLimit.Size = new System.Drawing.Size(66, 13);
+            lblFpsForegroundLimit.TabIndex = 25;
+            lblFpsForegroundLimit.Text = "Active Client";
+            // 
+            // numericFpsForegroundLimit
+            // 
+            this.numericFpsForegroundLimit.BackColor = System.Drawing.SystemColors.Window;
+            this.numericFpsForegroundLimit.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.numericFpsForegroundLimit.CausesValidation = false;
+            this.numericFpsForegroundLimit.Location = new System.Drawing.Point(108, 19);
+            this.numericFpsForegroundLimit.Maximum = new decimal(new int[] {
+            500,
+            0,
+            0,
+            0});
+            this.numericFpsForegroundLimit.Name = "numericFpsForegroundLimit";
+            this.numericFpsForegroundLimit.Size = new System.Drawing.Size(48, 20);
+            this.numericFpsForegroundLimit.TabIndex = 24;
+            this.numericFpsForegroundLimit.Value = new decimal(new int[] {
+            144,
+            0,
+            0,
+            0});
+            this.numericFpsForegroundLimit.Leave += new System.EventHandler(this.numericFpsForegroundLimit_Leave);
+            // 
+            // chbIsFpsThrottlingEnabled
+            // 
+            this.chbIsFpsThrottlingEnabled.AutoSize = true;
+            this.chbIsFpsThrottlingEnabled.Location = new System.Drawing.Point(10, 9);
+            this.chbIsFpsThrottlingEnabled.Name = "chbIsFpsThrottlingEnabled";
+            this.chbIsFpsThrottlingEnabled.Size = new System.Drawing.Size(216, 17);
+            this.chbIsFpsThrottlingEnabled.TabIndex = 21;
+            this.chbIsFpsThrottlingEnabled.Text = "Enable DirectX Hooks for FPS Throttling";
+            this.chbIsFpsThrottlingEnabled.UseVisualStyleBackColor = true;
+            this.chbIsFpsThrottlingEnabled.CheckedChanged += new System.EventHandler(this.chbIsFpsThrottlingEnabled_CheckedChanged);
+            // 
+            // AboutTabPage
+            // 
+            AboutTabPage.BackColor = System.Drawing.SystemColors.Control;
+            AboutTabPage.Controls.Add(AboutPanel);
+            AboutTabPage.Location = new System.Drawing.Point(124, 4);
+            AboutTabPage.Name = "AboutTabPage";
+            AboutTabPage.Size = new System.Drawing.Size(262, 353);
+            AboutTabPage.TabIndex = 5;
+            AboutTabPage.Text = "About";
+            // 
+            // AboutPanel
+            // 
+            AboutPanel.BackColor = System.Drawing.Color.Transparent;
+            AboutPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            AboutPanel.Controls.Add(lblLiabilityDisclaimer);
+            AboutPanel.Controls.Add(CreditMaintLabel);
+            AboutPanel.Controls.Add(DocumentationLinkLabel);
+            AboutPanel.Controls.Add(DescriptionLabel);
+            AboutPanel.Controls.Add(this.VersionLabel);
+            AboutPanel.Controls.Add(NameLabel);
+            AboutPanel.Controls.Add(this.DocumentationLink);
+            AboutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            AboutPanel.Location = new System.Drawing.Point(0, 0);
+            AboutPanel.Name = "AboutPanel";
+            AboutPanel.Size = new System.Drawing.Size(262, 353);
+            AboutPanel.TabIndex = 2;
+            // 
+            // lblLiabilityDisclaimer
+            // 
+            lblLiabilityDisclaimer.BackColor = System.Drawing.Color.Transparent;
+            lblLiabilityDisclaimer.Location = new System.Drawing.Point(5, 29);
+            lblLiabilityDisclaimer.Name = "lblLiabilityDisclaimer";
+            lblLiabilityDisclaimer.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
+            lblLiabilityDisclaimer.Size = new System.Drawing.Size(261, 117);
+            lblLiabilityDisclaimer.TabIndex = 9;
+            lblLiabilityDisclaimer.Text = resources.GetString("lblLiabilityDisclaimer.Text");
+            // 
+            // CreditMaintLabel
+            // 
+            CreditMaintLabel.AutoSize = true;
+            CreditMaintLabel.Location = new System.Drawing.Point(5, 273);
+            CreditMaintLabel.Name = "CreditMaintLabel";
+            CreditMaintLabel.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
+            CreditMaintLabel.Size = new System.Drawing.Size(258, 19);
+            CreditMaintLabel.TabIndex = 7;
+            CreditMaintLabel.Text = "Credit to previous maintainer: Phrynohyas Tig-Rah";
+            // 
+            // DocumentationLinkLabel
+            // 
+            DocumentationLinkLabel.AutoSize = true;
+            DocumentationLinkLabel.Location = new System.Drawing.Point(5, 292);
+            DocumentationLinkLabel.Name = "DocumentationLinkLabel";
+            DocumentationLinkLabel.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
+            DocumentationLinkLabel.Size = new System.Drawing.Size(197, 19);
+            DocumentationLinkLabel.TabIndex = 6;
+            DocumentationLinkLabel.Text = "For more information visit our discord:";
+            // 
+            // DescriptionLabel
+            // 
+            DescriptionLabel.BackColor = System.Drawing.Color.Transparent;
+            DescriptionLabel.Location = new System.Drawing.Point(5, 157);
+            DescriptionLabel.Name = "DescriptionLabel";
+            DescriptionLabel.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
+            DescriptionLabel.Size = new System.Drawing.Size(261, 127);
+            DescriptionLabel.TabIndex = 5;
+            DescriptionLabel.Text = resources.GetString("DescriptionLabel.Text");
+            // 
+            // VersionLabel
+            // 
+            this.VersionLabel.AutoSize = true;
+            this.VersionLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.VersionLabel.Location = new System.Drawing.Point(133, 9);
+            this.VersionLabel.Name = "VersionLabel";
+            this.VersionLabel.Size = new System.Drawing.Size(49, 20);
+            this.VersionLabel.TabIndex = 4;
+            this.VersionLabel.Text = "1.0.0";
+            // 
+            // NameLabel
+            // 
+            NameLabel.AutoSize = true;
+            NameLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            NameLabel.Location = new System.Drawing.Point(4, 9);
+            NameLabel.Name = "NameLabel";
+            NameLabel.Size = new System.Drawing.Size(130, 20);
+            NameLabel.TabIndex = 3;
+            NameLabel.Text = "EVE-O Preview";
+            // 
+            // DocumentationLink
+            // 
+            this.DocumentationLink.Location = new System.Drawing.Point(5, 311);
+            this.DocumentationLink.Margin = new System.Windows.Forms.Padding(30, 3, 3, 3);
+            this.DocumentationLink.Name = "DocumentationLink";
+            this.DocumentationLink.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
+            this.DocumentationLink.Size = new System.Drawing.Size(262, 33);
+            this.DocumentationLink.TabIndex = 2;
+            this.DocumentationLink.TabStop = true;
+            this.DocumentationLink.Text = "to be set from prresenter to be set from prresenter to be set from prresenter to " +
+    "be set from prresenter";
+            this.DocumentationLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.DocumentationLinkClicked_Handler);
+            // 
             // NotifyIcon
             // 
             this.NotifyIcon.ContextMenuStrip = this.TrayMenu;
@@ -1233,7 +1467,7 @@ namespace EveOPreview.View
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(390, 261);
+            this.ClientSize = new System.Drawing.Size(390, 361);
             this.Controls.Add(ContentTabControl);
             this.ForeColor = System.Drawing.SystemColors.ControlText;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -1274,12 +1508,22 @@ namespace EveOPreview.View
             this.activeClientsSplitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.activeClientsSplitContainer)).EndInit();
             this.activeClientsSplitContainer.ResumeLayout(false);
-            AboutTabPage.ResumeLayout(false);
-            AboutPanel.ResumeLayout(false);
-            AboutPanel.PerformLayout();
             CycleGroupTabPage.ResumeLayout(false);
             this.CycleGroupPanel.ResumeLayout(false);
             this.CycleGroupPanel.PerformLayout();
+            this.FpsLimiterTabPage.ResumeLayout(false);
+            this.fpsMainLayoutPanel.ResumeLayout(false);
+            this.fpsTopPanel.ResumeLayout(false);
+            this.fpsBottomPanel.ResumeLayout(false);
+            this.fpsBottomPanel.PerformLayout();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericFpsPredictedLimit)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericFpsBackgroundLimit)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericFpsForegroundLimit)).EndInit();
+            AboutTabPage.ResumeLayout(false);
+            AboutPanel.ResumeLayout(false);
+            AboutPanel.PerformLayout();
             this.TrayMenu.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -1349,5 +1593,17 @@ namespace EveOPreview.View
         private Label lblTitleOffsetLeft;
         private TextBox txtTitleOffsetLeft;
         private Label lblTitleBorderWidth;
+        private TabPage FpsLimiterTabPage;
+        private TableLayoutPanel fpsMainLayoutPanel;
+        private Panel fpsBottomPanel;
+        private Panel fpsTopPanel;
+        private GroupBox groupBox1;
+        private NumericUpDown numericFpsForegroundLimit;
+        private CheckBox chbIsFpsThrottlingEnabled;
+        private NumericUpDown numericFpsPredictedLimit;
+        private NumericUpDown numericFpsBackgroundLimit;
+        private ToolTip toolTip;
+        private Button btnDummyFpsSave;
+        private Label lblFpsFeatureExpired;
     }
 }

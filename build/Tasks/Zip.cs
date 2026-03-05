@@ -14,7 +14,12 @@ namespace Build.Tasks
 			}
 
 			context.Zip(Configuration.BinFolder, Configuration.PublishFolder + "/EVE-O Preview.zip",
-			new[] { Configuration.BinFolder + "/EVE-O Preview.exe", Configuration.BinFolder + "/readme.pdf" });
+			new[]
+            {
+                Configuration.BinFolder + "/EVE-O Preview.exe", 
+                Configuration.BinFolder + "/readme.pdf", 
+                Configuration.BinFolder + "/FPSLimiter.Hook.dll"
+            });
 		}
 	}
 }

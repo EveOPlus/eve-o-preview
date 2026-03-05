@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
+using EveOPreview.Services.Interface;
 
 namespace EveOPreview.Configuration.Implementation
 {
@@ -11,11 +12,13 @@ namespace EveOPreview.Configuration.Implementation
 
         private readonly IAppConfig _appConfig;
         private readonly IThumbnailConfiguration _thumbnailConfiguration;
+        private readonly IPremiumService _premiumService;
 
-        public ConfigurationStorage(IAppConfig appConfig, IThumbnailConfiguration thumbnailConfiguration)
+        public ConfigurationStorage(IAppConfig appConfig, IThumbnailConfiguration thumbnailConfiguration, IPremiumService premiumService)
         {
             this._appConfig = appConfig;
             this._thumbnailConfiguration = thumbnailConfiguration;
+            _premiumService = premiumService;
         }
 
         public void Load()
@@ -39,6 +42,7 @@ namespace EveOPreview.Configuration.Implementation
             // StageHotkeyArraysToAvoidDuplicates(rawData);
 
             JsonConvert.PopulateObject(rawData, this._thumbnailConfiguration, jsonSerializerSettings);
+            this._thumbnailConfiguration.IsPremium = _premiumService.IsLicenseValidAndCurrent(this._thumbnailConfiguration.PremiumLicenseKey);
 
             // Validate data after loading it
             this._thumbnailConfiguration.ApplyRestrictions();
@@ -125,6 +129,7 @@ namespace EveOPreview.Configuration.Implementation
 
                 this._thumbnailConfiguration.CycleGroups.Add(cycleGroup1);
                 this._thumbnailConfiguration.CycleGroups.Add(cycleGroup2);
+                this._thumbnailConfiguration.ConfigVersion = 2;
             }
         }
 

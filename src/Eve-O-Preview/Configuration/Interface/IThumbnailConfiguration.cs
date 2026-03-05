@@ -7,6 +7,7 @@ namespace EveOPreview.Configuration
 {
     public interface IThumbnailConfiguration
     {
+        int ConfigVersion { get; set; }
         List<CycleGroup> CycleGroups { get; set; }
 
         Dictionary<string, Color> PerClientActiveClientHighlightColor { get; set; }
@@ -46,6 +47,11 @@ namespace EveOPreview.Configuration
         FontSettings TitleFontSettings { get; set; }
 
         Point LoginThumbnailLocation { get; set; }
+
+        FpsLimiterSettings FpsLimiterSettings { get; set; }
+        
+        string PremiumLicenseKey { get; set; }
+        bool IsPremium { get; set; }
 
         Point GetThumbnailLocation(string currentClient, string activeClient, Point defaultLocation);
         void SetThumbnailLocation(string currentClient, string activeClient, Point location);
