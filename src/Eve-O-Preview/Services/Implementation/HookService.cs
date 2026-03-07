@@ -2,6 +2,8 @@
 using EveOPreview.Services.Interface;
 using EveOPreview.Services.Interop;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
@@ -11,11 +13,13 @@ using System.Threading.Tasks;
 
 namespace EveOPreview.Services.Implementation
 {
-    public class FpsLimiterService : IFpsLimiterService
+    public class HookService : IHookService
     {
         private readonly IThumbnailConfiguration _configuration;
+        private readonly ConcurrentDictionary<IntPtr, Guid> _initializedClients = new ConcurrentDictionary<IntPtr, Guid>();
+        private readonly object _lock = new object();
         
-        public FpsLimiterService(IThumbnailConfiguration configuration)
+        public HookService(IThumbnailConfiguration configuration)
         {
             _configuration = configuration;
         }
@@ -130,20 +134,23 @@ namespace EveOPreview.Services.Implementation
             return await SetExactTargetFpsAsync(handle, 0, 0, 0).ConfigureAwait(false);
         }
 
-        public async Task TryInstallFpsLimiterIntoClientAsync(IProcessInfo procInfo)
+        public async Task TryInstallHooksAsync(IProcessInfo procInfo)
         {
-            if (!CanAccessFpsLimiter())
+            if (!CanAccessFpsLimiter() && !CanAccessAudioMute())
             {
                 return;
             }
-            
+
+            bool isFirstTimeInitializing = _initializedClients.TryAdd(procInfo.Handle, Guid.NewGuid());
+
             await Task.Run(() =>
             {
                 try
                 {
-                    if (Ping(procInfo.Handle))
+                    if (!isFirstTimeInitializing || Ping(procInfo.Handle))
                     {
                         // Already installed, as the pipe is active and responding. Don't try to install another hook.
+                        // e.g. If Eve-O was previously running and started up again, while Eve clients are already initialized.
                     }
                     else
                     {
@@ -198,7 +205,9 @@ namespace EveOPreview.Services.Implementation
                 }
                 catch (Exception ex)
                 {
-                    KernelNativeMethods.OutputDebug($"Unhandled exception in {nameof(TryInstallFpsLimiterIntoClientAsync)}", procInfo.Handle);
+                    KernelNativeMethods.OutputDebug($"Unhandled exception in {nameof(TryInstallHooksAsync)}", procInfo.Handle);
+
+                    _initializedClients.TryRemove(procInfo.Handle, out _);
                 }
             });
 
@@ -210,15 +219,112 @@ namespace EveOPreview.Services.Implementation
 
             // Regardless if we just installed it, or it was already installed, set the FPS to our target
             await UpdateTargetFpsAsync(procInfo.Handle);
+            await UpdateMutedAudioAsync(procInfo.Handle);
         }
 
-        private async Task<bool> SendTakeOwnershipCommand(IntPtr handle, int newOwnerProcessId)
+        private const uint jump_gates_start_play = 3689163958;
+        private const uint jump_gates_exit_play = 1537508544;
+        private const uint jump_gates_lightning_play = 1768044352;
+        private const uint location_banner_play = 2377891014;
+        private const uint location_banner_data_clicks_play = 3090840445;
+        public async Task<bool> UpdateMutedAudioAsync(IntPtr handle)
         {
-            if (!CanAccessFpsLimiter())
+            if (!CanAccessAudioMute())
             {
                 return false;
             }
 
+            await ClearMutedAudioListAsync(handle);
+
+            var mutedEventIds = new List<uint>();
+
+            if (_configuration.AudioMuteSettings.MuteJumpGateTunnel)
+            {
+                mutedEventIds.Add(jump_gates_start_play);
+                mutedEventIds.Add(jump_gates_exit_play);
+                mutedEventIds.Add(jump_gates_lightning_play);
+            }
+
+            if (_configuration.AudioMuteSettings.MuteLocationBanner)
+            {
+                mutedEventIds.Add(location_banner_play);
+                mutedEventIds.Add(location_banner_data_clicks_play);
+            }
+
+            return await SetMutedAudioListAsync(handle, mutedEventIds);
+        }
+
+        private async Task<bool> ClearMutedAudioListAsync(IntPtr handle)
+        {
+            return await Task.Run<bool>(() =>
+            {
+                try
+                {
+                    // 0xA2 0xC1 clear all muted sounds. expect 0x01 result.
+                    using (var client = GetClientsNamedPipe(handle, PipeDirection.InOut))
+                    {
+                        client.Connect(100);
+                        using (var writer = new BinaryWriter(client))
+                        using (var reader = new BinaryReader(client))
+                        {
+                            writer.Write((byte)0xA2);
+                            writer.Write((byte)0xC1);
+                            writer.Flush();
+
+                            var response = reader.ReadByte();
+
+                            return response == (byte)0x01;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    KernelNativeMethods.OutputDebug($"Unhandled exception during {nameof(SendTakeOwnershipCommand)}", handle);
+                    return false;
+                }
+            });
+        }
+
+        private async Task<bool> SetMutedAudioListAsync(IntPtr handle, List<uint> mutedEventIds)
+        {
+            return await Task.Run<bool>(() =>
+            {
+                try
+                {
+                    // 0xA2 0xC3 send length followed by list of uint, expect 0x01 result.
+                    using (var client = GetClientsNamedPipe(handle, PipeDirection.InOut))
+                    {
+                        client.Connect(100);
+                        using (var writer = new BinaryWriter(client))
+                        using (var reader = new BinaryReader(client))
+                        {
+                            writer.Write((byte)0xA2);
+                            writer.Write((byte)0xC3);
+                            
+                            writer.Write(mutedEventIds.Count);
+                            foreach (var eventId in mutedEventIds)
+                            {
+                                writer.Write(eventId);
+                            }
+
+                            writer.Flush();
+
+                            var response = reader.ReadByte();
+
+                            return response == (byte)0x01;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    KernelNativeMethods.OutputDebug($"Unhandled exception during {nameof(SendTakeOwnershipCommand)}", handle);
+                    return false;
+                }
+            });
+        }
+
+        private async Task<bool> SendTakeOwnershipCommand(IntPtr handle, int newOwnerProcessId)
+        {
             return await Task.Run<bool>(() =>
             {
                 try
@@ -311,6 +417,11 @@ namespace EveOPreview.Services.Implementation
         private bool CanAccessFpsLimiter()
         {
             return _configuration.IsPremium && _configuration.FpsLimiterSettings.IsEnabled;
+        }
+
+        private bool CanAccessAudioMute()
+        {
+            return _configuration.IsPremium;
         }
     }
 }

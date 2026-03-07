@@ -48,7 +48,8 @@ namespace EveOPreview.Presenters
             this.View.ApplicationExitRequested = this.ExitApplication;
             this.View.GetClientNameFromInput = this.GetClientDescriptionFromInputBox;
             this.View.FpsLimiterChanged = this.TriggerSetFpsLimiter;
-            this.View.FpsLimiterEnabledChanged = TriggerSetFpsLimiterEnabled;
+            this.View.FpsLimiterEnabledChanged = this.TriggerSetFpsLimiterEnabled;
+            this.View.AudioSettingsChanged = this.TriggerSetAudioSettings;
         }
 
         private void Activate()
@@ -130,6 +131,7 @@ namespace EveOPreview.Presenters
             this.View.ActiveClientHighlightColor = this._configuration.ActiveClientHighlightColor;
             this.View.TitleFontSettings = this._configuration.TitleFontSettings;
             this.View.FpsLimiterSettings = this._configuration.FpsLimiterSettings;
+            this.View.AudioMuteSettings = this._configuration.AudioMuteSettings;
 
             this.View.IsPremium = this._configuration.IsPremium;
         }
@@ -267,6 +269,11 @@ namespace EveOPreview.Presenters
         private void TriggerSetFpsLimiterEnabled()
         {
             this._mediator.Send(new SetFpsLimiterEnabled());
+        }
+
+        private void TriggerSetAudioSettings()
+        {
+            this._mediator.Send(new SetAudioSettings());
         }
 
         private void ExitApplication()

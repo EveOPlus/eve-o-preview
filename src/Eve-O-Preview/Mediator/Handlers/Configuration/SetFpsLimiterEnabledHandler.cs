@@ -13,13 +13,13 @@ namespace EveOPreview.Mediator.Handlers.Configuration
     {
         private readonly IThumbnailConfiguration _config;
         private readonly IProcessMonitor _processMonitor;
-        private readonly IFpsLimiterService _fpsLimiterService;
+        private readonly IHookService _hookService;
 
-        public SetFpsLimiterEnabledHandler(IThumbnailConfiguration config, IProcessMonitor processMonitor, IFpsLimiterService fpsLimiterService)
+        public SetFpsLimiterEnabledHandler(IThumbnailConfiguration config, IProcessMonitor processMonitor, IHookService hookService)
         {
             _config = config;
             _processMonitor = processMonitor;
-            _fpsLimiterService = fpsLimiterService;
+            _hookService = hookService;
         }
 
         public async Task<Unit> Handle(SetFpsLimiterEnabled request, CancellationToken cancellationToken)
@@ -28,12 +28,12 @@ namespace EveOPreview.Mediator.Handlers.Configuration
 
             if (_config.FpsLimiterSettings.IsEnabled && _config.IsPremium)
             {
-                var tasks = allKnownClients.Select(client => _fpsLimiterService.TryInstallFpsLimiterIntoClientAsync(client));
+                var tasks = allKnownClients.Select(client => _hookService.TryInstallHooksAsync(client));
                 await Task.WhenAll(tasks);
             }
             else
             {
-                var tasks = allKnownClients.Select(client => _fpsLimiterService.DisableFpsLimiterAsync(client.Handle));
+                var tasks = allKnownClients.Select(client => _hookService.DisableFpsLimiterAsync(client.Handle));
                 await Task.WhenAll(tasks);
             }
 

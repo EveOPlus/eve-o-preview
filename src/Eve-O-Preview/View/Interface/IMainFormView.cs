@@ -36,6 +36,7 @@ namespace EveOPreview.View
         FontSettings TitleFontSettings { get; set; }
 
         FpsLimiterSettings FpsLimiterSettings { get; set; }
+        AudioMuteSettings AudioMuteSettings { get; set; }
 
         List<CycleGroup> CycleGroups { get; set; }
 
@@ -60,6 +61,7 @@ namespace EveOPreview.View
 		Func<string> GetClientNameFromInput { get; set; }
         Action FpsLimiterChanged { get; set; }
         Action FpsLimiterEnabledChanged { get; set; }
+        Action AudioSettingsChanged { get; set; }
         bool IsPremium { get; set; }
     }
 }

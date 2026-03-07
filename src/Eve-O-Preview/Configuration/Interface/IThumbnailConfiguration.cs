@@ -49,7 +49,8 @@ namespace EveOPreview.Configuration
         Point LoginThumbnailLocation { get; set; }
 
         FpsLimiterSettings FpsLimiterSettings { get; set; }
-        
+        AudioMuteSettings AudioMuteSettings { get; set; }
+
         string PremiumLicenseKey { get; set; }
         bool IsPremium { get; set; }
 

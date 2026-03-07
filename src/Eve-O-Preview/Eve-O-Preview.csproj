@@ -114,6 +114,7 @@
     <Compile Include="Configuration\Implementation\ConfigurationStorage.cs" />
     <Compile Include="Configuration\Implementation\CycleGroup.cs" />
     <Compile Include="Configuration\Implementation\FontSettings.cs" />
+    <Compile Include="Configuration\Implementation\AudioMuteSettings.cs" />
     <Compile Include="Configuration\Implementation\FpsLimiterSettings.cs" />
     <Compile Include="Configuration\Interface\IAppConfig.cs" />
     <Compile Include="Configuration\Interface\IThumbnailConfiguration.cs" />
@@ -121,11 +122,13 @@
     <Compile Include="Helper\ProcessHelpers.cs" />
     <Compile Include="Mediator\Handlers\Configuration\SaveConfigurationHandler.cs" />
     <Compile Include="Mediator\Handlers\Configuration\SetFpsLimiterEnabledHandler.cs" />
+    <Compile Include="Mediator\Handlers\Configuration\SetAudioSettingsHandler.cs" />
     <Compile Include="Mediator\Handlers\Configuration\SetFpsLimiterHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailTitleFontSettingsUpdatedHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailFrameSettingsUpdatedHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailConfiguredSizeUpdatedHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailListUpdatedHandler.cs" />
+    <Compile Include="Mediator\Messages\Configuration\SetAudioSettings.cs" />
     <Compile Include="Mediator\Messages\Configuration\SetFpsLimiterEnabled.cs" />
     <Compile Include="Mediator\Messages\Configuration\SetFpsLimiter.cs" />
     <Compile Include="Mediator\Messages\Thumbnails\ThumbnailFontTitleSettingsUpdated.cs" />
@@ -142,9 +145,9 @@
     <Compile Include="Mediator\Messages\Thumbnails\ThumbnailLocationUpdated.cs" />
     <Compile Include="Mediator\Messages\Thumbnails\ThumbnailActiveSizeUpdated.cs" />
     <Compile Include="Presenters\Interface\IMainFormPresenter.cs" />
-    <Compile Include="Services\Implementation\FpsLimiterService.cs" />
+    <Compile Include="Services\Implementation\HookService.cs" />
     <Compile Include="Services\Implementation\PremiumService.cs" />
-    <Compile Include="Services\Interface\IFpsLimiterService.cs" />
+    <Compile Include="Services\Interface\IHookService.cs" />
     <Compile Include="Services\Implementation\ProcessInfo.cs" />
     <Compile Include="Services\Implementation\ProcessMonitor.cs" />
     <Compile Include="Services\Interface\IPremiumService.cs" />

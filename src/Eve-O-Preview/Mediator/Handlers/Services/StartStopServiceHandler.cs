@@ -13,13 +13,13 @@ namespace EveOPreview.Mediator.Handlers.Services
     {
         private readonly IThumbnailManager _manager;
         private readonly IProcessMonitor _procMonitor;
-        private readonly IFpsLimiterService _fpsLimiter;
+        private readonly IHookService _hook;
 
-        public StartStopServiceHandler(IThumbnailManager manager, IProcessMonitor procMonitor, IFpsLimiterService fpsLimiter)
+        public StartStopServiceHandler(IThumbnailManager manager, IProcessMonitor procMonitor, IHookService hook)
         {
             this._manager = manager;
             _procMonitor = procMonitor;
-            _fpsLimiter = fpsLimiter;
+            _hook = hook;
         }
 
         public Task<Unit> Handle(StartService message, CancellationToken cancellationToken)
@@ -34,7 +34,7 @@ namespace EveOPreview.Mediator.Handlers.Services
             this._manager.Stop();
 
             var processes = _procMonitor.GetAllProcesses();
-            var tasks = processes.Select(client => _fpsLimiter.DisableFpsLimiterAsync(client.Handle));
+            var tasks = processes.Select(client => _hook.DisableFpsLimiterAsync(client.Handle));
             await Task.WhenAll(tasks).ConfigureAwait(false);
 
             return Unit.Value;

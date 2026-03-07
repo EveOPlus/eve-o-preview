@@ -237,6 +237,22 @@ namespace EveOPreview.View
             }
         }
 
+        private AudioMuteSettings _audioMuteSettings;
+
+        public AudioMuteSettings AudioMuteSettings
+        {
+            get
+            {
+                return _audioMuteSettings;
+            }
+            set
+            {
+                _audioMuteSettings = value;
+                chbIsGateTunnelMuted.Checked = value.MuteJumpGateTunnel;
+                chbIsLocationBannerMuted.Checked = value.MuteLocationBanner;
+            }
+        }
+
         private bool _isPremium;
 
         public bool IsPremium
@@ -257,6 +273,8 @@ namespace EveOPreview.View
                     chbIsFpsThrottlingEnabled.Enabled = false;
                     chbIsFpsThrottlingEnabled.Checked = false;
                     lblFpsFeatureExpired.Visible = true;
+                    groupBoxFpsLimits.Visible = false;
+                    groupBoxAudioMuting.Visible = false;
                 }
             }
         }
@@ -344,6 +362,7 @@ namespace EveOPreview.View
 		public Func<string> GetClientNameFromInput { get; set; }
         public Action FpsLimiterChanged { get; set; }
         public Action FpsLimiterEnabledChanged { get; set; }
+        public Action AudioSettingsChanged { get; set; }
 
         #region UI events
         private void ContentTabControl_DrawItem(object sender, DrawItemEventArgs e)
@@ -943,6 +962,25 @@ namespace EveOPreview.View
             FpsLimiterSettings.FpsPredictingFocus = (int)numericFpsPredictedLimit.Value;
             this.ApplicationSettingsChanged?.Invoke();
             this.FpsLimiterChanged?.Invoke();
+        }
+
+        private void chbIsGateTunnelMuted_CheckedChanged(object sender, EventArgs e)
+        {
+            AnyAudioSettings_CheckedChanged();
+        }
+
+        private void chbIsLocationBannerMuted_CheckedChanged(object sender, EventArgs e)
+        {
+            AnyAudioSettings_CheckedChanged();
+        }
+
+        private void AnyAudioSettings_CheckedChanged()
+        {
+            this.AudioMuteSettings.MuteJumpGateTunnel = chbIsGateTunnelMuted.Checked;
+            this.AudioMuteSettings.MuteLocationBanner = chbIsLocationBannerMuted.Checked;
+            
+            this.ApplicationSettingsChanged?.Invoke();
+            this.AudioSettingsChanged?.Invoke();
         }
     }
 }

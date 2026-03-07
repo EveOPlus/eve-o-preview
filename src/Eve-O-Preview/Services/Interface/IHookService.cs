@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace EveOPreview.Services.Interface
 {
-    public interface IFpsLimiterService
+    public interface IHookService
     {
         bool Ping(IntPtr handle);
 
@@ -13,8 +13,10 @@ namespace EveOPreview.Services.Interface
 
         Task<bool> UpdateTargetFpsAsync(IntPtr handle);
 
-        Task TryInstallFpsLimiterIntoClientAsync(IProcessInfo procInfo);
+        Task TryInstallHooksAsync(IProcessInfo procInfo);
 
         Task<bool> DisableFpsLimiterAsync(IntPtr handle);
+
+        Task<bool> UpdateMutedAudioAsync(IntPtr handle);
     }
 }

@@ -129,12 +129,15 @@ namespace EveOPreview.View
             this.fpsMainLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
             this.fpsTopPanel = new System.Windows.Forms.Panel();
             this.fpsBottomPanel = new System.Windows.Forms.Panel();
-            this.lblFpsFeatureExpired = new System.Windows.Forms.Label();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBoxAudioMuting = new System.Windows.Forms.GroupBox();
+            this.chbIsLocationBannerMuted = new System.Windows.Forms.CheckBox();
+            this.chbIsGateTunnelMuted = new System.Windows.Forms.CheckBox();
+            this.groupBoxFpsLimits = new System.Windows.Forms.GroupBox();
             this.btnDummyFpsSave = new System.Windows.Forms.Button();
             this.numericFpsPredictedLimit = new System.Windows.Forms.NumericUpDown();
             this.numericFpsBackgroundLimit = new System.Windows.Forms.NumericUpDown();
             this.numericFpsForegroundLimit = new System.Windows.Forms.NumericUpDown();
+            this.lblFpsFeatureExpired = new System.Windows.Forms.Label();
             this.chbIsFpsThrottlingEnabled = new System.Windows.Forms.CheckBox();
             this.VersionLabel = new System.Windows.Forms.Label();
             this.DocumentationLink = new System.Windows.Forms.LinkLabel();
@@ -200,7 +203,8 @@ namespace EveOPreview.View
             this.fpsMainLayoutPanel.SuspendLayout();
             this.fpsTopPanel.SuspendLayout();
             this.fpsBottomPanel.SuspendLayout();
-            this.groupBox1.SuspendLayout();
+            this.groupBoxAudioMuting.SuspendLayout();
+            this.groupBoxFpsLimits.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericFpsPredictedLimit)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericFpsBackgroundLimit)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericFpsForegroundLimit)).BeginInit();
@@ -1158,7 +1162,7 @@ namespace EveOPreview.View
             this.FpsLimiterTabPage.Name = "FpsLimiterTabPage";
             this.FpsLimiterTabPage.Size = new System.Drawing.Size(262, 353);
             this.FpsLimiterTabPage.TabIndex = 7;
-            this.FpsLimiterTabPage.Text = "FPS Limiter";
+            this.FpsLimiterTabPage.Text = "Premium";
             this.FpsLimiterTabPage.UseVisualStyleBackColor = true;
             // 
             // fpsMainLayoutPanel
@@ -1197,8 +1201,8 @@ namespace EveOPreview.View
             // 
             // fpsBottomPanel
             // 
-            this.fpsBottomPanel.Controls.Add(this.lblFpsFeatureExpired);
-            this.fpsBottomPanel.Controls.Add(this.groupBox1);
+            this.fpsBottomPanel.Controls.Add(this.groupBoxAudioMuting);
+            this.fpsBottomPanel.Controls.Add(this.groupBoxFpsLimits);
             this.fpsBottomPanel.Controls.Add(this.chbIsFpsThrottlingEnabled);
             this.fpsBottomPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.fpsBottomPanel.Location = new System.Drawing.Point(3, 112);
@@ -1206,32 +1210,55 @@ namespace EveOPreview.View
             this.fpsBottomPanel.Size = new System.Drawing.Size(256, 238);
             this.fpsBottomPanel.TabIndex = 1;
             // 
-            // lblFpsFeatureExpired
+            // groupBoxAudioMuting
             // 
-            this.lblFpsFeatureExpired.Location = new System.Drawing.Point(21, 168);
-            this.lblFpsFeatureExpired.Name = "lblFpsFeatureExpired";
-            this.lblFpsFeatureExpired.Size = new System.Drawing.Size(224, 68);
-            this.lblFpsFeatureExpired.TabIndex = 24;
-            this.lblFpsFeatureExpired.Text = "This experimental feature has expired.\r\nIf this is the first time running, please" +
-    " try closing and re-starting, or alternatively please update to the latest versi" +
-    "on.\r\n";
-            this.lblFpsFeatureExpired.Visible = false;
+            this.groupBoxAudioMuting.Controls.Add(this.chbIsLocationBannerMuted);
+            this.groupBoxAudioMuting.Controls.Add(this.chbIsGateTunnelMuted);
+            this.groupBoxAudioMuting.Location = new System.Drawing.Point(10, 158);
+            this.groupBoxAudioMuting.Name = "groupBoxAudioMuting";
+            this.groupBoxAudioMuting.Size = new System.Drawing.Size(241, 66);
+            this.groupBoxAudioMuting.TabIndex = 23;
+            this.groupBoxAudioMuting.TabStop = false;
+            this.groupBoxAudioMuting.Text = "Audio";
             // 
-            // groupBox1
+            // chbIsLocationBannerMuted
             // 
-            this.groupBox1.Controls.Add(this.btnDummyFpsSave);
-            this.groupBox1.Controls.Add(lblFpsPredictiveLimit);
-            this.groupBox1.Controls.Add(this.numericFpsPredictedLimit);
-            this.groupBox1.Controls.Add(lblFpsBackgroundLimit);
-            this.groupBox1.Controls.Add(this.numericFpsBackgroundLimit);
-            this.groupBox1.Controls.Add(lblFpsForegroundLimit);
-            this.groupBox1.Controls.Add(this.numericFpsForegroundLimit);
-            this.groupBox1.Location = new System.Drawing.Point(10, 37);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(241, 114);
-            this.groupBox1.TabIndex = 22;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "FPS Limits";
+            this.chbIsLocationBannerMuted.AutoSize = true;
+            this.chbIsLocationBannerMuted.Location = new System.Drawing.Point(14, 44);
+            this.chbIsLocationBannerMuted.Name = "chbIsLocationBannerMuted";
+            this.chbIsLocationBannerMuted.Size = new System.Drawing.Size(172, 17);
+            this.chbIsLocationBannerMuted.TabIndex = 23;
+            this.chbIsLocationBannerMuted.Text = "Mute Location Banner Warp In";
+            this.chbIsLocationBannerMuted.UseVisualStyleBackColor = true;
+            this.chbIsLocationBannerMuted.CheckedChanged += new System.EventHandler(this.chbIsLocationBannerMuted_CheckedChanged);
+            // 
+            // chbIsGateTunnelMuted
+            // 
+            this.chbIsGateTunnelMuted.AutoSize = true;
+            this.chbIsGateTunnelMuted.Location = new System.Drawing.Point(14, 21);
+            this.chbIsGateTunnelMuted.Name = "chbIsGateTunnelMuted";
+            this.chbIsGateTunnelMuted.Size = new System.Drawing.Size(140, 17);
+            this.chbIsGateTunnelMuted.TabIndex = 22;
+            this.chbIsGateTunnelMuted.Text = "Mute Jump Gate Tunnel";
+            this.chbIsGateTunnelMuted.UseVisualStyleBackColor = true;
+            this.chbIsGateTunnelMuted.CheckedChanged += new System.EventHandler(this.chbIsGateTunnelMuted_CheckedChanged);
+            // 
+            // groupBoxFpsLimits
+            // 
+            this.groupBoxFpsLimits.Controls.Add(this.btnDummyFpsSave);
+            this.groupBoxFpsLimits.Controls.Add(lblFpsPredictiveLimit);
+            this.groupBoxFpsLimits.Controls.Add(this.numericFpsPredictedLimit);
+            this.groupBoxFpsLimits.Controls.Add(lblFpsBackgroundLimit);
+            this.groupBoxFpsLimits.Controls.Add(this.numericFpsBackgroundLimit);
+            this.groupBoxFpsLimits.Controls.Add(lblFpsForegroundLimit);
+            this.groupBoxFpsLimits.Controls.Add(this.numericFpsForegroundLimit);
+            this.groupBoxFpsLimits.Controls.Add(this.lblFpsFeatureExpired);
+            this.groupBoxFpsLimits.Location = new System.Drawing.Point(10, 37);
+            this.groupBoxFpsLimits.Name = "groupBoxFpsLimits";
+            this.groupBoxFpsLimits.Size = new System.Drawing.Size(241, 114);
+            this.groupBoxFpsLimits.TabIndex = 22;
+            this.groupBoxFpsLimits.TabStop = false;
+            this.groupBoxFpsLimits.Text = "FPS Limits";
             // 
             // btnDummyFpsSave
             // 
@@ -1332,14 +1359,25 @@ namespace EveOPreview.View
             0});
             this.numericFpsForegroundLimit.Leave += new System.EventHandler(this.numericFpsForegroundLimit_Leave);
             // 
+            // lblFpsFeatureExpired
+            // 
+            this.lblFpsFeatureExpired.Location = new System.Drawing.Point(11, 21);
+            this.lblFpsFeatureExpired.Name = "lblFpsFeatureExpired";
+            this.lblFpsFeatureExpired.Size = new System.Drawing.Size(224, 68);
+            this.lblFpsFeatureExpired.TabIndex = 24;
+            this.lblFpsFeatureExpired.Text = "This experimental feature has expired.\r\nIf this is the first time running, please" +
+    " try closing and re-starting, or alternatively please update to the latest versi" +
+    "on.\r\n";
+            this.lblFpsFeatureExpired.Visible = false;
+            // 
             // chbIsFpsThrottlingEnabled
             // 
             this.chbIsFpsThrottlingEnabled.AutoSize = true;
             this.chbIsFpsThrottlingEnabled.Location = new System.Drawing.Point(10, 9);
             this.chbIsFpsThrottlingEnabled.Name = "chbIsFpsThrottlingEnabled";
-            this.chbIsFpsThrottlingEnabled.Size = new System.Drawing.Size(216, 17);
+            this.chbIsFpsThrottlingEnabled.Size = new System.Drawing.Size(149, 17);
             this.chbIsFpsThrottlingEnabled.TabIndex = 21;
-            this.chbIsFpsThrottlingEnabled.Text = "Enable DirectX Hooks for FPS Throttling";
+            this.chbIsFpsThrottlingEnabled.Text = "Enable DirectX FPS Limits";
             this.chbIsFpsThrottlingEnabled.UseVisualStyleBackColor = true;
             this.chbIsFpsThrottlingEnabled.CheckedChanged += new System.EventHandler(this.chbIsFpsThrottlingEnabled_CheckedChanged);
             // 
@@ -1516,8 +1554,10 @@ namespace EveOPreview.View
             this.fpsTopPanel.ResumeLayout(false);
             this.fpsBottomPanel.ResumeLayout(false);
             this.fpsBottomPanel.PerformLayout();
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
+            this.groupBoxAudioMuting.ResumeLayout(false);
+            this.groupBoxAudioMuting.PerformLayout();
+            this.groupBoxFpsLimits.ResumeLayout(false);
+            this.groupBoxFpsLimits.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericFpsPredictedLimit)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericFpsBackgroundLimit)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericFpsForegroundLimit)).EndInit();
@@ -1597,7 +1637,7 @@ namespace EveOPreview.View
         private TableLayoutPanel fpsMainLayoutPanel;
         private Panel fpsBottomPanel;
         private Panel fpsTopPanel;
-        private GroupBox groupBox1;
+        private GroupBox groupBoxFpsLimits;
         private NumericUpDown numericFpsForegroundLimit;
         private CheckBox chbIsFpsThrottlingEnabled;
         private NumericUpDown numericFpsPredictedLimit;
@@ -1605,5 +1645,8 @@ namespace EveOPreview.View
         private ToolTip toolTip;
         private Button btnDummyFpsSave;
         private Label lblFpsFeatureExpired;
+        private GroupBox groupBoxAudioMuting;
+        private CheckBox chbIsLocationBannerMuted;
+        private CheckBox chbIsGateTunnelMuted;
     }
 }

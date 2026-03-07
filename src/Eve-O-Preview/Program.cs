@@ -93,7 +93,7 @@ namespace EveOPreview
             // Singleton registration is used for services
             // Low-level services
             container.Register<IWindowManager>();
-            container.Register<IFpsLimiterService>();
+            container.Register<IHookService>();
             container.Register<IProcessMonitor>();
             container.Register<IPremiumService>();
 

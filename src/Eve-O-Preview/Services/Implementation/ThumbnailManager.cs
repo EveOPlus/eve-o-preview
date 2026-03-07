@@ -39,7 +39,7 @@ namespace EveOPreview.Services
         private readonly IThumbnailViewFactory _thumbnailViewFactory;
         private readonly Dictionary<IntPtr, IThumbnailView> _thumbnailViews;
         private IKeyboardMouseEvents _keyboardMouseEvents;
-        private readonly IFpsLimiterService _fpsLimiterService;
+        private readonly IHookService _hookService;
 
         private (IntPtr Handle, string Title) _activeClient;
         private IntPtr _externalApplication;
@@ -56,7 +56,7 @@ namespace EveOPreview.Services
         private List<HotkeyHandler> _cycleClientHotkeyHandlers = new List<HotkeyHandler>();
         #endregion
 
-        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents, IFpsLimiterService fpsLimiterService)
+        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents, IHookService hookService)
         {
             this._mediator = mediator;
             this._processMonitor = processMonitor;
@@ -64,7 +64,7 @@ namespace EveOPreview.Services
             this._configuration = configuration;
             this._thumbnailViewFactory = factory;
             this._keyboardMouseEvents = keyboardMouseEvents;
-            _fpsLimiterService = fpsLimiterService;
+            _hookService = hookService;
 
             this._activeClient = (IntPtr.Zero, ThumbnailManager.DEFAULT_CLIENT_TITLE);
 
@@ -245,7 +245,7 @@ namespace EveOPreview.Services
                     viewsAdded.Add(view.Title);
                 }
 
-                _ = _fpsLimiterService.TryInstallFpsLimiterIntoClientAsync(process);
+                _ = _hookService.TryInstallHooksAsync(process);
             }
 
             foreach (IProcessInfo process in updatedProcesses)

@@ -1,4 +1,7 @@
 ﻿using Cake.Common.Diagnostics;
+using Cake.Common.Tools.DotNet;
+using Cake.Common.Tools.DotNet.MSBuild;
+using Cake.Common.Tools.DotNet.Publish;
 using Cake.Common.Tools.MSBuild;
 using Cake.Frosting;
 
@@ -21,6 +24,16 @@ namespace Build.Tasks
 					settings.ToolPath = Configuration.BuildToolPath;
 				}
 			});
-		}
+
+            //context.DotNetPublish("./src/Eve-O-Hooks/Eve-O-Hooks.csproj", new DotNetPublishSettings
+            //{
+            //    Configuration = Configuration.BuildConfiguration,
+            //    Runtime = "win-x64",
+            //    SelfContained = true,
+            //    OutputDirectory = Configuration.BinFolder,
+            //    MSBuildSettings = new DotNetMSBuildSettings()
+            //        .WithProperty("PublishAot", "true")
+            //});
+        }
 	}
 }

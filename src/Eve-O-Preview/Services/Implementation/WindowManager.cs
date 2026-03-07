@@ -8,15 +8,15 @@ namespace EveOPreview.Services.Implementation
 {
     public class WindowManager : IWindowManager
     {
-        private readonly IFpsLimiterService _fpsLimiterService;
+        private readonly IHookService _hookService;
 
         #region Private constants
         private const int WINDOW_SIZE_THRESHOLD = 300;
         #endregion
         
-        public WindowManager(IFpsLimiterService fpsLimiterService)
+        public WindowManager(IHookService hookService)
         {
-            _fpsLimiterService = fpsLimiterService;
+            _hookService = hookService;
             // Composition is always enabled for Windows 8+
             this.IsCompositionEnabled = 
                 ((Environment.OSVersion.Version.Major == 6) && (Environment.OSVersion.Version.Minor >= 2)) // Win 8 and Win 8.1
@@ -49,7 +49,7 @@ namespace EveOPreview.Services.Implementation
 
         public void ActivateWindow(IntPtr handle)
         {
-            _ = _fpsLimiterService.TellEveClientFocusIsComingAsync(handle);
+            _ = _hookService.TellEveClientFocusIsComingAsync(handle);
             
             try
             {
@@ -152,7 +152,7 @@ namespace EveOPreview.Services.Implementation
 
         public void PredictUpcomingClient(IntPtr upcomingHandle)
         {
-            _fpsLimiterService.TellEveClientFocusIsMaybeComingSoonAsync(upcomingHandle);
+            _hookService.TellEveClientFocusIsMaybeComingSoonAsync(upcomingHandle);
         }
     }
 }
