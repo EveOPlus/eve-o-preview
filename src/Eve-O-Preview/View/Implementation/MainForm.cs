@@ -718,8 +718,16 @@ namespace EveOPreview.View
             this.KeyPreview = true;
 
             // Use KeyData to get both the key and the modifiers (Ctrl, Alt, Shift)
-            KeyEventHandler handler = (s, e) => _capturedKeyData = e.KeyData;
-            this.KeyUp += handler;
+            KeyEventHandler downHandler = (s, e) =>
+            {
+                // Ignore if the user is just tapping Ctrl/Shift/Alt by themselves
+                if (e.KeyCode == Keys.ControlKey || e.KeyCode == Keys.ShiftKey || e.KeyCode == Keys.Menu)
+                    return;
+
+                _capturedKeyData = e.KeyData;
+            };
+
+            this.KeyDown += downHandler;
 
 			var sw = Stopwatch.StartNew();
             while (_capturedKeyData == null)
@@ -734,11 +742,10 @@ namespace EveOPreview.View
 				}
             }
 
-            this.KeyUp -= handler;
+            this.KeyDown -= downHandler;
 
             KeysConverter converter = new KeysConverter();
             string keyString = converter.ConvertToString(_capturedKeyData);
-            MessageBox.Show("New hotkey captured. This will not take effect until you next close Eve-O Preview.");
 
             return keyString;
         }

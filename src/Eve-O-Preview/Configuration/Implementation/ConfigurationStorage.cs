@@ -2,7 +2,9 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
+using EveOPreview.Mediator.Messages;
 using EveOPreview.Services.Interface;
+using MediatR;
 
 namespace EveOPreview.Configuration.Implementation
 {
@@ -13,12 +15,14 @@ namespace EveOPreview.Configuration.Implementation
         private readonly IAppConfig _appConfig;
         private readonly IThumbnailConfiguration _thumbnailConfiguration;
         private readonly IPremiumService _premiumService;
+        private readonly IMediator _mediator;
 
-        public ConfigurationStorage(IAppConfig appConfig, IThumbnailConfiguration thumbnailConfiguration, IPremiumService premiumService)
+        public ConfigurationStorage(IAppConfig appConfig, IThumbnailConfiguration thumbnailConfiguration, IPremiumService premiumService, IMediator mediator)
         {
             this._appConfig = appConfig;
             this._thumbnailConfiguration = thumbnailConfiguration;
             _premiumService = premiumService;
+            _mediator = mediator;
         }
 
         public void Load()
@@ -46,6 +50,7 @@ namespace EveOPreview.Configuration.Implementation
 
             // Validate data after loading it
             this._thumbnailConfiguration.ApplyRestrictions();
+            this._mediator.Send(new RefreshCycleGroupHotkeys()).GetAwaiter().GetResult();
         }
 
         private void AutoMigrateVersion1Config(string rawData)

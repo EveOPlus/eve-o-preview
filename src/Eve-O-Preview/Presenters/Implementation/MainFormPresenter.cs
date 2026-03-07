@@ -174,6 +174,7 @@ namespace EveOPreview.Presenters
             this._configuration.TitleFontSettings = this.View.TitleFontSettings;
             await this._mediator.Publish(new ThumbnailFontTitleSettingsUpdated());
             
+            await this._mediator.Send(new RefreshCycleGroupHotkeys());
             await this._mediator.Send(new SaveConfiguration());
         }
 

@@ -151,11 +151,11 @@ namespace EveOPreview.Services
 
         public void RegisterCycleClientHotkey(CycleGroup cycleGroup)
         {
-            RegisterCycleClientHotkey(cycleGroup.ForwardHotkeys?.Select(x => this._configuration.StringToKey(x)), true, cycleGroup.ClientsOrder);
-            RegisterCycleClientHotkey(cycleGroup.BackwardHotkeys?.Select(x => this._configuration.StringToKey(x)), false, cycleGroup.ClientsOrder);
+            RegisterCycleClientHotkey(cycleGroup.ForwardHotkeysParsedAndOrdered, true, cycleGroup.ClientsOrder);
+            RegisterCycleClientHotkey(cycleGroup.BackwardHotkeysParsedAndOrdered, false, cycleGroup.ClientsOrder);
         }
 
-        internal void RegisterCycleClientHotkey(IEnumerable<Keys> keys, bool isForwards, SortedDictionary<int, string> cycleOrder)
+        internal void RegisterCycleClientHotkey(List<Keys> keys, bool isForwards, SortedDictionary<int, string> cycleOrder)
         {
             _keyboardMouseEvents.KeyDown += (sender, e) =>
             {
