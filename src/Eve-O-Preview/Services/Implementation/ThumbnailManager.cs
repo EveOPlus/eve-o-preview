@@ -161,7 +161,7 @@ namespace EveOPreview.Services
             {
                 foreach (var hotkey in keys)
                 {
-                    if (e.KeyCode == hotkey)
+                    if (e.KeyData == hotkey)
                     {
                         if (this._windowManager.IsCurrentlySwitching)
                         {
