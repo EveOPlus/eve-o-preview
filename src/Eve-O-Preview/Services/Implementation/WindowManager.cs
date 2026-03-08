@@ -152,6 +152,11 @@ namespace EveOPreview.Services.Implementation
 
         public void PredictUpcomingClient(IntPtr upcomingHandle)
         {
+            if (upcomingHandle == IntPtr.Zero)
+            {
+                return;
+            }
+
             _hookService.TellEveClientFocusIsMaybeComingSoonAsync(upcomingHandle);
         }
     }

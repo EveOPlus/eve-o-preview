@@ -47,9 +47,15 @@ namespace EveOPreview.Presenters
             this.View.DocumentationLinkActivated = this.OpenDocumentationLink;
             this.View.ApplicationExitRequested = this.ExitApplication;
             this.View.GetClientNameFromInput = this.GetClientDescriptionFromInputBox;
+            this.View.CaptureNewHotkey = this.SendCaptureNewHotkeyRequest;
             this.View.FpsLimiterChanged = this.TriggerSetFpsLimiter;
             this.View.FpsLimiterEnabledChanged = this.TriggerSetFpsLimiterEnabled;
             this.View.AudioSettingsChanged = this.TriggerSetAudioSettings;
+        }
+
+        private CaptureNewHotkeyResponse SendCaptureNewHotkeyRequest(string currentKey)
+        {
+            return _mediator.Send(new CaptureNewHotkey(currentKey, 10000)).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         private void Activate()

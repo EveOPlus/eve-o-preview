@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using EveOPreview.Helper;
 using EveOPreview.Services.Interop;
+using Serilog;
 
 namespace EveOPreview.Services.Implementation
 {
@@ -46,6 +48,7 @@ namespace EveOPreview.Services.Implementation
 
             if (!isDebuggerPresent && !Debugger.IsAttached)
             {
+                Log.Logger.WithCallerInfo().Information("No debugger present. Launching debugger sidecar.");
                 string currentExe = Process.GetCurrentProcess().MainModule.FileName;
                 int myPid = Process.GetCurrentProcess().Id;
 
@@ -57,6 +60,10 @@ namespace EveOPreview.Services.Implementation
                 newProcess.UseShellExecute = false;
 
                 Process.Start(newProcess);
+            }
+            else
+            {
+                Log.Logger.WithCallerInfo().Information("A debugger is already present. Will not launch debugger sidecar.");
             }
         }
 

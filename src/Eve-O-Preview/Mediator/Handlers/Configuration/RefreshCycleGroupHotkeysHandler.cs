@@ -4,6 +4,7 @@ using MediatR;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using EveOPreview.Helper;
 
 namespace EveOPreview.Mediator.Handlers.Configuration
 {
@@ -20,16 +21,19 @@ namespace EveOPreview.Mediator.Handlers.Configuration
         {
             foreach (var cycleGroup in _config.CycleGroups)
             {
+                cycleGroup.ForwardHotkeys.RemoveAll(x => x == null);
+                cycleGroup.BackwardHotkeys.RemoveAll(x => x == null);
+
                 cycleGroup.ForwardHotkeysParsedAndOrdered.Clear();
                 cycleGroup.BackwardHotkeysParsedAndOrdered.Clear();
 
-                var forwardHotkeys = cycleGroup.ForwardHotkeys?.Select(x => _config.StringToKey(x));
+                var forwardHotkeys = cycleGroup.ForwardHotkeys?.Select(HotkeyHelpers.ToHotkeys);
                 if (forwardHotkeys != null)
                 {
                     cycleGroup.ForwardHotkeysParsedAndOrdered.AddRange(forwardHotkeys);
                 }
 
-                var backwardHotkeys = cycleGroup.BackwardHotkeys?.Select(x => _config.StringToKey(x));
+                var backwardHotkeys = cycleGroup.BackwardHotkeys?.Select(HotkeyHelpers.ToHotkeys);
                 if (backwardHotkeys != null)
                 {
                     cycleGroup.BackwardHotkeysParsedAndOrdered.AddRange(backwardHotkeys);

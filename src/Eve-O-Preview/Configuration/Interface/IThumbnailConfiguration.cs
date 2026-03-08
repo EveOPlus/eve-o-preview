@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using EveOPreview.Configuration.Implementation;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
-using EveOPreview.Configuration.Implementation;
 
 namespace EveOPreview.Configuration
 {
@@ -11,6 +12,8 @@ namespace EveOPreview.Configuration
         List<CycleGroup> CycleGroups { get; set; }
 
         Dictionary<string, Color> PerClientActiveClientHighlightColor { get; set; }
+        
+        Dictionary<string, string> ClientHotkey { get; set; }
 
         bool MinimizeToTray { get; set; }
         int ThumbnailRefreshPeriod { get; set; }
@@ -62,7 +65,6 @@ namespace EveOPreview.Configuration
 
         Keys GetClientHotkey(string currentClient);
         void SetClientHotkey(string currentClient, Keys hotkey);
-        Keys StringToKey(string hotkey);
 
         bool IsPriorityClient(string currentClient);
 

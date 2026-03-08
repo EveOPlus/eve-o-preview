@@ -2,6 +2,8 @@
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
+using EveOPreview.Helper;
+using Serilog;
 
 namespace EveOPreview
 {
@@ -12,16 +14,18 @@ namespace EveOPreview
     // So this dumb and non elegant approach is used
     sealed class ExceptionHandler
     {
-        private const string EXCEPTION_DUMP_FILE_NAME = "EVE-O Preview.log";
-        private const string EXCEPTION_MESSAGE = "EVE-O Preview has encountered a problem and needs to close. Additional information has been saved in the crash log file.";
+        private const string EXCEPTION_MESSAGE = "EVE-O Preview has encountered a problem and needs to close. Additional information has been saved in the log file.";
 
         public void SetupExceptionHandlers()
         {
+            
+#if DEBUG
             if (System.Diagnostics.Debugger.IsAttached)
             {
                 return;
             }
-
+#endif
+            
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
             Application.ThreadException += delegate (Object sender, ThreadExceptionEventArgs e)
             {
@@ -38,8 +42,7 @@ namespace EveOPreview
         {
             try
             {
-                String exceptionMessage = exception.ToString();
-                File.WriteAllText(ExceptionHandler.EXCEPTION_DUMP_FILE_NAME, exceptionMessage);
+                Log.Logger.WithCallerInfo().Error(exception, EXCEPTION_MESSAGE);
 
                 MessageBox.Show(ExceptionHandler.EXCEPTION_MESSAGE, @"EVE-O Preview", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }

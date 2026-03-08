@@ -1,16 +1,16 @@
 using EveOPreview.Configuration;
 using EveOPreview.Presenters;
 using EveOPreview.Services;
-using EveOPreview.Services.Interop;
+using EveOPreview.Services.Implementation;
+using EveOPreview.Services.Interface;
 using EveOPreview.View;
 using Gma.System.MouseKeyHook;
 using MediatR;
+using Serilog;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
-using EveOPreview.Services.Implementation;
-using EveOPreview.Services.Interface;
 
 namespace EveOPreview
 {
@@ -30,6 +30,10 @@ namespace EveOPreview
             }
             else
             {
+                SetupLogger();
+                
+                Log.Information("Starting new instance of Eve-O Preview");
+                
                 // The very usual Mutex-based single-instance screening
                 // 'token' variable is used to store reference to the instance Mutex
                 // during the app lifetime
@@ -39,19 +43,34 @@ namespace EveOPreview
                 // Nothing to do here
                 if (Program._singleInstanceMutex == null)
                 {
+                    Log.Warning("An existing instance of Eve-O Preview is already running. Exiting.");
                     return;
                 }
 
+                
                 ExceptionHandler handler = new ExceptionHandler();
                 handler.SetupExceptionHandlers();
 
                 IApplicationController controller = Program.InitializeApplicationController();
 
                 Program.InitializeWinForms();
+                
                 DebuggerSidecar.LaunchTheSideCar();
 
                 controller.Run<MainFormPresenter>();
             }
+        }
+
+        private static void SetupLogger()
+        {
+            Log.Logger = new LoggerConfiguration()
+                .Enrich.FromLogContext()
+                .WriteTo.File("logs/EVE-O Preview Log-.txt",
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 7,
+                    // Add {MemberName} to the template below:
+                    outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] {Properties:j} {Message:lj}{NewLine}{Exception}")
+                .CreateLogger();
         }
 
         private static Mutex GetInstanceToken()
@@ -88,6 +107,7 @@ namespace EveOPreview
         {
             IIocContainer container = new LightInjectContainer();
 
+            container.RegisterInstance<ILogger>(Log.Logger);
             container.RegisterInstance<IKeyboardMouseEvents>(Hook.GlobalEvents());
 
             // Singleton registration is used for services

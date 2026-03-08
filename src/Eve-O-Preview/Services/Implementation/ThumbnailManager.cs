@@ -109,6 +109,11 @@ namespace EveOPreview.Services
 
         public void SetActive(KeyValuePair<IntPtr, IThumbnailView> newClient)
         {
+            if (newClient.Value == null)
+            {
+                return;
+            }
+
             this.GetActiveClient()?.ClearBorder();
 
             this._windowManager.ActivateWindow(newClient.Key);
@@ -123,8 +128,8 @@ namespace EveOPreview.Services
             var nextClientTitle = FindNextClientInCycleGroup(isForwards, _activeClient.Title, cycleOrder);
             var nextNextClientTitle = FindNextClientInCycleGroup(isForwards, nextClientTitle, cycleOrder);
 
-            var nextClient = _thumbnailViews.First(x => x.Value.Title == nextClientTitle);
-            var nextNextClient = _thumbnailViews.First(x => x.Value.Title == nextNextClientTitle);
+            var nextClient = _thumbnailViews.FirstOrDefault(x => x.Value.Title == nextClientTitle);
+            var nextNextClient = _thumbnailViews.FirstOrDefault(x => x.Value.Title == nextNextClientTitle);
             var lastClient = _activeClient;
 
             SetActive(nextClient);

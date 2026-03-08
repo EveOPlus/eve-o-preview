@@ -161,6 +161,9 @@ namespace EveOPreview.Configuration.Implementation
         [JsonProperty("LoginThumbnailLocation")]
         public Point LoginThumbnailLocation { get; set; }
 
+        [JsonProperty]
+        public Dictionary<string, string> ClientHotkey { get; set; }
+
         public FpsLimiterSettings FpsLimiterSettings { get; set; }
 
         public AudioMuteSettings AudioMuteSettings { get; set; }
@@ -173,14 +176,16 @@ namespace EveOPreview.Configuration.Implementation
 
         [JsonProperty]
         private Dictionary<string, Dictionary<string, Point>> PerClientLayout { get; set; }
+        
         [JsonProperty]
         private Dictionary<string, Point> FlatLayout { get; set; }
+        
         [JsonProperty]
         private Dictionary<string, ClientLayout> ClientLayout { get; set; }
-        [JsonProperty]
-        private Dictionary<string, string> ClientHotkey { get; set; }
+        
         [JsonProperty]
         private Dictionary<string, bool> DisableThumbnail { get; set; }
+        
         [JsonProperty]
         private List<string> PriorityClients { get; set; }
 
@@ -262,12 +267,6 @@ namespace EveOPreview.Configuration.Implementation
         public void SetClientHotkey(string currentClient, Keys hotkey)
         {
             this.ClientHotkey[currentClient] = (new KeysConverter()).ConvertToInvariantString(hotkey);
-        }
-
-        public Keys StringToKey(string hotkey)
-        {
-            object rawValue = (new KeysConverter()).ConvertFromInvariantString(hotkey);
-            return rawValue != null ? (Keys)rawValue : Keys.None;
         }
 
         public bool IsPriorityClient(string currentClient)

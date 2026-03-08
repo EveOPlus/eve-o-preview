@@ -1,4 +1,5 @@
 ﻿using EveOPreview.Configuration.Implementation;
+using EveOPreview.Mediator.Messages;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -59,6 +60,7 @@ namespace EveOPreview.View
 		Action<string> ThumbnailStateChanged { get; set; }
 		Action DocumentationLinkActivated { get; set; }
 		Func<string> GetClientNameFromInput { get; set; }
+        Func<string, CaptureNewHotkeyResponse> CaptureNewHotkey { get; set; }
         Action FpsLimiterChanged { get; set; }
         Action FpsLimiterEnabledChanged { get; set; }
         Action AudioSettingsChanged { get; set; }

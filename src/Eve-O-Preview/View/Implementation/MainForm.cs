@@ -360,6 +360,9 @@ namespace EveOPreview.View
 		public Action DocumentationLinkActivated { get; set; }
 
 		public Func<string> GetClientNameFromInput { get; set; }
+        
+		public Func<string, CaptureNewHotkeyResponse> CaptureNewHotkey { get; set; }
+
         public Action FpsLimiterChanged { get; set; }
         public Action FpsLimiterEnabledChanged { get; set; }
         public Action AudioSettingsChanged { get; set; }
@@ -686,70 +689,24 @@ namespace EveOPreview.View
                 return;
             }
 
-            cycleGroupForwardHotkey1Text.Text = "Listening...";
-			this.Enabled = false;
-            var lastKeyUp = WaitForNextKeyUp();
-			this.Enabled = true;
-
-			if (string.IsNullOrEmpty(lastKeyUp))
-			{ 
-				cycleGroupForwardHotkey1Text.Text = "Error";
-				return;
+            if (WaitForHotkeyCapture(cycleGroupForwardHotkey1Text, out var captureHotkeyResponse))
+            {
+                return;
             }
 
-            cycleGroupForwardHotkey1Text.Text = lastKeyUp;
+            cycleGroupForwardHotkey1Text.Text = captureHotkeyResponse.KeyString;
 			if (!selectedGroup.ForwardHotkeys.Any())
 			{
-				selectedGroup.ForwardHotkeys.Add(lastKeyUp);
+				selectedGroup.ForwardHotkeys.Add(captureHotkeyResponse.KeyString);
             }
             else
             {
-				selectedGroup.ForwardHotkeys[0] = lastKeyUp;
+				selectedGroup.ForwardHotkeys[0] = captureHotkeyResponse.KeyString;
             }
 
             this.ApplicationSettingsChanged?.Invoke();
         }
-
-        private Keys? _capturedKeyData = null;
-
-        public string WaitForNextKeyUp()
-        {
-            _capturedKeyData = null;
-            this.KeyPreview = true;
-
-            // Use KeyData to get both the key and the modifiers (Ctrl, Alt, Shift)
-            KeyEventHandler downHandler = (s, e) =>
-            {
-                // Ignore if the user is just tapping Ctrl/Shift/Alt by themselves
-                if (e.KeyCode == Keys.ControlKey || e.KeyCode == Keys.ShiftKey || e.KeyCode == Keys.Menu)
-                    return;
-
-                _capturedKeyData = e.KeyData;
-            };
-
-            this.KeyDown += downHandler;
-
-			var sw = Stopwatch.StartNew();
-            while (_capturedKeyData == null)
-            {
-                Application.DoEvents();
-                System.Threading.Thread.Sleep(10);
-
-				if (sw.ElapsedMilliseconds > 10000)
-				{
-					MessageBox.Show("Nothing captured for 10 seconds. This feature it not very reliable, especially if there is an existing conflicting hotkey. If you are having issues please close Eve-O Preview and manually modify the config json instead.");
-					return string.Empty;
-				}
-            }
-
-            this.KeyDown -= downHandler;
-
-            KeysConverter converter = new KeysConverter();
-            string keyString = converter.ConvertToString(_capturedKeyData);
-
-            return keyString;
-        }
-
+        
         private void cycleGroupForwardHotkey2Text_DoubleClick(object sender, EventArgs e)
         {
             var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
@@ -759,28 +716,40 @@ namespace EveOPreview.View
                 return;
             }
 
-            cycleGroupForwardHotkey2Text.Text = "Listening...";
-            this.Enabled = false;
-            var lastKeyUp = WaitForNextKeyUp();
-            this.Enabled = true;
-
-            if (string.IsNullOrEmpty(lastKeyUp))
+            if (WaitForHotkeyCapture(cycleGroupForwardHotkey2Text, out var captureHotkeyResponse))
             {
-                cycleGroupForwardHotkey2Text.Text = "Error";
                 return;
             }
 
-            cycleGroupForwardHotkey2Text.Text = lastKeyUp;
+            cycleGroupForwardHotkey2Text.Text = captureHotkeyResponse.KeyString;
             if (selectedGroup.ForwardHotkeys.Count < 2)
             {
-                selectedGroup.ForwardHotkeys.Add(lastKeyUp);
+                selectedGroup.ForwardHotkeys.Add(captureHotkeyResponse.KeyString);
             }
             else
             {
-                selectedGroup.ForwardHotkeys[1] = lastKeyUp;
+                selectedGroup.ForwardHotkeys[1] = captureHotkeyResponse.KeyString;
             }
 
             this.ApplicationSettingsChanged?.Invoke();
+        }
+
+        private bool WaitForHotkeyCapture(TextBox inputBox, out CaptureNewHotkeyResponse captureHotkeyResponse)
+        {
+            var previousValue = inputBox.Text;
+            inputBox.Text = "Listening...";
+            this.Enabled = false;
+            captureHotkeyResponse = this.CaptureNewHotkey(previousValue);
+            this.Enabled = true;
+
+            if (!captureHotkeyResponse.IsValid)
+            {
+                inputBox.Text = previousValue;
+                MessageBox.Show(captureHotkeyResponse.ErrorMessage);
+                return true;
+            }
+
+            return false;
         }
 
         private void cycleGroupBackwardHotkey1Text_DoubleClick(object sender, EventArgs e)
@@ -792,25 +761,19 @@ namespace EveOPreview.View
                 return;
             }
 
-            cycleGroupBackwardHotkey1Text.Text = "Listening...";
-            this.Enabled = false;
-            var lastKeyUp = WaitForNextKeyUp();
-            this.Enabled = true;
-
-            if (string.IsNullOrEmpty(lastKeyUp))
+            if (WaitForHotkeyCapture(cycleGroupBackwardHotkey1Text, out var captureHotkeyResponse))
             {
-                cycleGroupBackwardHotkey1Text.Text = "Error";
                 return;
             }
 
-            cycleGroupBackwardHotkey1Text.Text = lastKeyUp;
+            cycleGroupBackwardHotkey1Text.Text = captureHotkeyResponse.KeyString;
             if (!selectedGroup.BackwardHotkeys.Any())
             {
-                selectedGroup.BackwardHotkeys.Add(lastKeyUp);
+                selectedGroup.BackwardHotkeys.Add(captureHotkeyResponse.KeyString);
             }
             else
             {
-                selectedGroup.BackwardHotkeys[0] = lastKeyUp;
+                selectedGroup.BackwardHotkeys[0] = captureHotkeyResponse.KeyString;
             }
 
             this.ApplicationSettingsChanged?.Invoke();
@@ -825,25 +788,19 @@ namespace EveOPreview.View
                 return;
             }
 
-            cycleGroupBackwardHotkey2Text.Text = "Listening...";
-            this.Enabled = false;
-            var lastKeyUp = WaitForNextKeyUp();
-            this.Enabled = true;
-
-            if (string.IsNullOrEmpty(lastKeyUp))
+            if (WaitForHotkeyCapture(cycleGroupBackwardHotkey2Text, out var captureHotkeyResponse))
             {
-                cycleGroupBackwardHotkey2Text.Text = "Error";
                 return;
             }
 
-            cycleGroupBackwardHotkey2Text.Text = lastKeyUp;
+            cycleGroupBackwardHotkey2Text.Text = captureHotkeyResponse.KeyString;
             if (selectedGroup.BackwardHotkeys.Count < 2)
             {
-                selectedGroup.BackwardHotkeys.Add(lastKeyUp);
+                selectedGroup.BackwardHotkeys.Add(captureHotkeyResponse.KeyString);
             }
             else
             {
-                selectedGroup.BackwardHotkeys[1] = lastKeyUp;
+                selectedGroup.BackwardHotkeys[1] = captureHotkeyResponse.KeyString;
             }
 
             this.ApplicationSettingsChanged?.Invoke();
