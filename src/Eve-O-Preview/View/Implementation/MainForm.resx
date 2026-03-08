@@ -322,7 +322,7 @@
     <value>Note: These are experimental Premium features.
 A free license has been temporarily provided.
 
-FPS Limiting is accomplished by hooking into DirectX to limit maximum FPS, and Audio muting by hooking into audio events.
+FPS Limiting is accomplished by hooking into DirectX to limit maximum FPS, and Audio muting by monitoring then muting audio events.
 </value>
   </data>
   <metadata name="lblFpsPredictiveLimit.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
