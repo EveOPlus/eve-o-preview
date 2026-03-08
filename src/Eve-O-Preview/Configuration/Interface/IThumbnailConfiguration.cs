@@ -56,6 +56,7 @@ namespace EveOPreview.Configuration
 
         string PremiumLicenseKey { get; set; }
         bool IsPremium { get; set; }
+        string ToggleHideActiveClientsHotkey { get; set; }
 
         Point GetThumbnailLocation(string currentClient, string activeClient, Point defaultLocation);
         void SetThumbnailLocation(string currentClient, string activeClient, Point location);

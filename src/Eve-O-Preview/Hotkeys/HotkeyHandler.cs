@@ -4,7 +4,7 @@ using System.ComponentModel;
 
 namespace EveOPreview.UI.Hotkeys
 {
-    class HotkeyHandler : IMessageFilter, IDisposable
+    class OldHotkeyHandler : IMessageFilter, IDisposable
     {
         private static int _currentId;
         private const int MAX_ID = 0xBFFF;
@@ -14,10 +14,10 @@ namespace EveOPreview.UI.Hotkeys
         private readonly IntPtr _hotkeyTarget;
         #endregion
 
-        public HotkeyHandler(IntPtr target, Keys hotkey)
+        public OldHotkeyHandler(IntPtr target, Keys hotkey)
         {
-            this._hotkeyId = HotkeyHandler._currentId;
-            HotkeyHandler._currentId = (HotkeyHandler._currentId + 1) & HotkeyHandler.MAX_ID;
+            this._hotkeyId = OldHotkeyHandler._currentId;
+            OldHotkeyHandler._currentId = (OldHotkeyHandler._currentId + 1) & OldHotkeyHandler.MAX_ID;
 
             this._hotkeyTarget = target;
 
@@ -33,7 +33,7 @@ namespace EveOPreview.UI.Hotkeys
             GC.SuppressFinalize(this);
         }
 
-        ~HotkeyHandler()
+        ~OldHotkeyHandler()
         {
             // Unregister the hotkey if necessary
             this.Unregister();

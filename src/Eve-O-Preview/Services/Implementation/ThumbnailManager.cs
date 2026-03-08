@@ -52,8 +52,6 @@ namespace EveOPreview.Services
 
         private int _refreshCycleCount;
         private int _hideThumbnailsDelay;
-
-        private List<HotkeyHandler> _cycleClientHotkeyHandlers = new List<HotkeyHandler>();
         #endregion
 
         public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents, IHookService hookService)

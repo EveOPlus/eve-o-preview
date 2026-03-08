@@ -44,7 +44,7 @@ namespace EveOPreview.View
         private Point _baseMousePosition;
         private Size _baseZoomMaximumSize;
 
-        private HotkeyHandler _hotkeyHandler;
+        // private HotkeyHandler _hotkeyHandler;
 
         private IThumbnailConfiguration _config;
         private Lazy<Color> _myBorderColor;

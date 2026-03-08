@@ -64,7 +64,7 @@ namespace EveOPreview.Configuration.Implementation
             this.EnableActiveClientHighlight = false;
             this.ActiveClientHighlightColor = Color.GreenYellow;
             this.ActiveClientHighlightThickness = 3;
-            
+
             this.TitleFontSettings = new FontSettings();
             this.TitleFontSettings.Name = "Arial";
             this.TitleFontSettings.Size = 14.25f;
@@ -155,6 +155,8 @@ namespace EveOPreview.Configuration.Implementation
         public Color ActiveClientHighlightColor { get; set; }
 
         public int ActiveClientHighlightThickness { get; set; }
+        
+        public string ToggleHideActiveClientsHotkey { get; set; }
 
         public FontSettings TitleFontSettings { get; set; }
 

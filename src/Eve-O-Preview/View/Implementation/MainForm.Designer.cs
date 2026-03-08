@@ -144,6 +144,8 @@ namespace EveOPreview.View
             this.NotifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.TrayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.txtToggleHideAllActiveHotkey = new System.Windows.Forms.TextBox();
+            this.lblToggleHideAllActive = new System.Windows.Forms.Label();
             RestoreWindowMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ExitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             TitleMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -924,13 +926,14 @@ namespace EveOPreview.View
             // 
             // activeClientsSplitContainer.Panel1
             // 
+            this.activeClientsSplitContainer.Panel1.Controls.Add(this.txtToggleHideAllActiveHotkey);
+            this.activeClientsSplitContainer.Panel1.Controls.Add(this.lblToggleHideAllActive);
             this.activeClientsSplitContainer.Panel1.Controls.Add(ThumbnailsListLabel);
             // 
             // activeClientsSplitContainer.Panel2
             // 
             this.activeClientsSplitContainer.Panel2.Controls.Add(this.ThumbnailsList);
             this.activeClientsSplitContainer.Size = new System.Drawing.Size(260, 351);
-            this.activeClientsSplitContainer.SplitterDistance = 34;
             this.activeClientsSplitContainer.TabIndex = 35;
             // 
             // ThumbnailsListLabel
@@ -1500,6 +1503,24 @@ namespace EveOPreview.View
             this.TrayMenu.Name = "contextMenuStrip1";
             this.TrayMenu.Size = new System.Drawing.Size(152, 76);
             // 
+            // txtToggleHideAllActiveHotkey
+            // 
+            this.txtToggleHideAllActiveHotkey.BackColor = System.Drawing.SystemColors.Control;
+            this.txtToggleHideAllActiveHotkey.Location = new System.Drawing.Point(134, 25);
+            this.txtToggleHideAllActiveHotkey.Name = "txtToggleHideAllActiveHotkey";
+            this.txtToggleHideAllActiveHotkey.ReadOnly = true;
+            this.txtToggleHideAllActiveHotkey.Size = new System.Drawing.Size(119, 20);
+            this.txtToggleHideAllActiveHotkey.TabIndex = 35;
+            // 
+            // lblToggleHideAllActive
+            // 
+            this.lblToggleHideAllActive.AutoSize = true;
+            this.lblToggleHideAllActive.Location = new System.Drawing.Point(6, 28);
+            this.lblToggleHideAllActive.Name = "lblToggleHideAllActive";
+            this.lblToggleHideAllActive.Size = new System.Drawing.Size(122, 13);
+            this.lblToggleHideAllActive.TabIndex = 34;
+            this.lblToggleHideAllActive.Text = "Toggle Hide All (Hotkey)";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1648,5 +1669,7 @@ namespace EveOPreview.View
         private GroupBox groupBoxAudioMuting;
         private CheckBox chbIsLocationBannerMuted;
         private CheckBox chbIsGateTunnelMuted;
+        private TextBox txtToggleHideAllActiveHotkey;
+        private Label lblToggleHideAllActive;
     }
 }
