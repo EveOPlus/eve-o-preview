@@ -1,6 +1,12 @@
-
 ## Notice
-This software is no longer licensed under the MIT License.
+This software is no longer licensed under the MIT License. Commits prior to b8b25d9 may still be used under MIT. All subsequent commits are provided under GPLv3.
+
+## License
+Copyright © 2026 Aura Asuna. All Rights Reserved.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ## Join us on Discord
 Chat with the devs and eachother here on Eve-O Plus Discord https://discord.gg/HzQHBtTEcB
@@ -301,11 +307,3 @@ https://bitbucket.org/ulph/eve-o-preview-git
 ## CCP Copyright Notice
 
 EVE Online, the EVE logo, EVE and all associated logos and designs are the intellectual property of CCP hf. All artwork, screenshots, characters, vehicles, storylines, world facts or other recognizable features of the intellectual property relating to these trademarks are likewise the intellectual property of CCP hf. EVE Online and the EVE logo are the registered trademarks of CCP hf. All rights are reserved worldwide. All other trademarks are the property of their respective owners. CCP hf. has granted permission to pyfa to use EVE Online and all associated logos and designs for promotional and information purposes on its website but does not endorse, and is not in any way affiliated with, pyfa. CCP is in no way responsible for the content on or functioning of this program, nor can it be liable for any damage arising from the use of this program. 
-
-
-## License
-
-Copyright © 2026 Aura Asuna. All Rights Reserved.
-Permission is hereby granted to any person to use this software for personal, non commercial purposes, in its compiled, binary form only.
-You are permitted to view this source code for educational purposes only. You are strictly prohibited from copying, modifying, redistributing, or using this code in any project without express written permission from Aura Asuna.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND

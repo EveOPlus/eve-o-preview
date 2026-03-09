@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.2.11415.280 d18.0
+VisualStudioVersion = 18.2.11415.280
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eve-O-Preview", "Eve-O-Preview\Eve-O-Preview.csproj", "{6CA62DF3-8589-484C-8BC8-F763CA66BBB1}"
 EndProject
@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eve-O-Mock", "Eve-O-Mock\Ev
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Build", "..\build\Build.csproj", "{68083BCC-92B8-4A73-BFD2-0DE619873F86}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eve-O-Hooks", "Eve-O-Hooks\Eve-O-Hooks.csproj", "{9F043FCE-DDE0-4F99-B1D9-025B5516A8D8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eve-O-Preview.Robin", "Eve-O-Robin\Eve-O-Preview.Robin.csproj", "{9F043FCE-DDE0-4F99-B1D9-025B5516A8D8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

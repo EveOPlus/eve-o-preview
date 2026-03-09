@@ -55,13 +55,13 @@ namespace EveOPreview.View
             System.Windows.Forms.Label ThumbnailsListLabel;
             System.Windows.Forms.TabPage CycleGroupTabPage;
             System.Windows.Forms.Label label1;
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             System.Windows.Forms.Label lblFpsPredictiveLimit;
             System.Windows.Forms.Label lblFpsBackgroundLimit;
             System.Windows.Forms.Label lblFpsForegroundLimit;
             System.Windows.Forms.TabPage AboutTabPage;
             System.Windows.Forms.Panel AboutPanel;
             System.Windows.Forms.Label lblLiabilityDisclaimer;
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             System.Windows.Forms.Label CreditMaintLabel;
             System.Windows.Forms.Label DocumentationLinkLabel;
             System.Windows.Forms.Label DescriptionLabel;
@@ -1414,7 +1414,7 @@ namespace EveOPreview.View
             lblLiabilityDisclaimer.Location = new System.Drawing.Point(5, 29);
             lblLiabilityDisclaimer.Name = "lblLiabilityDisclaimer";
             lblLiabilityDisclaimer.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            lblLiabilityDisclaimer.Size = new System.Drawing.Size(261, 117);
+            lblLiabilityDisclaimer.Size = new System.Drawing.Size(261, 135);
             lblLiabilityDisclaimer.TabIndex = 9;
             lblLiabilityDisclaimer.Text = resources.GetString("lblLiabilityDisclaimer.Text");
             // 
@@ -1441,10 +1441,10 @@ namespace EveOPreview.View
             // DescriptionLabel
             // 
             DescriptionLabel.BackColor = System.Drawing.Color.Transparent;
-            DescriptionLabel.Location = new System.Drawing.Point(5, 157);
+            DescriptionLabel.Location = new System.Drawing.Point(5, 164);
             DescriptionLabel.Name = "DescriptionLabel";
             DescriptionLabel.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            DescriptionLabel.Size = new System.Drawing.Size(261, 127);
+            DescriptionLabel.Size = new System.Drawing.Size(261, 120);
             DescriptionLabel.TabIndex = 5;
             DescriptionLabel.Text = resources.GetString("DescriptionLabel.Text");
             // 
