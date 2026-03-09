@@ -17,6 +17,8 @@
 using EveOPreview.Configuration;
 using EveOPreview.Services.Interface;
 using EveOPreview.Services.Interop;
+using Serilog;
+using Serilog.Core;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -31,13 +33,33 @@ namespace EveOPreview.Services.Implementation
 {
     public class HookService : IHookService
     {
+        private const byte PIPE_FIRE_AND_FORGET = 0xA3;
+        private const byte PIPE_SET_FOCUSED_COMMAND = 0xB1;
+        private const byte PIPE_PREDICT_FOCUS_COMMAND = 0xB3;
+
+        private const byte PIPE_QUERY = 0xA1;
+        private const byte PIPE_PING_REQUEST_CODE = 0xB2;
+
+        private const byte PIPE_UPDATE = 0xA2;
+        private const byte PIPE_FPS_PREFIX_BYTE_FOCUSED = 0xF1;
+        private const byte PIPE_FPS_PREFIX_BYTE_BACKGROUND = 0xF2;
+        private const byte PIPE_FPS_PREFIX_BYTE_PREDICT = 0xF3;
+        private const byte PIPE_TAKE_OWNERSHIP_COMMAND = 0xB4;
+
+        private const byte PIPE_SOUND_UNMUTE_ALL = 0xC1;
+        private const byte PIPE_SOUND_MUTE_LIST = 0xC3;
+
+        private const byte PIPE_SUCCESS_RESPONSE_CODE = 0x01;
+        
         private readonly IThumbnailConfiguration _configuration;
+        private readonly ILogger _logger;
         private readonly ConcurrentDictionary<IntPtr, Guid> _initializedClients = new ConcurrentDictionary<IntPtr, Guid>();
         private readonly object _lock = new object();
         
-        public HookService(IThumbnailConfiguration configuration)
+        public HookService(IThumbnailConfiguration configuration, ILogger logger)
         {
             _configuration = configuration;
+            _logger = logger;
         }
         
         public bool Ping(IntPtr handle)
@@ -51,18 +73,20 @@ namespace EveOPreview.Services.Implementation
                     using (var writer = new BinaryWriter(client))
                     using (var reader = new BinaryReader(client))
                     {
-                        writer.Write((byte)0xA1);
-                        writer.Write((byte)0xB2);
+                        writer.Write(PIPE_QUERY);
+                        writer.Write(PIPE_PING_REQUEST_CODE);
                         writer.Flush();
 
                         var response = reader.ReadByte();
 
-                        return response == (byte)0x01;
+                        _logger.Verbose("Pipe Successfully pinged Robin.");
+                        return response == PIPE_SUCCESS_RESPONSE_CODE;
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.Verbose(ex, "Failed to ping Robin.");
                 return false;
             }
         }
@@ -84,15 +108,17 @@ namespace EveOPreview.Services.Implementation
                         client.Connect(100);
                         using (var writer = new BinaryWriter(client))
                         {
-                            writer.Write((byte)0xA3);
-                            writer.Write((byte)0xB1);
+                            writer.Write(PIPE_FIRE_AND_FORGET);
+                            writer.Write(PIPE_SET_FOCUSED_COMMAND);
                             writer.Flush();
+                            
+                            _logger.Verbose($"Pipe sent FireAndForget SetFocusedCommand for handle {handle}");
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    KernelNativeMethods.OutputDebug($"Error while calling TellEveClientFocusIsComing: {ex}", handle);
+                    _logger.Error(ex, $"Pipe Error while calling FireAndForget SetFocusedCommand for handle {handle}");
                     // Just be silent and don't block anything else.
                 }
             });
@@ -115,16 +141,18 @@ namespace EveOPreview.Services.Implementation
                         client.Connect(100);
                         using (var writer = new BinaryWriter(client))
                         {
-                            writer.Write((byte)0xA3);
-                            writer.Write((byte)0xB3);
+                            writer.Write(PIPE_FIRE_AND_FORGET);
+                            writer.Write(PIPE_PREDICT_FOCUS_COMMAND);
                             writer.Write(timeoutMs); // How long to wait before for focus before return to normal.
                             writer.Flush();
+                            
+                            _logger.Verbose($"Pipe sent FireAndForget PredictFocusCommand for handle {handle}");
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    KernelNativeMethods.OutputDebug($"Error while calling TellEveClientFocusIsMaybeBeComingSoon: {ex}", handle);
+                    _logger.Error(ex, $"Pipe Error while calling FireAndForget PredictFocusCommand for handle {handle}");
                     // Just be silent and don't block anything else.
                 }
             });
@@ -142,7 +170,11 @@ namespace EveOPreview.Services.Implementation
             int backgroundFps = fpsSettings.IsEnabled ? fpsSettings.FpsBackground : 0;
             int predictiveFps = fpsSettings.IsEnabled ? fpsSettings.FpsPredictingFocus : 0;
 
-            return await SetExactTargetFpsAsync(handle, foregroundFps, backgroundFps, predictiveFps);
+            var result = await SetExactTargetFpsAsync(handle, foregroundFps, backgroundFps, predictiveFps);
+
+            _logger.Information($"Pipe succeeded to set target fps = {result} with settings {nameof(foregroundFps)}={foregroundFps} {nameof(backgroundFps)}={backgroundFps} {nameof(predictiveFps)}={predictiveFps} for handle {handle}");
+
+            return result;
         }
 
         public async Task<bool> DisableFpsLimiterAsync(IntPtr handle)
@@ -171,27 +203,27 @@ namespace EveOPreview.Services.Implementation
                     else
                     {
                         var basePath = AppContext.BaseDirectory;
-                        var dllPath = Path.Combine(basePath, "FPSLimiter.Hook.dll");
-                        if (!File.Exists(dllPath)) throw new Exception($"Unable to find FPSLimiter.Hook.dll at: {dllPath}");
+                        var dllPath = Path.Combine(basePath, "Eve-O-Preview.Robin.dll");
+                        if (!File.Exists(dllPath)) throw new Exception($"Unable to find Eve-O-Preview.Robin.dll at: {dllPath}");
                         
                         var proc = Process.GetProcessById(procInfo.ProcessId);
 
-                        KernelNativeMethods.OutputDebug($"Working on {proc.MainWindowHandle}");
+                        _logger.Information($"Eve-O-Preview.Robin Working on handle {proc.MainWindowHandle}");
                         IntPtr hProc = KernelNativeMethods.OpenProcess(KernelNativeMethods.PROCESS_ALL_ACCESS, false, proc.Id);
                         if (hProc == IntPtr.Zero) throw new Exception("Failed to open process.");
 
                         string fullPath = Path.GetFullPath(dllPath);
                         byte[] pathBytes = Encoding.ASCII.GetBytes(fullPath + "\0");
 
-                        KernelNativeMethods.OutputDebug($"Allocate memory for DLL path string");
+                        _logger.Verbose($"Allocate memory for DLL path string");
                         IntPtr remoteAddr = KernelNativeMethods.VirtualAllocEx(hProc, IntPtr.Zero, (uint)pathBytes.Length, KernelNativeMethods.MEM_COMMIT_RESERVE, KernelNativeMethods.PAGE_EXECUTE_READWRITE);
                         if (remoteAddr == IntPtr.Zero) throw new Exception("Memory allocation failed.");
 
-                        KernelNativeMethods.OutputDebug($"Write DLL path to target process");
+                        _logger.Verbose($"Write DLL path to target process");
                         if (!KernelNativeMethods.WriteProcessMemory(hProc, remoteAddr, pathBytes, (uint)pathBytes.Length, out _))
                             throw new Exception("Failed to write to memory.");
 
-                        KernelNativeMethods.OutputDebug($"Call LoadLibraryA in target process");
+                        _logger.Verbose($"Call LoadLibraryA in target process");
                         IntPtr loadLibAddr = KernelNativeMethods.GetProcAddress(KernelNativeMethods.GetModuleHandle("kernel32.dll"), "LoadLibraryA");
                         IntPtr hThread = KernelNativeMethods.CreateRemoteThread(hProc, IntPtr.Zero, 0, loadLibAddr, remoteAddr, 0, IntPtr.Zero);
 
@@ -199,9 +231,9 @@ namespace EveOPreview.Services.Implementation
 
                         System.Threading.Thread.Sleep(2000); // Wait for module to load
 
-                        KernelNativeMethods.OutputDebug($"Verify and find 'Initialize' export offset");
+                        _logger.Verbose($"Verify and find 'Initialize' export offset");
                         proc.Refresh();
-                        var loadedModule = proc.Modules.Cast<ProcessModule>().FirstOrDefault(m => m.FileName.Contains("FPSLimiter"));
+                        var loadedModule = proc.Modules.Cast<ProcessModule>().FirstOrDefault(m => m.FileName.Contains("Eve-O-Preview.Robin"));
                         if (loadedModule == null) throw new Exception("DLL was not loaded into the target process.");
 
                         IntPtr localModule = KernelNativeMethods.LoadLibrary(fullPath);
@@ -213,15 +245,15 @@ namespace EveOPreview.Services.Implementation
                         IntPtr remoteInitAddr = new IntPtr(loadedModule.BaseAddress.ToInt64() + offset);
 
                         // Execute 'Initialize' in target process
-                        KernelNativeMethods.OutputDebug($"Execute 'Initialize' in target process");
+                        _logger.Verbose($"Execute 'Initialize' in target process");
                         KernelNativeMethods.CreateRemoteThread(hProc, IntPtr.Zero, 0, remoteInitAddr, IntPtr.Zero, 0, IntPtr.Zero);
 
-                        KernelNativeMethods.OutputDebug($"Successfully injected and initialized at: {remoteInitAddr}");
+                        _logger.Information("Successfully initialized Eve-O-Preview.Robin");
                     }
                 }
                 catch (Exception ex)
                 {
-                    KernelNativeMethods.OutputDebug($"Unhandled exception in {nameof(TryInstallHooksAsync)}", procInfo.Handle);
+                    _logger.Error($"Unhandled exception in {nameof(TryInstallHooksAsync)}", procInfo.Handle);
 
                     _initializedClients.TryRemove(procInfo.Handle, out _);
                 }
@@ -259,12 +291,16 @@ namespace EveOPreview.Services.Implementation
                 mutedEventIds.Add(jump_gates_start_play);
                 mutedEventIds.Add(jump_gates_exit_play);
                 mutedEventIds.Add(jump_gates_lightning_play);
+                
+                _logger.Information("Pipe Muting gate tunnel audio.");
             }
 
             if (_configuration.AudioMuteSettings.MuteLocationBanner)
             {
                 mutedEventIds.Add(location_banner_play);
                 mutedEventIds.Add(location_banner_data_clicks_play);
+                
+                _logger.Information("Pipe Muting location banner audio.");
             }
 
             return await SetMutedAudioListAsync(handle, mutedEventIds);
@@ -283,19 +319,20 @@ namespace EveOPreview.Services.Implementation
                         using (var writer = new BinaryWriter(client))
                         using (var reader = new BinaryReader(client))
                         {
-                            writer.Write((byte)0xA2);
-                            writer.Write((byte)0xC1);
+                            writer.Write(PIPE_UPDATE);
+                            writer.Write(PIPE_SOUND_UNMUTE_ALL);
                             writer.Flush();
 
                             var response = reader.ReadByte();
 
-                            return response == (byte)0x01;
+                            _logger.Verbose($"Pipe sent PipeUpdate PipeSoundUnmuteAll for handle {handle}");
+                            return response == PIPE_SUCCESS_RESPONSE_CODE;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    KernelNativeMethods.OutputDebug($"Unhandled exception during {nameof(SendTakeOwnershipCommand)}", handle);
+                    _logger.Error(ex, $"Pipe Error while calling PipeUpdate PipeSoundUnmuteAll for handle {handle}");
                     return false;
                 }
             });
@@ -314,8 +351,8 @@ namespace EveOPreview.Services.Implementation
                         using (var writer = new BinaryWriter(client))
                         using (var reader = new BinaryReader(client))
                         {
-                            writer.Write((byte)0xA2);
-                            writer.Write((byte)0xC3);
+                            writer.Write(PIPE_UPDATE);
+                            writer.Write(PIPE_SOUND_MUTE_LIST);
                             
                             writer.Write(mutedEventIds.Count);
                             foreach (var eventId in mutedEventIds)
@@ -326,14 +363,15 @@ namespace EveOPreview.Services.Implementation
                             writer.Flush();
 
                             var response = reader.ReadByte();
+                            _logger.Verbose($"Pipe sent PipeUpdate PipeSoundMuteList for handle {handle}");
 
-                            return response == (byte)0x01;
+                            return response == PIPE_SUCCESS_RESPONSE_CODE;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    KernelNativeMethods.OutputDebug($"Unhandled exception during {nameof(SendTakeOwnershipCommand)}", handle);
+                    _logger.Error(ex, $"Pipe Error while calling PipeUpdate PipeSoundMuteList for handle {handle}");
                     return false;
                 }
             });
@@ -352,20 +390,21 @@ namespace EveOPreview.Services.Implementation
                         using (var writer = new BinaryWriter(client))
                         using (var reader = new BinaryReader(client))
                         {
-                            writer.Write((byte)0xA2);
-                            writer.Write((byte)0xB4);
+                            writer.Write(PIPE_UPDATE);
+                            writer.Write(PIPE_TAKE_OWNERSHIP_COMMAND);
                             writer.Write(newOwnerProcessId);
                             writer.Flush();
 
                             var response = reader.ReadByte();
+                            _logger.Verbose($"Pipe sent PipeUpdate PipeTakeOwnershipCommand for handle {handle}");
 
-                            return response == (byte)0x01;
+                            return response == PIPE_SUCCESS_RESPONSE_CODE;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    KernelNativeMethods.OutputDebug($"Unhandled exception during {nameof(SendTakeOwnershipCommand)}", handle);
+                    _logger.Error(ex, $"Pipe Error while calling PipeUpdate PipeTakeOwnershipCommand for handle {handle}");
                     return false;
                 }
             });
@@ -379,9 +418,8 @@ namespace EveOPreview.Services.Implementation
                 {
                     return MakeThePipeCallToSetFps(handle, foregroundFps, backgroundFps, predictiveFps);
                 }
-                catch (Exception ex)
+                catch
                 {
-                    KernelNativeMethods.OutputDebug($"Unhandled exception during {nameof(SetExactTargetFpsAsync)}", handle);
                     return false;
                 }
             }).ConfigureAwait(false);
@@ -398,24 +436,24 @@ namespace EveOPreview.Services.Implementation
                     using (var writer = new BinaryWriter(client))
                     using (var reader = new BinaryReader(client))
                     {
-                        writer.Write((byte)0xA2);
-                        writer.Write((byte)0xF1);
+                        writer.Write(PIPE_UPDATE);
+                        writer.Write(PIPE_FPS_PREFIX_BYTE_FOCUSED);
                         writer.Write(foregroundFps);
-                        writer.Write((byte)0xF2);
+                        writer.Write(PIPE_FPS_PREFIX_BYTE_BACKGROUND);
                         writer.Write(backgroundFps);
-                        writer.Write((byte)0xF3);
+                        writer.Write(PIPE_FPS_PREFIX_BYTE_PREDICT);
                         writer.Write(predictiveFps);
                         writer.Flush();
 
                         var response = reader.ReadByte();
 
-                        return response == (byte)0x01;
+                        return response == PIPE_SUCCESS_RESPONSE_CODE;
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                KernelNativeMethods.OutputDebug($"Unhandled exception during {nameof(MakeThePipeCallToSetFps)}", handle);
+                _logger.Error(ex, $"Pipe Error while calling PipeUpdate PipeFpsPrefixBytes for handle {handle}");
                 return false;
             }
         }
@@ -427,7 +465,7 @@ namespace EveOPreview.Services.Implementation
 
         private string GetClientsPipeName(IntPtr handle)
         {
-            return $"FpsLimiter_{handle}";
+            return $"EveoRobin_{handle}";
         }
 
         private bool CanAccessFpsLimiter()

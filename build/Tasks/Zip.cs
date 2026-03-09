@@ -35,7 +35,7 @@ namespace Build.Tasks
                 Configuration.BinFolder + "/EVE-O Preview.exe", 
                 Configuration.BinFolder + "/LICENSE.txt", 
                 Configuration.BinFolder + "/readme.pdf", 
-                Configuration.BinFolder + "/FPSLimiter.Hook.dll"
+                Configuration.BinFolder + "/Eve-O-Preview.Robin.dll"
             });
 		}
 	}

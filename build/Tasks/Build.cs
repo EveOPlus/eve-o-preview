@@ -41,15 +41,15 @@ namespace Build.Tasks
 				}
 			});
 
-            //context.DotNetPublish("./src/Eve-O-Hooks/Eve-O-Hooks.csproj", new DotNetPublishSettings
-            //{
-            //    Configuration = Configuration.BuildConfiguration,
-            //    Runtime = "win-x64",
-            //    SelfContained = true,
-            //    OutputDirectory = Configuration.BinFolder,
-            //    MSBuildSettings = new DotNetMSBuildSettings()
-            //        .WithProperty("PublishAot", "true")
-            //});
-        }
+			context.DotNetPublish("./src/Eve-O-Preview.Robin/Eve-O-Preview.Robin.csproj", new DotNetPublishSettings
+			{
+				Configuration = Configuration.BuildConfiguration,
+				Runtime = "win-x64",
+				SelfContained = true,
+				OutputDirectory = Configuration.BinFolder,
+				MSBuildSettings = new DotNetMSBuildSettings()
+					.WithProperty("PublishAot", "true")
+			});
+		}
 	}
 }
