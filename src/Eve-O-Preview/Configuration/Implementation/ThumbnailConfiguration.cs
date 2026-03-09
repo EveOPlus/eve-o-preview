@@ -31,7 +31,7 @@ namespace EveOPreview.Configuration.Implementation
 
         public ThumbnailConfiguration()
         {
-            this.ConfigVersion = 2;
+            this.ConfigVersion = 3;
 
             this.CycleGroups = new List<CycleGroup>();
 
@@ -44,7 +44,6 @@ namespace EveOPreview.Configuration.Implementation
             this.PerClientLayout = new Dictionary<string, Dictionary<string, Point>>();
             this.FlatLayout = new Dictionary<string, Point>();
             this.ClientLayout = new Dictionary<string, ClientLayout>();
-            this.ClientHotkey = new Dictionary<string, string>();
             this.DisableThumbnail = new Dictionary<string, bool>();
             this.PriorityClients = new List<string>();
 
@@ -80,7 +79,7 @@ namespace EveOPreview.Configuration.Implementation
             this.EnableActiveClientHighlight = false;
             this.ActiveClientHighlightColor = Color.GreenYellow;
             this.ActiveClientHighlightThickness = 3;
-            
+
             this.TitleFontSettings = new FontSettings();
             this.TitleFontSettings.Name = "Arial";
             this.TitleFontSettings.Size = 14.25f;
@@ -171,15 +170,17 @@ namespace EveOPreview.Configuration.Implementation
         public Color ActiveClientHighlightColor { get; set; }
 
         public int ActiveClientHighlightThickness { get; set; }
+        
+        public string ToggleHideActiveClientsHotkey { get; set; }
+
+        [JsonIgnore]
+        public Keys ToggleHideActiveClientsHotkeyParsed { get; set; }
 
         public FontSettings TitleFontSettings { get; set; }
 
         [JsonProperty("LoginThumbnailLocation")]
         public Point LoginThumbnailLocation { get; set; }
-
-        [JsonProperty]
-        public Dictionary<string, string> ClientHotkey { get; set; }
-
+        
         public FpsLimiterSettings FpsLimiterSettings { get; set; }
 
         public AudioMuteSettings AudioMuteSettings { get; set; }
@@ -266,33 +267,18 @@ namespace EveOPreview.Configuration.Implementation
         {
             this.ClientLayout[currentClient] = layout;
         }
-
-        public Keys GetClientHotkey(string currentClient)
-        {
-            string hotkey;
-            if (this.ClientHotkey.TryGetValue(currentClient, out hotkey))
-            {
-                // Protect from incorrect values
-                object rawValue = (new KeysConverter()).ConvertFromInvariantString(hotkey);
-                return rawValue != null ? (Keys)rawValue : Keys.None;
-            }
-
-            return Keys.None;
-        }
-
-        public void SetClientHotkey(string currentClient, Keys hotkey)
-        {
-            this.ClientHotkey[currentClient] = (new KeysConverter()).ConvertToInvariantString(hotkey);
-        }
-
         public bool IsPriorityClient(string currentClient)
         {
             return this.PriorityClients.Contains(currentClient);
         }
 
+        [JsonIgnore] 
+        public bool IsTemporarilyHidingAllThumbnails { get; set; } = false;
+
         public bool IsThumbnailDisabled(string currentClient)
         {
-            return this.DisableThumbnail.TryGetValue(currentClient, out bool isDisabled) && isDisabled;
+            return IsTemporarilyHidingAllThumbnails || 
+                   this.DisableThumbnail.TryGetValue(currentClient, out bool isDisabled) && isDisabled;
         }
 
         public void ToggleThumbnail(string currentClient, bool isDisabled)

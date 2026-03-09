@@ -29,8 +29,6 @@ namespace EveOPreview.Configuration
 
         Dictionary<string, Color> PerClientActiveClientHighlightColor { get; set; }
         
-        Dictionary<string, string> ClientHotkey { get; set; }
-
         bool MinimizeToTray { get; set; }
         int ThumbnailRefreshPeriod { get; set; }
 
@@ -72,18 +70,18 @@ namespace EveOPreview.Configuration
 
         string PremiumLicenseKey { get; set; }
         bool IsPremium { get; set; }
+        string ToggleHideActiveClientsHotkey { get; set; }
+        Keys ToggleHideActiveClientsHotkeyParsed { get; set; }
 
         Point GetThumbnailLocation(string currentClient, string activeClient, Point defaultLocation);
         void SetThumbnailLocation(string currentClient, string activeClient, Point location);
 
         ClientLayout GetClientLayout(string currentClient);
         void SetClientLayout(string currentClient, ClientLayout layout);
-
-        Keys GetClientHotkey(string currentClient);
-        void SetClientHotkey(string currentClient, Keys hotkey);
-
+        
         bool IsPriorityClient(string currentClient);
 
+        bool IsTemporarilyHidingAllThumbnails { get; set; }
         bool IsThumbnailDisabled(string currentClient);
         void ToggleThumbnail(string currentClient, bool isDisabled);
 

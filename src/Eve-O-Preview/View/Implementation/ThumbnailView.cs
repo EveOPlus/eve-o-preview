@@ -16,7 +16,6 @@
 
 using EveOPreview.Configuration;
 using EveOPreview.Services;
-using EveOPreview.UI.Hotkeys;
 using System;
 using System.ComponentModel;
 using System.Drawing;
@@ -60,7 +59,7 @@ namespace EveOPreview.View
         private Point _baseMousePosition;
         private Size _baseZoomMaximumSize;
 
-        private HotkeyHandler _hotkeyHandler;
+        // private HotkeyHandler _hotkeyHandler;
 
         private IThumbnailConfiguration _config;
         private Lazy<Color> _myBorderColor;
@@ -364,37 +363,7 @@ namespace EveOPreview.View
         {
             this.RestoreWindowSizeAndLocation();
         }
-
-        public void RegisterHotkey(Keys hotkey)
-        {
-            if (this._hotkeyHandler != null)
-            {
-                this.UnregisterHotkey();
-            }
-
-            if (hotkey == Keys.None)
-            {
-                return;
-            }
-
-            this._hotkeyHandler = new HotkeyHandler(this.Handle, hotkey);
-            this._hotkeyHandler.Pressed += HotkeyPressed_Handler;
-            this._hotkeyHandler.Register();
-        }
-
-        public void UnregisterHotkey()
-        {
-            if (this._hotkeyHandler == null)
-            {
-                return;
-            }
-
-            this._hotkeyHandler.Unregister();
-            this._hotkeyHandler.Pressed -= HotkeyPressed_Handler;
-            this._hotkeyHandler.Dispose();
-            this._hotkeyHandler = null;
-        }
-
+        
         public void Refresh(bool forceRefresh)
         {
             this.RefreshThumbnail(forceRefresh);

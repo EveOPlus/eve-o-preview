@@ -14,27 +14,31 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System.Threading;
-using System.Threading.Tasks;
 using EveOPreview.Configuration;
+using EveOPreview.Helper;
 using EveOPreview.Mediator.Messages;
 using MediatR;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace EveOPreview.Mediator.Handlers.Configuration
 {
     sealed class SaveConfigurationHandler : IRequestHandler<SaveConfiguration>
     {
         private readonly IConfigurationStorage _storage;
+        private readonly IThumbnailConfiguration _config;
 
-        public SaveConfigurationHandler(IConfigurationStorage storage)
+        public SaveConfigurationHandler(IConfigurationStorage storage, IThumbnailConfiguration config)
         {
             this._storage = storage;
+            _config = config;
         }
 
         public Task<Unit> Handle(SaveConfiguration message, CancellationToken cancellationToken)
         {
             this._storage.Save();
-
+            
             return Unit.Task;
         }
     }

@@ -269,6 +269,12 @@ namespace EveOPreview.View
             }
         }
 
+        public string ToggleHideAllActiveHotkey
+        {
+            get => this.txtToggleHideAllActiveHotkey.Text;
+            set => this.txtToggleHideAllActiveHotkey.Text = value;
+        }
+
         private bool _isPremium;
 
         public bool IsPremium
@@ -294,7 +300,7 @@ namespace EveOPreview.View
                 }
             }
         }
-
+        
         public new void Show()
 		{
 			// Registers the current instance as the application's Main Form
@@ -382,6 +388,7 @@ namespace EveOPreview.View
         public Action FpsLimiterChanged { get; set; }
         public Action FpsLimiterEnabledChanged { get; set; }
         public Action AudioSettingsChanged { get; set; }
+        public Action ToggleHideAllActiveClients { get; set; }
 
         #region UI events
         private void ContentTabControl_DrawItem(object sender, DrawItemEventArgs e)
@@ -918,6 +925,11 @@ namespace EveOPreview.View
 
         private void chbIsFpsThrottlingEnabled_CheckedChanged(object sender, EventArgs e)
         {
+            if (this._suppressEvents)
+            {
+                return;
+            }
+            
             FpsLimiterSettings.IsEnabled = chbIsFpsThrottlingEnabled.Checked;
             this.ApplicationSettingsChanged?.Invoke();
             this.FpsLimiterEnabledChanged?.Invoke();
@@ -946,11 +958,21 @@ namespace EveOPreview.View
 
         private void chbIsGateTunnelMuted_CheckedChanged(object sender, EventArgs e)
         {
+            if (this._suppressEvents)
+            {
+                return;
+            }
+            
             AnyAudioSettings_CheckedChanged();
         }
 
         private void chbIsLocationBannerMuted_CheckedChanged(object sender, EventArgs e)
         {
+            if (this._suppressEvents)
+            {
+                return;
+            }
+            
             AnyAudioSettings_CheckedChanged();
         }
 
@@ -961,6 +983,30 @@ namespace EveOPreview.View
             
             this.ApplicationSettingsChanged?.Invoke();
             this.AudioSettingsChanged?.Invoke();
+        }
+
+        public void UpdateThumbnailToggleHideAllStatus(bool notificationIsHidden)
+        {
+            this.btnToggleHideAll.Text = notificationIsHidden ? "Show All" : "Hide All";
+            this.btnToggleHideAll.BackColor = notificationIsHidden ? Color.RosyBrown : SystemColors.Control;
+            this.ClientsTabPage.Text = notificationIsHidden ? "ALL HIDDEN" : "All Clients";
+        }
+        
+        private void btnToggleHideAll_Click(object sender, EventArgs e)
+        {
+            this.ToggleHideAllActiveClients();
+        }
+
+        private void txtToggleHideAllActiveHotkey_DoubleClick(object sender, EventArgs e)
+        {
+            if (WaitForHotkeyCapture(txtToggleHideAllActiveHotkey, out var captureHotkeyResponse))
+            {
+                return;
+            }
+
+            txtToggleHideAllActiveHotkey.Text = captureHotkeyResponse.KeyString;
+
+            this.ApplicationSettingsChanged?.Invoke();
         }
     }
 }

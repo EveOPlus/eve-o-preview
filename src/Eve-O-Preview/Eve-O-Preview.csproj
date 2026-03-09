@@ -27,6 +27,7 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -37,6 +38,7 @@
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <Prefer32Bit>false</Prefer32Bit>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>icon.ico</ApplicationIcon>
@@ -82,7 +84,7 @@
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <LangVersion>7.3</LangVersion>
+    <LangVersion>latest</LangVersion>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
@@ -126,16 +128,17 @@
     <Compile Include="Mediator\Handlers\Configuration\SaveConfigurationHandler.cs" />
     <Compile Include="Mediator\Handlers\Configuration\SetFpsLimiterEnabledHandler.cs" />
     <Compile Include="Mediator\Handlers\Configuration\SetAudioSettingsHandler.cs" />
-    <Compile Include="Mediator\Handlers\Configuration\RefreshCycleGroupHotkeysHandler.cs" />
+    <Compile Include="Mediator\Handlers\Configuration\RefreshHotkeysHandler.cs" />
     <Compile Include="Mediator\Handlers\Configuration\SetFpsLimiterHandler.cs" />
     <Compile Include="Mediator\Handlers\Configuration\CaptureNewHotkeyHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailTitleFontSettingsUpdatedHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailFrameSettingsUpdatedHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailConfiguredSizeUpdatedHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailListUpdatedHandler.cs" />
+    <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailToggleHideAllHandler.cs" />
     <Compile Include="Mediator\Messages\Configuration\CaptureNewHotkey.cs" />
     <Compile Include="Mediator\Messages\Configuration\SetAudioSettings.cs" />
-    <Compile Include="Mediator\Messages\Configuration\RefreshCycleGroupHotkeys.cs" />
+    <Compile Include="Mediator\Messages\Configuration\RefreshHotkeys.cs" />
     <Compile Include="Mediator\Messages\Configuration\SetFpsLimiterEnabled.cs" />
     <Compile Include="Mediator\Messages\Configuration\SetFpsLimiter.cs" />
     <Compile Include="Mediator\Messages\Configuration\CaptureNewHotkeyResponse.cs" />
@@ -152,6 +155,8 @@
     <Compile Include="Mediator\Messages\Services\StopService.cs" />
     <Compile Include="Mediator\Messages\Thumbnails\ThumbnailLocationUpdated.cs" />
     <Compile Include="Mediator\Messages\Thumbnails\ThumbnailActiveSizeUpdated.cs" />
+    <Compile Include="Mediator\Messages\Thumbnails\ThumbnailToggleHideAll.cs" />
+    <Compile Include="Mediator\Messages\Thumbnails\ThumbnailToggleHideAllChanged.cs" />
     <Compile Include="Presenters\Interface\IMainFormPresenter.cs" />
     <Compile Include="Services\Implementation\HookService.cs" />
     <Compile Include="Services\Implementation\PremiumService.cs" />
@@ -208,8 +213,6 @@
     <Compile Include="View\Interface\IThumbnailDescription.cs" />
     <Compile Include="View\Interface\ViewZoomAnchor.cs" />
     <Compile Include="Configuration\Implementation\ThumbnailConfiguration.cs" />
-    <Compile Include="Hotkeys\HotkeyHandler.cs" />
-    <Compile Include="Hotkeys\HotkeyHandlerNativeMethods.cs" />
     <Compile Include="View\Implementation\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -270,9 +273,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="FodyWeavers.xml" />
-    <Content Include="FPSLimiter.Hook.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="icon.ico" />
   </ItemGroup>
   <ItemGroup>

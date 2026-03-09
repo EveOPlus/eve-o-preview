@@ -18,18 +18,17 @@ using EveOPreview.Configuration;
 using EveOPreview.Configuration.Implementation;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Services.Interface;
-using EveOPreview.UI.Hotkeys;
 using EveOPreview.View;
 using Gma.System.MouseKeyHook;
 using MediatR;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace EveOPreview.Services
@@ -68,8 +67,6 @@ namespace EveOPreview.Services
 
         private int _refreshCycleCount;
         private int _hideThumbnailsDelay;
-
-        private List<HotkeyHandler> _cycleClientHotkeyHandlers = new List<HotkeyHandler>();
         #endregion
 
         public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents, IHookService hookService)
@@ -168,6 +165,8 @@ namespace EveOPreview.Services
             {
                 RegisterCycleClientHotkey(cycleGroup);
             }
+
+            RegisterToggleHideAllThumbnails();
         }
 
         public void RegisterCycleClientHotkey(CycleGroup cycleGroup)
@@ -205,6 +204,19 @@ namespace EveOPreview.Services
                         e.Handled = true;
                         return;
                     }
+                }
+            };
+        }
+
+        public void RegisterToggleHideAllThumbnails()
+        {
+            // Using the KeyUp for this one so it has less chance of impacting the flow of other more important hotkeys (like client cycling)
+            _keyboardMouseEvents.KeyUp += (sender, e) =>
+            {
+                if (e.KeyData == _configuration.ToggleHideActiveClientsHotkeyParsed)
+                {
+                    _ = _mediator.Send(new ThumbnailToggleHideAll()); // fire and forget, no need to await this
+                    e.Handled = true;
                 }
             };
         }
@@ -256,7 +268,6 @@ namespace EveOPreview.Services
                 view.ThumbnailLostFocus = this.ThumbnailViewLostFocus;
                 view.ThumbnailActivated = this.ThumbnailActivated;
                 view.ThumbnailDeactivated = this.ThumbnailDeactivated;
-                view.RegisterHotkey(this._configuration.GetClientHotkey(view.Title));
 
                 this.ApplyClientLayout(view.Id, view.Title);
 
@@ -285,8 +296,6 @@ namespace EveOPreview.Services
                     view.Title = process.Title;
                     viewsAdded.Add(view.Title);
 
-                    view.RegisterHotkey(this._configuration.GetClientHotkey(process.Title));
-
                     this.ApplyClientLayout(view.Id, view.Title);
                 }
             }
@@ -300,8 +309,6 @@ namespace EveOPreview.Services
                 {
                     viewsRemoved.Add(view.Title);
                 }
-
-                view.UnregisterHotkey();
 
                 view.ThumbnailResized = null;
                 view.ThumbnailMoved = null;

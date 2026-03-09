@@ -253,7 +253,7 @@ namespace EveOPreview.Services.Implementation
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Unhandled exception in {nameof(TryInstallHooksAsync)}", procInfo.Handle);
+                    _logger.Error(ex, $"Unhandled exception in {nameof(TryInstallHooksAsync)}");
 
                     _initializedClients.TryRemove(procInfo.Handle, out _);
                 }

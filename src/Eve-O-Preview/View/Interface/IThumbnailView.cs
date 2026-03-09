@@ -43,10 +43,7 @@ namespace EveOPreview.View
 
         void ZoomIn(ViewZoomAnchor anchor, int zoomFactor);
         void ZoomOut();
-
-        void RegisterHotkey(Keys hotkey);
-        void UnregisterHotkey();
-
+        
         void Refresh(bool forceRefresh);
 
         Action<IntPtr> ThumbnailResized { get; set; }

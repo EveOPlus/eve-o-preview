@@ -83,6 +83,11 @@ namespace EveOPreview.Mediator.Handlers.Configuration
         {
             var hotkeysInConfig = new Dictionary<Keys, string>();
 
+            if (_config.ToggleHideActiveClientsHotkeyParsed != Keys.None)
+            {
+                AddOrMeaningfulError(hotkeysInConfig, _config.ToggleHideActiveClientsHotkeyParsed, "Toggle Hide All Active Clients Hotkey");
+            }
+
             foreach (var cycleGroup in _config.CycleGroups)
             {
                 foreach (var forwardKeyString in cycleGroup.ForwardHotkeys)
@@ -94,11 +99,6 @@ namespace EveOPreview.Mediator.Handlers.Configuration
                 {
                     AddOrMeaningfulError(hotkeysInConfig, backwardKeyString.ToHotkeys(), $"Cycle Group {cycleGroup.Description} Backward");
                 }
-            }
-
-            foreach (var client in _config.ClientHotkey)
-            {
-                AddOrMeaningfulError(hotkeysInConfig, client.Value.ToHotkeys(), $"Client Hotkey {client.Key}");
             }
 
             return hotkeysInConfig;

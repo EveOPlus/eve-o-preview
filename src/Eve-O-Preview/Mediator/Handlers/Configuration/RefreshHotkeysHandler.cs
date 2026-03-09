@@ -24,16 +24,16 @@ using EveOPreview.Helper;
 
 namespace EveOPreview.Mediator.Handlers.Configuration
 {
-    sealed class RefreshCycleGroupHotkeysHandler : IRequestHandler<RefreshCycleGroupHotkeys>
+    sealed class RefreshHotkeysHandler : IRequestHandler<RefreshHotkeys>
     {
         private readonly IThumbnailConfiguration _config;
 
-        public RefreshCycleGroupHotkeysHandler(IThumbnailConfiguration Config)
+        public RefreshHotkeysHandler(IThumbnailConfiguration Config)
         {
             _config = Config;
         }
 
-        public async Task<Unit> Handle(RefreshCycleGroupHotkeys request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(RefreshHotkeys request, CancellationToken cancellationToken)
         {
             foreach (var cycleGroup in _config.CycleGroups)
             {
@@ -55,6 +55,8 @@ namespace EveOPreview.Mediator.Handlers.Configuration
                     cycleGroup.BackwardHotkeysParsedAndOrdered.AddRange(backwardHotkeys);
                 }
             }
+
+            _config.ToggleHideActiveClientsHotkeyParsed = _config.ToggleHideActiveClientsHotkey.ToHotkeys();
 
             return Unit.Value;
         }

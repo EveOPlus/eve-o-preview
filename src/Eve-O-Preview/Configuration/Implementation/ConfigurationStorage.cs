@@ -14,13 +14,14 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
-using System.IO;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Services.Interface;
 using MediatR;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace EveOPreview.Configuration.Implementation
 {
@@ -53,20 +54,58 @@ namespace EveOPreview.Configuration.Implementation
             string rawData = File.ReadAllText(filename);
 
             AutoMigrateVersion1Config(rawData);
+            var cycleGroupsToAdd = AutoMigrateVersion2Config(rawData);
 
             JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings()
             {
                 ObjectCreationHandling = ObjectCreationHandling.Replace
             };
-
-            // StageHotkeyArraysToAvoidDuplicates(rawData);
-
+            
             JsonConvert.PopulateObject(rawData, this._thumbnailConfiguration, jsonSerializerSettings);
+            this._thumbnailConfiguration.CycleGroups.AddRange(cycleGroupsToAdd);
             this._thumbnailConfiguration.IsPremium = _premiumService.IsLicenseValidAndCurrent(this._thumbnailConfiguration.PremiumLicenseKey);
 
             // Validate data after loading it
             this._thumbnailConfiguration.ApplyRestrictions();
-            this._mediator.Send(new RefreshCycleGroupHotkeys()).GetAwaiter().GetResult();
+            this._mediator.Send(new RefreshHotkeys()).GetAwaiter().GetResult();
+        }
+
+        private List<CycleGroup> AutoMigrateVersion2Config(string rawData)
+        {
+            var newCycleGroups = new List<CycleGroup>();
+            
+            var dynamicConfig = JsonConvert.DeserializeObject<dynamic>(rawData);
+            if (dynamicConfig.ConfigVersion < 3)
+            {
+                Dictionary<string, string> oldClientHotkeys = new Dictionary<string, string>();
+                if (dynamicConfig.ClientHotkey is JObject)
+                {
+                    oldClientHotkeys = dynamicConfig.ClientHotkey.ToObject<Dictionary<string, string>>();
+
+                    var grouped = oldClientHotkeys.GroupBy(x => x.Value);
+                    foreach (var individualGroup in grouped)
+                    {
+                        var newCycleGroup = new CycleGroup();
+                        newCycleGroup.ForwardHotkeys = new List<string> { individualGroup.Key };
+
+                        int i = 1;
+                        foreach (var client in individualGroup)
+                        {
+                            newCycleGroup.ClientsOrder.Add(i, client.Key);
+                        }
+
+                        var toonNames = individualGroup.Select(x => x.Key.Replace("EVE - ", "")).ToList();
+
+                        newCycleGroup.Description = $"ClientHk - {string.Join(", ", toonNames)}";
+
+                        newCycleGroups.Add(newCycleGroup);
+                    }
+                }
+
+                dynamicConfig.ConfigVersion = 3;
+            }
+            
+            return newCycleGroups;
         }
 
         private void AutoMigrateVersion1Config(string rawData)
@@ -156,7 +195,8 @@ namespace EveOPreview.Configuration.Implementation
 
         public void Save()
         {
-            string rawData = JsonConvert.SerializeObject(this._thumbnailConfiguration, Formatting.Indented);
+            var options = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+            string rawData = JsonConvert.SerializeObject(this._thumbnailConfiguration, Formatting.Indented, options);
             string filename = this.GetConfigFileName();
 
             try

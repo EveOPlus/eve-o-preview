@@ -19,6 +19,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using EveOPreview.Configuration;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.View;
@@ -26,7 +28,7 @@ using MediatR;
 
 namespace EveOPreview.Presenters
 {
-    public class MainFormPresenter : Presenter<IMainFormView>, IMainFormPresenter
+    public class MainFormPresenter : Presenter<IMainFormView>, IMainFormPresenter, INotificationHandler<ThumbnailToggleHideAllChangedNotification>
     {
         #region Private constants
         private const string DISCORD_URL = @"https://discord.gg/HzQHBtTEcB";
@@ -42,7 +44,12 @@ namespace EveOPreview.Presenters
         private bool _exitApplication;
         #endregion
 
-        public MainFormPresenter(IApplicationController controller, IMainFormView view, IMediator mediator, IThumbnailConfiguration configuration, IConfigurationStorage configurationStorage)
+        public MainFormPresenter(
+            IApplicationController controller, 
+            IMainFormView view, 
+            IMediator mediator, 
+            IThumbnailConfiguration configuration, 
+            IConfigurationStorage configurationStorage)
             : base(controller, view)
         {
             this._mediator = mediator;
@@ -67,6 +74,7 @@ namespace EveOPreview.Presenters
             this.View.FpsLimiterChanged = this.TriggerSetFpsLimiter;
             this.View.FpsLimiterEnabledChanged = this.TriggerSetFpsLimiterEnabled;
             this.View.AudioSettingsChanged = this.TriggerSetAudioSettings;
+            this.View.ToggleHideAllActiveClients = this.TriggerToggleHideAllActiveClients;
         }
 
         private CaptureNewHotkeyResponse SendCaptureNewHotkeyRequest(string currentKey)
@@ -152,10 +160,11 @@ namespace EveOPreview.Presenters
             this.View.EnableActiveClientHighlight = this._configuration.EnableActiveClientHighlight;
             this.View.ActiveClientHighlightColor = this._configuration.ActiveClientHighlightColor;
             this.View.TitleFontSettings = this._configuration.TitleFontSettings;
+            this.View.ToggleHideAllActiveHotkey = this._configuration.ToggleHideActiveClientsHotkey;
+            this.View.IsPremium = this._configuration.IsPremium;
+
             this.View.FpsLimiterSettings = this._configuration.FpsLimiterSettings;
             this.View.AudioMuteSettings = this._configuration.AudioMuteSettings;
-
-            this.View.IsPremium = this._configuration.IsPremium;
         }
 
         private async void SaveApplicationSettings()
@@ -189,14 +198,16 @@ namespace EveOPreview.Presenters
             this._configuration.EnableActiveClientHighlight = this.View.EnableActiveClientHighlight;
             this._configuration.ActiveClientHighlightColor = this.View.ActiveClientHighlightColor;
 
+            this._configuration.TitleFontSettings = this.View.TitleFontSettings;
+            this._configuration.ToggleHideActiveClientsHotkey = this.View.ToggleHideAllActiveHotkey;
+            
             this._configurationStorage.Save();
 
             this.View.RefreshZoomSettings();
 
-            this._configuration.TitleFontSettings = this.View.TitleFontSettings;
             await this._mediator.Publish(new ThumbnailFontTitleSettingsUpdated());
             
-            await this._mediator.Send(new RefreshCycleGroupHotkeys());
+            await this._mediator.Send(new RefreshHotkeys());
             await this._mediator.Send(new SaveConfiguration());
         }
 
@@ -251,7 +262,7 @@ namespace EveOPreview.Presenters
             {
                 this._configuration.ToggleThumbnail(title, description.IsDisabled);
             }
-
+            
             await this._mediator.Send(new SaveConfiguration());
         }
 
@@ -299,10 +310,22 @@ namespace EveOPreview.Presenters
             this._mediator.Send(new SetAudioSettings());
         }
 
+        private void TriggerToggleHideAllActiveClients()
+        {
+            this._mediator.Send(new ThumbnailToggleHideAll());
+        }
+
         private void ExitApplication()
         {
             this._exitApplication = true;
             this.View.Close();
+        }
+
+        public Task Handle(ThumbnailToggleHideAllChangedNotification notification, CancellationToken cancellationToken)
+        {
+            this.View.UpdateThumbnailToggleHideAllStatus(notification.IsHidden);
+
+            return Task.CompletedTask;
         }
     }
 }
