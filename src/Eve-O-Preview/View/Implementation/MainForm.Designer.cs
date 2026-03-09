@@ -102,11 +102,13 @@ namespace EveOPreview.View
             this.EnableActiveClientHighlightCheckBox = new System.Windows.Forms.CheckBox();
             this.ShowThumbnailOverlaysCheckBox = new System.Windows.Forms.CheckBox();
             this.ShowThumbnailFramesCheckBox = new System.Windows.Forms.CheckBox();
-            this.ClientsTabPage = new System.Windows.Forms.TabPage();
             this.activeClientsSplitContainer = new System.Windows.Forms.SplitContainer();
             this.groupBoxToggleHideAllThumbnails = new System.Windows.Forms.GroupBox();
+            this.btnMinimizeAllClients = new System.Windows.Forms.Button();
+            this.lblMinimizeAllClientsHotkey = new System.Windows.Forms.Label();
+            this.txtMinimizeAllClientsHotkey = new System.Windows.Forms.TextBox();
             this.btnToggleHideAll = new System.Windows.Forms.Button();
-            this.lblToggleHideAllActive = new System.Windows.Forms.Label();
+            this.lblToggleHideAllActiveHotkey = new System.Windows.Forms.Label();
             this.txtToggleHideAllActiveHotkey = new System.Windows.Forms.TextBox();
             this.ThumbnailsList = new System.Windows.Forms.CheckedListBox();
             this.CycleGroupPanel = new System.Windows.Forms.Panel();
@@ -129,6 +131,7 @@ namespace EveOPreview.View
             this.addClientToCycleGroupButton = new System.Windows.Forms.Button();
             this.VersionLabel = new System.Windows.Forms.Label();
             this.DocumentationLink = new System.Windows.Forms.LinkLabel();
+            this.ClientsTabPage = new System.Windows.Forms.TabPage();
             this.ContentTabControl = new System.Windows.Forms.TabControl();
             this.ZoomTabPage = new System.Windows.Forms.TabPage();
             this.FpsLimiterTabPage = new System.Windows.Forms.TabPage();
@@ -191,7 +194,6 @@ namespace EveOPreview.View
             OverlayTabPage.SuspendLayout();
             OverlaySettingsPanel.SuspendLayout();
             this.groupBoxOverlayFont.SuspendLayout();
-            this.ClientsTabPage.SuspendLayout();
             ClientsPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.activeClientsSplitContainer)).BeginInit();
             this.activeClientsSplitContainer.Panel1.SuspendLayout();
@@ -202,6 +204,7 @@ namespace EveOPreview.View
             this.CycleGroupPanel.SuspendLayout();
             AboutTabPage.SuspendLayout();
             AboutPanel.SuspendLayout();
+            this.ClientsTabPage.SuspendLayout();
             this.ContentTabControl.SuspendLayout();
             this.ZoomTabPage.SuspendLayout();
             this.FpsLimiterTabPage.SuspendLayout();
@@ -865,16 +868,6 @@ namespace EveOPreview.View
             this.ShowThumbnailFramesCheckBox.UseVisualStyleBackColor = true;
             this.ShowThumbnailFramesCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
             // 
-            // ClientsTabPage
-            // 
-            this.ClientsTabPage.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientsTabPage.Controls.Add(ClientsPanel);
-            this.ClientsTabPage.Location = new System.Drawing.Point(124, 4);
-            this.ClientsTabPage.Name = "ClientsTabPage";
-            this.ClientsTabPage.Size = new System.Drawing.Size(262, 353);
-            this.ClientsTabPage.TabIndex = 4;
-            this.ClientsTabPage.Text = "Active Clients";
-            // 
             // ClientsPanel
             // 
             ClientsPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -901,44 +894,76 @@ namespace EveOPreview.View
             // 
             this.activeClientsSplitContainer.Panel2.Controls.Add(this.ThumbnailsList);
             this.activeClientsSplitContainer.Size = new System.Drawing.Size(260, 351);
-            this.activeClientsSplitContainer.SplitterDistance = 81;
+            this.activeClientsSplitContainer.SplitterDistance = 108;
             this.activeClientsSplitContainer.TabIndex = 35;
             // 
             // groupBoxToggleHideAllThumbnails
             // 
+            this.groupBoxToggleHideAllThumbnails.Controls.Add(this.btnMinimizeAllClients);
+            this.groupBoxToggleHideAllThumbnails.Controls.Add(this.lblMinimizeAllClientsHotkey);
+            this.groupBoxToggleHideAllThumbnails.Controls.Add(this.txtMinimizeAllClientsHotkey);
             this.groupBoxToggleHideAllThumbnails.Controls.Add(this.btnToggleHideAll);
-            this.groupBoxToggleHideAllThumbnails.Controls.Add(this.lblToggleHideAllActive);
+            this.groupBoxToggleHideAllThumbnails.Controls.Add(this.lblToggleHideAllActiveHotkey);
             this.groupBoxToggleHideAllThumbnails.Controls.Add(this.txtToggleHideAllActiveHotkey);
-            this.groupBoxToggleHideAllThumbnails.Location = new System.Drawing.Point(8, 3);
+            this.groupBoxToggleHideAllThumbnails.Location = new System.Drawing.Point(3, 3);
             this.groupBoxToggleHideAllThumbnails.Name = "groupBoxToggleHideAllThumbnails";
-            this.groupBoxToggleHideAllThumbnails.Size = new System.Drawing.Size(245, 53);
+            this.groupBoxToggleHideAllThumbnails.Size = new System.Drawing.Size(250, 89);
             this.groupBoxToggleHideAllThumbnails.TabIndex = 37;
             this.groupBoxToggleHideAllThumbnails.TabStop = false;
-            this.groupBoxToggleHideAllThumbnails.Text = "Temporarily";
+            this.groupBoxToggleHideAllThumbnails.Text = "All Clients";
+            // 
+            // btnMinimizeAllClients
+            // 
+            this.btnMinimizeAllClients.Location = new System.Drawing.Point(6, 51);
+            this.btnMinimizeAllClients.Name = "btnMinimizeAllClients";
+            this.btnMinimizeAllClients.Size = new System.Drawing.Size(96, 26);
+            this.btnMinimizeAllClients.TabIndex = 39;
+            this.btnMinimizeAllClients.Text = "Minimize";
+            this.btnMinimizeAllClients.UseVisualStyleBackColor = true;
+            this.btnMinimizeAllClients.Click += new System.EventHandler(this.btnMinimizeAllClients_Click);
+            // 
+            // lblMinimizeAllClientsHotkey
+            // 
+            this.lblMinimizeAllClientsHotkey.AutoSize = true;
+            this.lblMinimizeAllClientsHotkey.Location = new System.Drawing.Point(106, 58);
+            this.lblMinimizeAllClientsHotkey.Name = "lblMinimizeAllClientsHotkey";
+            this.lblMinimizeAllClientsHotkey.Size = new System.Drawing.Size(41, 13);
+            this.lblMinimizeAllClientsHotkey.TabIndex = 37;
+            this.lblMinimizeAllClientsHotkey.Text = "Hotkey";
+            // 
+            // txtMinimizeAllClientsHotkey
+            // 
+            this.txtMinimizeAllClientsHotkey.BackColor = System.Drawing.SystemColors.Control;
+            this.txtMinimizeAllClientsHotkey.Location = new System.Drawing.Point(146, 54);
+            this.txtMinimizeAllClientsHotkey.Name = "txtMinimizeAllClientsHotkey";
+            this.txtMinimizeAllClientsHotkey.ReadOnly = true;
+            this.txtMinimizeAllClientsHotkey.Size = new System.Drawing.Size(94, 20);
+            this.txtMinimizeAllClientsHotkey.TabIndex = 38;
+            this.txtMinimizeAllClientsHotkey.DoubleClick += new System.EventHandler(this.txtMinimizeAllClientsHotkey_DoubleClick);
             // 
             // btnToggleHideAll
             // 
             this.btnToggleHideAll.Location = new System.Drawing.Point(6, 19);
             this.btnToggleHideAll.Name = "btnToggleHideAll";
-            this.btnToggleHideAll.Size = new System.Drawing.Size(83, 26);
+            this.btnToggleHideAll.Size = new System.Drawing.Size(96, 26);
             this.btnToggleHideAll.TabIndex = 36;
-            this.btnToggleHideAll.Text = "Hide All";
+            this.btnToggleHideAll.Text = "Hide Thumbnails";
             this.btnToggleHideAll.UseVisualStyleBackColor = true;
             this.btnToggleHideAll.Click += new System.EventHandler(this.btnToggleHideAll_Click);
             // 
-            // lblToggleHideAllActive
+            // lblToggleHideAllActiveHotkey
             // 
-            this.lblToggleHideAllActive.AutoSize = true;
-            this.lblToggleHideAllActive.Location = new System.Drawing.Point(95, 26);
-            this.lblToggleHideAllActive.Name = "lblToggleHideAllActive";
-            this.lblToggleHideAllActive.Size = new System.Drawing.Size(41, 13);
-            this.lblToggleHideAllActive.TabIndex = 34;
-            this.lblToggleHideAllActive.Text = "Hotkey";
+            this.lblToggleHideAllActiveHotkey.AutoSize = true;
+            this.lblToggleHideAllActiveHotkey.Location = new System.Drawing.Point(106, 26);
+            this.lblToggleHideAllActiveHotkey.Name = "lblToggleHideAllActiveHotkey";
+            this.lblToggleHideAllActiveHotkey.Size = new System.Drawing.Size(41, 13);
+            this.lblToggleHideAllActiveHotkey.TabIndex = 34;
+            this.lblToggleHideAllActiveHotkey.Text = "Hotkey";
             // 
             // txtToggleHideAllActiveHotkey
             // 
             this.txtToggleHideAllActiveHotkey.BackColor = System.Drawing.SystemColors.Control;
-            this.txtToggleHideAllActiveHotkey.Location = new System.Drawing.Point(142, 22);
+            this.txtToggleHideAllActiveHotkey.Location = new System.Drawing.Point(146, 22);
             this.txtToggleHideAllActiveHotkey.Name = "txtToggleHideAllActiveHotkey";
             this.txtToggleHideAllActiveHotkey.ReadOnly = true;
             this.txtToggleHideAllActiveHotkey.Size = new System.Drawing.Size(94, 20);
@@ -948,7 +973,7 @@ namespace EveOPreview.View
             // ThumbnailsListLabel
             // 
             ThumbnailsListLabel.AutoSize = true;
-            ThumbnailsListLabel.Location = new System.Drawing.Point(2, 64);
+            ThumbnailsListLabel.Location = new System.Drawing.Point(2, 97);
             ThumbnailsListLabel.Name = "ThumbnailsListLabel";
             ThumbnailsListLabel.Size = new System.Drawing.Size(162, 13);
             ThumbnailsListLabel.TabIndex = 33;
@@ -1304,6 +1329,16 @@ namespace EveOPreview.View
     "be set from prresenter";
             this.DocumentationLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.DocumentationLinkClicked_Handler);
             // 
+            // ClientsTabPage
+            // 
+            this.ClientsTabPage.BackColor = System.Drawing.SystemColors.Control;
+            this.ClientsTabPage.Controls.Add(ClientsPanel);
+            this.ClientsTabPage.Location = new System.Drawing.Point(124, 4);
+            this.ClientsTabPage.Name = "ClientsTabPage";
+            this.ClientsTabPage.Size = new System.Drawing.Size(262, 353);
+            this.ClientsTabPage.TabIndex = 4;
+            this.ClientsTabPage.Text = "Active Clients";
+            // 
             // ContentTabControl
             // 
             this.ContentTabControl.Alignment = System.Windows.Forms.TabAlignment.Left;
@@ -1582,7 +1617,6 @@ namespace EveOPreview.View
             OverlaySettingsPanel.PerformLayout();
             this.groupBoxOverlayFont.ResumeLayout(false);
             this.groupBoxOverlayFont.PerformLayout();
-            this.ClientsTabPage.ResumeLayout(false);
             ClientsPanel.ResumeLayout(false);
             this.activeClientsSplitContainer.Panel1.ResumeLayout(false);
             this.activeClientsSplitContainer.Panel1.PerformLayout();
@@ -1597,6 +1631,7 @@ namespace EveOPreview.View
             AboutTabPage.ResumeLayout(false);
             AboutPanel.ResumeLayout(false);
             AboutPanel.PerformLayout();
+            this.ClientsTabPage.ResumeLayout(false);
             this.ContentTabControl.ResumeLayout(false);
             this.ZoomTabPage.ResumeLayout(false);
             this.FpsLimiterTabPage.ResumeLayout(false);
@@ -1696,10 +1731,13 @@ namespace EveOPreview.View
         private CheckBox chbIsLocationBannerMuted;
         private CheckBox chbIsGateTunnelMuted;
         private TextBox txtToggleHideAllActiveHotkey;
-        private Label lblToggleHideAllActive;
+        private Label lblToggleHideAllActiveHotkey;
         private Button btnToggleHideAll;
-        private GroupBox groupBoxToggleHideAllThumbnails;
         private TabControl ContentTabControl;
         private TabPage ClientsTabPage;
+        private GroupBox groupBoxToggleHideAllThumbnails;
+        private Button btnMinimizeAllClients;
+        private Label lblMinimizeAllClientsHotkey;
+        private TextBox txtMinimizeAllClientsHotkey;
     }
 }

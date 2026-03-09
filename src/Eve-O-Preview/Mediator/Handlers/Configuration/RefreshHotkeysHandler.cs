@@ -57,6 +57,7 @@ namespace EveOPreview.Mediator.Handlers.Configuration
             }
 
             _config.ToggleHideActiveClientsHotkeyParsed = _config.ToggleHideActiveClientsHotkey.ToHotkeys();
+            _config.MinimizeAllClientsHotkeyParsed = _config.MinimizeAllClientsHotkey.ToHotkeys();
 
             return Unit.Value;
         }

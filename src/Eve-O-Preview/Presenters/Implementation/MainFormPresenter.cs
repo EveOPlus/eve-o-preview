@@ -75,6 +75,7 @@ namespace EveOPreview.Presenters
             this.View.FpsLimiterEnabledChanged = this.TriggerSetFpsLimiterEnabled;
             this.View.AudioSettingsChanged = this.TriggerSetAudioSettings;
             this.View.ToggleHideAllActiveClients = this.TriggerToggleHideAllActiveClients;
+            this.View.MinimizeAllClients = this.TriggerMinimizeAllClientsHotkey;
         }
 
         private CaptureNewHotkeyResponse SendCaptureNewHotkeyRequest(string currentKey)
@@ -161,6 +162,7 @@ namespace EveOPreview.Presenters
             this.View.ActiveClientHighlightColor = this._configuration.ActiveClientHighlightColor;
             this.View.TitleFontSettings = this._configuration.TitleFontSettings;
             this.View.ToggleHideAllActiveHotkey = this._configuration.ToggleHideActiveClientsHotkey;
+            this.View.MinimizeAllClientsHotkey = this._configuration.MinimizeAllClientsHotkey;
             this.View.IsPremium = this._configuration.IsPremium;
 
             this.View.FpsLimiterSettings = this._configuration.FpsLimiterSettings;
@@ -200,6 +202,7 @@ namespace EveOPreview.Presenters
 
             this._configuration.TitleFontSettings = this.View.TitleFontSettings;
             this._configuration.ToggleHideActiveClientsHotkey = this.View.ToggleHideAllActiveHotkey;
+            this._configuration.MinimizeAllClientsHotkey = this.View.MinimizeAllClientsHotkey;
             
             this._configurationStorage.Save();
 
@@ -313,6 +316,11 @@ namespace EveOPreview.Presenters
         private void TriggerToggleHideAllActiveClients()
         {
             this._mediator.Send(new ThumbnailToggleHideAll());
+        }
+
+        private void TriggerMinimizeAllClientsHotkey()
+        {
+            this._mediator.Send(new MinimizeAllClients());
         }
 
         private void ExitApplication()

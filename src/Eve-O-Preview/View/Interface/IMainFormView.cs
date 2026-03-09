@@ -55,6 +55,7 @@ namespace EveOPreview.View
         FpsLimiterSettings FpsLimiterSettings { get; set; }
         AudioMuteSettings AudioMuteSettings { get; set; }
         string ToggleHideAllActiveHotkey { get; set; }
+        string MinimizeAllClientsHotkey { get; set; }
 
         List<CycleGroup> CycleGroups { get; set; }
 
@@ -82,6 +83,7 @@ namespace EveOPreview.View
         Action FpsLimiterEnabledChanged { get; set; }
         Action AudioSettingsChanged { get; set; }
         Action ToggleHideAllActiveClients { get; set; }
+        Action MinimizeAllClients { get; set; }
         bool IsPremium { get; set; }
         void UpdateThumbnailToggleHideAllStatus(bool notificationIsHidden);
     }

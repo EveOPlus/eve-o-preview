@@ -172,10 +172,14 @@ namespace EveOPreview.Configuration.Implementation
         public int ActiveClientHighlightThickness { get; set; }
         
         public string ToggleHideActiveClientsHotkey { get; set; }
+        public string MinimizeAllClientsHotkey { get; set; }
 
         [JsonIgnore]
         public Keys ToggleHideActiveClientsHotkeyParsed { get; set; }
 
+        [JsonIgnore]
+        public Keys MinimizeAllClientsHotkeyParsed { get; set; }
+        
         public FontSettings TitleFontSettings { get; set; }
 
         [JsonProperty("LoginThumbnailLocation")]

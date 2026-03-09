@@ -166,7 +166,7 @@ namespace EveOPreview.Services
                 RegisterCycleClientHotkey(cycleGroup);
             }
 
-            RegisterToggleHideAllThumbnails();
+            RegisterGeneralHotkeys();
         }
 
         public void RegisterCycleClientHotkey(CycleGroup cycleGroup)
@@ -208,14 +208,19 @@ namespace EveOPreview.Services
             };
         }
 
-        public void RegisterToggleHideAllThumbnails()
+        public void RegisterGeneralHotkeys()
         {
             // Using the KeyUp for this one so it has less chance of impacting the flow of other more important hotkeys (like client cycling)
             _keyboardMouseEvents.KeyUp += (sender, e) =>
             {
                 if (e.KeyData == _configuration.ToggleHideActiveClientsHotkeyParsed)
                 {
-                    _ = _mediator.Send(new ThumbnailToggleHideAll()); // fire and forget, no need to await this
+                    _mediator.Send(new ThumbnailToggleHideAll());
+                    e.Handled = true;
+                }
+                else if (e.KeyData == _configuration.MinimizeAllClientsHotkeyParsed)
+                {
+                    _mediator.Send(new MinimizeAllClients());
                     e.Handled = true;
                 }
             };

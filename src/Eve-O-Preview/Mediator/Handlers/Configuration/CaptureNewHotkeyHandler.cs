@@ -85,7 +85,12 @@ namespace EveOPreview.Mediator.Handlers.Configuration
 
             if (_config.ToggleHideActiveClientsHotkeyParsed != Keys.None)
             {
-                AddOrMeaningfulError(hotkeysInConfig, _config.ToggleHideActiveClientsHotkeyParsed, "Toggle Hide All Active Clients Hotkey");
+                AddOrMeaningfulError(hotkeysInConfig, _config.ToggleHideActiveClientsHotkeyParsed, "Toggle Hide All Active Clients");
+            }
+
+            if (_config.MinimizeAllClientsHotkeyParsed != Keys.None)
+            {
+                AddOrMeaningfulError(hotkeysInConfig, _config.MinimizeAllClientsHotkeyParsed, "Minimize All Clients");
             }
 
             foreach (var cycleGroup in _config.CycleGroups)

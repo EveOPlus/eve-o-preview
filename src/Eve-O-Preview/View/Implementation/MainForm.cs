@@ -274,6 +274,13 @@ namespace EveOPreview.View
             get => this.txtToggleHideAllActiveHotkey.Text;
             set => this.txtToggleHideAllActiveHotkey.Text = value;
         }
+        
+        public string MinimizeAllClientsHotkey
+        {
+            get => this.txtMinimizeAllClientsHotkey.Text;
+            set => this.txtMinimizeAllClientsHotkey.Text = value;
+        }
+        
 
         private bool _isPremium;
 
@@ -389,6 +396,7 @@ namespace EveOPreview.View
         public Action FpsLimiterEnabledChanged { get; set; }
         public Action AudioSettingsChanged { get; set; }
         public Action ToggleHideAllActiveClients { get; set; }
+        public Action MinimizeAllClients { get; set; }
 
         #region UI events
         private void ContentTabControl_DrawItem(object sender, DrawItemEventArgs e)
@@ -1007,6 +1015,23 @@ namespace EveOPreview.View
             txtToggleHideAllActiveHotkey.Text = captureHotkeyResponse.KeyString;
 
             this.ApplicationSettingsChanged?.Invoke();
+        }
+
+        private void txtMinimizeAllClientsHotkey_DoubleClick(object sender, EventArgs e)
+        {
+            if (WaitForHotkeyCapture(txtMinimizeAllClientsHotkey, out var captureHotkeyResponse))
+            {
+                return;
+            }
+
+            txtMinimizeAllClientsHotkey.Text = captureHotkeyResponse.KeyString;
+
+            this.ApplicationSettingsChanged?.Invoke();
+        }
+
+        private void btnMinimizeAllClients_Click(object sender, EventArgs e)
+        {
+            this.MinimizeAllClients();
         }
     }
 }

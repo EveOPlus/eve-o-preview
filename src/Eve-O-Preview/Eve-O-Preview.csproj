@@ -135,6 +135,7 @@
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailFrameSettingsUpdatedHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailConfiguredSizeUpdatedHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailListUpdatedHandler.cs" />
+    <Compile Include="Mediator\Handlers\Thumbnails\MinimiseAllClientsHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailToggleHideAllHandler.cs" />
     <Compile Include="Mediator\Messages\Configuration\CaptureNewHotkey.cs" />
     <Compile Include="Mediator\Messages\Configuration\SetAudioSettings.cs" />
@@ -142,6 +143,7 @@
     <Compile Include="Mediator\Messages\Configuration\SetFpsLimiterEnabled.cs" />
     <Compile Include="Mediator\Messages\Configuration\SetFpsLimiter.cs" />
     <Compile Include="Mediator\Messages\Configuration\CaptureNewHotkeyResponse.cs" />
+    <Compile Include="Mediator\Messages\Thumbnails\MinimiseAllClients.cs" />
     <Compile Include="Mediator\Messages\Thumbnails\ThumbnailFontTitleSettingsUpdated.cs" />
     <Compile Include="Mediator\Messages\Thumbnails\ThumbnailFrameSettingsUpdated.cs" />
     <Compile Include="Mediator\Messages\Thumbnails\ThumbnailConfiguredSizeUpdated.cs" />
