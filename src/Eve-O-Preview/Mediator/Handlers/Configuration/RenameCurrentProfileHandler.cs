@@ -14,35 +14,27 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using EveOPreview.Configuration;
+using EveOPreview.Configuration.Interface;
 using EveOPreview.Mediator.Messages;
 using MediatR;
-using Serilog;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace EveOPreview.Mediator.Handlers.Thumbnails
+namespace EveOPreview.Mediator.Handlers.Configuration;
+
+public class RenameCurrentProfileHandler : IRequestHandler<RenameCurrentProfile>
 {
-    public class ChangeSelectedProfileHandler : IRequestHandler<ChangeSelectedProfile>
+    private readonly IProfileManager _profileManager;
+
+    public RenameCurrentProfileHandler(IProfileManager profileManager)
     {
-        private readonly IConfigurationStorage _configStorage;
-        private readonly IPublisher _publisher;
-        private readonly ILogger _logger;
+        _profileManager = profileManager;
+    }
 
-        public ChangeSelectedProfileHandler(IConfigurationStorage configStorage, IMediator publisher, ILogger logger)
-        {
-            _configStorage = configStorage;
-            _publisher = publisher;
-            _logger = logger;
-        }
+    public Task<Unit> Handle(RenameCurrentProfile request, CancellationToken cancellationToken)
+    {
+        _profileManager.RenameCurrentProfile(request);
 
-        public async Task<Unit> Handle(ChangeSelectedProfile notification, CancellationToken ct)
-        {
-            //_configStorage.CurrentProfile = notification.NewProfileLocation;
-            await _publisher.Publish(new SelectedProfileChangedNotification(notification.NewProfileLocation), ct);
-            _configStorage.Load();
-
-            return Unit.Value;
-        }
+        return Unit.Task;
     }
 }

@@ -14,16 +14,16 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System;
-using EveOPreview.Mediator.Messages;
+using MediatR;
 
-namespace EveOPreview.Services.Interface;
+namespace EveOPreview.Mediator.Messages;
 
-public interface IGlobalEvents
+public class RenameCurrentProfile : IRequest
 {
-    event Action<SelectedProfileChangedNotification> CurrentProfileChanged;
-    void PublishCurrentProfileChanged(SelectedProfileChangedNotification notification);
+    public string NewProfileName { get; }
 
-    event Action<ProfileListChangedNotification> ProfileListChanged;
-    void PublishProfileListChanged(ProfileListChangedNotification notification);
+    public RenameCurrentProfile(string newProfileName)
+    {
+        NewProfileName = newProfileName;
+    }
 }

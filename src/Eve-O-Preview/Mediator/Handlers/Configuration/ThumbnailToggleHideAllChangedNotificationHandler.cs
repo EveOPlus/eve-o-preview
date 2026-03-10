@@ -15,25 +15,25 @@
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using EveOPreview.Mediator.Messages;
-using EveOPreview.Services.Interface;
 using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
+using EveOPreview.Presenters;
 
 namespace EveOPreview.Mediator.Handlers.Configuration;
 
-public class SelectedProfileChangedNotificationMainViewHandler : INotificationHandler<SelectedProfileChangedNotification>
+public class ThumbnailToggleHideAllChangedNotificationHandler : INotificationHandler<ThumbnailToggleHideAllChangedNotification>
 {
-    private readonly IGlobalEvents _globalEvents;
+    private readonly MainFormPresenter _mainFormPresenter;
 
-    public SelectedProfileChangedNotificationMainViewHandler(IGlobalEvents globalEvents)
+    public ThumbnailToggleHideAllChangedNotificationHandler(MainFormPresenter mainFormPresenter)
     {
-        _globalEvents = globalEvents;
+        _mainFormPresenter = mainFormPresenter;
     }
 
-    public Task Handle(SelectedProfileChangedNotification notification, CancellationToken cancellationToken)
+    public Task Handle(ThumbnailToggleHideAllChangedNotification notification, CancellationToken cancellationToken)
     {
-        _globalEvents.PublishProfileChanged(notification);
+        _mainFormPresenter.HandleThumbnailToggleHideAllChangedNotification(notification);
 
         return Task.CompletedTask;
     }

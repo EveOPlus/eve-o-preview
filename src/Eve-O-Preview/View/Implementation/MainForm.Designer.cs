@@ -95,6 +95,7 @@ namespace EveOPreview.View
             this.txtFontOutlineWidth = new System.Windows.Forms.TextBox();
             this.btnFontOutlineColor = new System.Windows.Forms.Button();
             this.btnSetOverlayFontColor = new System.Windows.Forms.Button();
+            this.lblDisplaySampleFont = new EveOPreview.View.CustomControl.OutlinedLabel();
             this.btnSetOverlayFont = new System.Windows.Forms.Button();
             this.HighlightColorLabel = new System.Windows.Forms.Label();
             this.ActiveClientHighlightColorButton = new System.Windows.Forms.Panel();
@@ -150,16 +151,15 @@ namespace EveOPreview.View
             this.chbIsFpsThrottlingEnabled = new System.Windows.Forms.CheckBox();
             this.tabPageProfiles = new System.Windows.Forms.TabPage();
             this.splitContainerMainProfiles = new System.Windows.Forms.SplitContainer();
+            this.lblProfilesExperimentalWarning = new System.Windows.Forms.Label();
             this.lblLoadedProfileName = new System.Windows.Forms.Label();
             this.btnDeleteProfile = new System.Windows.Forms.Button();
             this.btnCloneProfile = new System.Windows.Forms.Button();
-            this.btnNewProfile = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.txtLoadedProfileName = new System.Windows.Forms.TextBox();
             this.listBoxProfiles = new System.Windows.Forms.ListBox();
             this.NotifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.TrayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.lblDisplaySampleFont = new EveOPreview.View.CustomControl.OutlinedLabel();
             RestoreWindowMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ExitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             TitleMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -742,7 +742,6 @@ namespace EveOPreview.View
             this.txtTitleOffsetTop.Size = new System.Drawing.Size(26, 20);
             this.txtTitleOffsetTop.TabIndex = 38;
             this.txtTitleOffsetTop.Text = "1";
-            this.txtTitleOffsetTop.Enter += new System.EventHandler(this.txtTitleOffsetTop_Enter);
             this.txtTitleOffsetTop.Leave += new System.EventHandler(this.txtTitleOffsetTop_Leave);
             // 
             // lblTitleOffsetLeft
@@ -761,7 +760,6 @@ namespace EveOPreview.View
             this.txtTitleOffsetLeft.Size = new System.Drawing.Size(26, 20);
             this.txtTitleOffsetLeft.TabIndex = 36;
             this.txtTitleOffsetLeft.Text = "1";
-            this.txtTitleOffsetLeft.Enter += new System.EventHandler(this.txtTitleOffsetLeft_Enter);
             this.txtTitleOffsetLeft.Leave += new System.EventHandler(this.txtTitleOffsetLeft_Leave);
             // 
             // lblTitleBorderWidth
@@ -780,7 +778,6 @@ namespace EveOPreview.View
             this.txtFontOutlineWidth.Size = new System.Drawing.Size(26, 20);
             this.txtFontOutlineWidth.TabIndex = 34;
             this.txtFontOutlineWidth.Text = "0";
-            this.txtFontOutlineWidth.Enter += new System.EventHandler(this.txtFontOutlineWidth_Enter);
             this.txtFontOutlineWidth.Leave += new System.EventHandler(this.txtFontOutlineWidth_Leave);
             // 
             // btnFontOutlineColor
@@ -802,6 +799,19 @@ namespace EveOPreview.View
             this.btnSetOverlayFontColor.Text = "Forecolor";
             this.btnSetOverlayFontColor.UseVisualStyleBackColor = true;
             this.btnSetOverlayFontColor.Click += new System.EventHandler(this.btnSetOverlayFontColor_Click);
+            // 
+            // lblDisplaySampleFont
+            // 
+            this.lblDisplaySampleFont.AutoSize = true;
+            this.lblDisplaySampleFont.BackColor = System.Drawing.SystemColors.Control;
+            this.lblDisplaySampleFont.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
+            this.lblDisplaySampleFont.Location = new System.Drawing.Point(6, 76);
+            this.lblDisplaySampleFont.Name = "lblDisplaySampleFont";
+            this.lblDisplaySampleFont.OutlineColor = System.Drawing.Color.White;
+            this.lblDisplaySampleFont.OutlineWidth = 1F;
+            this.lblDisplaySampleFont.Size = new System.Drawing.Size(45, 13);
+            this.lblDisplaySampleFont.TabIndex = 32;
+            this.lblDisplaySampleFont.Text = "Sample.";
             // 
             // btnSetOverlayFont
             // 
@@ -1607,66 +1617,65 @@ namespace EveOPreview.View
             // 
             // splitContainerMainProfiles.Panel1
             // 
+            this.splitContainerMainProfiles.Panel1.Controls.Add(this.lblProfilesExperimentalWarning);
             this.splitContainerMainProfiles.Panel1.Controls.Add(this.lblLoadedProfileName);
             this.splitContainerMainProfiles.Panel1.Controls.Add(this.btnDeleteProfile);
             this.splitContainerMainProfiles.Panel1.Controls.Add(this.btnCloneProfile);
-            this.splitContainerMainProfiles.Panel1.Controls.Add(this.btnNewProfile);
-            this.splitContainerMainProfiles.Panel1.Controls.Add(this.textBox1);
+            this.splitContainerMainProfiles.Panel1.Controls.Add(this.txtLoadedProfileName);
             // 
             // splitContainerMainProfiles.Panel2
             // 
             this.splitContainerMainProfiles.Panel2.Controls.Add(this.listBoxProfiles);
             this.splitContainerMainProfiles.Size = new System.Drawing.Size(266, 353);
-            this.splitContainerMainProfiles.SplitterDistance = 73;
+            this.splitContainerMainProfiles.SplitterDistance = 89;
             this.splitContainerMainProfiles.TabIndex = 0;
+            // 
+            // lblProfilesExperimentalWarning
+            // 
+            this.lblProfilesExperimentalWarning.Location = new System.Drawing.Point(5, 3);
+            this.lblProfilesExperimentalWarning.Name = "lblProfilesExperimentalWarning";
+            this.lblProfilesExperimentalWarning.Size = new System.Drawing.Size(196, 26);
+            this.lblProfilesExperimentalWarning.TabIndex = 5;
+            this.lblProfilesExperimentalWarning.Text = "This is a new experimental feature. Make sure you have backups!";
             // 
             // lblLoadedProfileName
             // 
             this.lblLoadedProfileName.AutoSize = true;
-            this.lblLoadedProfileName.Location = new System.Drawing.Point(11, 51);
+            this.lblLoadedProfileName.Location = new System.Drawing.Point(9, 70);
             this.lblLoadedProfileName.Name = "lblLoadedProfileName";
-            this.lblLoadedProfileName.Size = new System.Drawing.Size(43, 13);
+            this.lblLoadedProfileName.Size = new System.Drawing.Size(73, 13);
             this.lblLoadedProfileName.TabIndex = 4;
-            this.lblLoadedProfileName.Text = "Loaded";
+            this.lblLoadedProfileName.Text = "Current Profile";
             // 
             // btnDeleteProfile
             // 
-            this.btnDeleteProfile.Enabled = false;
-            this.btnDeleteProfile.Location = new System.Drawing.Point(153, 10);
+            this.btnDeleteProfile.Location = new System.Drawing.Point(134, 34);
             this.btnDeleteProfile.Name = "btnDeleteProfile";
-            this.btnDeleteProfile.Size = new System.Drawing.Size(65, 29);
+            this.btnDeleteProfile.Size = new System.Drawing.Size(124, 29);
             this.btnDeleteProfile.TabIndex = 3;
-            this.btnDeleteProfile.Text = "Delete";
+            this.btnDeleteProfile.Text = "Delete Current Profile";
             this.btnDeleteProfile.UseVisualStyleBackColor = true;
+            this.btnDeleteProfile.Click += new System.EventHandler(this.btnDeleteProfile_Click);
             // 
             // btnCloneProfile
             // 
-            this.btnCloneProfile.Enabled = false;
-            this.btnCloneProfile.Location = new System.Drawing.Point(82, 10);
+            this.btnCloneProfile.Location = new System.Drawing.Point(3, 34);
             this.btnCloneProfile.Name = "btnCloneProfile";
-            this.btnCloneProfile.Size = new System.Drawing.Size(65, 29);
+            this.btnCloneProfile.Size = new System.Drawing.Size(124, 29);
             this.btnCloneProfile.TabIndex = 2;
-            this.btnCloneProfile.Text = "Clone";
+            this.btnCloneProfile.Text = "Clone Current Profile";
             this.btnCloneProfile.UseVisualStyleBackColor = true;
+            this.btnCloneProfile.Click += new System.EventHandler(this.btnCloneProfile_Click);
             // 
-            // btnNewProfile
+            // txtLoadedProfileName
             // 
-            this.btnNewProfile.Enabled = false;
-            this.btnNewProfile.Location = new System.Drawing.Point(11, 10);
-            this.btnNewProfile.Name = "btnNewProfile";
-            this.btnNewProfile.Size = new System.Drawing.Size(65, 29);
-            this.btnNewProfile.TabIndex = 1;
-            this.btnNewProfile.Text = "New";
-            this.btnNewProfile.UseVisualStyleBackColor = true;
-            // 
-            // textBox1
-            // 
-            this.textBox1.Enabled = false;
-            this.textBox1.Location = new System.Drawing.Point(60, 45);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(198, 20);
-            this.textBox1.TabIndex = 0;
-            this.textBox1.Text = "Default - Feature currently disabled";
+            this.txtLoadedProfileName.Location = new System.Drawing.Point(88, 67);
+            this.txtLoadedProfileName.Name = "txtLoadedProfileName";
+            this.txtLoadedProfileName.Size = new System.Drawing.Size(170, 20);
+            this.txtLoadedProfileName.TabIndex = 0;
+            this.txtLoadedProfileName.Text = "Default";
+            this.txtLoadedProfileName.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtLoadedProfileName_KeyDown);
+            this.txtLoadedProfileName.Leave += new System.EventHandler(this.txtLoadedProfileName_Leave);
             // 
             // listBoxProfiles
             // 
@@ -1674,8 +1683,9 @@ namespace EveOPreview.View
             this.listBoxProfiles.FormattingEnabled = true;
             this.listBoxProfiles.Location = new System.Drawing.Point(0, 0);
             this.listBoxProfiles.Name = "listBoxProfiles";
-            this.listBoxProfiles.Size = new System.Drawing.Size(266, 276);
+            this.listBoxProfiles.Size = new System.Drawing.Size(266, 260);
             this.listBoxProfiles.TabIndex = 0;
+            this.listBoxProfiles.Click += new System.EventHandler(this.listBoxProfiles_Click);
             // 
             // NotifyIcon
             // 
@@ -1695,19 +1705,6 @@ namespace EveOPreview.View
             ExitMenuItem});
             this.TrayMenu.Name = "contextMenuStrip1";
             this.TrayMenu.Size = new System.Drawing.Size(152, 76);
-            // 
-            // lblDisplaySampleFont
-            // 
-            this.lblDisplaySampleFont.AutoSize = true;
-            this.lblDisplaySampleFont.BackColor = System.Drawing.SystemColors.Control;
-            this.lblDisplaySampleFont.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
-            this.lblDisplaySampleFont.Location = new System.Drawing.Point(6, 76);
-            this.lblDisplaySampleFont.Name = "lblDisplaySampleFont";
-            this.lblDisplaySampleFont.OutlineColor = System.Drawing.Color.White;
-            this.lblDisplaySampleFont.OutlineWidth = 1F;
-            this.lblDisplaySampleFont.Size = new System.Drawing.Size(45, 13);
-            this.lblDisplaySampleFont.TabIndex = 32;
-            this.lblDisplaySampleFont.Text = "Sample.";
             // 
             // MainForm
             // 
@@ -1884,9 +1881,9 @@ namespace EveOPreview.View
         private SplitContainer splitContainerMainCycleGroup;
         private Button btnDeleteProfile;
         private Button btnCloneProfile;
-        private Button btnNewProfile;
-        private TextBox textBox1;
+        private TextBox txtLoadedProfileName;
         private ListBox listBoxProfiles;
         private Label lblLoadedProfileName;
+        private Label lblProfilesExperimentalWarning;
     }
 }

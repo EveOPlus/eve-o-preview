@@ -14,16 +14,26 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System;
+using EveOPreview.Services.Interface;
+using MediatR;
+using System.Threading;
+using System.Threading.Tasks;
 using EveOPreview.Mediator.Messages;
 
-namespace EveOPreview.Services.Interface;
+namespace EveOPreview.Mediator.Handlers.Configuration;
 
-public interface IGlobalEvents
+public class ProfileListChangedNotificationHandler : INotificationHandler<ProfileListChangedNotification>
 {
-    event Action<SelectedProfileChangedNotification> CurrentProfileChanged;
-    void PublishCurrentProfileChanged(SelectedProfileChangedNotification notification);
+    private readonly IGlobalEvents _globalEvents;
 
-    event Action<ProfileListChangedNotification> ProfileListChanged;
-    void PublishProfileListChanged(ProfileListChangedNotification notification);
+    public ProfileListChangedNotificationHandler(IGlobalEvents globalEvents)
+    {
+        _globalEvents = globalEvents;
+    }
+
+    public Task Handle(ProfileListChangedNotification notification, CancellationToken cancellationToken)
+    {
+        _globalEvents.PublishProfileListChanged(notification);
+        return Task.CompletedTask;
+    }
 }

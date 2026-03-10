@@ -39,7 +39,7 @@ namespace EveOPreview.Configuration.Implementation
         private readonly ILogger _logger;
         private readonly IGlobalEvents _globalEvents;
 
-        public ProfileLocation CurrentProfile { get; private set; }
+        public ProfileLocation CurrentProfile { get; set; }
 
         public ConfigurationStorage(IAppConfig appConfig, IThumbnailConfiguration thumbnailConfiguration, IPremiumService premiumService, IMediator mediator, IProfileManager profileManager, ILogger logger, IGlobalEvents globalEvents)
         {
@@ -52,7 +52,7 @@ namespace EveOPreview.Configuration.Implementation
 
             CurrentProfile = profileManager.GetDefaultProfileLocation();
 
-            _globalEvents.ProfileChanged += HandleSelectedProfileChangedNotification;
+            _globalEvents.CurrentProfileChanged += HandleSelectedProfileChangedNotification;
         }
 
         public void Load()
@@ -223,7 +223,7 @@ namespace EveOPreview.Configuration.Implementation
                 // Ignore error if for some reason the updated config cannot be written down
             }
         }
-
+        
         private void HandleSelectedProfileChangedNotification(SelectedProfileChangedNotification notification)
         {
             CurrentProfile = notification.NewProfileLocation;

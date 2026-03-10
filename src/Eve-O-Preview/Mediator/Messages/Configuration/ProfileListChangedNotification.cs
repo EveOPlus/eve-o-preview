@@ -14,16 +14,19 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System;
-using EveOPreview.Mediator.Messages;
+using System.Collections.Generic;
+using EveOPreview.Configuration.Model;
+using MediatR;
 
-namespace EveOPreview.Services.Interface;
+namespace EveOPreview.Mediator.Messages;
 
-public interface IGlobalEvents
+public class ProfileListChangedNotification : INotification
 {
-    event Action<SelectedProfileChangedNotification> CurrentProfileChanged;
-    void PublishCurrentProfileChanged(SelectedProfileChangedNotification notification);
+    public List<ProfileLocation> NewProfileLocations { get; }
+    public ProfileLocation CurrentProfile { get; }
 
-    event Action<ProfileListChangedNotification> ProfileListChanged;
-    void PublishProfileListChanged(ProfileListChangedNotification notification);
+    public ProfileListChangedNotification(List<ProfileLocation> newProfileLocations)
+    {
+        NewProfileLocations = newProfileLocations;
+    }
 }

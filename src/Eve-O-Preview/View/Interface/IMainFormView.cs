@@ -19,6 +19,7 @@ using EveOPreview.Mediator.Messages;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using EveOPreview.Configuration.Model;
 
 namespace EveOPreview.View
 {
@@ -56,6 +57,7 @@ namespace EveOPreview.View
         AudioMuteSettings AudioMuteSettings { get; set; }
         string ToggleHideAllActiveHotkey { get; set; }
         string MinimizeAllClientsHotkey { get; set; }
+        string LoadedProfileName { get; set; }
 
         List<CycleGroup> CycleGroups { get; set; }
 
@@ -84,7 +86,12 @@ namespace EveOPreview.View
         Action AudioSettingsChanged { get; set; }
         Action ToggleHideAllActiveClients { get; set; }
         Action MinimizeAllClients { get; set; }
+        public Action CloneCurrentProfile { get; set; }
+        public Action DeleteCurrentProfile { get; set; }
+        Action<string> RenameCurrentProfile { get; set; }
+        Action<ProfileLocation> SwitchToProfile { get; set; }
         bool IsPremium { get; set; }
         void UpdateThumbnailToggleHideAllStatus(bool notificationIsHidden);
+        void UpdateProfileList(List<ProfileLocation> notificationNewProfileLocations);
     }
 }

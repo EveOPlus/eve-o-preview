@@ -22,6 +22,8 @@ using System.Linq;
 using EveOPreview.Configuration.Interface;
 using EveOPreview.Configuration.Model;
 using EveOPreview.Helper;
+using EveOPreview.Mediator.Messages;
+using MediatR;
 
 namespace EveOPreview.Configuration.Implementation;
 
@@ -31,15 +33,17 @@ public class ProfileManager : IProfileManager
     private const string PROFILES_DIR = "Profiles";
     private const string DEFAULT_PROFILE_DIR = "Default";
     private const string APP_FOLDER_NAME = "Eve-O Preview";
-    
+
     private readonly ILogger _logger;
+    private readonly IMediator _mediator;
 
     public string ProfileRootDirectory { get; }
     public List<ProfileLocation> ProfileLocations { get; }
-    
-    public ProfileManager(ILogger logger)
+
+    public ProfileManager(ILogger logger, IMediator _mediator)
     {
         _logger = logger;
+        this._mediator = _mediator;
         ProfileRootDirectory = FindOrCreateProfileRootDirectory();
         _logger.WithCallerInfo().Information($"Profiles Root Directory located at {ProfileRootDirectory}");
 
@@ -100,7 +104,7 @@ public class ProfileManager : IProfileManager
             // Either the old profile doesn't exist, or we've already migrated it (destination exists), so we can skip migration.
             return;
         }
-        
+
         _logger.WithCallerInfo().Information($"Located a legacy profile to be migrated");
 
         try
@@ -153,10 +157,13 @@ public class ProfileManager : IProfileManager
                 locations.Add(new ProfileLocation
                 {
                     FriendlyName = profileName,
+                    FolderPath = dirPath,
                     FullPath = baseJsonPath
                 });
             }
         }
+
+        _mediator.Publish(new ProfileListChangedNotification(locations));
 
         return locations;
     }
@@ -167,10 +174,144 @@ public class ProfileManager : IProfileManager
 
         if (string.IsNullOrWhiteSpace(defaultProfile?.FullPath))
         {
-            _logger.WithCallerInfo().Information($"Unable to locate any profiles at default location {defaultProfile?.FullPath}");
+            _logger.WithCallerInfo()
+                .Information($"Unable to locate any profiles at default location {defaultProfile?.FullPath}");
             return null;
         }
 
-        return defaultProfile; 
+        return defaultProfile;
+    }
+
+    public void CloneCurrentProfile()
+    {
+        var currentProfile = _mediator.Send(new GetCurrentProfileLocation()).Result;
+        string newProfileName = GenerateNextProfileName(currentProfile.FriendlyName);
+        string destDir = Path.Combine(ProfileRootDirectory, newProfileName);
+
+        try
+        {
+            CopyDirectory(currentProfile.FolderPath, destDir);
+
+            RefreshProfileLocations();
+        }
+        catch (Exception ex)
+        {
+            _logger.WithCallerInfo().Error(ex, $"Failed to clone profile {currentProfile.FriendlyName}");
+        }
+    }
+
+    public void DeleteCurrentProfile()
+    {
+        var currentProfile = _mediator.Send(new GetCurrentProfileLocation()).Result;
+        if (currentProfile.FriendlyName == DEFAULT_PROFILE_DIR)
+        {
+            return;
+        }
+
+        if (!Directory.Exists(currentProfile.FolderPath))
+        {
+            _logger.WithCallerInfo().Warning($"Failed to delete non existing path {currentProfile.FolderPath}");
+            return;
+        }
+
+        try
+        {
+            Directory.Delete(currentProfile.FolderPath, true);
+            _logger.WithCallerInfo().Information($"Deleted profile {currentProfile.FriendlyName} directory: {currentProfile.FolderPath}");
+
+            this._mediator.Send(new ChangeSelectedProfile(GetDefaultProfileLocation()));
+            RefreshProfileLocations();
+        }
+        catch (Exception ex)
+        {
+            _logger.WithCallerInfo().Error(ex, $"Failed to delete profile {currentProfile.FriendlyName}");
+        }
+    }
+
+    public void RenameCurrentProfile(RenameCurrentProfile request)
+    {
+        var currentProfile = _mediator.Send(new GetCurrentProfileLocation()).Result;
+
+        if (currentProfile.FriendlyName == request.NewProfileName)
+        {
+            return;
+        }
+
+        string newProfileName = GenerateNextProfileName(request.NewProfileName);
+        string destDir = Path.Combine(ProfileRootDirectory, newProfileName);
+
+        try
+        {
+            MoveDirectory(currentProfile.FolderPath, destDir);
+
+            RefreshProfileLocations();
+        }
+        catch (Exception ex)
+        {
+            _logger.WithCallerInfo().Error(ex, $"Failed to rename profile {currentProfile.FriendlyName}");
+        }
+    }
+
+    private string GenerateNextProfileName(string baseName)
+    {
+        int i = 1;
+        string candidateName = baseName;
+
+        while (Directory.Exists(Path.Combine(ProfileRootDirectory, candidateName)))
+        {
+            i++;
+            candidateName = $"{baseName} ({i})";
+        }
+
+        return candidateName;
+    }
+
+    private void CopyDirectory(string sourceDir, string destDir)
+    { 
+        bool sourceExists = Directory.Exists(sourceDir);
+        bool destDirExists = Directory.Exists(destDir);
+        if (!sourceExists || destDirExists)
+        {
+            _logger.WithCallerInfo().Warning($"Unable to copy folder. Source [{sourceDir}] Exists = {sourceExists}.  Destination [{destDir}] Exists = {destDirExists}.");
+            return;
+        }
+
+        Directory.CreateDirectory(destDir);
+
+        foreach (string filePath in Directory.GetFiles(sourceDir))
+        {
+            try
+            {
+                string fileName = Path.GetFileName(filePath);
+                string destPath = Path.Combine(destDir, fileName);
+                File.Copy(filePath, destPath, true);
+            }
+            catch (Exception ex)
+            {
+                _logger.WithCallerInfo().Error(ex, $"Failed to copy file {filePath}");
+            }
+        }
+    }
+
+    private void MoveDirectory(string sourceDir, string destDir)
+    {
+        bool sourceExists = Directory.Exists(sourceDir);
+        bool destExists = Directory.Exists(destDir);
+
+        if (!sourceExists || destExists)
+        {
+            _logger.WithCallerInfo().Warning($"Unable to move folder. Source [{sourceDir}] Exists = {sourceExists}. Destination [{destDir}] Exists = {destExists}.");
+            return;
+        }
+
+        try
+        {
+            Directory.Move(sourceDir, destDir);
+            _logger.WithCallerInfo().Information($"Successfully renamed directory from {sourceDir} to {destDir}");
+        }
+        catch (Exception ex)
+        {
+            _logger.WithCallerInfo().Error(ex, $"Failed to move directory {sourceDir}");
+        }
     }
 }

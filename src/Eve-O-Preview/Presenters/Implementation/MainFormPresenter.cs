@@ -19,9 +19,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using EveOPreview.Configuration;
+using EveOPreview.Configuration.Interface;
+using EveOPreview.Configuration.Model;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Services.Interface;
 using EveOPreview.View;
@@ -40,6 +40,7 @@ namespace EveOPreview.Presenters
         private readonly IThumbnailConfiguration _configuration;
         private readonly IConfigurationStorage _configurationStorage;
         private readonly IGlobalEvents _globalEvents;
+        private readonly IProfileManager _profileManager;
         private readonly IDictionary<string, IThumbnailDescription> _descriptionsCache;
         private bool _suppressSizeNotifications;
 
@@ -52,30 +53,20 @@ namespace EveOPreview.Presenters
             IMediator mediator, 
             IThumbnailConfiguration configuration, 
             IConfigurationStorage configurationStorage,
-            IGlobalEvents globalEvents)
+            IGlobalEvents globalEvents,
+            IProfileManager profileManager)
             : base(controller, view)
         {
             this._mediator = mediator;
             this._configuration = configuration;
             this._configurationStorage = configurationStorage;
             _globalEvents = globalEvents;
-
-            _globalEvents.ProfileChanged += HandleSelectedProfileChangedNotification;
-            _globalEvents.ThumbnailToggleHideAllChanged += HandleThumbnailToggleHideAllChangedNotification;
+            _profileManager = profileManager;
+            
+            _globalEvents.CurrentProfileChanged += HandleSelectedProfileChangedNotification;
+            _globalEvents.ProfileListChanged += HandleProfileListChangedNotification;
 
             this._descriptionsCache = new Dictionary<string, IThumbnailDescription>();
-
-            var currentProfile = _mediator.Send(new GetCurrentProfileLocation()).Result;
-            _ = _mediator.Send(new ChangeSelectedProfile(currentProfile)).Result;
-        }
-
-        public void HandleSelectedProfileChangedNotification(SelectedProfileChangedNotification notification)
-        {
-            ReInitialize();
-        }
-
-        private void ReInitialize()
-        {
             lock (this._descriptionsCache)
             {
                 this._descriptionsCache.Clear();
@@ -99,11 +90,50 @@ namespace EveOPreview.Presenters
             this.View.AudioSettingsChanged = this.TriggerSetAudioSettings;
             this.View.ToggleHideAllActiveClients = this.TriggerToggleHideAllActiveClients;
             this.View.MinimizeAllClients = this.TriggerMinimizeAllClientsHotkey;
+            this.View.SwitchToProfile = this.ActionSwitchToNewProfile;
+            this.View.CloneCurrentProfile = this.ActionCloneCurrentProfile;
+            this.View.DeleteCurrentProfile = this.ActionDeleteCurrentProfile;
+            this.View.RenameCurrentProfile = this.RenameCurrentProfile;
+
+            var currentProfile = _mediator.Send(new GetCurrentProfileLocation()).Result;
+            _ = _mediator.Send(new ChangeSelectedProfile(currentProfile)).Result;
+            _profileManager.RefreshProfileLocations();
+        }
+
+        private void RenameCurrentProfile(string newProfileName)
+        {
+            _mediator.Send(new RenameCurrentProfile(newProfileName));
+        }
+
+        private void ActionDeleteCurrentProfile()
+        {
+            _mediator.Send(new DeleteCurrentProfile());
+
+        }
+
+        private void ActionCloneCurrentProfile()
+        {
+            _mediator.Send(new CloneCurrentProfile());
+        }
+
+        public void HandleSelectedProfileChangedNotification(SelectedProfileChangedNotification notification)
+        {
+            ReloadApplicationSettings();
+        }
+
+        private void ActionSwitchToNewProfile(ProfileLocation newProfileLocation)
+        {
+            _mediator.Send(new ChangeSelectedProfile(newProfileLocation));
         }
 
         public void HandleThumbnailToggleHideAllChangedNotification(ThumbnailToggleHideAllChangedNotification notification)
         {
             this.View.UpdateThumbnailToggleHideAllStatus(notification.IsHidden);
+        }
+
+        public void HandleProfileListChangedNotification(ProfileListChangedNotification notification)
+        {
+            this.View.UpdateProfileList(notification.NewProfileLocations);
         }
 
         private CaptureNewHotkeyResponse SendCaptureNewHotkeyRequest(string currentKey)
@@ -163,7 +193,11 @@ namespace EveOPreview.Presenters
         private void LoadApplicationSettings()
         {
             this._configurationStorage.Load();
+            ReloadApplicationSettings();
+        }
 
+        private void ReloadApplicationSettings()
+        {
             this.View.CycleGroups = this._configuration.CycleGroups;
 
             this.View.MinimizeToTray = this._configuration.MinimizeToTray;
@@ -195,6 +229,7 @@ namespace EveOPreview.Presenters
 
             this.View.FpsLimiterSettings = this._configuration.FpsLimiterSettings;
             this.View.AudioMuteSettings = this._configuration.AudioMuteSettings;
+            this.View.LoadedProfileName = this._configurationStorage.CurrentProfile.FriendlyName;
         }
 
         private async void SaveApplicationSettings()
@@ -232,7 +267,7 @@ namespace EveOPreview.Presenters
             this._configuration.ToggleHideActiveClientsHotkey = this.View.ToggleHideAllActiveHotkey;
             this._configuration.MinimizeAllClientsHotkey = this.View.MinimizeAllClientsHotkey;
             
-            this._configurationStorage.Save();
+            //this._configurationStorage.Save();
 
             this.View.RefreshZoomSettings();
 

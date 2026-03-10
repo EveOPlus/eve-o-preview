@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using EveOPreview.Configuration.Model;
+using EveOPreview.Mediator.Messages;
 
 namespace EveOPreview.Configuration.Interface;
 
@@ -25,4 +26,7 @@ public interface IProfileManager
     List<ProfileLocation> ProfileLocations { get; }
     List<ProfileLocation> RefreshProfileLocations();
     ProfileLocation GetDefaultProfileLocation();
+    void CloneCurrentProfile();
+    void DeleteCurrentProfile();
+    void RenameCurrentProfile(RenameCurrentProfile request);
 }

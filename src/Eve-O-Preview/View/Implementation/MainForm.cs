@@ -15,13 +15,13 @@
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using EveOPreview.Configuration.Implementation;
+using EveOPreview.Configuration.Model;
 using EveOPreview.Mediator.Messages;
-using EveOPreview.Services;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -54,19 +54,37 @@ namespace EveOPreview.View
             this.InitZoomAnchorMap();
 		}
 
-		public List<CycleGroup> CycleGroups { get; set; }
+        public List<CycleGroup> CycleGroups
+        {
+            get;
+            set
+            {
+                this._suppressEvents = true;
+                field = value;
+                RefreshCycleGroups();
+                this._suppressEvents = false;
+            }
+        } = [];
 
-		public bool MinimizeToTray
-		{
-			get => this.MinimizeToTrayCheckBox.Checked;
-			set => this.MinimizeToTrayCheckBox.Checked = value;
-		}
+        public bool MinimizeToTray
+        {
+            get => this.MinimizeToTrayCheckBox.Checked;
+            set
+            {
+                this._suppressEvents = true;
 
-		public double ThumbnailOpacity
+                this.MinimizeToTrayCheckBox.Checked = value;
+                this._suppressEvents = false;
+
+            }
+        }
+
+        public double ThumbnailOpacity
 		{
 			get => Math.Min(this.ThumbnailOpacityTrackBar.Value / 100.00, 1.00);
 			set
-			{
+            {
+                this._suppressEvents = true;
 				int barValue = (int)(100.0 * value);
 				if (barValue > 100)
 				{
@@ -78,72 +96,112 @@ namespace EveOPreview.View
 				}
 
 				this.ThumbnailOpacityTrackBar.Value = barValue;
-			}
-		}
+                this._suppressEvents = false;
+            }
+        }
 
 		public bool EnableClientLayoutTracking
-		{
-			get => this.EnableClientLayoutTrackingCheckBox.Checked;
-			set => this.EnableClientLayoutTrackingCheckBox.Checked = value;
-		}
+        {
+            get => this.EnableClientLayoutTrackingCheckBox.Checked;
+            set
+            {
+                this._suppressEvents = true;
+                this.EnableClientLayoutTrackingCheckBox.Checked = value;
+                this._suppressEvents = false;
+            }
+        }
 
-		public bool HideActiveClientThumbnail
-		{
-			get => this.HideActiveClientThumbnailCheckBox.Checked;
-			set => this.HideActiveClientThumbnailCheckBox.Checked = value;
-		}
+        public bool HideActiveClientThumbnail
+        {
+            get => this.HideActiveClientThumbnailCheckBox.Checked;
+            set
+            {
+                this._suppressEvents = true;
+                this.HideActiveClientThumbnailCheckBox.Checked = value;
+                this._suppressEvents = false;
+            }
+        }
 
-		public bool MinimizeInactiveClients
-		{
-			get => this.MinimizeInactiveClientsCheckBox.Checked;
-			set => this.MinimizeInactiveClientsCheckBox.Checked = value;
-		}
+        public bool MinimizeInactiveClients
+        {
+            get => this.MinimizeInactiveClientsCheckBox.Checked;
+            set
+            {
+                this._suppressEvents = true;
+                this.MinimizeInactiveClientsCheckBox.Checked = value;
+                this._suppressEvents = false;
+            }
+        }
 
-		public bool ShowThumbnailsAlwaysOnTop
-		{
-			get => this.ShowThumbnailsAlwaysOnTopCheckBox.Checked;
-			set => this.ShowThumbnailsAlwaysOnTopCheckBox.Checked = value;
-		}
+        public bool ShowThumbnailsAlwaysOnTop
+        {
+            get => this.ShowThumbnailsAlwaysOnTopCheckBox.Checked;
+            set
+            {
+                this._suppressEvents = true;
+                this.ShowThumbnailsAlwaysOnTopCheckBox.Checked = value;
+                this._suppressEvents = false;
+            }
+        }
 
-		public bool HideThumbnailsOnLostFocus
-		{
-			get => this.HideThumbnailsOnLostFocusCheckBox.Checked;
-			set => this.HideThumbnailsOnLostFocusCheckBox.Checked = value;
-		}
+        public bool HideThumbnailsOnLostFocus
+        {
+            get => this.HideThumbnailsOnLostFocusCheckBox.Checked;
+            set
+            {
+                this._suppressEvents = true;
+                this.HideThumbnailsOnLostFocusCheckBox.Checked = value;
+                this._suppressEvents = false;
+            }
+        }
 
-		public bool EnablePerClientThumbnailLayouts
-		{
-			get => this.EnablePerClientThumbnailsLayoutsCheckBox.Checked;
-			set => this.EnablePerClientThumbnailsLayoutsCheckBox.Checked = value;
-		}
+        public bool EnablePerClientThumbnailLayouts
+        {
+            get => this.EnablePerClientThumbnailsLayoutsCheckBox.Checked;
+            set
+            {
+                this._suppressEvents = true;
+                this.EnablePerClientThumbnailsLayoutsCheckBox.Checked = value;
+                this._suppressEvents = false;
+            }
+        }
 
-		public Size ThumbnailSize
+        public Size ThumbnailSize
 		{
 			get => new Size((int)this.ThumbnailsWidthNumericEdit.Value, (int)this.ThumbnailsHeightNumericEdit.Value);
 			set
 			{
+                this._suppressEvents = true;
 				this.ThumbnailsWidthNumericEdit.Value = value.Width;
 				this.ThumbnailsHeightNumericEdit.Value = value.Height;
-			}
-		}
+                this._suppressEvents = false;
+            }
+        }
 
 		public bool EnableThumbnailZoom
 		{
 			get => this.EnableThumbnailZoomCheckBox.Checked;
 			set
 			{
+                this._suppressEvents = true;
 				this.EnableThumbnailZoomCheckBox.Checked = value;
 				this.RefreshZoomSettings();
-			}
-		}
+                this._suppressEvents = false;
+            }
+        }
 
 		public int ThumbnailZoomFactor
-		{
-			get => (int)this.ThumbnailZoomFactorNumericEdit.Value;
-			set => this.ThumbnailZoomFactorNumericEdit.Value = value;
-		}
+        {
+            get => (int)this.ThumbnailZoomFactorNumericEdit.Value;
+            set
+            {
+                this._suppressEvents = true;
+                this.ThumbnailZoomFactorNumericEdit.Value = value;
+                this._suppressEvents = false;
+            }
+        }
 
-		public ViewZoomAnchor ThumbnailZoomAnchor
+        public ViewZoomAnchor ThumbnailZoomAnchor
 		{
 			get
 			{
@@ -168,38 +226,57 @@ namespace EveOPreview.View
 			}
 			set
 			{
+                this._suppressEvents = true;
 				this._cachedThumbnailZoomAnchor = value;
 				this._zoomAnchorMap[this._cachedThumbnailZoomAnchor].Checked = true;
-			}
-		}
+                this._suppressEvents = false;
+            }
+        }
 
 		public bool ShowThumbnailOverlays
-		{
-			get => this.ShowThumbnailOverlaysCheckBox.Checked;
-			set => this.ShowThumbnailOverlaysCheckBox.Checked = value;
-		}
+        {
+            get => this.ShowThumbnailOverlaysCheckBox.Checked;
+            set
+            {
+                this._suppressEvents = true;
+                this.ShowThumbnailOverlaysCheckBox.Checked = value;
+                this._suppressEvents = false;
+            }
+        }
 
-		public bool ShowThumbnailFrames
-		{
-			get => this.ShowThumbnailFramesCheckBox.Checked;
-			set => this.ShowThumbnailFramesCheckBox.Checked = value;
-		}
+        public bool ShowThumbnailFrames
+        {
+            get => this.ShowThumbnailFramesCheckBox.Checked;
+            set
+            {
+                this._suppressEvents = true;
+                this.ShowThumbnailFramesCheckBox.Checked = value;
+                this._suppressEvents = false;
+            }
+        }
 
-		public bool EnableActiveClientHighlight
-		{
-			get => this.EnableActiveClientHighlightCheckBox.Checked;
-			set => this.EnableActiveClientHighlightCheckBox.Checked = value;
-		}
+        public bool EnableActiveClientHighlight
+        {
+            get => this.EnableActiveClientHighlightCheckBox.Checked;
+            set
+            {
+                this._suppressEvents = true;
+                this.EnableActiveClientHighlightCheckBox.Checked = value;
+                this._suppressEvents = false;
+            }
+        }
 
-		public Color ActiveClientHighlightColor
+        public Color ActiveClientHighlightColor
 		{
 			get => this._activeClientHighlightColor;
 			set
 			{
+                this._suppressEvents = true;
 				this._activeClientHighlightColor = value;
 				this.ActiveClientHighlightColorButton.BackColor = value;
-			}
-		}
+                this._suppressEvents = false;
+            }
+        }
 		private Color _activeClientHighlightColor;
 
         public FontSettings TitleFontSettings
@@ -220,6 +297,7 @@ namespace EveOPreview.View
             }
             set
             {
+                this._suppressEvents = true;
                 if (value?.Name == null || value?.Size < 0)
                 {
 					return;
@@ -232,6 +310,7 @@ namespace EveOPreview.View
                 txtFontOutlineWidth.Text = value.OutlineWidth.ToString(CultureInfo.InvariantCulture);
                 txtTitleOffsetLeft.Text = value.PositionOffsetFromLeft.ToString();
                 txtTitleOffsetTop.Text = value.PositionOffsetFromTop.ToString();
+                this._suppressEvents = false;
             }
         }
 
@@ -245,11 +324,13 @@ namespace EveOPreview.View
             }
             set
             {
+                this._suppressEvents = true;
                 _fpsLimiterSettings = value;
                 numericFpsForegroundLimit.Value = value.FpsFocused;
                 numericFpsBackgroundLimit.Value = value.FpsBackground;
                 numericFpsPredictedLimit.Value = value.FpsPredictingFocus;
                 chbIsFpsThrottlingEnabled.Checked = value.IsEnabled;
+                this._suppressEvents = false;
             }
         }
 
@@ -263,24 +344,47 @@ namespace EveOPreview.View
             }
             set
             {
+                this._suppressEvents = true;
                 _audioMuteSettings = value;
                 chbIsGateTunnelMuted.Checked = value.MuteJumpGateTunnel;
                 chbIsLocationBannerMuted.Checked = value.MuteLocationBanner;
+                this._suppressEvents = false;
             }
         }
 
         public string ToggleHideAllActiveHotkey
         {
             get => this.txtToggleHideAllActiveHotkey.Text;
-            set => this.txtToggleHideAllActiveHotkey.Text = value;
+            set
+            {
+                this._suppressEvents = true;
+                this.txtToggleHideAllActiveHotkey.Text = value;
+                this._suppressEvents = false;
+            }
         }
-        
+
         public string MinimizeAllClientsHotkey
         {
             get => this.txtMinimizeAllClientsHotkey.Text;
-            set => this.txtMinimizeAllClientsHotkey.Text = value;
+            set
+            {
+                this._suppressEvents = true;
+                this.txtMinimizeAllClientsHotkey.Text = value;
+                this._suppressEvents = false;
+            }
         }
-        
+
+        public string LoadedProfileName
+        {
+            get => this.txtLoadedProfileName.Text;
+            set
+            {
+                this._suppressEvents = true;
+                this.txtLoadedProfileName.Text = value;
+                this._suppressEvents = false;
+            }
+        }
+
 
         private bool _isPremium;
 
@@ -292,6 +396,7 @@ namespace EveOPreview.View
             }
             set
             {
+                this._suppressEvents = true;
                 _isPremium = value;
                 
                 if (!value)
@@ -305,6 +410,7 @@ namespace EveOPreview.View
                     groupBoxFpsLimits.Visible = false;
                     groupBoxAudioMuting.Visible = false;
                 }
+                this._suppressEvents = false;
             }
         }
         
@@ -397,6 +503,11 @@ namespace EveOPreview.View
         public Action AudioSettingsChanged { get; set; }
         public Action ToggleHideAllActiveClients { get; set; }
         public Action MinimizeAllClients { get; set; }
+        public Action CloneCurrentProfile { get; set; }
+        public Action DeleteCurrentProfile { get; set; }
+        public Action<string> RenameCurrentProfile { get; set; }
+        public Action<ProfileLocation> SwitchToProfile { get; set; }
+
 
         #region UI events
         private void ContentTabControl_DrawItem(object sender, DrawItemEventArgs e)
@@ -906,27 +1017,12 @@ namespace EveOPreview.View
             UpdateTitleOffset();
         }
 
-        private void txtTitleOffsetLeft_Enter(object sender, EventArgs e)
-        {
-            UpdateTitleOffset();
-        }
-
         private void txtTitleOffsetTop_Leave(object sender, EventArgs e)
         {
             UpdateTitleOffset();
         }
 
-        private void txtTitleOffsetTop_Enter(object sender, EventArgs e)
-        {
-            UpdateTitleOffset();
-        }
-
         private void txtFontOutlineWidth_Leave(object sender, EventArgs e)
-        {
-            UpdateFontOutlineWidth();
-        }
-
-        private void txtFontOutlineWidth_Enter(object sender, EventArgs e)
         {
             UpdateFontOutlineWidth();
         }
@@ -999,7 +1095,27 @@ namespace EveOPreview.View
             this.btnToggleHideAll.BackColor = notificationIsHidden ? Color.RosyBrown : SystemColors.Control;
             this.ClientsTabPage.Text = notificationIsHidden ? "ALL HIDDEN" : "All Clients";
         }
-        
+
+        public void UpdateProfileList(List<ProfileLocation> notificationNewProfileLocations)
+        {
+            var selectedProfile = txtLoadedProfileName.Text;
+
+            notificationNewProfileLocations =
+                notificationNewProfileLocations.OrderByDescending(x => x.FriendlyName == "Default") // Put default on the top, then the rest.
+                    .ThenBy(x => x.FriendlyName).ToList();
+
+            listBoxProfiles.DataSource = null;
+            listBoxProfiles.DataSource = notificationNewProfileLocations;
+            listBoxProfiles.DisplayMember = nameof(ProfileLocation.FriendlyName);
+            listBoxProfiles.Update();
+
+            var itemToSelect = notificationNewProfileLocations.FirstOrDefault(x => x.FriendlyName == selectedProfile);
+            if (itemToSelect != null)
+            {
+                listBoxProfiles.SelectedItem = itemToSelect;
+            }
+        }
+
         private void btnToggleHideAll_Click(object sender, EventArgs e)
         {
             this.ToggleHideAllActiveClients();
@@ -1032,6 +1148,96 @@ namespace EveOPreview.View
         private void btnMinimizeAllClients_Click(object sender, EventArgs e)
         {
             this.MinimizeAllClients();
+        }
+
+        private void listBoxProfiles_Click(object sender, EventArgs e)
+        {
+            var selectedProfile = listBoxProfiles.SelectedItem as ProfileLocation;
+            if (selectedProfile == null)
+            {
+                return;
+            }
+
+            this.SwitchToProfile(selectedProfile);
+        }
+
+        private void btnCloneProfile_Click(object sender, EventArgs e)
+        {
+            this.CloneCurrentProfile();
+        }
+
+        private void btnDeleteProfile_Click(object sender, EventArgs e)
+        {
+            if (this.txtLoadedProfileName.Text == "Default")
+            {
+                MessageBox.Show("Cannot delete the Default profile");
+                return;
+            }
+
+            DialogResult result = MessageBox.Show(
+                $"Are you sure you want to permanently delete the profile '{this.txtLoadedProfileName.Text}'?\n\nThis action cannot be undone. Please ensure you have a backup if needed.",
+                "Confirm Deletion",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                this.DeleteCurrentProfile();
+            }
+        }
+
+        private void txtLoadedProfileName_Leave(object sender, EventArgs e)
+        {
+            UI_RenameCurrentProfile();
+        }
+
+        private void txtLoadedProfileName_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                UI_RenameCurrentProfile();
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+        }
+
+        private void UI_RenameCurrentProfile()
+        {
+            var newName = txtLoadedProfileName.Text.Trim();
+            
+            if (!ValidateProfileName(newName, out var message))
+            {
+                MessageBox.Show(message);
+                return;
+            }
+
+            this.RenameCurrentProfile(newName);
+        }
+
+        private bool ValidateProfileName(string name, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
+            if (name.Length > 50)
+            {
+                errorMessage = "Profile name cannot exceed 50 characters.";
+                return false;
+            }
+
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+            if (name.IndexOfAny(invalidChars) >= 0)
+            {
+                errorMessage = "Name contains invalid characters (\\ / : * ? \" < > |)";
+                return false;
+            }
+
+            if (name.EndsWith(" ") || name.EndsWith("."))
+            {
+                errorMessage = "Name cannot end with a space or a period.";
+                return false;
+            }
+
+            return true;
         }
     }
 }

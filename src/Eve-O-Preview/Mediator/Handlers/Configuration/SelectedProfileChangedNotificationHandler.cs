@@ -22,18 +22,18 @@ using System.Threading.Tasks;
 
 namespace EveOPreview.Mediator.Handlers.Configuration;
 
-public class ThumbnailToggleHideAllChangedNotificationMainViewHandler : INotificationHandler<ThumbnailToggleHideAllChangedNotification>
+public class SelectedProfileChangedNotificationHandler : INotificationHandler<SelectedProfileChangedNotification>
 {
     private readonly IGlobalEvents _globalEvents;
 
-    public ThumbnailToggleHideAllChangedNotificationMainViewHandler(IGlobalEvents globalEvents)
+    public SelectedProfileChangedNotificationHandler(IGlobalEvents globalEvents)
     {
         _globalEvents = globalEvents;
     }
 
-    public Task Handle(ThumbnailToggleHideAllChangedNotification notification, CancellationToken cancellationToken)
+    public Task Handle(SelectedProfileChangedNotification notification, CancellationToken cancellationToken)
     {
-        _globalEvents.PublishThumbnailToggleHideAllChanged(notification);
+        _globalEvents.PublishCurrentProfileChanged(notification);
 
         return Task.CompletedTask;
     }

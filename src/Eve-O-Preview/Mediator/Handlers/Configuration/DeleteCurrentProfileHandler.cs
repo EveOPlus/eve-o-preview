@@ -14,16 +14,27 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System;
+using System.Threading;
+using System.Threading.Tasks;
+using EveOPreview.Configuration.Interface;
 using EveOPreview.Mediator.Messages;
+using MediatR;
 
-namespace EveOPreview.Services.Interface;
+namespace EveOPreview.Mediator.Handlers.Configuration;
 
-public interface IGlobalEvents
+public class DeleteCurrentProfileHandler : IRequestHandler<DeleteCurrentProfile>
 {
-    event Action<SelectedProfileChangedNotification> CurrentProfileChanged;
-    void PublishCurrentProfileChanged(SelectedProfileChangedNotification notification);
+    private readonly IProfileManager _profileManager;
 
-    event Action<ProfileListChangedNotification> ProfileListChanged;
-    void PublishProfileListChanged(ProfileListChangedNotification notification);
+    public DeleteCurrentProfileHandler(IProfileManager profileManager)
+    {
+        _profileManager = profileManager;
+    }
+
+    public Task<Unit> Handle(DeleteCurrentProfile request, CancellationToken cancellationToken)
+    {
+        _profileManager.DeleteCurrentProfile();
+
+        return Unit.Task;
+    }
 }

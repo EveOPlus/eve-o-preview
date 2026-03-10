@@ -20,7 +20,7 @@ namespace EveOPreview.Configuration
 {
     public interface IConfigurationStorage
     {
-        ProfileLocation CurrentProfile { get; }
+        ProfileLocation CurrentProfile { get; set; }
 
         void Load();
         void Save();

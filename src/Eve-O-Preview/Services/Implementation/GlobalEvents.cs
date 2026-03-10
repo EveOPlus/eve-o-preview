@@ -22,9 +22,9 @@ namespace EveOPreview.Services.Implementation;
 
 public class GlobalEvents : IGlobalEvents
 {
-    public event Action<SelectedProfileChangedNotification> ProfileChanged;
-    public void PublishProfileChanged(SelectedProfileChangedNotification n) => ProfileChanged?.Invoke(n);
+    public event Action<SelectedProfileChangedNotification> CurrentProfileChanged;
+    public void PublishCurrentProfileChanged(SelectedProfileChangedNotification n) => CurrentProfileChanged?.Invoke(n);
 
-    public event Action<ThumbnailToggleHideAllChangedNotification> ThumbnailToggleHideAllChanged;
-    public void PublishThumbnailToggleHideAllChanged(ThumbnailToggleHideAllChangedNotification n) => ThumbnailToggleHideAllChanged?.Invoke(n);
+    public event Action<ProfileListChangedNotification> ProfileListChanged;
+    public void PublishProfileListChanged(ProfileListChangedNotification n) => ProfileListChanged?.Invoke(n);
 }

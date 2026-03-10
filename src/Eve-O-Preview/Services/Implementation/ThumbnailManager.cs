@@ -24,11 +24,9 @@ using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace EveOPreview.Services
@@ -55,6 +53,7 @@ namespace EveOPreview.Services
         private readonly Dictionary<IntPtr, IThumbnailView> _thumbnailViews;
         private IKeyboardMouseEvents _keyboardMouseEvents;
         private readonly IHookService _hookService;
+        private readonly IGlobalEvents _globalEvents;
 
         private (IntPtr Handle, string Title) _activeClient;
         private IntPtr _externalApplication;
@@ -69,7 +68,7 @@ namespace EveOPreview.Services
         private int _hideThumbnailsDelay;
         #endregion
 
-        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents, IHookService hookService)
+        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents, IHookService hookService, IGlobalEvents globalEvents)
         {
             this._mediator = mediator;
             this._processMonitor = processMonitor;
@@ -78,6 +77,7 @@ namespace EveOPreview.Services
             this._thumbnailViewFactory = factory;
             this._keyboardMouseEvents = keyboardMouseEvents;
             _hookService = hookService;
+            _globalEvents = globalEvents;
 
             this._activeClient = (IntPtr.Zero, ThumbnailManager.DEFAULT_CLIENT_TITLE);
 
@@ -97,7 +97,14 @@ namespace EveOPreview.Services
 
             this._hideThumbnailsDelay = this._configuration.HideThumbnailsDelay;
 
-            RegisterAllHotkeys(this._configuration.CycleGroups);
+            this._globalEvents.CurrentProfileChanged += HandleCurrentProfileChanged;
+
+            RegisterAllHotkeys();
+        }
+
+        private void HandleCurrentProfileChanged(SelectedProfileChangedNotification obj)
+        {
+            RegisterAllHotkeys();
         }
 
         public IThumbnailView GetClientByTitle(string title)
@@ -159,8 +166,14 @@ namespace EveOPreview.Services
             return remainingClients.Any() ? remainingClients.First().Value : orderedTitles.FirstOrDefault().Value;
         }
 
-        public void RegisterAllHotkeys(List<CycleGroup> cycleGroups)
+        private List<KeyEventHandler> _trackedHotkeyDownDelegates = new List<KeyEventHandler>();
+        private List<KeyEventHandler> _trackedHotkeyUpDelegates = new List<KeyEventHandler>();
+
+        public void RegisterAllHotkeys()
         {
+            var cycleGroups = this._configuration.CycleGroups;
+            UnregisterExistingHotkeys();
+
             foreach (var cycleGroup in cycleGroups)
             {
                 RegisterCycleClientHotkey(cycleGroup);
@@ -169,15 +182,31 @@ namespace EveOPreview.Services
             RegisterGeneralHotkeys();
         }
 
+        private void UnregisterExistingHotkeys()
+        {
+            foreach (var existingDown in _trackedHotkeyDownDelegates)
+            {
+                _keyboardMouseEvents.KeyDown -= existingDown;
+            }
+            _trackedHotkeyDownDelegates.Clear();
+
+            foreach (var existingUp in _trackedHotkeyUpDelegates)
+            {
+                _keyboardMouseEvents.KeyUp -= existingUp;
+            }
+            _trackedHotkeyUpDelegates.Clear();
+        }
+
         public void RegisterCycleClientHotkey(CycleGroup cycleGroup)
         {
             RegisterCycleClientHotkey(cycleGroup.ForwardHotkeysParsedAndOrdered, true, cycleGroup.ClientsOrder);
             RegisterCycleClientHotkey(cycleGroup.BackwardHotkeysParsedAndOrdered, false, cycleGroup.ClientsOrder);
         }
 
+
         internal void RegisterCycleClientHotkey(List<Keys> keys, bool isForwards, SortedDictionary<int, string> cycleOrder)
         {
-            _keyboardMouseEvents.KeyDown += (sender, e) =>
+            KeyEventHandler newDownDelegate = (sender, e) =>
             {
                 foreach (var hotkey in keys)
                 {
@@ -194,8 +223,11 @@ namespace EveOPreview.Services
                     }
                 }
             };
-            
-            _keyboardMouseEvents.KeyUp += (sender, e) =>
+
+            _keyboardMouseEvents.KeyDown += newDownDelegate;
+            _trackedHotkeyDownDelegates.Add(newDownDelegate);
+
+            KeyEventHandler newUpDelegate = (sender, e) =>
             {
                 foreach (var hotkey in keys)
                 {
@@ -206,12 +238,15 @@ namespace EveOPreview.Services
                     }
                 }
             };
+
+            _keyboardMouseEvents.KeyUp += newUpDelegate;
+            _trackedHotkeyUpDelegates.Add(newUpDelegate);
         }
 
         public void RegisterGeneralHotkeys()
         {
             // Using the KeyUp for this one so it has less chance of impacting the flow of other more important hotkeys (like client cycling)
-            _keyboardMouseEvents.KeyUp += (sender, e) =>
+            KeyEventHandler newUpDelegate = (sender, e) =>
             {
                 if (e.KeyData == _configuration.ToggleHideActiveClientsHotkeyParsed)
                 {
@@ -224,6 +259,9 @@ namespace EveOPreview.Services
                     e.Handled = true;
                 }
             };
+
+            _keyboardMouseEvents.KeyUp += newUpDelegate;
+            _trackedHotkeyUpDelegates.Add(newUpDelegate);
         }
 
         public void Start()

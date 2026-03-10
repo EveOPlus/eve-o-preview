@@ -31,7 +31,7 @@ namespace EveOPreview.Helper
             }
             catch (Exception ex)
             {
-                Log.Logger.WithCallerInfo().Warning($"Unable to parse hotkey value '{stringKey}'");
+                Log.Logger.WithCallerInfo().Warning(ex, $"Unable to parse hotkey value '{stringKey}'");
                 return Keys.None;
             }
         }
