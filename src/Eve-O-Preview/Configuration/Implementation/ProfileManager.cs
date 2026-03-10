@@ -147,13 +147,12 @@ public class ProfileManager : IProfileManager
         foreach (string dirPath in profileDirs)
         {
             string baseJsonPath = Path.Combine(dirPath, BASE_FILENAME);
+            string profileName = Path.GetFileName(dirPath);
 
             // If this folder has a profile, add it to the list.
-            if (File.Exists(baseJsonPath))
+            if (File.Exists(baseJsonPath) || profileName == DEFAULT_PROFILE_DIR)
             {
                 // Use the folder name as the friendly name.
-                string profileName = Path.GetFileName(dirPath);
-
                 locations.Add(new ProfileLocation
                 {
                     FriendlyName = profileName,
