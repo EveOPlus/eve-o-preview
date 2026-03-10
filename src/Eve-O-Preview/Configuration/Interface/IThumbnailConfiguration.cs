@@ -15,7 +15,6 @@
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using EveOPreview.Configuration.Implementation;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;

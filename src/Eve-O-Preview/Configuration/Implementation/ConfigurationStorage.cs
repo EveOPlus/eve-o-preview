@@ -22,36 +22,49 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using EveOPreview.Configuration.Interface;
+using EveOPreview.Configuration.Model;
+using Serilog;
 
 namespace EveOPreview.Configuration.Implementation
 {
     class ConfigurationStorage : IConfigurationStorage
     {
-        private const string CONFIGURATION_FILE_NAME = "EVE-O Preview.json";
+        //private const string CONFIGURATION_FILE_NAME = "EVE-O Preview.json";
 
         private readonly IAppConfig _appConfig;
         private readonly IThumbnailConfiguration _thumbnailConfiguration;
         private readonly IPremiumService _premiumService;
         private readonly IMediator _mediator;
+        private readonly ILogger _logger;
+        private readonly IGlobalEvents _globalEvents;
 
-        public ConfigurationStorage(IAppConfig appConfig, IThumbnailConfiguration thumbnailConfiguration, IPremiumService premiumService, IMediator mediator)
+        public ProfileLocation CurrentProfile { get; private set; }
+
+        public ConfigurationStorage(IAppConfig appConfig, IThumbnailConfiguration thumbnailConfiguration, IPremiumService premiumService, IMediator mediator, IProfileManager profileManager, ILogger logger, IGlobalEvents globalEvents)
         {
             this._appConfig = appConfig;
             this._thumbnailConfiguration = thumbnailConfiguration;
             _premiumService = premiumService;
             _mediator = mediator;
+            _logger = logger;
+            _globalEvents = globalEvents;
+
+            CurrentProfile = profileManager.GetDefaultProfileLocation();
+
+            _globalEvents.ProfileChanged += HandleSelectedProfileChangedNotification;
         }
 
         public void Load()
         {
-            string filename = this.GetConfigFileName();
-
-            if (!File.Exists(filename))
+            if (!File.Exists(CurrentProfile.FullPath))
             {
+                _logger.Error($"Failed Loading configuration profile because file does not exist at : {CurrentProfile.FullPath}");
                 return;
             }
-
-            string rawData = File.ReadAllText(filename);
+            
+            _logger.Information($"Loading configuration profile: {CurrentProfile.FriendlyName} at {CurrentProfile.FullPath}");
+            string rawData = File.ReadAllText(CurrentProfile.FullPath);
 
             AutoMigrateVersion1Config(rawData);
             var cycleGroupsToAdd = AutoMigrateVersion2Config(rawData);
@@ -77,6 +90,7 @@ namespace EveOPreview.Configuration.Implementation
             var dynamicConfig = JsonConvert.DeserializeObject<dynamic>(rawData);
             if (dynamicConfig.ConfigVersion < 3)
             {
+                _logger.Information($"Auto migrating version 2 config for profile: {CurrentProfile.FriendlyName}");
                 Dictionary<string, string> oldClientHotkeys = new Dictionary<string, string>();
                 if (dynamicConfig.ClientHotkey is JObject)
                 {
@@ -113,6 +127,7 @@ namespace EveOPreview.Configuration.Implementation
             var dynamicConfig = JsonConvert.DeserializeObject<dynamic>(rawData);
             if (dynamicConfig.ConfigVersion == 1)
             {
+                _logger.Information($"Auto migrating version 1 config for profile: {CurrentProfile.FriendlyName}");
                 var cycleGroup1 = new CycleGroup();
                 cycleGroup1.Description = "Cycle Group 1 Migrated";
                 if (dynamicConfig.CycleGroup1ForwardHotkeys is JArray)
@@ -195,13 +210,13 @@ namespace EveOPreview.Configuration.Implementation
 
         public void Save()
         {
+            _logger.Information($"Saving configuration profile: {CurrentProfile.FriendlyName} at {CurrentProfile.FullPath}");
             var options = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
             string rawData = JsonConvert.SerializeObject(this._thumbnailConfiguration, Formatting.Indented, options);
-            string filename = this.GetConfigFileName();
 
             try
             {
-                File.WriteAllText(filename, rawData);
+                File.WriteAllText(CurrentProfile.FullPath, rawData);
             }
             catch (IOException)
             {
@@ -209,9 +224,9 @@ namespace EveOPreview.Configuration.Implementation
             }
         }
 
-        private string GetConfigFileName()
+        private void HandleSelectedProfileChangedNotification(SelectedProfileChangedNotification notification)
         {
-            return string.IsNullOrEmpty(this._appConfig.ConfigFileName) ? ConfigurationStorage.CONFIGURATION_FILE_NAME : this._appConfig.ConfigFileName;
+            CurrentProfile = notification.NewProfileLocation;
         }
     }
 }

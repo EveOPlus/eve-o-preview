@@ -95,7 +95,6 @@ namespace EveOPreview.View
             this.txtFontOutlineWidth = new System.Windows.Forms.TextBox();
             this.btnFontOutlineColor = new System.Windows.Forms.Button();
             this.btnSetOverlayFontColor = new System.Windows.Forms.Button();
-            this.lblDisplaySampleFont = new EveOPreview.View.CustomControl.OutlinedLabel();
             this.btnSetOverlayFont = new System.Windows.Forms.Button();
             this.HighlightColorLabel = new System.Windows.Forms.Label();
             this.ActiveClientHighlightColorButton = new System.Windows.Forms.Panel();
@@ -112,23 +111,24 @@ namespace EveOPreview.View
             this.txtToggleHideAllActiveHotkey = new System.Windows.Forms.TextBox();
             this.ThumbnailsList = new System.Windows.Forms.CheckedListBox();
             this.CycleGroupPanel = new System.Windows.Forms.Panel();
+            this.splitContainerMainCycleGroup = new System.Windows.Forms.SplitContainer();
+            this.CycleGroupLabel = new System.Windows.Forms.Label();
             this.removeGroupButton = new System.Windows.Forms.Button();
+            this.addClientToCycleGroupButton = new System.Windows.Forms.Button();
             this.cycleGroupMoveClientOrderUpButton = new System.Windows.Forms.Button();
+            this.selectCycleGroupComboBox = new System.Windows.Forms.ComboBox();
             this.removeClientToCycleGroupButton = new System.Windows.Forms.Button();
+            this.cycleGroupDescriptionLabel = new System.Windows.Forms.Label();
             this.addNewGroupButton = new System.Windows.Forms.Button();
+            this.cycleGroupDescriptionText = new System.Windows.Forms.TextBox();
             this.cycleGroupClientOrderLabel = new System.Windows.Forms.Label();
-            this.cycleGroupClientOrderList = new System.Windows.Forms.ListBox();
+            this.cycleGroupForwardHotkeyLabel = new System.Windows.Forms.Label();
+            this.cycleGroupForwardHotkey1Text = new System.Windows.Forms.TextBox();
             this.cycleGroupBackwardHotkey2Text = new System.Windows.Forms.TextBox();
+            this.cycleGroupForwardHotkey2Text = new System.Windows.Forms.TextBox();
             this.cycleGroupBackwardHotkey1Text = new System.Windows.Forms.TextBox();
             this.cycleGroupBackHotkeyLabel = new System.Windows.Forms.Label();
-            this.cycleGroupForwardHotkey2Text = new System.Windows.Forms.TextBox();
-            this.cycleGroupForwardHotkey1Text = new System.Windows.Forms.TextBox();
-            this.cycleGroupForwardHotkeyLabel = new System.Windows.Forms.Label();
-            this.cycleGroupDescriptionText = new System.Windows.Forms.TextBox();
-            this.cycleGroupDescriptionLabel = new System.Windows.Forms.Label();
-            this.CycleGroupLabel = new System.Windows.Forms.Label();
-            this.selectCycleGroupComboBox = new System.Windows.Forms.ComboBox();
-            this.addClientToCycleGroupButton = new System.Windows.Forms.Button();
+            this.cycleGroupClientOrderList = new System.Windows.Forms.ListBox();
             this.VersionLabel = new System.Windows.Forms.Label();
             this.DocumentationLink = new System.Windows.Forms.LinkLabel();
             this.ClientsTabPage = new System.Windows.Forms.TabPage();
@@ -148,9 +148,18 @@ namespace EveOPreview.View
             this.numericFpsForegroundLimit = new System.Windows.Forms.NumericUpDown();
             this.lblFpsFeatureExpired = new System.Windows.Forms.Label();
             this.chbIsFpsThrottlingEnabled = new System.Windows.Forms.CheckBox();
+            this.tabPageProfiles = new System.Windows.Forms.TabPage();
+            this.splitContainerMainProfiles = new System.Windows.Forms.SplitContainer();
+            this.lblLoadedProfileName = new System.Windows.Forms.Label();
+            this.btnDeleteProfile = new System.Windows.Forms.Button();
+            this.btnCloneProfile = new System.Windows.Forms.Button();
+            this.btnNewProfile = new System.Windows.Forms.Button();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.listBoxProfiles = new System.Windows.Forms.ListBox();
             this.NotifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.TrayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.lblDisplaySampleFont = new EveOPreview.View.CustomControl.OutlinedLabel();
             RestoreWindowMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ExitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             TitleMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -202,6 +211,10 @@ namespace EveOPreview.View
             this.groupBoxToggleHideAllThumbnails.SuspendLayout();
             CycleGroupTabPage.SuspendLayout();
             this.CycleGroupPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerMainCycleGroup)).BeginInit();
+            this.splitContainerMainCycleGroup.Panel1.SuspendLayout();
+            this.splitContainerMainCycleGroup.Panel2.SuspendLayout();
+            this.splitContainerMainCycleGroup.SuspendLayout();
             AboutTabPage.SuspendLayout();
             AboutPanel.SuspendLayout();
             this.ClientsTabPage.SuspendLayout();
@@ -216,6 +229,11 @@ namespace EveOPreview.View
             ((System.ComponentModel.ISupportInitialize)(this.numericFpsPredictedLimit)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericFpsBackgroundLimit)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericFpsForegroundLimit)).BeginInit();
+            this.tabPageProfiles.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerMainProfiles)).BeginInit();
+            this.splitContainerMainProfiles.Panel1.SuspendLayout();
+            this.splitContainerMainProfiles.Panel2.SuspendLayout();
+            this.splitContainerMainProfiles.SuspendLayout();
             this.TrayMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -252,7 +270,7 @@ namespace EveOPreview.View
             GeneralTabPage.Location = new System.Drawing.Point(124, 4);
             GeneralTabPage.Name = "GeneralTabPage";
             GeneralTabPage.Padding = new System.Windows.Forms.Padding(3);
-            GeneralTabPage.Size = new System.Drawing.Size(262, 353);
+            GeneralTabPage.Size = new System.Drawing.Size(266, 353);
             GeneralTabPage.TabIndex = 0;
             GeneralTabPage.Text = "General";
             // 
@@ -269,7 +287,7 @@ namespace EveOPreview.View
             GeneralSettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             GeneralSettingsPanel.Location = new System.Drawing.Point(3, 3);
             GeneralSettingsPanel.Name = "GeneralSettingsPanel";
-            GeneralSettingsPanel.Size = new System.Drawing.Size(256, 347);
+            GeneralSettingsPanel.Size = new System.Drawing.Size(260, 347);
             GeneralSettingsPanel.TabIndex = 18;
             // 
             // MinimizeInactiveClientsCheckBox
@@ -365,7 +383,7 @@ namespace EveOPreview.View
             ThumbnailTabPage.Location = new System.Drawing.Point(124, 4);
             ThumbnailTabPage.Name = "ThumbnailTabPage";
             ThumbnailTabPage.Padding = new System.Windows.Forms.Padding(3);
-            ThumbnailTabPage.Size = new System.Drawing.Size(262, 353);
+            ThumbnailTabPage.Size = new System.Drawing.Size(266, 353);
             ThumbnailTabPage.TabIndex = 1;
             ThumbnailTabPage.Text = "Thumbnail";
             // 
@@ -381,7 +399,7 @@ namespace EveOPreview.View
             ThumbnailSettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             ThumbnailSettingsPanel.Location = new System.Drawing.Point(3, 3);
             ThumbnailSettingsPanel.Name = "ThumbnailSettingsPanel";
-            ThumbnailSettingsPanel.Size = new System.Drawing.Size(256, 347);
+            ThumbnailSettingsPanel.Size = new System.Drawing.Size(260, 347);
             ThumbnailSettingsPanel.TabIndex = 19;
             // 
             // HeigthLabel
@@ -488,7 +506,7 @@ namespace EveOPreview.View
             ZoomSettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             ZoomSettingsPanel.Location = new System.Drawing.Point(0, 0);
             ZoomSettingsPanel.Name = "ZoomSettingsPanel";
-            ZoomSettingsPanel.Size = new System.Drawing.Size(262, 353);
+            ZoomSettingsPanel.Size = new System.Drawing.Size(266, 353);
             ZoomSettingsPanel.TabIndex = 36;
             // 
             // ZoomFactorLabel
@@ -670,7 +688,7 @@ namespace EveOPreview.View
             OverlayTabPage.Controls.Add(OverlaySettingsPanel);
             OverlayTabPage.Location = new System.Drawing.Point(124, 4);
             OverlayTabPage.Name = "OverlayTabPage";
-            OverlayTabPage.Size = new System.Drawing.Size(262, 353);
+            OverlayTabPage.Size = new System.Drawing.Size(266, 353);
             OverlayTabPage.TabIndex = 3;
             OverlayTabPage.Text = "Overlay";
             // 
@@ -686,7 +704,7 @@ namespace EveOPreview.View
             OverlaySettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             OverlaySettingsPanel.Location = new System.Drawing.Point(0, 0);
             OverlaySettingsPanel.Name = "OverlaySettingsPanel";
-            OverlaySettingsPanel.Size = new System.Drawing.Size(262, 353);
+            OverlaySettingsPanel.Size = new System.Drawing.Size(266, 353);
             OverlaySettingsPanel.TabIndex = 25;
             // 
             // groupBoxOverlayFont
@@ -785,19 +803,6 @@ namespace EveOPreview.View
             this.btnSetOverlayFontColor.UseVisualStyleBackColor = true;
             this.btnSetOverlayFontColor.Click += new System.EventHandler(this.btnSetOverlayFontColor_Click);
             // 
-            // lblDisplaySampleFont
-            // 
-            this.lblDisplaySampleFont.AutoSize = true;
-            this.lblDisplaySampleFont.BackColor = System.Drawing.SystemColors.Control;
-            this.lblDisplaySampleFont.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
-            this.lblDisplaySampleFont.Location = new System.Drawing.Point(6, 76);
-            this.lblDisplaySampleFont.Name = "lblDisplaySampleFont";
-            this.lblDisplaySampleFont.OutlineColor = System.Drawing.Color.White;
-            this.lblDisplaySampleFont.OutlineWidth = 1F;
-            this.lblDisplaySampleFont.Size = new System.Drawing.Size(45, 13);
-            this.lblDisplaySampleFont.TabIndex = 32;
-            this.lblDisplaySampleFont.Text = "Sample.";
-            // 
             // btnSetOverlayFont
             // 
             this.btnSetOverlayFont.Location = new System.Drawing.Point(6, 19);
@@ -875,12 +880,13 @@ namespace EveOPreview.View
             ClientsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             ClientsPanel.Location = new System.Drawing.Point(0, 0);
             ClientsPanel.Name = "ClientsPanel";
-            ClientsPanel.Size = new System.Drawing.Size(262, 353);
+            ClientsPanel.Size = new System.Drawing.Size(266, 353);
             ClientsPanel.TabIndex = 32;
             // 
             // activeClientsSplitContainer
             // 
             this.activeClientsSplitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.activeClientsSplitContainer.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
             this.activeClientsSplitContainer.Location = new System.Drawing.Point(0, 0);
             this.activeClientsSplitContainer.Name = "activeClientsSplitContainer";
             this.activeClientsSplitContainer.Orientation = System.Windows.Forms.Orientation.Horizontal;
@@ -893,8 +899,8 @@ namespace EveOPreview.View
             // activeClientsSplitContainer.Panel2
             // 
             this.activeClientsSplitContainer.Panel2.Controls.Add(this.ThumbnailsList);
-            this.activeClientsSplitContainer.Size = new System.Drawing.Size(260, 351);
-            this.activeClientsSplitContainer.SplitterDistance = 108;
+            this.activeClientsSplitContainer.Size = new System.Drawing.Size(264, 351);
+            this.activeClientsSplitContainer.SplitterDistance = 116;
             this.activeClientsSplitContainer.TabIndex = 35;
             // 
             // groupBoxToggleHideAllThumbnails
@@ -984,12 +990,12 @@ namespace EveOPreview.View
             this.ThumbnailsList.BackColor = System.Drawing.SystemColors.Window;
             this.ThumbnailsList.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.ThumbnailsList.CheckOnClick = true;
-            this.ThumbnailsList.Dock = System.Windows.Forms.DockStyle.Top;
+            this.ThumbnailsList.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ThumbnailsList.FormattingEnabled = true;
             this.ThumbnailsList.IntegralHeight = false;
             this.ThumbnailsList.Location = new System.Drawing.Point(0, 0);
             this.ThumbnailsList.Name = "ThumbnailsList";
-            this.ThumbnailsList.Size = new System.Drawing.Size(260, 306);
+            this.ThumbnailsList.Size = new System.Drawing.Size(264, 231);
             this.ThumbnailsList.TabIndex = 34;
             this.ThumbnailsList.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.ThumbnailsList_ItemCheck_Handler);
             // 
@@ -998,39 +1004,66 @@ namespace EveOPreview.View
             CycleGroupTabPage.Controls.Add(this.CycleGroupPanel);
             CycleGroupTabPage.Location = new System.Drawing.Point(124, 4);
             CycleGroupTabPage.Name = "CycleGroupTabPage";
-            CycleGroupTabPage.Size = new System.Drawing.Size(262, 353);
+            CycleGroupTabPage.Size = new System.Drawing.Size(266, 353);
             CycleGroupTabPage.TabIndex = 6;
             CycleGroupTabPage.Text = "Cycle Groups";
             // 
             // CycleGroupPanel
             // 
-            this.CycleGroupPanel.Controls.Add(this.removeGroupButton);
-            this.CycleGroupPanel.Controls.Add(this.cycleGroupMoveClientOrderUpButton);
-            this.CycleGroupPanel.Controls.Add(this.removeClientToCycleGroupButton);
-            this.CycleGroupPanel.Controls.Add(this.addNewGroupButton);
-            this.CycleGroupPanel.Controls.Add(this.cycleGroupClientOrderLabel);
-            this.CycleGroupPanel.Controls.Add(this.cycleGroupClientOrderList);
-            this.CycleGroupPanel.Controls.Add(this.cycleGroupBackwardHotkey2Text);
-            this.CycleGroupPanel.Controls.Add(this.cycleGroupBackwardHotkey1Text);
-            this.CycleGroupPanel.Controls.Add(this.cycleGroupBackHotkeyLabel);
-            this.CycleGroupPanel.Controls.Add(this.cycleGroupForwardHotkey2Text);
-            this.CycleGroupPanel.Controls.Add(this.cycleGroupForwardHotkey1Text);
-            this.CycleGroupPanel.Controls.Add(this.cycleGroupForwardHotkeyLabel);
-            this.CycleGroupPanel.Controls.Add(this.cycleGroupDescriptionText);
-            this.CycleGroupPanel.Controls.Add(this.cycleGroupDescriptionLabel);
-            this.CycleGroupPanel.Controls.Add(this.CycleGroupLabel);
-            this.CycleGroupPanel.Controls.Add(this.selectCycleGroupComboBox);
-            this.CycleGroupPanel.Controls.Add(this.addClientToCycleGroupButton);
+            this.CycleGroupPanel.Controls.Add(this.splitContainerMainCycleGroup);
             this.CycleGroupPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.CycleGroupPanel.Location = new System.Drawing.Point(0, 0);
             this.CycleGroupPanel.Name = "CycleGroupPanel";
-            this.CycleGroupPanel.Size = new System.Drawing.Size(262, 353);
+            this.CycleGroupPanel.Size = new System.Drawing.Size(266, 353);
             this.CycleGroupPanel.TabIndex = 0;
+            // 
+            // splitContainerMainCycleGroup
+            // 
+            this.splitContainerMainCycleGroup.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainerMainCycleGroup.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
+            this.splitContainerMainCycleGroup.Location = new System.Drawing.Point(0, 0);
+            this.splitContainerMainCycleGroup.Name = "splitContainerMainCycleGroup";
+            this.splitContainerMainCycleGroup.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainerMainCycleGroup.Panel1
+            // 
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.CycleGroupLabel);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.removeGroupButton);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.addClientToCycleGroupButton);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupMoveClientOrderUpButton);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.selectCycleGroupComboBox);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.removeClientToCycleGroupButton);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupDescriptionLabel);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.addNewGroupButton);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupDescriptionText);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupClientOrderLabel);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupForwardHotkeyLabel);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupForwardHotkey1Text);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupBackwardHotkey2Text);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupForwardHotkey2Text);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupBackwardHotkey1Text);
+            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupBackHotkeyLabel);
+            // 
+            // splitContainerMainCycleGroup.Panel2
+            // 
+            this.splitContainerMainCycleGroup.Panel2.Controls.Add(this.cycleGroupClientOrderList);
+            this.splitContainerMainCycleGroup.Size = new System.Drawing.Size(266, 353);
+            this.splitContainerMainCycleGroup.SplitterDistance = 160;
+            this.splitContainerMainCycleGroup.TabIndex = 17;
+            // 
+            // CycleGroupLabel
+            // 
+            this.CycleGroupLabel.AutoSize = true;
+            this.CycleGroupLabel.Location = new System.Drawing.Point(13, 10);
+            this.CycleGroupLabel.Name = "CycleGroupLabel";
+            this.CycleGroupLabel.Size = new System.Drawing.Size(101, 13);
+            this.CycleGroupLabel.TabIndex = 2;
+            this.CycleGroupLabel.Text = "Select Cycle Group:";
             // 
             // removeGroupButton
             // 
             this.removeGroupButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.removeGroupButton.Location = new System.Drawing.Point(200, 22);
+            this.removeGroupButton.Location = new System.Drawing.Point(210, 25);
             this.removeGroupButton.Name = "removeGroupButton";
             this.removeGroupButton.Size = new System.Drawing.Size(24, 23);
             this.removeGroupButton.TabIndex = 16;
@@ -1038,10 +1071,21 @@ namespace EveOPreview.View
             this.removeGroupButton.UseVisualStyleBackColor = true;
             this.removeGroupButton.Click += new System.EventHandler(this.removeGroupButton_Click);
             // 
+            // addClientToCycleGroupButton
+            // 
+            this.addClientToCycleGroupButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.addClientToCycleGroupButton.Location = new System.Drawing.Point(233, 132);
+            this.addClientToCycleGroupButton.Name = "addClientToCycleGroupButton";
+            this.addClientToCycleGroupButton.Size = new System.Drawing.Size(22, 23);
+            this.addClientToCycleGroupButton.TabIndex = 0;
+            this.addClientToCycleGroupButton.Text = "+";
+            this.addClientToCycleGroupButton.UseVisualStyleBackColor = true;
+            this.addClientToCycleGroupButton.Click += new System.EventHandler(this.addClientToCycleGroupButton_Click);
+            // 
             // cycleGroupMoveClientOrderUpButton
             // 
             this.cycleGroupMoveClientOrderUpButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cycleGroupMoveClientOrderUpButton.Location = new System.Drawing.Point(165, 129);
+            this.cycleGroupMoveClientOrderUpButton.Location = new System.Drawing.Point(175, 132);
             this.cycleGroupMoveClientOrderUpButton.Name = "cycleGroupMoveClientOrderUpButton";
             this.cycleGroupMoveClientOrderUpButton.Size = new System.Drawing.Size(33, 23);
             this.cycleGroupMoveClientOrderUpButton.TabIndex = 15;
@@ -1049,10 +1093,19 @@ namespace EveOPreview.View
             this.cycleGroupMoveClientOrderUpButton.UseVisualStyleBackColor = true;
             this.cycleGroupMoveClientOrderUpButton.Click += new System.EventHandler(this.cycleGroupMoveClientOrderUpButton_Click);
             // 
+            // selectCycleGroupComboBox
+            // 
+            this.selectCycleGroupComboBox.FormattingEnabled = true;
+            this.selectCycleGroupComboBox.Location = new System.Drawing.Point(16, 26);
+            this.selectCycleGroupComboBox.Name = "selectCycleGroupComboBox";
+            this.selectCycleGroupComboBox.Size = new System.Drawing.Size(192, 21);
+            this.selectCycleGroupComboBox.TabIndex = 1;
+            this.selectCycleGroupComboBox.SelectedValueChanged += new System.EventHandler(this.selectCycleGroupComboBox_SelectedValueChanged);
+            // 
             // removeClientToCycleGroupButton
             // 
             this.removeClientToCycleGroupButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.removeClientToCycleGroupButton.Location = new System.Drawing.Point(200, 129);
+            this.removeClientToCycleGroupButton.Location = new System.Drawing.Point(210, 132);
             this.removeClientToCycleGroupButton.Name = "removeClientToCycleGroupButton";
             this.removeClientToCycleGroupButton.Size = new System.Drawing.Size(22, 23);
             this.removeClientToCycleGroupButton.TabIndex = 14;
@@ -1060,10 +1113,19 @@ namespace EveOPreview.View
             this.removeClientToCycleGroupButton.UseVisualStyleBackColor = true;
             this.removeClientToCycleGroupButton.Click += new System.EventHandler(this.removeClientToCycleGroupButton_Click);
             // 
+            // cycleGroupDescriptionLabel
+            // 
+            this.cycleGroupDescriptionLabel.AutoSize = true;
+            this.cycleGroupDescriptionLabel.Location = new System.Drawing.Point(13, 57);
+            this.cycleGroupDescriptionLabel.Name = "cycleGroupDescriptionLabel";
+            this.cycleGroupDescriptionLabel.Size = new System.Drawing.Size(63, 13);
+            this.cycleGroupDescriptionLabel.TabIndex = 3;
+            this.cycleGroupDescriptionLabel.Text = "Description:";
+            // 
             // addNewGroupButton
             // 
             this.addNewGroupButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.addNewGroupButton.Location = new System.Drawing.Point(223, 22);
+            this.addNewGroupButton.Location = new System.Drawing.Point(233, 25);
             this.addNewGroupButton.Name = "addNewGroupButton";
             this.addNewGroupButton.Size = new System.Drawing.Size(24, 23);
             this.addNewGroupButton.TabIndex = 13;
@@ -1071,37 +1133,66 @@ namespace EveOPreview.View
             this.addNewGroupButton.UseVisualStyleBackColor = true;
             this.addNewGroupButton.Click += new System.EventHandler(this.addNewGroupButton_Click);
             // 
+            // cycleGroupDescriptionText
+            // 
+            this.cycleGroupDescriptionText.Location = new System.Drawing.Point(92, 54);
+            this.cycleGroupDescriptionText.Name = "cycleGroupDescriptionText";
+            this.cycleGroupDescriptionText.Size = new System.Drawing.Size(163, 20);
+            this.cycleGroupDescriptionText.TabIndex = 4;
+            this.cycleGroupDescriptionText.Leave += new System.EventHandler(this.cycleGroupDescriptionText_Leave);
+            // 
             // cycleGroupClientOrderLabel
             // 
             this.cycleGroupClientOrderLabel.AutoSize = true;
-            this.cycleGroupClientOrderLabel.Location = new System.Drawing.Point(3, 134);
+            this.cycleGroupClientOrderLabel.Location = new System.Drawing.Point(13, 137);
             this.cycleGroupClientOrderLabel.Name = "cycleGroupClientOrderLabel";
             this.cycleGroupClientOrderLabel.Size = new System.Drawing.Size(91, 13);
             this.cycleGroupClientOrderLabel.TabIndex = 12;
             this.cycleGroupClientOrderLabel.Text = "Clients and Order:";
             // 
-            // cycleGroupClientOrderList
+            // cycleGroupForwardHotkeyLabel
             // 
-            this.cycleGroupClientOrderList.FormattingEnabled = true;
-            this.cycleGroupClientOrderList.Location = new System.Drawing.Point(6, 153);
-            this.cycleGroupClientOrderList.Name = "cycleGroupClientOrderList";
-            this.cycleGroupClientOrderList.Size = new System.Drawing.Size(239, 186);
-            this.cycleGroupClientOrderList.TabIndex = 11;
+            this.cycleGroupForwardHotkeyLabel.AutoSize = true;
+            this.cycleGroupForwardHotkeyLabel.Location = new System.Drawing.Point(13, 83);
+            this.cycleGroupForwardHotkeyLabel.Name = "cycleGroupForwardHotkeyLabel";
+            this.cycleGroupForwardHotkeyLabel.Size = new System.Drawing.Size(69, 13);
+            this.cycleGroupForwardHotkeyLabel.TabIndex = 5;
+            this.cycleGroupForwardHotkeyLabel.Text = "Forward Key:";
+            // 
+            // cycleGroupForwardHotkey1Text
+            // 
+            this.cycleGroupForwardHotkey1Text.BackColor = System.Drawing.SystemColors.Control;
+            this.cycleGroupForwardHotkey1Text.Location = new System.Drawing.Point(92, 80);
+            this.cycleGroupForwardHotkey1Text.Name = "cycleGroupForwardHotkey1Text";
+            this.cycleGroupForwardHotkey1Text.ReadOnly = true;
+            this.cycleGroupForwardHotkey1Text.Size = new System.Drawing.Size(80, 20);
+            this.cycleGroupForwardHotkey1Text.TabIndex = 6;
+            this.cycleGroupForwardHotkey1Text.DoubleClick += new System.EventHandler(this.cycleGroupForwardHotkey1Text_DoubleClick);
             // 
             // cycleGroupBackwardHotkey2Text
             // 
             this.cycleGroupBackwardHotkey2Text.BackColor = System.Drawing.SystemColors.Control;
-            this.cycleGroupBackwardHotkey2Text.Location = new System.Drawing.Point(165, 103);
+            this.cycleGroupBackwardHotkey2Text.Location = new System.Drawing.Point(175, 106);
             this.cycleGroupBackwardHotkey2Text.Name = "cycleGroupBackwardHotkey2Text";
             this.cycleGroupBackwardHotkey2Text.ReadOnly = true;
             this.cycleGroupBackwardHotkey2Text.Size = new System.Drawing.Size(80, 20);
             this.cycleGroupBackwardHotkey2Text.TabIndex = 10;
             this.cycleGroupBackwardHotkey2Text.DoubleClick += new System.EventHandler(this.cycleGroupBackwardHotkey2Text_DoubleClick);
             // 
+            // cycleGroupForwardHotkey2Text
+            // 
+            this.cycleGroupForwardHotkey2Text.BackColor = System.Drawing.SystemColors.Control;
+            this.cycleGroupForwardHotkey2Text.Location = new System.Drawing.Point(175, 80);
+            this.cycleGroupForwardHotkey2Text.Name = "cycleGroupForwardHotkey2Text";
+            this.cycleGroupForwardHotkey2Text.ReadOnly = true;
+            this.cycleGroupForwardHotkey2Text.Size = new System.Drawing.Size(80, 20);
+            this.cycleGroupForwardHotkey2Text.TabIndex = 7;
+            this.cycleGroupForwardHotkey2Text.DoubleClick += new System.EventHandler(this.cycleGroupForwardHotkey2Text_DoubleClick);
+            // 
             // cycleGroupBackwardHotkey1Text
             // 
             this.cycleGroupBackwardHotkey1Text.BackColor = System.Drawing.SystemColors.Control;
-            this.cycleGroupBackwardHotkey1Text.Location = new System.Drawing.Point(82, 103);
+            this.cycleGroupBackwardHotkey1Text.Location = new System.Drawing.Point(92, 106);
             this.cycleGroupBackwardHotkey1Text.Name = "cycleGroupBackwardHotkey1Text";
             this.cycleGroupBackwardHotkey1Text.ReadOnly = true;
             this.cycleGroupBackwardHotkey1Text.Size = new System.Drawing.Size(80, 20);
@@ -1111,86 +1202,20 @@ namespace EveOPreview.View
             // cycleGroupBackHotkeyLabel
             // 
             this.cycleGroupBackHotkeyLabel.AutoSize = true;
-            this.cycleGroupBackHotkeyLabel.Location = new System.Drawing.Point(3, 106);
+            this.cycleGroupBackHotkeyLabel.Location = new System.Drawing.Point(13, 109);
             this.cycleGroupBackHotkeyLabel.Name = "cycleGroupBackHotkeyLabel";
             this.cycleGroupBackHotkeyLabel.Size = new System.Drawing.Size(79, 13);
             this.cycleGroupBackHotkeyLabel.TabIndex = 8;
             this.cycleGroupBackHotkeyLabel.Text = "Backward Key:";
             // 
-            // cycleGroupForwardHotkey2Text
+            // cycleGroupClientOrderList
             // 
-            this.cycleGroupForwardHotkey2Text.BackColor = System.Drawing.SystemColors.Control;
-            this.cycleGroupForwardHotkey2Text.Location = new System.Drawing.Point(165, 77);
-            this.cycleGroupForwardHotkey2Text.Name = "cycleGroupForwardHotkey2Text";
-            this.cycleGroupForwardHotkey2Text.ReadOnly = true;
-            this.cycleGroupForwardHotkey2Text.Size = new System.Drawing.Size(80, 20);
-            this.cycleGroupForwardHotkey2Text.TabIndex = 7;
-            this.cycleGroupForwardHotkey2Text.DoubleClick += new System.EventHandler(this.cycleGroupForwardHotkey2Text_DoubleClick);
-            // 
-            // cycleGroupForwardHotkey1Text
-            // 
-            this.cycleGroupForwardHotkey1Text.BackColor = System.Drawing.SystemColors.Control;
-            this.cycleGroupForwardHotkey1Text.Location = new System.Drawing.Point(82, 77);
-            this.cycleGroupForwardHotkey1Text.Name = "cycleGroupForwardHotkey1Text";
-            this.cycleGroupForwardHotkey1Text.ReadOnly = true;
-            this.cycleGroupForwardHotkey1Text.Size = new System.Drawing.Size(80, 20);
-            this.cycleGroupForwardHotkey1Text.TabIndex = 6;
-            this.cycleGroupForwardHotkey1Text.DoubleClick += new System.EventHandler(this.cycleGroupForwardHotkey1Text_DoubleClick);
-            // 
-            // cycleGroupForwardHotkeyLabel
-            // 
-            this.cycleGroupForwardHotkeyLabel.AutoSize = true;
-            this.cycleGroupForwardHotkeyLabel.Location = new System.Drawing.Point(3, 80);
-            this.cycleGroupForwardHotkeyLabel.Name = "cycleGroupForwardHotkeyLabel";
-            this.cycleGroupForwardHotkeyLabel.Size = new System.Drawing.Size(69, 13);
-            this.cycleGroupForwardHotkeyLabel.TabIndex = 5;
-            this.cycleGroupForwardHotkeyLabel.Text = "Forward Key:";
-            // 
-            // cycleGroupDescriptionText
-            // 
-            this.cycleGroupDescriptionText.Location = new System.Drawing.Point(82, 51);
-            this.cycleGroupDescriptionText.Name = "cycleGroupDescriptionText";
-            this.cycleGroupDescriptionText.Size = new System.Drawing.Size(163, 20);
-            this.cycleGroupDescriptionText.TabIndex = 4;
-            this.cycleGroupDescriptionText.Leave += new System.EventHandler(this.cycleGroupDescriptionText_Leave);
-            // 
-            // cycleGroupDescriptionLabel
-            // 
-            this.cycleGroupDescriptionLabel.AutoSize = true;
-            this.cycleGroupDescriptionLabel.Location = new System.Drawing.Point(3, 54);
-            this.cycleGroupDescriptionLabel.Name = "cycleGroupDescriptionLabel";
-            this.cycleGroupDescriptionLabel.Size = new System.Drawing.Size(63, 13);
-            this.cycleGroupDescriptionLabel.TabIndex = 3;
-            this.cycleGroupDescriptionLabel.Text = "Description:";
-            // 
-            // CycleGroupLabel
-            // 
-            this.CycleGroupLabel.AutoSize = true;
-            this.CycleGroupLabel.Location = new System.Drawing.Point(3, 7);
-            this.CycleGroupLabel.Name = "CycleGroupLabel";
-            this.CycleGroupLabel.Size = new System.Drawing.Size(101, 13);
-            this.CycleGroupLabel.TabIndex = 2;
-            this.CycleGroupLabel.Text = "Select Cycle Group:";
-            // 
-            // selectCycleGroupComboBox
-            // 
-            this.selectCycleGroupComboBox.FormattingEnabled = true;
-            this.selectCycleGroupComboBox.Location = new System.Drawing.Point(6, 23);
-            this.selectCycleGroupComboBox.Name = "selectCycleGroupComboBox";
-            this.selectCycleGroupComboBox.Size = new System.Drawing.Size(192, 21);
-            this.selectCycleGroupComboBox.TabIndex = 1;
-            this.selectCycleGroupComboBox.SelectedValueChanged += new System.EventHandler(this.selectCycleGroupComboBox_SelectedValueChanged);
-            // 
-            // addClientToCycleGroupButton
-            // 
-            this.addClientToCycleGroupButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.addClientToCycleGroupButton.Location = new System.Drawing.Point(223, 129);
-            this.addClientToCycleGroupButton.Name = "addClientToCycleGroupButton";
-            this.addClientToCycleGroupButton.Size = new System.Drawing.Size(22, 23);
-            this.addClientToCycleGroupButton.TabIndex = 0;
-            this.addClientToCycleGroupButton.Text = "+";
-            this.addClientToCycleGroupButton.UseVisualStyleBackColor = true;
-            this.addClientToCycleGroupButton.Click += new System.EventHandler(this.addClientToCycleGroupButton_Click);
+            this.cycleGroupClientOrderList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.cycleGroupClientOrderList.FormattingEnabled = true;
+            this.cycleGroupClientOrderList.Location = new System.Drawing.Point(0, 0);
+            this.cycleGroupClientOrderList.Name = "cycleGroupClientOrderList";
+            this.cycleGroupClientOrderList.Size = new System.Drawing.Size(266, 189);
+            this.cycleGroupClientOrderList.TabIndex = 11;
             // 
             // label1
             // 
@@ -1235,7 +1260,7 @@ namespace EveOPreview.View
             AboutTabPage.Controls.Add(AboutPanel);
             AboutTabPage.Location = new System.Drawing.Point(124, 4);
             AboutTabPage.Name = "AboutTabPage";
-            AboutTabPage.Size = new System.Drawing.Size(262, 353);
+            AboutTabPage.Size = new System.Drawing.Size(266, 353);
             AboutTabPage.TabIndex = 5;
             AboutTabPage.Text = "About";
             // 
@@ -1253,7 +1278,7 @@ namespace EveOPreview.View
             AboutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             AboutPanel.Location = new System.Drawing.Point(0, 0);
             AboutPanel.Name = "AboutPanel";
-            AboutPanel.Size = new System.Drawing.Size(262, 353);
+            AboutPanel.Size = new System.Drawing.Size(266, 353);
             AboutPanel.TabIndex = 2;
             // 
             // lblLiabilityDisclaimer
@@ -1335,7 +1360,7 @@ namespace EveOPreview.View
             this.ClientsTabPage.Controls.Add(ClientsPanel);
             this.ClientsTabPage.Location = new System.Drawing.Point(124, 4);
             this.ClientsTabPage.Name = "ClientsTabPage";
-            this.ClientsTabPage.Size = new System.Drawing.Size(262, 353);
+            this.ClientsTabPage.Size = new System.Drawing.Size(266, 353);
             this.ClientsTabPage.TabIndex = 4;
             this.ClientsTabPage.Text = "Active Clients";
             // 
@@ -1349,6 +1374,7 @@ namespace EveOPreview.View
             this.ContentTabControl.Controls.Add(this.ClientsTabPage);
             this.ContentTabControl.Controls.Add(CycleGroupTabPage);
             this.ContentTabControl.Controls.Add(this.FpsLimiterTabPage);
+            this.ContentTabControl.Controls.Add(this.tabPageProfiles);
             this.ContentTabControl.Controls.Add(AboutTabPage);
             this.ContentTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ContentTabControl.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
@@ -1357,7 +1383,7 @@ namespace EveOPreview.View
             this.ContentTabControl.Multiline = true;
             this.ContentTabControl.Name = "ContentTabControl";
             this.ContentTabControl.SelectedIndex = 0;
-            this.ContentTabControl.Size = new System.Drawing.Size(390, 361);
+            this.ContentTabControl.Size = new System.Drawing.Size(394, 361);
             this.ContentTabControl.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
             this.ContentTabControl.TabIndex = 7;
             this.ContentTabControl.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.ContentTabControl_DrawItem);
@@ -1368,7 +1394,7 @@ namespace EveOPreview.View
             this.ZoomTabPage.Controls.Add(ZoomSettingsPanel);
             this.ZoomTabPage.Location = new System.Drawing.Point(124, 4);
             this.ZoomTabPage.Name = "ZoomTabPage";
-            this.ZoomTabPage.Size = new System.Drawing.Size(262, 353);
+            this.ZoomTabPage.Size = new System.Drawing.Size(266, 353);
             this.ZoomTabPage.TabIndex = 2;
             this.ZoomTabPage.Text = "Zoom";
             // 
@@ -1377,15 +1403,15 @@ namespace EveOPreview.View
             this.FpsLimiterTabPage.Controls.Add(this.fpsMainLayoutPanel);
             this.FpsLimiterTabPage.Location = new System.Drawing.Point(124, 4);
             this.FpsLimiterTabPage.Name = "FpsLimiterTabPage";
-            this.FpsLimiterTabPage.Size = new System.Drawing.Size(262, 353);
+            this.FpsLimiterTabPage.Size = new System.Drawing.Size(266, 353);
             this.FpsLimiterTabPage.TabIndex = 7;
-            this.FpsLimiterTabPage.Text = "Premium";
+            this.FpsLimiterTabPage.Text = "FPS / Audio";
             this.FpsLimiterTabPage.UseVisualStyleBackColor = true;
             // 
             // fpsMainLayoutPanel
             // 
             this.fpsMainLayoutPanel.ColumnCount = 1;
-            this.fpsMainLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 262F));
+            this.fpsMainLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 270F));
             this.fpsMainLayoutPanel.Controls.Add(this.fpsTopPanel, 0, 0);
             this.fpsMainLayoutPanel.Controls.Add(this.fpsBottomPanel, 0, 1);
             this.fpsMainLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -1394,7 +1420,7 @@ namespace EveOPreview.View
             this.fpsMainLayoutPanel.RowCount = 2;
             this.fpsMainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 109F));
             this.fpsMainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.fpsMainLayoutPanel.Size = new System.Drawing.Size(262, 353);
+            this.fpsMainLayoutPanel.Size = new System.Drawing.Size(266, 353);
             this.fpsMainLayoutPanel.TabIndex = 0;
             // 
             // fpsTopPanel
@@ -1403,7 +1429,7 @@ namespace EveOPreview.View
             this.fpsTopPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.fpsTopPanel.Location = new System.Drawing.Point(3, 3);
             this.fpsTopPanel.Name = "fpsTopPanel";
-            this.fpsTopPanel.Size = new System.Drawing.Size(256, 103);
+            this.fpsTopPanel.Size = new System.Drawing.Size(264, 103);
             this.fpsTopPanel.TabIndex = 0;
             // 
             // fpsBottomPanel
@@ -1414,7 +1440,7 @@ namespace EveOPreview.View
             this.fpsBottomPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.fpsBottomPanel.Location = new System.Drawing.Point(3, 112);
             this.fpsBottomPanel.Name = "fpsBottomPanel";
-            this.fpsBottomPanel.Size = new System.Drawing.Size(256, 238);
+            this.fpsBottomPanel.Size = new System.Drawing.Size(264, 238);
             this.fpsBottomPanel.TabIndex = 1;
             // 
             // groupBoxAudioMuting
@@ -1561,6 +1587,96 @@ namespace EveOPreview.View
             this.chbIsFpsThrottlingEnabled.UseVisualStyleBackColor = true;
             this.chbIsFpsThrottlingEnabled.CheckedChanged += new System.EventHandler(this.chbIsFpsThrottlingEnabled_CheckedChanged);
             // 
+            // tabPageProfiles
+            // 
+            this.tabPageProfiles.Controls.Add(this.splitContainerMainProfiles);
+            this.tabPageProfiles.Location = new System.Drawing.Point(124, 4);
+            this.tabPageProfiles.Name = "tabPageProfiles";
+            this.tabPageProfiles.Size = new System.Drawing.Size(266, 353);
+            this.tabPageProfiles.TabIndex = 8;
+            this.tabPageProfiles.Text = "Profiles";
+            this.tabPageProfiles.UseVisualStyleBackColor = true;
+            // 
+            // splitContainerMainProfiles
+            // 
+            this.splitContainerMainProfiles.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainerMainProfiles.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
+            this.splitContainerMainProfiles.Location = new System.Drawing.Point(0, 0);
+            this.splitContainerMainProfiles.Name = "splitContainerMainProfiles";
+            this.splitContainerMainProfiles.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainerMainProfiles.Panel1
+            // 
+            this.splitContainerMainProfiles.Panel1.Controls.Add(this.lblLoadedProfileName);
+            this.splitContainerMainProfiles.Panel1.Controls.Add(this.btnDeleteProfile);
+            this.splitContainerMainProfiles.Panel1.Controls.Add(this.btnCloneProfile);
+            this.splitContainerMainProfiles.Panel1.Controls.Add(this.btnNewProfile);
+            this.splitContainerMainProfiles.Panel1.Controls.Add(this.textBox1);
+            // 
+            // splitContainerMainProfiles.Panel2
+            // 
+            this.splitContainerMainProfiles.Panel2.Controls.Add(this.listBoxProfiles);
+            this.splitContainerMainProfiles.Size = new System.Drawing.Size(266, 353);
+            this.splitContainerMainProfiles.SplitterDistance = 73;
+            this.splitContainerMainProfiles.TabIndex = 0;
+            // 
+            // lblLoadedProfileName
+            // 
+            this.lblLoadedProfileName.AutoSize = true;
+            this.lblLoadedProfileName.Location = new System.Drawing.Point(11, 51);
+            this.lblLoadedProfileName.Name = "lblLoadedProfileName";
+            this.lblLoadedProfileName.Size = new System.Drawing.Size(43, 13);
+            this.lblLoadedProfileName.TabIndex = 4;
+            this.lblLoadedProfileName.Text = "Loaded";
+            // 
+            // btnDeleteProfile
+            // 
+            this.btnDeleteProfile.Enabled = false;
+            this.btnDeleteProfile.Location = new System.Drawing.Point(153, 10);
+            this.btnDeleteProfile.Name = "btnDeleteProfile";
+            this.btnDeleteProfile.Size = new System.Drawing.Size(65, 29);
+            this.btnDeleteProfile.TabIndex = 3;
+            this.btnDeleteProfile.Text = "Delete";
+            this.btnDeleteProfile.UseVisualStyleBackColor = true;
+            // 
+            // btnCloneProfile
+            // 
+            this.btnCloneProfile.Enabled = false;
+            this.btnCloneProfile.Location = new System.Drawing.Point(82, 10);
+            this.btnCloneProfile.Name = "btnCloneProfile";
+            this.btnCloneProfile.Size = new System.Drawing.Size(65, 29);
+            this.btnCloneProfile.TabIndex = 2;
+            this.btnCloneProfile.Text = "Clone";
+            this.btnCloneProfile.UseVisualStyleBackColor = true;
+            // 
+            // btnNewProfile
+            // 
+            this.btnNewProfile.Enabled = false;
+            this.btnNewProfile.Location = new System.Drawing.Point(11, 10);
+            this.btnNewProfile.Name = "btnNewProfile";
+            this.btnNewProfile.Size = new System.Drawing.Size(65, 29);
+            this.btnNewProfile.TabIndex = 1;
+            this.btnNewProfile.Text = "New";
+            this.btnNewProfile.UseVisualStyleBackColor = true;
+            // 
+            // textBox1
+            // 
+            this.textBox1.Enabled = false;
+            this.textBox1.Location = new System.Drawing.Point(60, 45);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(198, 20);
+            this.textBox1.TabIndex = 0;
+            this.textBox1.Text = "Default - Feature currently disabled";
+            // 
+            // listBoxProfiles
+            // 
+            this.listBoxProfiles.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.listBoxProfiles.FormattingEnabled = true;
+            this.listBoxProfiles.Location = new System.Drawing.Point(0, 0);
+            this.listBoxProfiles.Name = "listBoxProfiles";
+            this.listBoxProfiles.Size = new System.Drawing.Size(266, 276);
+            this.listBoxProfiles.TabIndex = 0;
+            // 
             // NotifyIcon
             // 
             this.NotifyIcon.ContextMenuStrip = this.TrayMenu;
@@ -1580,18 +1696,32 @@ namespace EveOPreview.View
             this.TrayMenu.Name = "contextMenuStrip1";
             this.TrayMenu.Size = new System.Drawing.Size(152, 76);
             // 
+            // lblDisplaySampleFont
+            // 
+            this.lblDisplaySampleFont.AutoSize = true;
+            this.lblDisplaySampleFont.BackColor = System.Drawing.SystemColors.Control;
+            this.lblDisplaySampleFont.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
+            this.lblDisplaySampleFont.Location = new System.Drawing.Point(6, 76);
+            this.lblDisplaySampleFont.Name = "lblDisplaySampleFont";
+            this.lblDisplaySampleFont.OutlineColor = System.Drawing.Color.White;
+            this.lblDisplaySampleFont.OutlineWidth = 1F;
+            this.lblDisplaySampleFont.Size = new System.Drawing.Size(45, 13);
+            this.lblDisplaySampleFont.TabIndex = 32;
+            this.lblDisplaySampleFont.Text = "Sample.";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(390, 361);
+            this.ClientSize = new System.Drawing.Size(394, 361);
             this.Controls.Add(this.ContentTabControl);
             this.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(0);
             this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.MinimumSize = new System.Drawing.Size(410, 390);
             this.Name = "MainForm";
             this.Text = "EVE-O Preview";
             this.TopMost = true;
@@ -1627,7 +1757,11 @@ namespace EveOPreview.View
             this.groupBoxToggleHideAllThumbnails.PerformLayout();
             CycleGroupTabPage.ResumeLayout(false);
             this.CycleGroupPanel.ResumeLayout(false);
-            this.CycleGroupPanel.PerformLayout();
+            this.splitContainerMainCycleGroup.Panel1.ResumeLayout(false);
+            this.splitContainerMainCycleGroup.Panel1.PerformLayout();
+            this.splitContainerMainCycleGroup.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerMainCycleGroup)).EndInit();
+            this.splitContainerMainCycleGroup.ResumeLayout(false);
             AboutTabPage.ResumeLayout(false);
             AboutPanel.ResumeLayout(false);
             AboutPanel.PerformLayout();
@@ -1646,6 +1780,12 @@ namespace EveOPreview.View
             ((System.ComponentModel.ISupportInitialize)(this.numericFpsPredictedLimit)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericFpsBackgroundLimit)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericFpsForegroundLimit)).EndInit();
+            this.tabPageProfiles.ResumeLayout(false);
+            this.splitContainerMainProfiles.Panel1.ResumeLayout(false);
+            this.splitContainerMainProfiles.Panel1.PerformLayout();
+            this.splitContainerMainProfiles.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerMainProfiles)).EndInit();
+            this.splitContainerMainProfiles.ResumeLayout(false);
             this.TrayMenu.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -1739,5 +1879,14 @@ namespace EveOPreview.View
         private Button btnMinimizeAllClients;
         private Label lblMinimizeAllClientsHotkey;
         private TextBox txtMinimizeAllClientsHotkey;
+        private TabPage tabPageProfiles;
+        private SplitContainer splitContainerMainProfiles;
+        private SplitContainer splitContainerMainCycleGroup;
+        private Button btnDeleteProfile;
+        private Button btnCloneProfile;
+        private Button btnNewProfile;
+        private TextBox textBox1;
+        private ListBox listBoxProfiles;
+        private Label lblLoadedProfileName;
     }
 }

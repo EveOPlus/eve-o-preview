@@ -15,12 +15,14 @@
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using EveOPreview.Configuration;
+using EveOPreview.Configuration.Interface;
 using EveOPreview.Presenters;
 using EveOPreview.Services;
 using EveOPreview.Services.Implementation;
 using EveOPreview.Services.Interface;
 using EveOPreview.View;
 using Gma.System.MouseKeyHook;
+using LightInject;
 using MediatR;
 using Serilog;
 using System;
@@ -141,9 +143,11 @@ namespace EveOPreview
             container.Register(typeof(IRequestHandler<,>), typeof(Program).Assembly);
 
             // Configuration services
+            container.Register<IProfileManager>();
             container.Register<IConfigurationStorage>();
             container.Register<IAppConfig>();
             container.Register<IThumbnailConfiguration>();
+            container.Register<IGlobalEvents>();
 
             // Application services
             container.Register<IThumbnailManager>();

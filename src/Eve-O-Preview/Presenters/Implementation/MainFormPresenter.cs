@@ -23,12 +23,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using EveOPreview.Configuration;
 using EveOPreview.Mediator.Messages;
+using EveOPreview.Services.Interface;
 using EveOPreview.View;
 using MediatR;
 
 namespace EveOPreview.Presenters
 {
-    public class MainFormPresenter : Presenter<IMainFormView>, IMainFormPresenter, INotificationHandler<ThumbnailToggleHideAllChangedNotification>
+    public class MainFormPresenter : Presenter<IMainFormView>, IMainFormPresenter
     {
         #region Private constants
         private const string DISCORD_URL = @"https://discord.gg/HzQHBtTEcB";
@@ -38,6 +39,7 @@ namespace EveOPreview.Presenters
         private readonly IMediator _mediator;
         private readonly IThumbnailConfiguration _configuration;
         private readonly IConfigurationStorage _configurationStorage;
+        private readonly IGlobalEvents _globalEvents;
         private readonly IDictionary<string, IThumbnailDescription> _descriptionsCache;
         private bool _suppressSizeNotifications;
 
@@ -49,14 +51,35 @@ namespace EveOPreview.Presenters
             IMainFormView view, 
             IMediator mediator, 
             IThumbnailConfiguration configuration, 
-            IConfigurationStorage configurationStorage)
+            IConfigurationStorage configurationStorage,
+            IGlobalEvents globalEvents)
             : base(controller, view)
         {
             this._mediator = mediator;
             this._configuration = configuration;
             this._configurationStorage = configurationStorage;
+            _globalEvents = globalEvents;
+
+            _globalEvents.ProfileChanged += HandleSelectedProfileChangedNotification;
+            _globalEvents.ThumbnailToggleHideAllChanged += HandleThumbnailToggleHideAllChangedNotification;
 
             this._descriptionsCache = new Dictionary<string, IThumbnailDescription>();
+
+            var currentProfile = _mediator.Send(new GetCurrentProfileLocation()).Result;
+            _ = _mediator.Send(new ChangeSelectedProfile(currentProfile)).Result;
+        }
+
+        public void HandleSelectedProfileChangedNotification(SelectedProfileChangedNotification notification)
+        {
+            ReInitialize();
+        }
+
+        private void ReInitialize()
+        {
+            lock (this._descriptionsCache)
+            {
+                this._descriptionsCache.Clear();
+            }
 
             this._suppressSizeNotifications = false;
             this._exitApplication = false;
@@ -76,6 +99,11 @@ namespace EveOPreview.Presenters
             this.View.AudioSettingsChanged = this.TriggerSetAudioSettings;
             this.View.ToggleHideAllActiveClients = this.TriggerToggleHideAllActiveClients;
             this.View.MinimizeAllClients = this.TriggerMinimizeAllClientsHotkey;
+        }
+
+        public void HandleThumbnailToggleHideAllChangedNotification(ThumbnailToggleHideAllChangedNotification notification)
+        {
+            this.View.UpdateThumbnailToggleHideAllStatus(notification.IsHidden);
         }
 
         private CaptureNewHotkeyResponse SendCaptureNewHotkeyRequest(string currentKey)
@@ -261,11 +289,19 @@ namespace EveOPreview.Presenters
 
         private async void UpdateThumbnailState(String title)
         {
-            if (this._descriptionsCache.TryGetValue(title, out IThumbnailDescription description))
+            bool exists;
+            IThumbnailDescription description;
+
+            lock (_descriptionsCache)
+            {
+                exists = this._descriptionsCache.TryGetValue(title, out description);
+            }
+            
+            if (exists)
             {
                 this._configuration.ToggleThumbnail(title, description.IsDisabled);
             }
-            
+
             await this._mediator.Send(new SaveConfiguration());
         }
 
@@ -279,7 +315,11 @@ namespace EveOPreview.Presenters
         public string GetClientDescriptionFromInputBox()
         {
             var input = new ClientNameInputBox();
-            input.LoadKnownClients(_descriptionsCache.Keys.ToList());
+            lock (_descriptionsCache)
+            {
+                input.LoadKnownClients(_descriptionsCache.Keys.ToList());
+            }
+
             input.ShowDialog();
 
             return input.SelectedClientName;
@@ -327,13 +367,6 @@ namespace EveOPreview.Presenters
         {
             this._exitApplication = true;
             this.View.Close();
-        }
-
-        public Task Handle(ThumbnailToggleHideAllChangedNotification notification, CancellationToken cancellationToken)
-        {
-            this.View.UpdateThumbnailToggleHideAllStatus(notification.IsHidden);
-
-            return Task.CompletedTask;
         }
     }
 }
