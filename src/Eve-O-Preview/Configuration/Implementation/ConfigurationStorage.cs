@@ -52,7 +52,7 @@ namespace EveOPreview.Configuration.Implementation
 
             CurrentProfile = profileManager.GetDefaultProfileLocation();
 
-            _globalEvents.CurrentProfileChanged += HandleSelectedProfileChangedNotification;
+            //_globalEvents.CurrentProfileChanged += HandleSelectedProfileChangedNotification;
         }
 
         public void Load()
@@ -224,9 +224,9 @@ namespace EveOPreview.Configuration.Implementation
             }
         }
         
-        private void HandleSelectedProfileChangedNotification(SelectedProfileChangedNotification notification)
-        {
-            CurrentProfile = notification.NewProfileLocation;
-        }
+        //private void HandleSelectedProfileChangedNotification(SelectedProfileChangedNotification notification)
+        //{
+        //    CurrentProfile = notification.NewProfileLocation;
+        //}
     }
 }
