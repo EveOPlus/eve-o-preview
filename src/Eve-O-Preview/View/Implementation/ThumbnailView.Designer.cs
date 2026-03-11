@@ -1,3 +1,5 @@
+using EveOPreview.View.CustomControl;
+
 namespace EveOPreview.View
 {
     partial class ThumbnailView
@@ -14,7 +16,71 @@ namespace EveOPreview.View
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
+            this.thumbnailContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.menuMinimize = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuReposition = new System.Windows.Forms.ToolStripMenuItem();
+            this.resizeThumbnailToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.minimizeAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.holdRightClickToMoveTimer = new System.Windows.Forms.Timer(this.components);
+            this.thumbnailContextMenu.SuspendLayout();
             this.SuspendLayout();
+            // 
+            // thumbnailContextMenu
+            // 
+            this.thumbnailContextMenu.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(20)))), ((int)(((byte)(22)))));
+            this.thumbnailContextMenu.Font = new System.Drawing.Font("Segoe UI Semibold", 9.5F);
+            this.thumbnailContextMenu.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(212)))), ((int)(((byte)(175)))), ((int)(((byte)(55)))));
+            this.thumbnailContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.menuMinimize,
+            this.minimizeAllToolStripMenuItem,
+            this.toolStripSeparator1,
+            this.menuReposition,
+            this.resizeThumbnailToolStripMenuItem});
+            this.thumbnailContextMenu.Name = "thumbnailContextMenu";
+            this.thumbnailContextMenu.ShowImageMargin = false;
+            this.thumbnailContextMenu.Size = new System.Drawing.Size(125, 98);
+            // 
+            // menuMinimize
+            // 
+            this.menuMinimize.Name = "menuMinimize";
+            this.menuMinimize.Size = new System.Drawing.Size(124, 22);
+            this.menuMinimize.Text = "Minimize";
+            this.menuMinimize.Click += new System.EventHandler(this.menuMinimize_Click);
+            // 
+            // menuReposition
+            // 
+            this.menuReposition.Name = "menuReposition";
+            this.menuReposition.Size = new System.Drawing.Size(124, 22);
+            this.menuReposition.Text = "Move";
+            this.menuReposition.Click += new System.EventHandler(this.menuReposition_Click);
+            // 
+            // resizeThumbnailToolStripMenuItem
+            // 
+            this.resizeThumbnailToolStripMenuItem.Name = "resizeThumbnailToolStripMenuItem";
+            this.resizeThumbnailToolStripMenuItem.Size = new System.Drawing.Size(124, 22);
+            this.resizeThumbnailToolStripMenuItem.Text = "Resize";
+            this.resizeThumbnailToolStripMenuItem.ToolTipText = "Hold Shift to maintain aspect ratio while resizing";
+            this.resizeThumbnailToolStripMenuItem.Click += new System.EventHandler(this.resizeThumbnailToolStripMenuItem_Click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(121, 6);
+            // 
+            // minimizeAllToolStripMenuItem
+            // 
+            this.minimizeAllToolStripMenuItem.Name = "minimizeAllToolStripMenuItem";
+            this.minimizeAllToolStripMenuItem.Size = new System.Drawing.Size(124, 22);
+            this.minimizeAllToolStripMenuItem.Text = "Minimize All";
+            this.minimizeAllToolStripMenuItem.Click += new System.EventHandler(this.minimizeAllToolStripMenuItem_Click);
+            // 
+            // holdRightClickToMoveTimer
+            // 
+            this.holdRightClickToMoveTimer.Interval = 350;
+            this.holdRightClickToMoveTimer.Tick += new System.EventHandler(this.holdRightClickToMoveTimer_Tick);
             // 
             // ThumbnailView
             // 
@@ -42,12 +108,22 @@ namespace EveOPreview.View
             this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.MouseUp_Handler);
             this.Move += new System.EventHandler(this.Move_Handler);
             this.Resize += new System.EventHandler(this.Resize_Handler);
+            this.thumbnailContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
 
+
         #endregion
 
-
+        private System.Windows.Forms.ContextMenuStrip thumbnailContextMenu;
+        private System.ComponentModel.IContainer components;
+        private System.Windows.Forms.ToolStripMenuItem menuMinimize;
+        private System.Windows.Forms.ToolStripMenuItem menuReposition;
+        private System.Windows.Forms.ToolStripMenuItem resizeThumbnailToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem minimizeAllToolStripMenuItem;
+        private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.Timer holdRightClickToMoveTimer;
     }
 }

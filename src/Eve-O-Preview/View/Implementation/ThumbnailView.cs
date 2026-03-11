@@ -15,7 +15,12 @@
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using EveOPreview.Configuration;
+using EveOPreview.Configuration.Implementation;
+using EveOPreview.Mediator.Messages;
 using EveOPreview.Services;
+using EveOPreview.View.CustomControl;
+using Gma.System.MouseKeyHook;
+using MediatR;
 using System;
 using System.ComponentModel;
 using System.Drawing;
@@ -23,7 +28,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using EveOPreview.Configuration.Implementation;
 
 namespace EveOPreview.View
 {
@@ -49,7 +53,8 @@ namespace EveOPreview.View
         private bool _isLocationChanged;
         private bool _isSizeChanged;
 
-        private bool _isCustomMouseModeActive;
+        private MouseMode _customMouseModeActive = MouseMode.Disabled;
+        private double _thumbnailRatioAtStartOfResize = 1;
 
         private double _opacity;
          
@@ -64,9 +69,12 @@ namespace EveOPreview.View
         private IThumbnailConfiguration _config;
         private Lazy<Color> _myBorderColor;
         private IThumbnailManager _thumbnailManager;
+        private readonly IMediator _mediator;
+        private readonly IKeyboardMouseEvents _keyboardMouseEvents;
+
         #endregion
 
-        protected ThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager)
+        protected ThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager, IMediator mediator, IKeyboardMouseEvents keyboardMouseEvents)
         {
             this.SuppressResizeEvent();
 
@@ -83,8 +91,6 @@ namespace EveOPreview.View
             this._isLocationChanged = true;
             this._isSizeChanged = true;
 
-            this._isCustomMouseModeActive = false;
-
             this._opacity = 0.1;
 
             InitializeComponent();
@@ -94,8 +100,24 @@ namespace EveOPreview.View
             this._config = config;
             SetDefaultBorderColor();
             this._thumbnailManager = thumbnailManager;
+            
+            _mediator = mediator;
+            _keyboardMouseEvents = keyboardMouseEvents;
+
+            InitializeContextMenu();
         }
-        
+
+        private void InitializeContextMenu()
+        {
+            thumbnailContextMenu.Renderer = new DarkGoldRenderer();
+            thumbnailContextMenu.BackColor = Color.FromArgb(20, 20, 22);
+            thumbnailContextMenu.ForeColor = Color.FromArgb(212, 175, 55);
+            thumbnailContextMenu.Font = new Font("Segoe UI Semibold", 9.5F);
+
+            thumbnailContextMenu.ShowImageMargin = false;
+            thumbnailContextMenu.ShowCheckMargin = false;
+        }
+
         public IWindowManager WindowManager { get; }
 
         public IntPtr Id { get; set; }
@@ -477,9 +499,7 @@ namespace EveOPreview.View
 
         private void MouseEnter_Handler(object sender, EventArgs e)
         {
-            this.ExitCustomMouseMode();
             this.SaveWindowSizeAndLocation();
-
             this.ThumbnailFocused?.Invoke(this.Id);
         }
 
@@ -490,23 +510,20 @@ namespace EveOPreview.View
 
         private void MouseDown_Handler(object sender, MouseEventArgs e)
         {
-            this.MouseDownEventHandler(e.Button, Control.ModifierKeys);
+            this.MouseDownEventHandler(e, Control.ModifierKeys);
         }
 
         private void MouseMove_Handler(object sender, MouseEventArgs e)
         {
-            if (this._isCustomMouseModeActive)
+            if (this._customMouseModeActive > MouseMode.Disabled)
             {
-                this.ProcessCustomMouseMode(e.Button.HasFlag(MouseButtons.Left), e.Button.HasFlag(MouseButtons.Right));
+                _keyboardMouseEvents.MouseMove += this.ProcessCustomMouseMode;
+                _keyboardMouseEvents.MouseUp += this.ExitCustomMouseMode;
             }
         }
 
         private void MouseUp_Handler(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Right)
-            {
-                this.ExitCustomMouseMode();
-            }
         }
 
         private void HotkeyPressed_Handler(object sender, HandledEventArgs e)
@@ -539,66 +556,170 @@ namespace EveOPreview.View
             this.Location = this._baseZoomLocation;
         }
 
-        private void EnterCustomMouseMode()
+        private void PutCursorOnCenter()
+        {
+            Point centerOfForm = new Point(this.ClientSize.Width / 2, this.ClientSize.Height / 2);
+            Cursor.Position = this.PointToScreen(centerOfForm);
+        }
+
+        private void PutCursorOnBottomRightCorner()
+        {
+            var x = this.ClientSize.Width - 5;
+            var y = this.ClientSize.Height - 5;
+
+            Point centerOfBottomRightCorner = new Point(x, y);
+            Cursor.Position = this.PointToScreen(centerOfBottomRightCorner);
+        }
+
+        private void ProcessCustomMouseMode(object sender, MouseEventArgs e)
+        {
+            int offsetX = e.X - this._baseMousePosition.X;
+            int offsetY = e.Y - this._baseMousePosition.Y;
+            this._baseMousePosition = e.Location;
+
+            bool isShiftDown = (Control.ModifierKeys & Keys.Shift) == Keys.Shift;
+
+            switch (_customMouseModeActive)
+            {
+                case MouseMode.Move:
+                    this.Location = new Point(this.Location.X + offsetX, this.Location.Y + offsetY);
+                    this._baseZoomLocation = this.Location;
+                    break;
+                case MouseMode.Resize:
+                    if (isShiftDown)
+                    {
+                        // Maintain Ratio
+                        int newWidth = this.Size.Width + offsetX;
+                        int newHeight = (int)(newWidth / this._thumbnailRatioAtStartOfResize);
+                        this.Size = new Size(newWidth, newHeight);
+                    }
+                    else
+                    {
+                        // Free Resize
+                        this.Size = new Size(this.Size.Width + offsetX, this.Size.Height + offsetY);
+                    }
+                    break;
+            }
+        }
+
+        private void EnterCustomMouseMode(MouseMode modeToEnter)
         {
             this.RestoreWindowSizeAndLocation();
 
-            this._isCustomMouseModeActive = true;
+            switch (modeToEnter)
+            {
+                case MouseMode.Move:
+                    PutCursorOnCenter();
+                    break;
+                case MouseMode.Resize:
+                    _thumbnailRatioAtStartOfResize = this.ClientSize.Height > 0 ? (double)this.ClientSize.Width / this.ClientSize.Height : 1.0;
+                    PutCursorOnBottomRightCorner();
+                    break;
+            }
+            this._customMouseModeActive = modeToEnter;
             this._baseMousePosition = Control.MousePosition;
-        }
-
-        private void ProcessCustomMouseMode(bool leftButton, bool rightButton)
-        {
-            Point mousePosition = Control.MousePosition;
-            int offsetX = mousePosition.X - this._baseMousePosition.X;
-            int offsetY = mousePosition.Y - this._baseMousePosition.Y;
-            this._baseMousePosition = mousePosition;
-
-            // Left + Right buttons trigger thumbnail resize
-            // Right button only trigger thumbnail movement
-            if (leftButton && rightButton)
-            {
-                this.Size = new Size(this.Size.Width + offsetX, this.Size.Height + offsetY);
-                this._baseZoomSize = this.Size;
-            }
-            else
-            {
-                this.Location = new Point(this.Location.X + offsetX, this.Location.Y + offsetY);
-                this._baseZoomLocation = this.Location;
-            }
         }
 
         private void ExitCustomMouseMode()
         {
-            this._isCustomMouseModeActive = false;
+            if (this._customMouseModeActive > MouseMode.Disabled)
+            {
+                _keyboardMouseEvents.MouseMove -= this.ProcessCustomMouseMode;
+                _keyboardMouseEvents.MouseUp -= this.ExitCustomMouseMode;
+            }
+
+            SaveWindowSizeAndLocation();
+            this._customMouseModeActive = MouseMode.Disabled;
         }
+
+        private void ExitCustomMouseMode(object sender, MouseEventArgs e)
+        {
+            ExitCustomMouseMode();
+        }
+
+        private void StartRightClickDrag()
+        {
+            if (thumbnailContextMenu.Visible)
+            {
+                thumbnailContextMenu.Close();
+            }
+
+            EnterCustomMouseMode(MouseMode.Move);
+        }
+
         #endregion
 
         #region Custom GUI events
-        protected virtual void MouseDownEventHandler(MouseButtons mouseButtons, Keys modifierKeys)
+        protected virtual void MouseDownEventHandler(MouseEventArgs e, Keys modifierKeys)
         {
-            switch (mouseButtons)
+            if (this._customMouseModeActive > MouseMode.Disabled)
             {
-                case MouseButtons.Left when modifierKeys == Keys.Control:
-                    this.ThumbnailDeactivated?.Invoke(this.Id, false);
-                    break;
-                case MouseButtons.Left when modifierKeys == (Keys.Control | Keys.Shift):
-                    this.ThumbnailDeactivated?.Invoke(this.Id, true);
-                    break;
-                case MouseButtons.Left:
-                    var oldWindow = this._thumbnailManager.GetActiveClient();
-                    this.ThumbnailActivated?.Invoke(this.Id);
-                    this.SetHighlight();
-                    this.Refresh(true);
+                return;
+            }
+            else
+            {
+                switch (e.Button)
+                {
+                    case MouseButtons.Left when modifierKeys == Keys.Control:
+                        this.ThumbnailDeactivated?.Invoke(this.Id, false);
+                        break;
+                    case MouseButtons.Left when modifierKeys == (Keys.Control | Keys.Shift):
+                        break;
+                    case MouseButtons.Left:
+                        var oldWindow = this._thumbnailManager.GetActiveClient();
+                        this.ThumbnailActivated?.Invoke(this.Id);
+                        this.SetHighlight();
+                        this.Refresh(true);
 
-                    oldWindow?.ClearBorder();
-                    break;
-                case MouseButtons.Right:
-                case MouseButtons.Left | MouseButtons.Right:
-                    this.EnterCustomMouseMode();
-                    break;
+                        oldWindow?.ClearBorder();
+                        break;
+                    case MouseButtons.Right:
+                        holdRightClickToMoveTimer.Start(); // If somebody tries to click and hold right click to move, lets override the menu and let them.
+                        var location = new Point(e.Location.X - 30, e.Location.Y - 10);
+                        thumbnailContextMenu.Show(this, location);
+                        break;
+                }
             }
         }
         #endregion
+
+        private void menuMinimize_Click(object sender, EventArgs e)
+        {
+            _mediator.Send(new MinimizeClient(this.Id));
+        }
+
+        private void minimizeAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            _mediator.Send(new MinimizeAllClients());
+        }
+
+        private void menuReposition_Click(object sender, EventArgs e)
+        {
+            this.EnterCustomMouseMode(MouseMode.Move);
+        }
+
+        private void resizeThumbnailToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.EnterCustomMouseMode(MouseMode.Resize);
+        }
+
+
+
+        private void holdRightClickToMoveTimer_Tick(object sender, EventArgs e)
+        {
+            holdRightClickToMoveTimer.Enabled = false;
+
+            if (Control.MouseButtons == MouseButtons.Right)
+            {
+                StartRightClickDrag();
+            }
+        }
+    }
+
+    public enum MouseMode
+    {
+        Disabled,
+        Move,
+        Resize
     }
 }

@@ -139,6 +139,7 @@
     <Compile Include="Mediator\Handlers\Configuration\SetFpsLimiterHandler.cs" />
     <Compile Include="Mediator\Handlers\Configuration\CaptureNewHotkeyHandler.cs" />
     <Compile Include="Mediator\Handlers\Configuration\ChangeSelectedProfileHandler.cs" />
+    <Compile Include="Mediator\Handlers\Thumbnails\MinimiseClientHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailTitleFontSettingsUpdatedHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailFrameSettingsUpdatedHandler.cs" />
     <Compile Include="Mediator\Handlers\Thumbnails\ThumbnailConfiguredSizeUpdatedHandler.cs" />
@@ -158,6 +159,7 @@
     <Compile Include="Mediator\Messages\Configuration\SetFpsLimiter.cs" />
     <Compile Include="Mediator\Messages\Configuration\CaptureNewHotkeyResponse.cs" />
     <Compile Include="Mediator\Messages\Configuration\ChangeSelectedProfile.cs" />
+    <Compile Include="Mediator\Messages\Thumbnails\MinimiseClient.cs" />
     <Compile Include="Mediator\Messages\Thumbnails\MinimiseAllClients.cs" />
     <Compile Include="Mediator\Messages\Thumbnails\ThumbnailFontTitleSettingsUpdated.cs" />
     <Compile Include="Mediator\Messages\Thumbnails\ThumbnailFrameSettingsUpdated.cs" />
@@ -208,6 +210,10 @@
     <Compile Include="Presenters\Interface\ViewCloseRequest.cs" />
     <Compile Include="Presenters\Implementation\ViewZoomAnchorConverter.cs" />
     <Compile Include="Services\Interop\WINDOWPLACEMENT.cs" />
+    <Compile Include="View\CustomControl\DarkGoldRenderer.cs" />
+    <Compile Include="View\CustomControl\DarkModeContextMenuStrip.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="View\CustomControl\OutlinedLabel.cs">
       <SubType>Component</SubType>
     </Compile>

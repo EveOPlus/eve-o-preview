@@ -25,6 +25,7 @@ using Gma.System.MouseKeyHook;
 using LightInject;
 using MediatR;
 using Serilog;
+using Serilog.Events;
 using System;
 using System.Linq;
 using System.Threading;
@@ -48,7 +49,7 @@ namespace EveOPreview
             }
             else
             {
-                SetupLogger();
+                SetupLogger(args);
                 
                 Log.Information("Starting new instance of Eve-O Preview");
                 
@@ -79,9 +80,13 @@ namespace EveOPreview
             }
         }
 
-        private static void SetupLogger()
+        private static void SetupLogger(params string[] args)
         {
+            var isVerbose = args.Contains("--verbose") || args.Contains("-v");
+            var minimumLevel = isVerbose ? LogEventLevel.Verbose : LogEventLevel.Information;
+
             Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Is(minimumLevel)
                 .Enrich.FromLogContext()
                 .WriteTo.File("logs/EVE-O Preview Log-.txt",
                     rollingInterval: RollingInterval.Day,

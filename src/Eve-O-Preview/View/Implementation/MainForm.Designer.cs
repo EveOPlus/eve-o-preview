@@ -95,7 +95,6 @@ namespace EveOPreview.View
             this.txtFontOutlineWidth = new System.Windows.Forms.TextBox();
             this.btnFontOutlineColor = new System.Windows.Forms.Button();
             this.btnSetOverlayFontColor = new System.Windows.Forms.Button();
-            this.lblDisplaySampleFont = new EveOPreview.View.CustomControl.OutlinedLabel();
             this.btnSetOverlayFont = new System.Windows.Forms.Button();
             this.HighlightColorLabel = new System.Windows.Forms.Label();
             this.ActiveClientHighlightColorButton = new System.Windows.Forms.Panel();
@@ -159,7 +158,8 @@ namespace EveOPreview.View
             this.listBoxProfiles = new System.Windows.Forms.ListBox();
             this.NotifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.TrayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.instantToolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.lblDisplaySampleFont = new EveOPreview.View.CustomControl.OutlinedLabel();
             RestoreWindowMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ExitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             TitleMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -800,19 +800,6 @@ namespace EveOPreview.View
             this.btnSetOverlayFontColor.UseVisualStyleBackColor = true;
             this.btnSetOverlayFontColor.Click += new System.EventHandler(this.btnSetOverlayFontColor_Click);
             // 
-            // lblDisplaySampleFont
-            // 
-            this.lblDisplaySampleFont.AutoSize = true;
-            this.lblDisplaySampleFont.BackColor = System.Drawing.SystemColors.Control;
-            this.lblDisplaySampleFont.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
-            this.lblDisplaySampleFont.Location = new System.Drawing.Point(6, 76);
-            this.lblDisplaySampleFont.Name = "lblDisplaySampleFont";
-            this.lblDisplaySampleFont.OutlineColor = System.Drawing.Color.White;
-            this.lblDisplaySampleFont.OutlineWidth = 1F;
-            this.lblDisplaySampleFont.Size = new System.Drawing.Size(45, 13);
-            this.lblDisplaySampleFont.TabIndex = 32;
-            this.lblDisplaySampleFont.Text = "Sample.";
-            // 
             // btnSetOverlayFont
             // 
             this.btnSetOverlayFont.Location = new System.Drawing.Point(6, 19);
@@ -955,6 +942,7 @@ namespace EveOPreview.View
             this.txtMinimizeAllClientsHotkey.ReadOnly = true;
             this.txtMinimizeAllClientsHotkey.Size = new System.Drawing.Size(94, 20);
             this.txtMinimizeAllClientsHotkey.TabIndex = 38;
+            this.instantToolTip.SetToolTip(this.txtMinimizeAllClientsHotkey, "Double click to set");
             this.txtMinimizeAllClientsHotkey.DoubleClick += new System.EventHandler(this.txtMinimizeAllClientsHotkey_DoubleClick);
             // 
             // btnToggleHideAll
@@ -984,6 +972,7 @@ namespace EveOPreview.View
             this.txtToggleHideAllActiveHotkey.ReadOnly = true;
             this.txtToggleHideAllActiveHotkey.Size = new System.Drawing.Size(94, 20);
             this.txtToggleHideAllActiveHotkey.TabIndex = 35;
+            this.instantToolTip.SetToolTip(this.txtToggleHideAllActiveHotkey, "Double click to set");
             this.txtToggleHideAllActiveHotkey.DoubleClick += new System.EventHandler(this.txtToggleHideAllActiveHotkey_DoubleClick);
             // 
             // ThumbnailsListLabel
@@ -1177,6 +1166,7 @@ namespace EveOPreview.View
             this.cycleGroupForwardHotkey1Text.ReadOnly = true;
             this.cycleGroupForwardHotkey1Text.Size = new System.Drawing.Size(80, 20);
             this.cycleGroupForwardHotkey1Text.TabIndex = 6;
+            this.instantToolTip.SetToolTip(this.cycleGroupForwardHotkey1Text, "Double click to set");
             this.cycleGroupForwardHotkey1Text.DoubleClick += new System.EventHandler(this.cycleGroupForwardHotkey1Text_DoubleClick);
             // 
             // cycleGroupBackwardHotkey2Text
@@ -1187,6 +1177,7 @@ namespace EveOPreview.View
             this.cycleGroupBackwardHotkey2Text.ReadOnly = true;
             this.cycleGroupBackwardHotkey2Text.Size = new System.Drawing.Size(80, 20);
             this.cycleGroupBackwardHotkey2Text.TabIndex = 10;
+            this.instantToolTip.SetToolTip(this.cycleGroupBackwardHotkey2Text, "Double click to set");
             this.cycleGroupBackwardHotkey2Text.DoubleClick += new System.EventHandler(this.cycleGroupBackwardHotkey2Text_DoubleClick);
             // 
             // cycleGroupForwardHotkey2Text
@@ -1197,6 +1188,7 @@ namespace EveOPreview.View
             this.cycleGroupForwardHotkey2Text.ReadOnly = true;
             this.cycleGroupForwardHotkey2Text.Size = new System.Drawing.Size(80, 20);
             this.cycleGroupForwardHotkey2Text.TabIndex = 7;
+            this.instantToolTip.SetToolTip(this.cycleGroupForwardHotkey2Text, "Double click to set");
             this.cycleGroupForwardHotkey2Text.DoubleClick += new System.EventHandler(this.cycleGroupForwardHotkey2Text_DoubleClick);
             // 
             // cycleGroupBackwardHotkey1Text
@@ -1207,6 +1199,7 @@ namespace EveOPreview.View
             this.cycleGroupBackwardHotkey1Text.ReadOnly = true;
             this.cycleGroupBackwardHotkey1Text.Size = new System.Drawing.Size(80, 20);
             this.cycleGroupBackwardHotkey1Text.TabIndex = 9;
+            this.instantToolTip.SetToolTip(this.cycleGroupBackwardHotkey1Text, "Double click to set");
             this.cycleGroupBackwardHotkey1Text.DoubleClick += new System.EventHandler(this.cycleGroupBackwardHotkey1Text_DoubleClick);
             // 
             // cycleGroupBackHotkeyLabel
@@ -1706,6 +1699,25 @@ namespace EveOPreview.View
             this.TrayMenu.Name = "contextMenuStrip1";
             this.TrayMenu.Size = new System.Drawing.Size(152, 76);
             // 
+            // instantToolTip
+            // 
+            this.instantToolTip.AutoPopDelay = 5000;
+            this.instantToolTip.InitialDelay = 0;
+            this.instantToolTip.ReshowDelay = 100;
+            // 
+            // lblDisplaySampleFont
+            // 
+            this.lblDisplaySampleFont.AutoSize = true;
+            this.lblDisplaySampleFont.BackColor = System.Drawing.SystemColors.Control;
+            this.lblDisplaySampleFont.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
+            this.lblDisplaySampleFont.Location = new System.Drawing.Point(6, 76);
+            this.lblDisplaySampleFont.Name = "lblDisplaySampleFont";
+            this.lblDisplaySampleFont.OutlineColor = System.Drawing.Color.White;
+            this.lblDisplaySampleFont.OutlineWidth = 1F;
+            this.lblDisplaySampleFont.Size = new System.Drawing.Size(45, 13);
+            this.lblDisplaySampleFont.TabIndex = 32;
+            this.lblDisplaySampleFont.Text = "Sample.";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1861,7 +1873,7 @@ namespace EveOPreview.View
         private CheckBox chbIsFpsThrottlingEnabled;
         private NumericUpDown numericFpsPredictedLimit;
         private NumericUpDown numericFpsBackgroundLimit;
-        private ToolTip toolTip;
+        private ToolTip instantToolTip;
         private Button btnDummyFpsSave;
         private Label lblFpsFeatureExpired;
         private GroupBox groupBoxAudioMuting;

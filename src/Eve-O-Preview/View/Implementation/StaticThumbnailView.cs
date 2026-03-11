@@ -19,6 +19,8 @@ using System.Drawing;
 using System.Windows.Forms;
 using EveOPreview.Configuration;
 using EveOPreview.Services;
+using Gma.System.MouseKeyHook;
+using MediatR;
 
 namespace EveOPreview.View
 {
@@ -29,8 +31,8 @@ namespace EveOPreview.View
         private IThumbnailConfiguration _config;
         #endregion
 
-        public StaticThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager)
-            : base(windowManager, config, thumbnailManager)
+        public StaticThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager, IMediator mediator, IKeyboardMouseEvents kbmEvents)
+            : base(windowManager, config, thumbnailManager, mediator, kbmEvents)
         {
             this._thumbnail = new StaticThumbnailImage
             {

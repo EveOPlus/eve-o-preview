@@ -18,6 +18,8 @@ using System;
 using System.Drawing;
 using EveOPreview.Configuration;
 using EveOPreview.Services;
+using Gma.System.MouseKeyHook;
+using MediatR;
 
 namespace EveOPreview.View
 {
@@ -30,8 +32,8 @@ namespace EveOPreview.View
         private IThumbnailConfiguration _config;
         #endregion
 
-        public LiveThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager)
-            : base(windowManager, config, thumbnailManager)
+        public LiveThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager, IMediator mediator, IKeyboardMouseEvents kbmEvents)
+            : base(windowManager, config, thumbnailManager, mediator, kbmEvents)
         {
             this._startLocation = new Point(0, 0);
             this._endLocation = new Point(this.ClientSize);
