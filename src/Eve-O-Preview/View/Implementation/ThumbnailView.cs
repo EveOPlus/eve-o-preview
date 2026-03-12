@@ -55,6 +55,7 @@ namespace EveOPreview.View
 
         private MouseMode _customMouseModeActive = MouseMode.Disabled;
         private double _thumbnailRatioAtStartOfResize = 1;
+        private Point _rightClickStartPosition;
 
         private double _opacity;
          
@@ -515,11 +516,6 @@ namespace EveOPreview.View
 
         private void MouseMove_Handler(object sender, MouseEventArgs e)
         {
-            if (this._customMouseModeActive > MouseMode.Disabled)
-            {
-                _keyboardMouseEvents.MouseMove += this.ProcessCustomMouseMode;
-                _keyboardMouseEvents.MouseUp += this.ExitCustomMouseMode;
-            }
         }
 
         private void MouseUp_Handler(object sender, MouseEventArgs e)
@@ -573,9 +569,14 @@ namespace EveOPreview.View
 
         private void ProcessCustomMouseMode(object sender, MouseEventArgs e)
         {
-            int offsetX = e.X - this._baseMousePosition.X;
-            int offsetY = e.Y - this._baseMousePosition.Y;
-            this._baseMousePosition = e.Location;
+            ProcessCustomMouseMode(e.Location, _baseMousePosition);
+        }
+
+        private void ProcessCustomMouseMode(Point currentPositionToCalculateOffsetTo, Point originToCalculateOffsetFrom)
+        {
+            int offsetX = currentPositionToCalculateOffsetTo.X - originToCalculateOffsetFrom.X;
+            int offsetY = currentPositionToCalculateOffsetTo.Y - originToCalculateOffsetFrom.Y;
+            this._baseMousePosition = currentPositionToCalculateOffsetTo;
 
             bool isShiftDown = (Control.ModifierKeys & Keys.Shift) == Keys.Shift;
 
@@ -602,22 +603,34 @@ namespace EveOPreview.View
             }
         }
 
-        private void EnterCustomMouseMode(MouseMode modeToEnter)
+        private void EnterCustomMouseMode(MouseMode modeToEnter, bool snapCursorPosition = true)
         {
             this.RestoreWindowSizeAndLocation();
 
             switch (modeToEnter)
             {
                 case MouseMode.Move:
-                    PutCursorOnCenter();
+                    if (snapCursorPosition)
+                    {
+                        PutCursorOnCenter();
+                    }
                     break;
                 case MouseMode.Resize:
                     _thumbnailRatioAtStartOfResize = this.ClientSize.Height > 0 ? (double)this.ClientSize.Width / this.ClientSize.Height : 1.0;
-                    PutCursorOnBottomRightCorner();
+                    if (snapCursorPosition)
+                    {
+                        PutCursorOnBottomRightCorner();
+                    }
                     break;
             }
             this._customMouseModeActive = modeToEnter;
             this._baseMousePosition = Control.MousePosition;
+
+            if (this._customMouseModeActive > MouseMode.Disabled)
+            {
+                _keyboardMouseEvents.MouseMove += this.ProcessCustomMouseMode;
+                _keyboardMouseEvents.MouseUp += this.ExitCustomMouseMode;
+            }
         }
 
         private void ExitCustomMouseMode()
@@ -644,7 +657,7 @@ namespace EveOPreview.View
                 thumbnailContextMenu.Close();
             }
 
-            EnterCustomMouseMode(MouseMode.Move);
+            EnterCustomMouseMode(MouseMode.Move, false);
         }
 
         #endregion
@@ -674,6 +687,7 @@ namespace EveOPreview.View
                         oldWindow?.ClearBorder();
                         break;
                     case MouseButtons.Right:
+                        _rightClickStartPosition = Cursor.Position;
                         holdRightClickToMoveTimer.Start(); // If somebody tries to click and hold right click to move, lets override the menu and let them.
                         var location = new Point(e.Location.X - 30, e.Location.Y - 10);
                         thumbnailContextMenu.Show(this, location);
@@ -712,6 +726,8 @@ namespace EveOPreview.View
             if (Control.MouseButtons == MouseButtons.Right)
             {
                 StartRightClickDrag();
+
+                ProcessCustomMouseMode(Cursor.Position, this._rightClickStartPosition);
             }
         }
     }
