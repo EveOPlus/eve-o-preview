@@ -1,3 +1,4 @@
+
 ## Notice
 This software is no longer licensed under the MIT License. Commits prior to b8b25d9 may still be used under MIT. All subsequent commits are provided under GPLv3.
 
@@ -22,20 +23,20 @@ The program does NOT (and will NOT ever) do the following things:
 * modify EVE Online interface
 * display modified EVE Online interface
 * broadcast any keyboard or mouse events
-* anyhow interact with EVE Online except of bringing its main window to foreground or resizing/minimizing it
+* anyhow interact with EVE Online in a way that changes gameplay or provides an unfair advantage.
 
 <div style="page-break-after: always;"></div>
 
 **Under any conditions you should NOT use EVE-O Preview for any actions that break EULA or ToS of EVE Online.**
 
-If you have find out that some of the features or their combination of EVE-O Preview might cause actions that can be considered as breaking EULA or ToS of EVE Online you should consider them as a bug and immediately notify the Developer ( Aura Asuna ) via in-game mail.
+If you have find out that some of the features or their combination of EVE-O Preview might cause actions that can be considered as breaking EULA or ToS of EVE Online you should consider them as a bug and immediately notify the Developer ( Aura Asuna ) via Discord.
 
 <div style="page-break-after: always;"></div>
 
 ## How To Install & Use
 
 1. Download and extract the contents of the .zip archive to a location of your choice (ie: Desktop, CCP folder, etc)
-..* **Note**: Please do not install the application into the *Program Files* or *Program files (x86)* folders. These folders in general do not allow applications to write anything there while EVE-O Preview now stores its configuration file next to its executable, thus requiring the write access to the folder it is installed into.
+..**Note**: While we make a best effort to support installing the program into *Program Files* or *Program files (x86)* folders. These folders in general do not allow applications to write anything there while EVE-O Preview stores its logs and configuration files next to its executable, thus making it difficult to support.
 2. Start up both EVE-O Preview and your EVE Clients (the order does not matter)
 3. Adjust settings as you see fit. Program options are described below
 
@@ -54,7 +55,7 @@ Video Guides:
 
 ## EVE Online EULA/ToS
 
-This application is legal under the EULA/ToS:
+This application attempts to be legal under the EULA/ToS:
 
 CCP FoxFour wrote:
 > Please keep the discussion on topic. The legitimacy of this software has already been discussed
@@ -67,6 +68,17 @@ CCP Grimmi wrote:
 > with us. These overlays do not allow any direct interaction with the EVE Client and you have
 > to bring the respective EVE Client to the front/put the window focus on it, in order to
 > interact with it.
+
+**Note**: CCP have adopted a stance that they "will not authorize or otherwise sanction the use of any third party software." and "Please use such third party applications or other software at your own risk."
+
+With that said, any feature in Eve-O Preview that could be used for cheating or gaining an in game advantage, is not our intention, must be considered a bug, and reported immediately.
+
+e.g. https://www.eveonline.com/news/view/client-modification-the-eula-and-you
+>It should be clear to everybody that we have no interest in banning people who do not do anything bad in New Eden.
+
+and
+
+>Our stance on third-party software is that we do not endorse such software as we have no control over what it does. As such, we can’t say that multiboxing software isn’t against our EULA. But the same goes in this case, that unless we determine that people are doing things beyond “multiboxing”, we will not be taking any action. We only care about the instances where people are messing with our process for the purposes of cheating, and running multiple clients at the same time is not in violation of our EULA in and of itself unless it involves trial accounts.
 
 <div style="page-break-after: always;"></div>
 
@@ -106,11 +118,48 @@ CCP Grimmi wrote:
 | Show frames | Determines whether thumbnails should be displays with window caption and borders |
 | Highlight active client | Determines whether the thumbnail of the active EVE client should be highlighted with a bright border |
 | Color | Color used to highlight the active client's thumbnail in case the corresponding option is set |
+| Title Font Section | Used to set the Font, Foreground Color, Outline Color, and Offset potion (from the top left) of the Clients Title
 
 #### **Active Clients** Tab
 | Option | Description |
 | --- | --- |
 | Thumbnails list | List of currently active EVE client thumbnails. Checking an element in this list will hide the corresponding thumbnail. However these checks are not persisted and on the next EVE client or EVE-O Preview run the thumbnail will be visible again |
+| Hide Thumbnails | Temporarily hide all thumbnails until toggle back to visiblie again through the same feature. A hotkey for this feature may be set by double clicking in the space to the right of "Hotkey"
+| Minimize | Immediately minimize all Eve Clients. A hotkey for this feature may be set by double clicking in the space to the right of "Hotkey"
+
+#### **Cycle Groups** Tab
+| Option | Description |
+| --- | --- |
+| Select Cycle Group Dropdown | A list of Cycle Groups that have been setup. Select the group you wish to view or edit here first |
+| Select Cycle Group - | Delete the currently selected Cycle Group |
+| Select Cycle Group + | Create a new Cycle Group |
+| Description | A unique identifier / name for the selected Cycle Group |
+| Forward Hotkey | This is the hotkey used to cycle forward in your order. If you only have a Single client in the group, then set only this value (as there is no backwards for only one). Note: Double click in either of the two spaces provided to set the Primary or Secondary hotkey |
+| Backward Hotkey | This is the hotkey used to cycle backward in your order. Note: Double click in either of the two spaces provided to set the Primary or Secondary hotkey |
+| Clients and Order + | Add one of the active (currently running) Eve Clients into this Cycle Group |
+| Clients and Order - | Remove the selected client from the below list, so they no longer participate in this Cycle Group |
+| Clients and Order Up | Move the position of the currently selected client up by one, in the order in which it cycles |
+
+#### **FPS / Audio** Tab
+| Option | Description |
+| --- | --- |
+| Enable DirectX FPS Limits | Fully turn on or off the FPL Limiter, None of the below FPS limits will apply while this is disabled |
+| Active Client | The maximum FPS of the currently active / foreground Client |
+| Inactive Client | The maximum FPS of the non-active / background Clients. Please avoid setting this below 15 FPS for the best experience, although lower may be possible it is not advised |
+| Predicted Client | When using Cycle Groups, Attempt to predict the next next client upcoming in the list to increase the FPS in preparation for taking foreground next |
+|  |  |
+| Mute Jump Gate Tunnel | Attempt to silence the audio when jumping through a gate |
+| Mute Asteroid Belt Warp In | Attempt to silence the audio (the big dong thing and machine gun ticking sound) when loading grid on each asteroid belt |
+
+#### **Profiles** Tab
+**Note**: Profiles are like a complete copy of all of your settings, hot swappable at runtime without having to close down Eve-O Preview. Each Profile can be setup completely different to one another and do not currently share any settings.
+
+At this time, Eve-O Preview will always launch with the Default profile, and does not remember the last profile used.
+| Option | Description |
+| --- | --- |
+| Clone Current Profile | Creates a new profile with an exact copy of your current profile |
+| Delete Current Profile | Deletes the currently selected profile. Note: Default cannot be deleted |
+| Current Profile | A unique name to help identify the currently selected profile. This matches the windows Folder name |
 
 <div style="page-break-after: always;"></div>
 
@@ -121,11 +170,12 @@ Mouse gestures are applied to the thumbnail window currently being hovered over.
 | Action | Gesture |
 | --- | --- |
 | Activate the EVE Online client and bring it to front  | Click the thumbnail |
-| Minimize the EVE Online client | Hold Control key and click the thumbnail |
+| Minimize the EVE Online client | Hold Control key and click the thumbnail, or right click and select Minimize |
+| Minimize ALL EVE Online clients | Right click any thumbnail and select Minimize All |
 | Switch to the last used application that is not an EVE Online client | Hold Control + Shift keys and click any thumbnail |
-| Move thumbnail to a new position | Press right mouse button and move the mouse |
-| Adjust thumbnail height | Press both left and right mouse buttons and move the mouse up or down |
-| Adjust thumbnail width | Press both left and right mouse buttons and move the mouse left or right |
+| Move thumbnail to a new position | Press and hold right click for a moment, or press right click to bring up menu, select Move, and then click when done |
+| Adjust thumbnail size | Press right click to bring up menu, select Resize, and then click when done |
+| Adjust thumbnail size, maintaining aspect ratio | Hold Shift key while re-sizing. See steps above to reside |
 
 <div style="page-break-after: always;"></div>
 
@@ -148,88 +198,11 @@ Some of the application options are not exposed in the GUI. They can be adjusted
 
 <div style="page-break-after: always;"></div>
 
-### Hotkey Setup
+### Cycle Clients with Hotkeys
 
-It is possible to set a key combinations to immediately jump to certain EVE window. However currently EVE-O Preview doesn't provide any GUI to set the these hotkeys. It should be done via editing the configuration file directly. Don't forget to make a backup copy of the file before editing it.
+It is possible to set a key combinations to immediately jump to certain EVE window. This applied to either a single client or an ordered list of clients. 
 
-**Note**: Don't forget to make a backup copy of the file before editing it.
-
-Open the file using any text editor. find the entry **ClientHotkey**. Most probably it will look like
-
-    "ClientHotkey": {},
-
-This means that no hotkeys are defined. Edit it to be like
-
-    "ClientHotkey": {
-      "EVE - Phrynohyas Tig-Rah": "F1",
-      "EVE - Ondatra Patrouette": "F2"
-    }
-
-This simple edit will assign **F1** as a hotkey for Phrynohyas Tig-Rah and **F2** as a hotkey for Ondatra Patrouette, so pressing F1 anywhere in Windows will immediately open EVE client for Phrynohyas Tig-Rah if he is logged on.
-
-The following hotkey is described as `modifier+key` where `modifier` can be **Control**, **Alt**, **Shift**, or their combination. F.e. it is possible to setup the hotkey as
-
-    "ClientHotkey": {
-      "EVE - Phrynohyas Tig-Rah": "F1",
-      "EVE - Ondatra Patrouette": "Control+Shift+F4"
-    }
-
-**Note:** Do not set hotkeys to use the key combinations already used by EVE. It won't work as "_I set hotkey for my DPS char to F1 and when I'll press F1 it will automatically open the DPS char's window and activate guns_". Key combination will be swallowed by EVE-O Preview and NOT retranslated to EVE window. So it will be only "_it will automatically open the DPS char's window_".
-
-<div style="page-break-after: always;"></div>
-
-### Cycle Clients with Hotkey Setup
-
-In a similar pattern to the per client Hotkey Setup, It is possible to set a key combinations to cycle through select Eve Windows. EVE-O Preview has a limited GUI to set the these Cycle Groups and hotkeys but it should be used with caution. If you have any issues you will need to edit the config. Don't forget to make a backup copy of the file before editing it.
-
-If you have not run EVE-O Preview before, or since this feature was added then it is recommended to quickly open and close EVE-O Preview once to trigger the config to update and/or migrage values. 
-
-**Note**: Don't forget to make a backup copy of the file before editing it.
-
-Open the file using any text editor. find the entry **CycleGroups**. If you have not setup anyting in the GUI then it will be blank, or if you have setup a shell in the GUI then it can be edited more accurately here.
-
-A sample you could copy may look like this:
-
-    "CycleGroups": [
-        {
-          "Description": "Cycle Group DPS",
-          "ForwardHotkeys": [
-            "F14",
-            "Ctrl+F14"
-          ],
-          "BackwardHotkeys": [
-            "F13",
-            "Ctrl+F13"
-          ],
-          "ClientsOrder": {
-            "1": "EVE - Example DPS Toon 1",
-            "2": "EVE - Example DPS Toon 2",
-            "3": "EVE - Example DPS Toon 3"
-          }
-        },
-        {
-          "Description": "Cycle Group Logi",
-          "ForwardHotkeys": [
-            "F16",
-            "Ctrl+F16"
-          ],
-          "BackwardHotkeys": [
-            "F15",
-            "Ctrl+F15"
-          ],
-          "ClientsOrder": {
-            "1": "EVE - Example Logi Toon 1",
-            "2": "EVE - Example Logi Toon 2"
-          }
-        }
-    ]
-
-It is highly recommended to leave the Hotkey values as default and bind them with a gaming device if you can support it.
-
-There are an unlimited number of Cycle Groups that you can create. Please note:
-**Note**: Every Description must be unique or the config will be invalid. Same with the ClientsOrder, The order number must be unique in each group.
-
-This may provide useful if you want to have one HotKey to cycle through a group of DPS characters, while another HotKey cycles through support roles such as gate scouts, or a group of logi.
+There are an unlimited number of Cycle Groups that you can create which may provide useful if you want to have one HotKey to cycle through a group of DPS characters, while another HotKey cycles through support roles such as gate scouts, or a group of logi.
 
 **Hints** 
 * Minimise the use of modifiers or standard keys to minimise issues with the client playing up. In the default example unusual Function keys (e.g. F14) are used which are then bound to a game pad or gaming mouse.

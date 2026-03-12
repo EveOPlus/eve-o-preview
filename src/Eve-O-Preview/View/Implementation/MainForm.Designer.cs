@@ -1462,9 +1462,9 @@ namespace EveOPreview.View
             this.chbIsLocationBannerMuted.AutoSize = true;
             this.chbIsLocationBannerMuted.Location = new System.Drawing.Point(14, 44);
             this.chbIsLocationBannerMuted.Name = "chbIsLocationBannerMuted";
-            this.chbIsLocationBannerMuted.Size = new System.Drawing.Size(172, 17);
+            this.chbIsLocationBannerMuted.Size = new System.Drawing.Size(153, 17);
             this.chbIsLocationBannerMuted.TabIndex = 23;
-            this.chbIsLocationBannerMuted.Text = "Mute Location Banner Warp In";
+            this.chbIsLocationBannerMuted.Text = "Mute Asteroid Belt Warp In";
             this.chbIsLocationBannerMuted.UseVisualStyleBackColor = true;
             this.chbIsLocationBannerMuted.CheckedChanged += new System.EventHandler(this.chbIsLocationBannerMuted_CheckedChanged);
             // 
