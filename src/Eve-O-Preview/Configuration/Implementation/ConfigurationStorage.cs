@@ -14,6 +14,7 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Services.Interface;
 using MediatR;
@@ -24,6 +25,7 @@ using System.IO;
 using System.Linq;
 using EveOPreview.Configuration.Interface;
 using EveOPreview.Configuration.Model;
+using EveOPreview.Helper;
 using Serilog;
 
 namespace EveOPreview.Configuration.Implementation
@@ -57,35 +59,42 @@ namespace EveOPreview.Configuration.Implementation
 
         public void Load()
         {
-            if (!File.Exists(CurrentProfile.FullPath))
+            try
             {
-                _logger.Error($"Failed Loading configuration profile because file does not exist at : {CurrentProfile.FullPath}");
-                return;
+                if (!File.Exists(CurrentProfile.FullPath))
+                {
+                    _logger.WithCallerInfo().Error($"Failed Loading configuration profile because file does not exist at : {CurrentProfile.FullPath}");
+                    return;
+                }
+
+                _logger.WithCallerInfo().Information($"Loading configuration profile: {CurrentProfile.FriendlyName} at {CurrentProfile.FullPath}");
+                string rawData = File.ReadAllText(CurrentProfile.FullPath);
+
+                JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings()
+                {
+                    ObjectCreationHandling = ObjectCreationHandling.Replace
+                };
+                JsonConvert.PopulateObject(rawData, this._thumbnailConfiguration, jsonSerializerSettings);
+
+                AutoMigrateVersion1Config(rawData);
+                AutoMigrateVersion2Config(rawData);
+                
+                // Validate data after loading it
+                this._thumbnailConfiguration.ApplyRestrictions();
             }
-            
-            _logger.Information($"Loading configuration profile: {CurrentProfile.FriendlyName} at {CurrentProfile.FullPath}");
-            string rawData = File.ReadAllText(CurrentProfile.FullPath);
-
-            AutoMigrateVersion1Config(rawData);
-            var cycleGroupsToAdd = AutoMigrateVersion2Config(rawData);
-
-            JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings()
+            catch (Exception ex)
             {
-                ObjectCreationHandling = ObjectCreationHandling.Replace
-            };
-            
-            JsonConvert.PopulateObject(rawData, this._thumbnailConfiguration, jsonSerializerSettings);
-            this._thumbnailConfiguration.CycleGroups.AddRange(cycleGroupsToAdd);
-            this._thumbnailConfiguration.IsPremium = _premiumService.IsLicenseValidAndCurrent(this._thumbnailConfiguration.PremiumLicenseKey);
-
-            // Validate data after loading it
-            this._thumbnailConfiguration.ApplyRestrictions();
-            this._mediator.Send(new RefreshHotkeys()).GetAwaiter().GetResult();
+                _logger.WithCallerInfo().Error(ex, "Unhandled exception while loading config.");
+            }
+            finally
+            {
+                this._thumbnailConfiguration.IsPremium = _premiumService.IsLicenseValidAndCurrent(this._thumbnailConfiguration.PremiumLicenseKey);
+                this._mediator.Send(new RefreshHotkeys()).GetAwaiter().GetResult();
+            }
         }
 
-        private List<CycleGroup> AutoMigrateVersion2Config(string rawData)
+        private void AutoMigrateVersion2Config(string rawData)
         {
-            var newCycleGroups = new List<CycleGroup>();
             
             var dynamicConfig = JsonConvert.DeserializeObject<dynamic>(rawData);
             if (dynamicConfig.ConfigVersion < 3)
@@ -112,20 +121,22 @@ namespace EveOPreview.Configuration.Implementation
 
                         newCycleGroup.Description = $"ClientHk - {string.Join(", ", toonNames)}";
 
-                        newCycleGroups.Add(newCycleGroup);
+                        if (_thumbnailConfiguration.CycleGroups.All(x => x.Description != newCycleGroup.Description))
+                        {
+
+                            _thumbnailConfiguration.CycleGroups.Add(newCycleGroup);
+                        }
                     }
                 }
 
                 dynamicConfig.ConfigVersion = 3;
             }
-            
-            return newCycleGroups;
         }
 
         private void AutoMigrateVersion1Config(string rawData)
         {
             var dynamicConfig = JsonConvert.DeserializeObject<dynamic>(rawData);
-            if (dynamicConfig.ConfigVersion == 1)
+            if (dynamicConfig.ConfigVersion == 1 && !this._thumbnailConfiguration.CycleGroups.Any())
             {
                 _logger.Information($"Auto migrating version 1 config for profile: {CurrentProfile.FriendlyName}");
                 var cycleGroup1 = new CycleGroup();
