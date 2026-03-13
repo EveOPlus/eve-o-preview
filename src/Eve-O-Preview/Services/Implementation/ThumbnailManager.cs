@@ -28,6 +28,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Threading;
+using Serilog;
 
 namespace EveOPreview.Services
 {
@@ -54,6 +55,7 @@ namespace EveOPreview.Services
         private IKeyboardMouseEvents _keyboardMouseEvents;
         private readonly IHookService _hookService;
         private readonly IGlobalEvents _globalEvents;
+        private readonly ILogger _logger;
 
         private (IntPtr Handle, string Title) _activeClient;
         private IntPtr _externalApplication;
@@ -68,7 +70,7 @@ namespace EveOPreview.Services
         private int _hideThumbnailsDelay;
         #endregion
 
-        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents, IHookService hookService, IGlobalEvents globalEvents)
+        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents, IHookService hookService, IGlobalEvents globalEvents, ILogger logger)
         {
             this._mediator = mediator;
             this._processMonitor = processMonitor;
@@ -78,6 +80,7 @@ namespace EveOPreview.Services
             this._keyboardMouseEvents = keyboardMouseEvents;
             _hookService = hookService;
             _globalEvents = globalEvents;
+            _logger = logger;
 
             this._activeClient = (IntPtr.Zero, ThumbnailManager.DEFAULT_CLIENT_TITLE);
 
@@ -129,6 +132,8 @@ namespace EveOPreview.Services
 
         public void SetActive(KeyValuePair<IntPtr, IThumbnailView> newClient)
         {
+            _logger.Verbose($"Setting active client to {newClient.Value?.Title}");
+
             if (newClient.Value == null)
             {
                 return;
@@ -152,6 +157,8 @@ namespace EveOPreview.Services
             var nextNextClient = _thumbnailViews.FirstOrDefault(x => x.Value.Title == nextNextClientTitle);
             var lastClient = _activeClient;
 
+            _logger.Verbose($"CycleNextClient Direction IsForward = [{isForwards}]. Next client is [{nextClientTitle}] and next, next client is [{nextNextClientTitle}]");
+
             SetActive(nextClient);
             this._windowManager.PredictUpcomingClient(nextNextClient.Key);
         }
@@ -174,6 +181,8 @@ namespace EveOPreview.Services
             var cycleGroups = this._configuration.CycleGroups;
             UnregisterExistingHotkeys();
 
+            _logger.Verbose("Registering all hotkeys.");
+
             foreach (var cycleGroup in cycleGroups)
             {
                 RegisterCycleClientHotkey(cycleGroup);
@@ -184,6 +193,8 @@ namespace EveOPreview.Services
 
         private void UnregisterExistingHotkeys()
         {
+            _logger.Verbose("Unregistering any existing hotkeys");
+
             foreach (var existingDown in _trackedHotkeyDownDelegates)
             {
                 _keyboardMouseEvents.KeyDown -= existingDown;
@@ -208,19 +219,28 @@ namespace EveOPreview.Services
         {
             KeyEventHandler newDownDelegate = (sender, e) =>
             {
-                foreach (var hotkey in keys)
+                try
                 {
-                    if (e.KeyData == hotkey)
+                    foreach (var hotkey in keys)
                     {
-                        if (this._windowManager.IsCurrentlySwitching)
+                        if (e.KeyData == hotkey)
                         {
+                            _logger.Verbose($"Hotkey down pressed KeyData = [{e.KeyData}] for Cycle Group. Direction IsForward = [{isForwards}]");
+
+                            if (this._windowManager.IsCurrentlySwitching)
+                            {
+                                return;
+                            }
+
+                            this.CycleNextClient(isForwards, cycleOrder);
+                            e.Handled = true;
                             return;
                         }
-
-                        this.CycleNextClient(isForwards, cycleOrder);
-                        e.Handled = true;
-                        return;
                     }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "Error while handling hotkey down.");
                 }
             };
 
@@ -229,13 +249,21 @@ namespace EveOPreview.Services
 
             KeyEventHandler newUpDelegate = (sender, e) =>
             {
-                foreach (var hotkey in keys)
+                try
                 {
-                    if (e.KeyCode == hotkey)
+                    foreach (var hotkey in keys)
                     {
-                        e.Handled = true;
-                        return;
+                        if (e.KeyCode == hotkey)
+                        {
+                            _logger.Verbose($"Hotkey up for KeyData = [{e.KeyData}] handled");
+                            e.Handled = true;
+                            return;
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "Error while handling hotkey up.");
                 }
             };
 
@@ -248,16 +276,26 @@ namespace EveOPreview.Services
             // Using the KeyUp for this one so it has less chance of impacting the flow of other more important hotkeys (like client cycling)
             KeyEventHandler newUpDelegate = (sender, e) =>
             {
-                if (e.KeyData == _configuration.ToggleHideActiveClientsHotkeyParsed)
+                try
                 {
-                    _mediator.Send(new ThumbnailToggleHideAll());
-                    e.Handled = true;
+                    if (e.KeyData == _configuration.ToggleHideActiveClientsHotkeyParsed)
+                    {
+                        _logger.Verbose($"Hotkey pressed KeyData = [{e.KeyData}] for Toggle Hide Active Clients");
+                        _mediator.Send(new ThumbnailToggleHideAll());
+                        e.Handled = true;
+                    }
+                    else if (e.KeyData == _configuration.MinimizeAllClientsHotkeyParsed)
+                    {
+                        _logger.Verbose($"Hotkey pressed KeyData = [{e.KeyData}] for Minimize All Clients");
+                        _mediator.Send(new MinimizeAllClients());
+                        e.Handled = true;
+                    }
                 }
-                else if (e.KeyData == _configuration.MinimizeAllClientsHotkeyParsed)
+                catch (Exception ex)
                 {
-                    _mediator.Send(new MinimizeAllClients());
-                    e.Handled = true;
+                    _logger.Error(ex, "Error handling general hotkey");
                 }
+
             };
 
             _keyboardMouseEvents.KeyUp += newUpDelegate;

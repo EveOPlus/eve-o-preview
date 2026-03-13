@@ -91,7 +91,7 @@ namespace EveOPreview
                 .WriteTo.File("logs/EVE-O Preview Log-.txt",
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 7,
-                    // Add {MemberName} to the template below:
+                    restrictedToMinimumLevel: minimumLevel,
                     outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] {Properties:j} {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
         }

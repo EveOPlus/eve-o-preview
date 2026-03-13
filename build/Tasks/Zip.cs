@@ -35,7 +35,8 @@ namespace Build.Tasks
                 Configuration.BinFolder + "/EVE-O Preview.exe", 
                 Configuration.BinFolder + "/LICENSE.txt", 
                 Configuration.BinFolder + "/readme.pdf", 
-                Configuration.BinFolder + "/Eve-O-Preview.Robin.dll"
+                Configuration.BinFolder + "/Eve-O-Preview.Robin.dll",
+                Configuration.BinFolder + "/Launch Eve-O Preview with Verbose Logging.cmd"
             });
 		}
 	}

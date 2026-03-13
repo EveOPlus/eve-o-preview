@@ -14,25 +14,31 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using EveOPreview.Services.Interface;
 using EveOPreview.Services.Interop;
 using System;
 using System.Drawing;
+using System.Net;
 using System.Runtime.InteropServices;
-using EveOPreview.Services.Interface;
+using EveOPreview.Helper;
+using Serilog;
 
 namespace EveOPreview.Services.Implementation
 {
     public class WindowManager : IWindowManager
     {
         private readonly IHookService _hookService;
+        private readonly ILogger _logger;
 
         #region Private constants
         private const int WINDOW_SIZE_THRESHOLD = 300;
         #endregion
         
-        public WindowManager(IHookService hookService)
+        public WindowManager(IHookService hookService, ILogger logger)
         {
             _hookService = hookService;
+            _logger = logger;
+
             // Composition is always enabled for Windows 8+
             this.IsCompositionEnabled = 
                 ((Environment.OSVersion.Version.Major == 6) && (Environment.OSVersion.Version.Minor >= 2)) // Win 8 and Win 8.1
@@ -65,8 +71,10 @@ namespace EveOPreview.Services.Implementation
 
         public void ActivateWindow(IntPtr handle)
         {
+            _logger.Verbose($"Activating handle: {handle}");
+
             _ = _hookService.TellEveClientFocusIsComingAsync(handle);
-            
+
             try
             {
                 IsCurrentlySwitching = true;
@@ -78,6 +86,10 @@ namespace EveOPreview.Services.Implementation
                 {
                     User32NativeMethods.ShowWindowAsync(handle, InteropConstants.SW_RESTORE);
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.WithCallerInfo().Error(ex, $"Error while Activating Window handle {handle}");
             }
             finally
             {

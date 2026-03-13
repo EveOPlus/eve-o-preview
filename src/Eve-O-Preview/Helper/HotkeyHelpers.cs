@@ -24,6 +24,11 @@ namespace EveOPreview.Helper
     {
         public static Keys ToHotkeys(this string stringKey)
         {
+            if (string.IsNullOrWhiteSpace(stringKey))
+            {
+                return Keys.None;
+            }
+
             try
             {
                 object rawValue = (new KeysConverter()).ConvertFromInvariantString(stringKey);
