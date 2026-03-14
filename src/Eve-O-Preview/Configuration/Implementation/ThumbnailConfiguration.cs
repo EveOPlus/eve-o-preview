@@ -19,6 +19,9 @@ namespace EveOPreview.Configuration.Implementation
 
             this.CycleGroups = new List<CycleGroup>();
 
+            // 【新增】初始化字典
+            this.ClientNotes = new Dictionary<string, string>();
+
             this.PerClientActiveClientHighlightColor = new Dictionary<string, Color>
             {
                 {"EVE - Example Toon 1", Color.Red},
@@ -96,6 +99,29 @@ namespace EveOPreview.Configuration.Implementation
 
         [JsonProperty("ThumbnailsOpacity")]
         public double ThumbnailOpacity { get; set; }
+
+        // 【新增】用于JSON序列化的属性
+        [JsonProperty("ClientNotes")]
+        public Dictionary<string, string> ClientNotes { get; set; }
+
+        // 【新增】实现获取和设置备注的方法
+        public string GetClientNote(string currentClient)
+        {
+            return this.ClientNotes.TryGetValue(currentClient, out string note) ? note : string.Empty;
+        }
+
+        public void SetClientNote(string currentClient, string note)
+        {
+            if (string.IsNullOrWhiteSpace(note))
+            {
+                // 如果备注为空，则从字典中移除，保持配置文件整洁
+                this.ClientNotes.Remove(currentClient);
+            }
+            else
+            {
+                this.ClientNotes[currentClient] = note;
+            }
+        }
 
         public bool EnableClientLayoutTracking
         {

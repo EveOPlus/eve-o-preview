@@ -91,7 +91,22 @@ namespace EveOPreview.View
             set
             {
                 this.Text = value;
-                this._overlay.SetOverlayLabel(value.Replace("EVE - ", ""));
+
+                // 1. 获取原有的角色ID（去掉了 "EVE - " 前缀）
+                string label = value.Replace("EVE - ", "");
+
+                // 2. 从配置中尝试读取这个角色的备注
+                // 注意：这里的 value 是完整的窗口标题 (例如 "EVE - 你的角色名")
+                string note = this._config.GetClientNote(value);
+
+                // 3. 如果备注不为空，则拼接到标签后面，例如显示为 "角色名 [拉货小号]"
+                if (!string.IsNullOrEmpty(note))
+                {
+                    label += $" [{note}]";
+                }
+
+                // 4. 将拼接好的最终字符串传递给悬浮文字层进行渲染
+                this._overlay.SetOverlayLabel(label);
                 SetDefaultBorderColor();
             }
         }

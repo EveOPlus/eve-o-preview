@@ -37,7 +37,11 @@ namespace EveOPreview.View
 
         List<CycleGroup> CycleGroups { get; set; }
 
-		void SetDocumentationUrl(string url);
+        string ClientNote { get; set; }
+        Action<string> SelectedClientChanged { get; set; }
+        Action<string, string> ClientNoteUpdated { get; set; }
+
+        void SetDocumentationUrl(string url);
 		void SetVersionInfo(string version);
 		void SetThumbnailSizeLimitations(Size minimumSize, Size maximumSize);
 

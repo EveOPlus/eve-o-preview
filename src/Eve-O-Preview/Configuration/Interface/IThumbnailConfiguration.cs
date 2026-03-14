@@ -9,6 +9,9 @@ namespace EveOPreview.Configuration
     {
         List<CycleGroup> CycleGroups { get; set; }
 
+        // 【新增】保存客户端备注的字典
+        Dictionary<string, string> ClientNotes { get; set; }
+
         Dictionary<string, Color> PerClientActiveClientHighlightColor { get; set; }
 
         bool MinimizeToTray { get; set; }
@@ -56,6 +59,10 @@ namespace EveOPreview.Configuration
         Keys GetClientHotkey(string currentClient);
         void SetClientHotkey(string currentClient, Keys hotkey);
         Keys StringToKey(string hotkey);
+
+        // 【新增】获取和设置备注的方法
+        string GetClientNote(string currentClient);
+        void SetClientNote(string currentClient, string note);
 
         bool IsPriorityClient(string currentClient);
 

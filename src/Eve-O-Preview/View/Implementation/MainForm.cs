@@ -45,8 +45,18 @@ namespace EveOPreview.View
 			get => this.MinimizeToTrayCheckBox.Checked;
 			set => this.MinimizeToTrayCheckBox.Checked = value;
 		}
+        // 【新增】实现委托属性
+        public Action<string> SelectedClientChanged { get; set; }
+        public Action<string, string> ClientNoteUpdated { get; set; }
 
-		public double ThumbnailOpacity
+        // 【新增】输入框内容的 Get/Set
+        public string ClientNote
+        {
+            get => this.txtClientNote.Text;
+            set => this.txtClientNote.Text = value;
+        }
+
+        public double ThumbnailOpacity
 		{
 			get => Math.Min(this.ThumbnailOpacityTrackBar.Value / 100.00, 1.00);
 			set
@@ -301,8 +311,28 @@ namespace EveOPreview.View
 
 		public Func<string> GetClientNameFromInput { get; set; }
 
-		#region UI events
-		private void ContentTabControl_DrawItem(object sender, DrawItemEventArgs e)
+        #region UI events
+
+        // 【新增】处理列表选中项改变事件
+        private void ThumbnailsList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (this.ThumbnailsList.SelectedItem is IThumbnailDescription selectedItem)
+            {
+                // 触发选中客户端改变事件，通知 Presenter 读取对应备注
+                this.SelectedClientChanged?.Invoke(selectedItem.Title);
+            }
+        }
+
+        // 【新增】处理输入框失去焦点（即输入完成）事件
+        private void txtClientNote_Leave(object sender, EventArgs e)
+        {
+            if (this.ThumbnailsList.SelectedItem is IThumbnailDescription selectedItem)
+            {
+                // 触发备注更新事件，通知 Presenter 保存数据
+                this.ClientNoteUpdated?.Invoke(selectedItem.Title, this.txtClientNote.Text);
+            }
+        }
+        private void ContentTabControl_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			TabControl control = (TabControl)sender;
 			TabPage page = control.TabPages[e.Index];
