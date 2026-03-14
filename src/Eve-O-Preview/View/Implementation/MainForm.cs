@@ -33,7 +33,7 @@ namespace EveOPreview.View
 
 			InitializeComponent();
 
-			this.ThumbnailsList.DisplayMember = "Title";
+            this.ThumbnailsList.DisplayMember = "Title";
 
             this.InitZoomAnchorMap();
 		}

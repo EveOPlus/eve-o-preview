@@ -403,6 +403,9 @@ namespace EveOPreview.Services
                 }
             }
 
+            // 【新增逻辑】用于记录当前渲染的是第几个未登录窗口
+            int loginWindowIndex = 0;
+
             // Hide, show, resize and move
             foreach (KeyValuePair<IntPtr, IThumbnailView> entry in this._thumbnailViews)
             {
@@ -429,10 +432,26 @@ namespace EveOPreview.Services
                 // No need to update Thumbnails while one of them is highlighted
                 if (!this._isHoverEffectActive)
                 {
-                    // Do not even move thumbnails with default caption
+                    // 【修改逻辑】区分已识别角色窗口和未识别(未登录)窗口
                     if (this.IsManageableThumbnail(view))
                     {
                         view.ThumbnailLocation = this._configuration.GetThumbnailLocation(view.Title, this._activeClient.Title, view.ThumbnailLocation);
+                    }
+                    else
+                    {
+                        // 获取基准坐标 (即通过拖动保存的 LoginThumbnailLocation 坐标)
+                        int startX = this._configuration.LoginThumbnailLocation.X;
+                        int startY = this._configuration.LoginThumbnailLocation.Y;
+
+                        // 计算垂直偏移量 (窗口高度 + 5像素的垂直间距)
+                        int spacing = 5;
+                        int offsetY = loginWindowIndex * (this._configuration.ThumbnailSize.Height + spacing);
+
+                        // 应用计算出的坐标
+                        view.ThumbnailLocation = new Point(startX, startY + offsetY);
+
+                        // 序号+1，供下一个未登录窗口使用，确保不重叠
+                        loginWindowIndex++;
                     }
 
                     view.SetOpacity(this._configuration.ThumbnailOpacity);
@@ -442,7 +461,7 @@ namespace EveOPreview.Services
                 view.IsOverlayEnabled = this._configuration.ShowThumbnailOverlays;
 
                 view.SetHighlight(
-                    this._configuration.EnableActiveClientHighlight && (view.Id == this._activeClient.Handle), 
+                    this._configuration.EnableActiveClientHighlight && (view.Id == this._activeClient.Handle),
                     this._configuration.ActiveClientHighlightThickness);
 
                 if (!view.IsActive)
@@ -678,13 +697,13 @@ namespace EveOPreview.Services
 
         private void SnapThumbnailView(IThumbnailView view)
         {
-            // Check if this feature is enabled
+            // 检查此功能是否开启
             if (!this._configuration.EnableThumbnailSnap)
             {
                 return;
             }
 
-            // Only borderless thumbnails can be docked
+            // 只对无边框缩略图执行吸附
             if (this._configuration.ShowThumbnailFrames)
             {
                 return;
@@ -692,41 +711,71 @@ namespace EveOPreview.Services
 
             int width = this._configuration.ThumbnailSize.Width;
             int height = this._configuration.ThumbnailSize.Height;
+            int gap = 2; // 你要求的 2 像素间隙
 
-            // TODO Extract method
-            int baseX = view.ThumbnailLocation.X;
-            int baseY = view.ThumbnailLocation.Y;
-
-            Point[] viewPoints = { new Point(baseX, baseY), new Point(baseX + width, baseY), new Point(baseX, baseY + height), new Point(baseX + width, baseY + height) };
-
-            // TODO Extract constants
-            int thresholdX = Math.Max(20, width / 10);
-            int thresholdY = Math.Max(20, height / 10);
+            // 搜索吸附阈值（在该范围内触发自动对齐）
+            int thresholdX = 15;
+            int thresholdY = 15;
 
             foreach (var entry in this._thumbnailViews)
             {
                 IThumbnailView testView = entry.Value;
 
                 if (view.Id == testView.Id)
-                {
                     continue;
-                }
 
+                int viewX = view.ThumbnailLocation.X;
+                int viewY = view.ThumbnailLocation.Y;
                 int testX = testView.ThumbnailLocation.X;
                 int testY = testView.ThumbnailLocation.Y;
 
-                Point[] testPoints = { new Point(testX, testY), new Point(testX + width, testY), new Point(testX, testY + height), new Point(testX + width, testY + height) };
+                Point newLocation = view.ThumbnailLocation;
+                bool snapped = false;
 
-                var delta = ThumbnailManager.TestViewPoints(viewPoints, testPoints, thresholdX, thresholdY);
-
-                if ((delta.X == 0) && (delta.Y == 0))
+                // 1. 水平对齐检查（如果垂直方向有重叠）
+                if (Math.Abs(viewY - testY) < thresholdY)
                 {
-                    continue;
+                    // 在左侧：对齐到 testView 的左侧 - 宽度 - 间隙
+                    if (Math.Abs(viewX - (testX - width - gap)) < thresholdX)
+                    {
+                        newLocation.X = testX - width - gap;
+                        newLocation.Y = testY;
+                        snapped = true;
+                    }
+                    // 在右侧：对齐到 testView 的右侧 + 间隙
+                    else if (Math.Abs(viewX - (testX + width + gap)) < thresholdX)
+                    {
+                        newLocation.X = testX + width + gap;
+                        newLocation.Y = testY;
+                        snapped = true;
+                    }
                 }
 
-                view.ThumbnailLocation = new Point(view.ThumbnailLocation.X + delta.X, view.ThumbnailLocation.Y + delta.Y);
-                this._configuration.SetThumbnailLocation(view.Title, this._activeClient.Title, view.ThumbnailLocation);
-                break;
+                // 2. 垂直对齐检查（如果水平方向有重叠）
+                if (Math.Abs(viewX - testX) < thresholdX)
+                {
+                    // 在上方：对齐到 testView 的上方 - 高度 - 间隙
+                    if (Math.Abs(viewY - (testY - height - gap)) < thresholdY)
+                    {
+                        newLocation.X = testX;
+                        newLocation.Y = testY - height - gap;
+                        snapped = true;
+                    }
+                    // 在下方：对齐到 testView 的下方 + 间隙
+                    else if (Math.Abs(viewY - (testY + height + gap)) < thresholdY)
+                    {
+                        newLocation.X = testX;
+                        newLocation.Y = testY + height + gap;
+                        snapped = true;
+                    }
+                }
+
+                if (snapped)
+                {
+                    view.ThumbnailLocation = newLocation;
+                    this._configuration.SetThumbnailLocation(view.Title, this._activeClient.Title, view.ThumbnailLocation);
+                    break; // 找到一个吸附点后停止，避免冲突
+                }
             }
         }
 
@@ -821,8 +870,32 @@ namespace EveOPreview.Services
         private void EnqueueLocationChange(IThumbnailView view)
         {
             string activeClientTitle = this._activeClient.Title;
-            // TODO ??
-            this._configuration.SetThumbnailLocation(view.Title, activeClientTitle, view.ThumbnailLocation);
+
+            // 【新增逻辑】区分已登录和未登录窗口
+            if (this.IsManageableThumbnail(view))
+            {
+                this._configuration.SetThumbnailLocation(view.Title, activeClientTitle, view.ThumbnailLocation);
+            }
+            else
+            {
+                // 1. 查找当前拖动的是第几个未登录窗口
+                int draggedIndex = 0;
+                foreach (var entry in this._thumbnailViews)
+                {
+                    if (!this.IsManageableThumbnail(entry.Value))
+                    {
+                        if (entry.Value.Id == view.Id) break;
+                        draggedIndex++;
+                    }
+                }
+
+                // 2. 反推整个未登录队列的顶部基准 Y 坐标
+                int spacing = 5; // 窗口之间的垂直间距(像素)，可自行修改
+                int baseY = view.ThumbnailLocation.Y - draggedIndex * (this._configuration.ThumbnailSize.Height + spacing);
+
+                // 3. 保存基准坐标
+                this._configuration.LoginThumbnailLocation = new Point(view.ThumbnailLocation.X, baseY);
+            }
 
             lock (this._locationChangeNotificationSyncRoot)
             {
