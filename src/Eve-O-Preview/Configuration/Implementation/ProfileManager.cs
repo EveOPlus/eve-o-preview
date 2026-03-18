@@ -54,8 +54,8 @@ public class ProfileManager : IProfileManager
 
     private string FindOrCreateProfileRootDirectory()
     {
-        string currentDir = AppDomain.CurrentDomain.BaseDirectory;
-        string localProfilesPath = Path.Combine(currentDir, PROFILES_DIR);
+        string exePath = System.IO.Path.GetDirectoryName(System.Environment.ProcessPath);
+        string localProfilesPath = Path.Combine(exePath, PROFILES_DIR);
 
         // First use any existing profiles that live in the same folder.
         if (Directory.Exists(localProfilesPath))
