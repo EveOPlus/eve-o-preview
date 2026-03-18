@@ -14,6 +14,7 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System;
 using EveOPreview.Configuration.Interface;
 using EveOPreview.Mediator.Messages;
 using MediatR;
@@ -31,10 +32,16 @@ public class RenameCurrentProfileHandler : IRequestHandler<RenameCurrentProfile>
         _profileManager = profileManager;
     }
 
-    public Task<Unit> Handle(RenameCurrentProfile request, CancellationToken cancellationToken)
+    public Task Handle(RenameCurrentProfile request, CancellationToken cancellationToken)
     {
-        _profileManager.RenameCurrentProfile(request);
-
-        return Unit.Task;
+        try
+        {
+            _profileManager.RenameCurrentProfile(request);
+            return Task.CompletedTask;
+        }
+        catch (Exception exception)
+        {
+            return Task.FromException(exception);
+        }
     }
 }

@@ -121,8 +121,10 @@ namespace EveOPreview.View
 
         public IWindowManager WindowManager { get; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IntPtr Id { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Title
         {
             get => this.Text;
@@ -135,6 +137,7 @@ namespace EveOPreview.View
         }
 
         private FontSettings _titleFontSettings;
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public FontSettings TitleFontSettings
         {
             get => _titleFontSettings;
@@ -145,10 +148,13 @@ namespace EveOPreview.View
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IsActive { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IsOverlayEnabled { get; set; }
-        
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Point ThumbnailLocation
         {
             get => this.Location;
@@ -159,22 +165,29 @@ namespace EveOPreview.View
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Size ThumbnailSize
         {
             get => this.ClientSize;
             set => this.ClientSize = value;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Action<IntPtr> ThumbnailResized { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Action<IntPtr> ThumbnailMoved { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Action<IntPtr> ThumbnailFocused { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Action<IntPtr> ThumbnailLostFocus { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Action<IntPtr> ThumbnailActivated { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Action<IntPtr, bool> ThumbnailDeactivated { get; set; }
 
         public void SetDefaultBorderColor()

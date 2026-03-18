@@ -18,7 +18,8 @@ namespace Build
 {
 	static class Configuration
 	{
-		public const string SolutionName = @"./src/EVE-O-Preview.sln";
+		public const string MainSolutionName = @"./src/Eve-O-Preview/Eve-O-Preview.csproj";
+		public const string RobinSolutionName = @"./src/Eve-O-Preview.Robin/Eve-O-Preview.Robin.csproj";
 
 		public const string BinFolder = @"./bin";
 		public const string ToolsFolder = @"./tools";

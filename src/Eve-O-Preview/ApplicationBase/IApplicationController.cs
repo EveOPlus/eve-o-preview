@@ -21,14 +21,6 @@ namespace EveOPreview
     /// </summary>
     public interface IApplicationController
     {
-        IApplicationController RegisterView<TView, TPresenter>()
-                    where TPresenter : class, TView
-                    where TView : IView;
-
-        IApplicationController RegisterInstance<T>(T instance);
-
-        IApplicationController RegisterService<TService, TImplementation>()
-                    where TImplementation : class, TService;
 
         void Run<TPresenter>()
                     where TPresenter : class, IPresenter;

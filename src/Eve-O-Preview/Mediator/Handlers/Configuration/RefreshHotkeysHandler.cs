@@ -14,6 +14,7 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System;
 using EveOPreview.Configuration;
 using EveOPreview.Mediator.Messages;
 using MediatR;
@@ -33,33 +34,39 @@ namespace EveOPreview.Mediator.Handlers.Configuration
             _config = Config;
         }
 
-        public async Task<Unit> Handle(RefreshHotkeys request, CancellationToken cancellationToken)
+        public Task Handle(RefreshHotkeys request, CancellationToken cancellationToken)
         {
-            foreach (var cycleGroup in _config.CycleGroups)
+            try
             {
-                cycleGroup.ForwardHotkeys.RemoveAll(x => x == null);
-                cycleGroup.BackwardHotkeys.RemoveAll(x => x == null);
-
-                cycleGroup.ForwardHotkeysParsedAndOrdered.Clear();
-                cycleGroup.BackwardHotkeysParsedAndOrdered.Clear();
-
-                var forwardHotkeys = cycleGroup.ForwardHotkeys?.Select(HotkeyHelpers.ToHotkeys);
-                if (forwardHotkeys != null)
+                foreach (var cycleGroup in _config.CycleGroups)
                 {
-                    cycleGroup.ForwardHotkeysParsedAndOrdered.AddRange(forwardHotkeys);
+                    cycleGroup.ForwardHotkeys.RemoveAll(x => x == null);
+                    cycleGroup.BackwardHotkeys.RemoveAll(x => x == null);
+
+                    cycleGroup.ForwardHotkeysParsedAndOrdered.Clear();
+                    cycleGroup.BackwardHotkeysParsedAndOrdered.Clear();
+
+                    var forwardHotkeys = cycleGroup.ForwardHotkeys?.Select(HotkeyHelpers.ToHotkeys);
+                    if (forwardHotkeys != null)
+                    {
+                        cycleGroup.ForwardHotkeysParsedAndOrdered.AddRange(forwardHotkeys);
+                    }
+
+                    var backwardHotkeys = cycleGroup.BackwardHotkeys?.Select(HotkeyHelpers.ToHotkeys);
+                    if (backwardHotkeys != null)
+                    {
+                        cycleGroup.BackwardHotkeysParsedAndOrdered.AddRange(backwardHotkeys);
+                    }
                 }
 
-                var backwardHotkeys = cycleGroup.BackwardHotkeys?.Select(HotkeyHelpers.ToHotkeys);
-                if (backwardHotkeys != null)
-                {
-                    cycleGroup.BackwardHotkeysParsedAndOrdered.AddRange(backwardHotkeys);
-                }
+                _config.ToggleHideActiveClientsHotkeyParsed = _config.ToggleHideActiveClientsHotkey.ToHotkeys();
+                _config.MinimizeAllClientsHotkeyParsed = _config.MinimizeAllClientsHotkey.ToHotkeys();
+                return Task.CompletedTask;
             }
-
-            _config.ToggleHideActiveClientsHotkeyParsed = _config.ToggleHideActiveClientsHotkey.ToHotkeys();
-            _config.MinimizeAllClientsHotkeyParsed = _config.MinimizeAllClientsHotkey.ToHotkeys();
-
-            return Unit.Value;
+            catch (Exception exception)
+            {
+                return Task.FromException(exception);
+            }
         }
     }
 }

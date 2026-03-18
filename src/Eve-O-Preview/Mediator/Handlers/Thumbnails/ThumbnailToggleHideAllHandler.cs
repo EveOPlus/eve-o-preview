@@ -33,15 +33,13 @@ namespace EveOPreview.Mediator.Handlers.Thumbnails
             _publisher = publisher;
         }
 
-        public async Task<Unit> Handle(ThumbnailToggleHideAll notification, CancellationToken ct)
+        public async Task Handle(ThumbnailToggleHideAll notification, CancellationToken ct)
         {
             bool isHidden = 
                 _thumbnailConfiguration.IsTemporarilyHidingAllThumbnails = 
                 !_thumbnailConfiguration.IsTemporarilyHidingAllThumbnails;
             
             await _publisher.Publish(new ThumbnailToggleHideAllChangedNotification(isHidden), ct);
-
-            return Unit.Value;
         }
     }
 }

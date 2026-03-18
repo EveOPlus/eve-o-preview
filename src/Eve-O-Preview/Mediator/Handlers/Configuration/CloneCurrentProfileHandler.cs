@@ -14,6 +14,7 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using EveOPreview.Configuration.Interface;
@@ -31,10 +32,16 @@ public class CloneCurrentProfileHandler : IRequestHandler<CloneCurrentProfile>
         _profileManager = profileManager;
     }
 
-    public Task<Unit> Handle(CloneCurrentProfile request, CancellationToken cancellationToken)
+    public Task Handle(CloneCurrentProfile request, CancellationToken cancellationToken)
     {
-        _profileManager.CloneCurrentProfile();
-
-        return Unit.Task;
+        try
+        {
+            _profileManager.CloneCurrentProfile();
+            return Task.CompletedTask;
+        }
+        catch (Exception exception)
+        {
+            return Task.FromException(exception);
+        }
     }
 }

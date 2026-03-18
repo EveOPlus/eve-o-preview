@@ -24,1784 +24,1841 @@ namespace EveOPreview.View
 			base.Dispose(disposing);
 		}
 
-		#region Windows Form Designer generated code
+        #region Windows Form Designer generated code
 
-		/// <summary>s
-		/// Required method for Designer support - do not modify
-		/// the contents of this method with the code editor.
-		/// </summary>
-		private void InitializeComponent()
-		{
-            this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ToolStripMenuItem RestoreWindowMenuItem;
-            System.Windows.Forms.ToolStripMenuItem ExitMenuItem;
-            System.Windows.Forms.ToolStripMenuItem TitleMenuItem;
-            System.Windows.Forms.ToolStripSeparator SeparatorMenuItem;
-            System.Windows.Forms.TabPage GeneralTabPage;
-            System.Windows.Forms.Panel GeneralSettingsPanel;
-            System.Windows.Forms.TabPage ThumbnailTabPage;
-            System.Windows.Forms.Panel ThumbnailSettingsPanel;
-            System.Windows.Forms.Label HeigthLabel;
-            System.Windows.Forms.Label WidthLabel;
-            System.Windows.Forms.Label OpacityLabel;
-            System.Windows.Forms.Panel ZoomSettingsPanel;
-            System.Windows.Forms.Label ZoomFactorLabel;
-            System.Windows.Forms.Label ZoomAnchorLabel;
-            System.Windows.Forms.TabPage OverlayTabPage;
-            System.Windows.Forms.Panel OverlaySettingsPanel;
-            System.Windows.Forms.Panel ClientsPanel;
-            System.Windows.Forms.Label ThumbnailsListLabel;
-            System.Windows.Forms.TabPage CycleGroupTabPage;
-            System.Windows.Forms.Label label1;
+        /// <summary>s
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            components = new System.ComponentModel.Container();
+            ToolStripMenuItem RestoreWindowMenuItem;
+            ToolStripMenuItem ExitMenuItem;
+            ToolStripMenuItem TitleMenuItem;
+            ToolStripSeparator SeparatorMenuItem;
+            TabPage GeneralTabPage;
+            Panel GeneralSettingsPanel;
+            TabPage ThumbnailTabPage;
+            Panel ThumbnailSettingsPanel;
+            Label HeigthLabel;
+            Label WidthLabel;
+            Label OpacityLabel;
+            Panel ZoomSettingsPanel;
+            Label ZoomFactorLabel;
+            Label ZoomAnchorLabel;
+            TabPage OverlayTabPage;
+            Panel OverlaySettingsPanel;
+            Panel ClientsPanel;
+            Label ThumbnailsListLabel;
+            TabPage CycleGroupTabPage;
+            Label label1;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            System.Windows.Forms.Label lblFpsPredictiveLimit;
-            System.Windows.Forms.Label lblFpsBackgroundLimit;
-            System.Windows.Forms.Label lblFpsForegroundLimit;
-            System.Windows.Forms.TabPage AboutTabPage;
-            System.Windows.Forms.Panel AboutPanel;
-            System.Windows.Forms.Label lblLiabilityDisclaimer;
-            System.Windows.Forms.Label CreditMaintLabel;
-            System.Windows.Forms.Label DocumentationLinkLabel;
-            System.Windows.Forms.Label DescriptionLabel;
-            System.Windows.Forms.Label NameLabel;
-            this.MinimizeInactiveClientsCheckBox = new System.Windows.Forms.CheckBox();
-            this.EnableClientLayoutTrackingCheckBox = new System.Windows.Forms.CheckBox();
-            this.HideActiveClientThumbnailCheckBox = new System.Windows.Forms.CheckBox();
-            this.ShowThumbnailsAlwaysOnTopCheckBox = new System.Windows.Forms.CheckBox();
-            this.HideThumbnailsOnLostFocusCheckBox = new System.Windows.Forms.CheckBox();
-            this.EnablePerClientThumbnailsLayoutsCheckBox = new System.Windows.Forms.CheckBox();
-            this.MinimizeToTrayCheckBox = new System.Windows.Forms.CheckBox();
-            this.ThumbnailsWidthNumericEdit = new System.Windows.Forms.NumericUpDown();
-            this.ThumbnailsHeightNumericEdit = new System.Windows.Forms.NumericUpDown();
-            this.ThumbnailOpacityTrackBar = new System.Windows.Forms.TrackBar();
-            this.ZoomAnchorPanel = new System.Windows.Forms.Panel();
-            this.ZoomAanchorNWRadioButton = new System.Windows.Forms.RadioButton();
-            this.ZoomAanchorNRadioButton = new System.Windows.Forms.RadioButton();
-            this.ZoomAanchorNERadioButton = new System.Windows.Forms.RadioButton();
-            this.ZoomAanchorWRadioButton = new System.Windows.Forms.RadioButton();
-            this.ZoomAanchorSERadioButton = new System.Windows.Forms.RadioButton();
-            this.ZoomAanchorCRadioButton = new System.Windows.Forms.RadioButton();
-            this.ZoomAanchorSRadioButton = new System.Windows.Forms.RadioButton();
-            this.ZoomAanchorERadioButton = new System.Windows.Forms.RadioButton();
-            this.ZoomAanchorSWRadioButton = new System.Windows.Forms.RadioButton();
-            this.EnableThumbnailZoomCheckBox = new System.Windows.Forms.CheckBox();
-            this.ThumbnailZoomFactorNumericEdit = new System.Windows.Forms.NumericUpDown();
-            this.groupBoxOverlayFont = new System.Windows.Forms.GroupBox();
-            this.lblTitleOffsetTop = new System.Windows.Forms.Label();
-            this.txtTitleOffsetTop = new System.Windows.Forms.TextBox();
-            this.lblTitleOffsetLeft = new System.Windows.Forms.Label();
-            this.txtTitleOffsetLeft = new System.Windows.Forms.TextBox();
-            this.lblTitleBorderWidth = new System.Windows.Forms.Label();
-            this.txtFontOutlineWidth = new System.Windows.Forms.TextBox();
-            this.btnFontOutlineColor = new System.Windows.Forms.Button();
-            this.btnSetOverlayFontColor = new System.Windows.Forms.Button();
-            this.btnSetOverlayFont = new System.Windows.Forms.Button();
-            this.HighlightColorLabel = new System.Windows.Forms.Label();
-            this.ActiveClientHighlightColorButton = new System.Windows.Forms.Panel();
-            this.EnableActiveClientHighlightCheckBox = new System.Windows.Forms.CheckBox();
-            this.ShowThumbnailOverlaysCheckBox = new System.Windows.Forms.CheckBox();
-            this.ShowThumbnailFramesCheckBox = new System.Windows.Forms.CheckBox();
-            this.activeClientsSplitContainer = new System.Windows.Forms.SplitContainer();
-            this.groupBoxToggleHideAllThumbnails = new System.Windows.Forms.GroupBox();
-            this.btnMinimizeAllClients = new System.Windows.Forms.Button();
-            this.lblMinimizeAllClientsHotkey = new System.Windows.Forms.Label();
-            this.txtMinimizeAllClientsHotkey = new System.Windows.Forms.TextBox();
-            this.btnToggleHideAll = new System.Windows.Forms.Button();
-            this.lblToggleHideAllActiveHotkey = new System.Windows.Forms.Label();
-            this.txtToggleHideAllActiveHotkey = new System.Windows.Forms.TextBox();
-            this.ThumbnailsList = new System.Windows.Forms.CheckedListBox();
-            this.CycleGroupPanel = new System.Windows.Forms.Panel();
-            this.splitContainerMainCycleGroup = new System.Windows.Forms.SplitContainer();
-            this.CycleGroupLabel = new System.Windows.Forms.Label();
-            this.removeGroupButton = new System.Windows.Forms.Button();
-            this.addClientToCycleGroupButton = new System.Windows.Forms.Button();
-            this.cycleGroupMoveClientOrderUpButton = new System.Windows.Forms.Button();
-            this.selectCycleGroupComboBox = new System.Windows.Forms.ComboBox();
-            this.removeClientToCycleGroupButton = new System.Windows.Forms.Button();
-            this.cycleGroupDescriptionLabel = new System.Windows.Forms.Label();
-            this.addNewGroupButton = new System.Windows.Forms.Button();
-            this.cycleGroupDescriptionText = new System.Windows.Forms.TextBox();
-            this.cycleGroupClientOrderLabel = new System.Windows.Forms.Label();
-            this.cycleGroupForwardHotkeyLabel = new System.Windows.Forms.Label();
-            this.cycleGroupForwardHotkey1Text = new System.Windows.Forms.TextBox();
-            this.cycleGroupBackwardHotkey2Text = new System.Windows.Forms.TextBox();
-            this.cycleGroupForwardHotkey2Text = new System.Windows.Forms.TextBox();
-            this.cycleGroupBackwardHotkey1Text = new System.Windows.Forms.TextBox();
-            this.cycleGroupBackHotkeyLabel = new System.Windows.Forms.Label();
-            this.cycleGroupClientOrderList = new System.Windows.Forms.ListBox();
-            this.VersionLabel = new System.Windows.Forms.Label();
-            this.DocumentationLink = new System.Windows.Forms.LinkLabel();
-            this.ClientsTabPage = new System.Windows.Forms.TabPage();
-            this.ContentTabControl = new System.Windows.Forms.TabControl();
-            this.ZoomTabPage = new System.Windows.Forms.TabPage();
-            this.FpsLimiterTabPage = new System.Windows.Forms.TabPage();
-            this.fpsMainLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
-            this.fpsTopPanel = new System.Windows.Forms.Panel();
-            this.fpsBottomPanel = new System.Windows.Forms.Panel();
-            this.groupBoxAudioMuting = new System.Windows.Forms.GroupBox();
-            this.chbIsLocationBannerMuted = new System.Windows.Forms.CheckBox();
-            this.chbIsGateTunnelMuted = new System.Windows.Forms.CheckBox();
-            this.groupBoxFpsLimits = new System.Windows.Forms.GroupBox();
-            this.btnDummyFpsSave = new System.Windows.Forms.Button();
-            this.numericFpsPredictedLimit = new System.Windows.Forms.NumericUpDown();
-            this.numericFpsBackgroundLimit = new System.Windows.Forms.NumericUpDown();
-            this.numericFpsForegroundLimit = new System.Windows.Forms.NumericUpDown();
-            this.lblFpsFeatureExpired = new System.Windows.Forms.Label();
-            this.chbIsFpsThrottlingEnabled = new System.Windows.Forms.CheckBox();
-            this.tabPageProfiles = new System.Windows.Forms.TabPage();
-            this.splitContainerMainProfiles = new System.Windows.Forms.SplitContainer();
-            this.lblProfilesExperimentalWarning = new System.Windows.Forms.Label();
-            this.lblLoadedProfileName = new System.Windows.Forms.Label();
-            this.btnDeleteProfile = new System.Windows.Forms.Button();
-            this.btnCloneProfile = new System.Windows.Forms.Button();
-            this.txtLoadedProfileName = new System.Windows.Forms.TextBox();
-            this.listBoxProfiles = new System.Windows.Forms.ListBox();
-            this.NotifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
-            this.TrayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.instantToolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.lblDisplaySampleFont = new EveOPreview.View.CustomControl.OutlinedLabel();
-            RestoreWindowMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            ExitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            TitleMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            SeparatorMenuItem = new System.Windows.Forms.ToolStripSeparator();
-            GeneralTabPage = new System.Windows.Forms.TabPage();
-            GeneralSettingsPanel = new System.Windows.Forms.Panel();
-            ThumbnailTabPage = new System.Windows.Forms.TabPage();
-            ThumbnailSettingsPanel = new System.Windows.Forms.Panel();
-            HeigthLabel = new System.Windows.Forms.Label();
-            WidthLabel = new System.Windows.Forms.Label();
-            OpacityLabel = new System.Windows.Forms.Label();
-            ZoomSettingsPanel = new System.Windows.Forms.Panel();
-            ZoomFactorLabel = new System.Windows.Forms.Label();
-            ZoomAnchorLabel = new System.Windows.Forms.Label();
-            OverlayTabPage = new System.Windows.Forms.TabPage();
-            OverlaySettingsPanel = new System.Windows.Forms.Panel();
-            ClientsPanel = new System.Windows.Forms.Panel();
-            ThumbnailsListLabel = new System.Windows.Forms.Label();
-            CycleGroupTabPage = new System.Windows.Forms.TabPage();
-            label1 = new System.Windows.Forms.Label();
-            lblFpsPredictiveLimit = new System.Windows.Forms.Label();
-            lblFpsBackgroundLimit = new System.Windows.Forms.Label();
-            lblFpsForegroundLimit = new System.Windows.Forms.Label();
-            AboutTabPage = new System.Windows.Forms.TabPage();
-            AboutPanel = new System.Windows.Forms.Panel();
-            lblLiabilityDisclaimer = new System.Windows.Forms.Label();
-            CreditMaintLabel = new System.Windows.Forms.Label();
-            DocumentationLinkLabel = new System.Windows.Forms.Label();
-            DescriptionLabel = new System.Windows.Forms.Label();
-            NameLabel = new System.Windows.Forms.Label();
+            Label lblFpsPredictiveLimit;
+            Label lblFpsBackgroundLimit;
+            Label lblFpsForegroundLimit;
+            TabPage AboutTabPage;
+            Panel AboutPanel;
+            Label lblLiabilityDisclaimer;
+            Label CreditMaintLabel;
+            Label DocumentationLinkLabel;
+            Label DescriptionLabel;
+            Label NameLabel;
+            MinimizeInactiveClientsCheckBox = new CheckBox();
+            EnableClientLayoutTrackingCheckBox = new CheckBox();
+            HideActiveClientThumbnailCheckBox = new CheckBox();
+            ShowThumbnailsAlwaysOnTopCheckBox = new CheckBox();
+            HideThumbnailsOnLostFocusCheckBox = new CheckBox();
+            EnablePerClientThumbnailsLayoutsCheckBox = new CheckBox();
+            MinimizeToTrayCheckBox = new CheckBox();
+            ThumbnailsWidthNumericEdit = new NumericUpDown();
+            ThumbnailsHeightNumericEdit = new NumericUpDown();
+            ThumbnailOpacityTrackBar = new TrackBar();
+            ZoomAnchorPanel = new Panel();
+            ZoomAanchorNWRadioButton = new RadioButton();
+            ZoomAanchorNRadioButton = new RadioButton();
+            ZoomAanchorNERadioButton = new RadioButton();
+            ZoomAanchorWRadioButton = new RadioButton();
+            ZoomAanchorSERadioButton = new RadioButton();
+            ZoomAanchorCRadioButton = new RadioButton();
+            ZoomAanchorSRadioButton = new RadioButton();
+            ZoomAanchorERadioButton = new RadioButton();
+            ZoomAanchorSWRadioButton = new RadioButton();
+            EnableThumbnailZoomCheckBox = new CheckBox();
+            ThumbnailZoomFactorNumericEdit = new NumericUpDown();
+            groupBoxOverlayFont = new GroupBox();
+            lblTitleOffsetTop = new Label();
+            txtTitleOffsetTop = new TextBox();
+            lblTitleOffsetLeft = new Label();
+            txtTitleOffsetLeft = new TextBox();
+            lblTitleBorderWidth = new Label();
+            txtFontOutlineWidth = new TextBox();
+            btnFontOutlineColor = new Button();
+            btnSetOverlayFontColor = new Button();
+            lblDisplaySampleFont = new OutlinedLabel();
+            btnSetOverlayFont = new Button();
+            HighlightColorLabel = new Label();
+            ActiveClientHighlightColorButton = new Panel();
+            EnableActiveClientHighlightCheckBox = new CheckBox();
+            ShowThumbnailOverlaysCheckBox = new CheckBox();
+            ShowThumbnailFramesCheckBox = new CheckBox();
+            activeClientsSplitContainer = new SplitContainer();
+            groupBoxToggleHideAllThumbnails = new GroupBox();
+            btnMinimizeAllClients = new Button();
+            lblMinimizeAllClientsHotkey = new Label();
+            txtMinimizeAllClientsHotkey = new TextBox();
+            btnToggleHideAll = new Button();
+            lblToggleHideAllActiveHotkey = new Label();
+            txtToggleHideAllActiveHotkey = new TextBox();
+            ThumbnailsList = new CheckedListBox();
+            CycleGroupPanel = new Panel();
+            splitContainerMainCycleGroup = new SplitContainer();
+            CycleGroupLabel = new Label();
+            removeGroupButton = new Button();
+            addClientToCycleGroupButton = new Button();
+            cycleGroupMoveClientOrderUpButton = new Button();
+            selectCycleGroupComboBox = new ComboBox();
+            removeClientToCycleGroupButton = new Button();
+            cycleGroupDescriptionLabel = new Label();
+            addNewGroupButton = new Button();
+            cycleGroupDescriptionText = new TextBox();
+            cycleGroupClientOrderLabel = new Label();
+            cycleGroupForwardHotkeyLabel = new Label();
+            cycleGroupForwardHotkey1Text = new TextBox();
+            cycleGroupBackwardHotkey2Text = new TextBox();
+            cycleGroupForwardHotkey2Text = new TextBox();
+            cycleGroupBackwardHotkey1Text = new TextBox();
+            cycleGroupBackHotkeyLabel = new Label();
+            cycleGroupClientOrderList = new ListBox();
+            VersionLabel = new Label();
+            DocumentationLink = new LinkLabel();
+            ClientsTabPage = new TabPage();
+            ContentTabControl = new TabControl();
+            ZoomTabPage = new TabPage();
+            FpsLimiterTabPage = new TabPage();
+            fpsMainLayoutPanel = new TableLayoutPanel();
+            fpsTopPanel = new Panel();
+            fpsBottomPanel = new Panel();
+            groupBoxAudioMuting = new GroupBox();
+            chbIsLocationBannerMuted = new CheckBox();
+            chbIsGateTunnelMuted = new CheckBox();
+            groupBoxFpsLimits = new GroupBox();
+            btnDummyFpsSave = new Button();
+            numericFpsPredictedLimit = new NumericUpDown();
+            numericFpsBackgroundLimit = new NumericUpDown();
+            numericFpsForegroundLimit = new NumericUpDown();
+            lblFpsFeatureExpired = new Label();
+            chbIsFpsThrottlingEnabled = new CheckBox();
+            tabPageProfiles = new TabPage();
+            splitContainerMainProfiles = new SplitContainer();
+            lblProfilesExperimentalWarning = new Label();
+            lblLoadedProfileName = new Label();
+            btnDeleteProfile = new Button();
+            btnCloneProfile = new Button();
+            txtLoadedProfileName = new TextBox();
+            listBoxProfiles = new ListBox();
+            NotifyIcon = new NotifyIcon(components);
+            TrayMenu = new ContextMenuStrip(components);
+            instantToolTip = new ToolTip(components);
+            RestoreWindowMenuItem = new ToolStripMenuItem();
+            ExitMenuItem = new ToolStripMenuItem();
+            TitleMenuItem = new ToolStripMenuItem();
+            SeparatorMenuItem = new ToolStripSeparator();
+            GeneralTabPage = new TabPage();
+            GeneralSettingsPanel = new Panel();
+            ThumbnailTabPage = new TabPage();
+            ThumbnailSettingsPanel = new Panel();
+            HeigthLabel = new Label();
+            WidthLabel = new Label();
+            OpacityLabel = new Label();
+            ZoomSettingsPanel = new Panel();
+            ZoomFactorLabel = new Label();
+            ZoomAnchorLabel = new Label();
+            OverlayTabPage = new TabPage();
+            OverlaySettingsPanel = new Panel();
+            ClientsPanel = new Panel();
+            ThumbnailsListLabel = new Label();
+            CycleGroupTabPage = new TabPage();
+            label1 = new Label();
+            lblFpsPredictiveLimit = new Label();
+            lblFpsBackgroundLimit = new Label();
+            lblFpsForegroundLimit = new Label();
+            AboutTabPage = new TabPage();
+            AboutPanel = new Panel();
+            lblLiabilityDisclaimer = new Label();
+            CreditMaintLabel = new Label();
+            DocumentationLinkLabel = new Label();
+            DescriptionLabel = new Label();
+            NameLabel = new Label();
             GeneralTabPage.SuspendLayout();
             GeneralSettingsPanel.SuspendLayout();
             ThumbnailTabPage.SuspendLayout();
             ThumbnailSettingsPanel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.ThumbnailsWidthNumericEdit)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ThumbnailsHeightNumericEdit)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ThumbnailOpacityTrackBar)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)ThumbnailsWidthNumericEdit).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)ThumbnailsHeightNumericEdit).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)ThumbnailOpacityTrackBar).BeginInit();
             ZoomSettingsPanel.SuspendLayout();
-            this.ZoomAnchorPanel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.ThumbnailZoomFactorNumericEdit)).BeginInit();
+            ZoomAnchorPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)ThumbnailZoomFactorNumericEdit).BeginInit();
             OverlayTabPage.SuspendLayout();
             OverlaySettingsPanel.SuspendLayout();
-            this.groupBoxOverlayFont.SuspendLayout();
+            groupBoxOverlayFont.SuspendLayout();
             ClientsPanel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.activeClientsSplitContainer)).BeginInit();
-            this.activeClientsSplitContainer.Panel1.SuspendLayout();
-            this.activeClientsSplitContainer.Panel2.SuspendLayout();
-            this.activeClientsSplitContainer.SuspendLayout();
-            this.groupBoxToggleHideAllThumbnails.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)activeClientsSplitContainer).BeginInit();
+            activeClientsSplitContainer.Panel1.SuspendLayout();
+            activeClientsSplitContainer.Panel2.SuspendLayout();
+            activeClientsSplitContainer.SuspendLayout();
+            groupBoxToggleHideAllThumbnails.SuspendLayout();
             CycleGroupTabPage.SuspendLayout();
-            this.CycleGroupPanel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerMainCycleGroup)).BeginInit();
-            this.splitContainerMainCycleGroup.Panel1.SuspendLayout();
-            this.splitContainerMainCycleGroup.Panel2.SuspendLayout();
-            this.splitContainerMainCycleGroup.SuspendLayout();
+            CycleGroupPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainerMainCycleGroup).BeginInit();
+            splitContainerMainCycleGroup.Panel1.SuspendLayout();
+            splitContainerMainCycleGroup.Panel2.SuspendLayout();
+            splitContainerMainCycleGroup.SuspendLayout();
             AboutTabPage.SuspendLayout();
             AboutPanel.SuspendLayout();
-            this.ClientsTabPage.SuspendLayout();
-            this.ContentTabControl.SuspendLayout();
-            this.ZoomTabPage.SuspendLayout();
-            this.FpsLimiterTabPage.SuspendLayout();
-            this.fpsMainLayoutPanel.SuspendLayout();
-            this.fpsTopPanel.SuspendLayout();
-            this.fpsBottomPanel.SuspendLayout();
-            this.groupBoxAudioMuting.SuspendLayout();
-            this.groupBoxFpsLimits.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericFpsPredictedLimit)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericFpsBackgroundLimit)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericFpsForegroundLimit)).BeginInit();
-            this.tabPageProfiles.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerMainProfiles)).BeginInit();
-            this.splitContainerMainProfiles.Panel1.SuspendLayout();
-            this.splitContainerMainProfiles.Panel2.SuspendLayout();
-            this.splitContainerMainProfiles.SuspendLayout();
-            this.TrayMenu.SuspendLayout();
-            this.SuspendLayout();
+            ClientsTabPage.SuspendLayout();
+            ContentTabControl.SuspendLayout();
+            ZoomTabPage.SuspendLayout();
+            FpsLimiterTabPage.SuspendLayout();
+            fpsMainLayoutPanel.SuspendLayout();
+            fpsTopPanel.SuspendLayout();
+            fpsBottomPanel.SuspendLayout();
+            groupBoxAudioMuting.SuspendLayout();
+            groupBoxFpsLimits.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)numericFpsPredictedLimit).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numericFpsBackgroundLimit).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numericFpsForegroundLimit).BeginInit();
+            tabPageProfiles.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainerMainProfiles).BeginInit();
+            splitContainerMainProfiles.Panel1.SuspendLayout();
+            splitContainerMainProfiles.Panel2.SuspendLayout();
+            splitContainerMainProfiles.SuspendLayout();
+            TrayMenu.SuspendLayout();
+            SuspendLayout();
             // 
             // RestoreWindowMenuItem
             // 
             RestoreWindowMenuItem.Name = "RestoreWindowMenuItem";
-            RestoreWindowMenuItem.Size = new System.Drawing.Size(151, 22);
+            RestoreWindowMenuItem.Size = new Size(151, 22);
             RestoreWindowMenuItem.Text = "Restore";
-            RestoreWindowMenuItem.Click += new System.EventHandler(this.RestoreMainForm_Handler);
+            RestoreWindowMenuItem.Click += RestoreMainForm_Handler;
             // 
             // ExitMenuItem
             // 
             ExitMenuItem.Name = "ExitMenuItem";
-            ExitMenuItem.Size = new System.Drawing.Size(151, 22);
+            ExitMenuItem.Size = new Size(151, 22);
             ExitMenuItem.Text = "Exit";
-            ExitMenuItem.Click += new System.EventHandler(this.ExitMenuItemClick_Handler);
+            ExitMenuItem.Click += ExitMenuItemClick_Handler;
             // 
             // TitleMenuItem
             // 
             TitleMenuItem.Enabled = false;
             TitleMenuItem.Name = "TitleMenuItem";
-            TitleMenuItem.Size = new System.Drawing.Size(151, 22);
+            TitleMenuItem.Size = new Size(151, 22);
             TitleMenuItem.Text = "EVE-O Preview";
             // 
             // SeparatorMenuItem
             // 
             SeparatorMenuItem.Name = "SeparatorMenuItem";
-            SeparatorMenuItem.Size = new System.Drawing.Size(148, 6);
+            SeparatorMenuItem.Size = new Size(148, 6);
             // 
             // GeneralTabPage
             // 
-            GeneralTabPage.BackColor = System.Drawing.SystemColors.Control;
+            GeneralTabPage.BackColor = SystemColors.Control;
             GeneralTabPage.Controls.Add(GeneralSettingsPanel);
-            GeneralTabPage.Location = new System.Drawing.Point(124, 4);
+            GeneralTabPage.Location = new Point(124, 4);
+            GeneralTabPage.Margin = new Padding(4, 3, 4, 3);
             GeneralTabPage.Name = "GeneralTabPage";
-            GeneralTabPage.Padding = new System.Windows.Forms.Padding(3);
-            GeneralTabPage.Size = new System.Drawing.Size(266, 353);
+            GeneralTabPage.Padding = new Padding(4, 3, 4, 3);
+            GeneralTabPage.Size = new Size(332, 409);
             GeneralTabPage.TabIndex = 0;
             GeneralTabPage.Text = "General";
             // 
             // GeneralSettingsPanel
             // 
-            GeneralSettingsPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            GeneralSettingsPanel.Controls.Add(this.MinimizeInactiveClientsCheckBox);
-            GeneralSettingsPanel.Controls.Add(this.EnableClientLayoutTrackingCheckBox);
-            GeneralSettingsPanel.Controls.Add(this.HideActiveClientThumbnailCheckBox);
-            GeneralSettingsPanel.Controls.Add(this.ShowThumbnailsAlwaysOnTopCheckBox);
-            GeneralSettingsPanel.Controls.Add(this.HideThumbnailsOnLostFocusCheckBox);
-            GeneralSettingsPanel.Controls.Add(this.EnablePerClientThumbnailsLayoutsCheckBox);
-            GeneralSettingsPanel.Controls.Add(this.MinimizeToTrayCheckBox);
-            GeneralSettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            GeneralSettingsPanel.Location = new System.Drawing.Point(3, 3);
+            GeneralSettingsPanel.BorderStyle = BorderStyle.FixedSingle;
+            GeneralSettingsPanel.Controls.Add(MinimizeInactiveClientsCheckBox);
+            GeneralSettingsPanel.Controls.Add(EnableClientLayoutTrackingCheckBox);
+            GeneralSettingsPanel.Controls.Add(HideActiveClientThumbnailCheckBox);
+            GeneralSettingsPanel.Controls.Add(ShowThumbnailsAlwaysOnTopCheckBox);
+            GeneralSettingsPanel.Controls.Add(HideThumbnailsOnLostFocusCheckBox);
+            GeneralSettingsPanel.Controls.Add(EnablePerClientThumbnailsLayoutsCheckBox);
+            GeneralSettingsPanel.Controls.Add(MinimizeToTrayCheckBox);
+            GeneralSettingsPanel.Dock = DockStyle.Fill;
+            GeneralSettingsPanel.Location = new Point(4, 3);
+            GeneralSettingsPanel.Margin = new Padding(4, 3, 4, 3);
             GeneralSettingsPanel.Name = "GeneralSettingsPanel";
-            GeneralSettingsPanel.Size = new System.Drawing.Size(260, 347);
+            GeneralSettingsPanel.Size = new Size(324, 403);
             GeneralSettingsPanel.TabIndex = 18;
             // 
             // MinimizeInactiveClientsCheckBox
             // 
-            this.MinimizeInactiveClientsCheckBox.AutoSize = true;
-            this.MinimizeInactiveClientsCheckBox.Location = new System.Drawing.Point(8, 79);
-            this.MinimizeInactiveClientsCheckBox.Name = "MinimizeInactiveClientsCheckBox";
-            this.MinimizeInactiveClientsCheckBox.Size = new System.Drawing.Size(163, 17);
-            this.MinimizeInactiveClientsCheckBox.TabIndex = 24;
-            this.MinimizeInactiveClientsCheckBox.Text = "Minimize inactive EVE clients";
-            this.MinimizeInactiveClientsCheckBox.UseVisualStyleBackColor = true;
-            this.MinimizeInactiveClientsCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            MinimizeInactiveClientsCheckBox.AutoSize = true;
+            MinimizeInactiveClientsCheckBox.Location = new Point(9, 91);
+            MinimizeInactiveClientsCheckBox.Margin = new Padding(4, 3, 4, 3);
+            MinimizeInactiveClientsCheckBox.Name = "MinimizeInactiveClientsCheckBox";
+            MinimizeInactiveClientsCheckBox.Size = new Size(178, 19);
+            MinimizeInactiveClientsCheckBox.TabIndex = 24;
+            MinimizeInactiveClientsCheckBox.Text = "Minimize inactive EVE clients";
+            MinimizeInactiveClientsCheckBox.UseVisualStyleBackColor = true;
+            MinimizeInactiveClientsCheckBox.CheckedChanged += OptionChanged_Handler;
             // 
             // EnableClientLayoutTrackingCheckBox
             // 
-            this.EnableClientLayoutTrackingCheckBox.AutoSize = true;
-            this.EnableClientLayoutTrackingCheckBox.Location = new System.Drawing.Point(8, 31);
-            this.EnableClientLayoutTrackingCheckBox.Name = "EnableClientLayoutTrackingCheckBox";
-            this.EnableClientLayoutTrackingCheckBox.Size = new System.Drawing.Size(127, 17);
-            this.EnableClientLayoutTrackingCheckBox.TabIndex = 19;
-            this.EnableClientLayoutTrackingCheckBox.Text = "Track client locations";
-            this.EnableClientLayoutTrackingCheckBox.UseVisualStyleBackColor = true;
-            this.EnableClientLayoutTrackingCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            EnableClientLayoutTrackingCheckBox.AutoSize = true;
+            EnableClientLayoutTrackingCheckBox.Location = new Point(9, 36);
+            EnableClientLayoutTrackingCheckBox.Margin = new Padding(4, 3, 4, 3);
+            EnableClientLayoutTrackingCheckBox.Name = "EnableClientLayoutTrackingCheckBox";
+            EnableClientLayoutTrackingCheckBox.Size = new Size(137, 19);
+            EnableClientLayoutTrackingCheckBox.TabIndex = 19;
+            EnableClientLayoutTrackingCheckBox.Text = "Track client locations";
+            EnableClientLayoutTrackingCheckBox.UseVisualStyleBackColor = true;
+            EnableClientLayoutTrackingCheckBox.CheckedChanged += OptionChanged_Handler;
             // 
             // HideActiveClientThumbnailCheckBox
             // 
-            this.HideActiveClientThumbnailCheckBox.AutoSize = true;
-            this.HideActiveClientThumbnailCheckBox.Checked = true;
-            this.HideActiveClientThumbnailCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.HideActiveClientThumbnailCheckBox.Location = new System.Drawing.Point(8, 55);
-            this.HideActiveClientThumbnailCheckBox.Name = "HideActiveClientThumbnailCheckBox";
-            this.HideActiveClientThumbnailCheckBox.Size = new System.Drawing.Size(184, 17);
-            this.HideActiveClientThumbnailCheckBox.TabIndex = 20;
-            this.HideActiveClientThumbnailCheckBox.Text = "Hide preview of active EVE client";
-            this.HideActiveClientThumbnailCheckBox.UseVisualStyleBackColor = true;
-            this.HideActiveClientThumbnailCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            HideActiveClientThumbnailCheckBox.AutoSize = true;
+            HideActiveClientThumbnailCheckBox.Checked = true;
+            HideActiveClientThumbnailCheckBox.CheckState = CheckState.Checked;
+            HideActiveClientThumbnailCheckBox.Location = new Point(9, 63);
+            HideActiveClientThumbnailCheckBox.Margin = new Padding(4, 3, 4, 3);
+            HideActiveClientThumbnailCheckBox.Name = "HideActiveClientThumbnailCheckBox";
+            HideActiveClientThumbnailCheckBox.Size = new Size(197, 19);
+            HideActiveClientThumbnailCheckBox.TabIndex = 20;
+            HideActiveClientThumbnailCheckBox.Text = "Hide preview of active EVE client";
+            HideActiveClientThumbnailCheckBox.UseVisualStyleBackColor = true;
+            HideActiveClientThumbnailCheckBox.CheckedChanged += OptionChanged_Handler;
             // 
             // ShowThumbnailsAlwaysOnTopCheckBox
             // 
-            this.ShowThumbnailsAlwaysOnTopCheckBox.AutoSize = true;
-            this.ShowThumbnailsAlwaysOnTopCheckBox.Checked = true;
-            this.ShowThumbnailsAlwaysOnTopCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.ShowThumbnailsAlwaysOnTopCheckBox.Location = new System.Drawing.Point(8, 103);
-            this.ShowThumbnailsAlwaysOnTopCheckBox.Name = "ShowThumbnailsAlwaysOnTopCheckBox";
-            this.ShowThumbnailsAlwaysOnTopCheckBox.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.ShowThumbnailsAlwaysOnTopCheckBox.Size = new System.Drawing.Size(137, 17);
-            this.ShowThumbnailsAlwaysOnTopCheckBox.TabIndex = 21;
-            this.ShowThumbnailsAlwaysOnTopCheckBox.Text = "Previews always on top";
-            this.ShowThumbnailsAlwaysOnTopCheckBox.UseVisualStyleBackColor = true;
-            this.ShowThumbnailsAlwaysOnTopCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ShowThumbnailsAlwaysOnTopCheckBox.AutoSize = true;
+            ShowThumbnailsAlwaysOnTopCheckBox.Checked = true;
+            ShowThumbnailsAlwaysOnTopCheckBox.CheckState = CheckState.Checked;
+            ShowThumbnailsAlwaysOnTopCheckBox.Location = new Point(9, 119);
+            ShowThumbnailsAlwaysOnTopCheckBox.Margin = new Padding(4, 3, 4, 3);
+            ShowThumbnailsAlwaysOnTopCheckBox.Name = "ShowThumbnailsAlwaysOnTopCheckBox";
+            ShowThumbnailsAlwaysOnTopCheckBox.RightToLeft = RightToLeft.No;
+            ShowThumbnailsAlwaysOnTopCheckBox.Size = new Size(148, 19);
+            ShowThumbnailsAlwaysOnTopCheckBox.TabIndex = 21;
+            ShowThumbnailsAlwaysOnTopCheckBox.Text = "Previews always on top";
+            ShowThumbnailsAlwaysOnTopCheckBox.UseVisualStyleBackColor = true;
+            ShowThumbnailsAlwaysOnTopCheckBox.CheckedChanged += OptionChanged_Handler;
             // 
             // HideThumbnailsOnLostFocusCheckBox
             // 
-            this.HideThumbnailsOnLostFocusCheckBox.AutoSize = true;
-            this.HideThumbnailsOnLostFocusCheckBox.Checked = true;
-            this.HideThumbnailsOnLostFocusCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.HideThumbnailsOnLostFocusCheckBox.Location = new System.Drawing.Point(8, 127);
-            this.HideThumbnailsOnLostFocusCheckBox.Name = "HideThumbnailsOnLostFocusCheckBox";
-            this.HideThumbnailsOnLostFocusCheckBox.Size = new System.Drawing.Size(234, 17);
-            this.HideThumbnailsOnLostFocusCheckBox.TabIndex = 22;
-            this.HideThumbnailsOnLostFocusCheckBox.Text = "Hide previews when EVE client is not active";
-            this.HideThumbnailsOnLostFocusCheckBox.UseVisualStyleBackColor = true;
-            this.HideThumbnailsOnLostFocusCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            HideThumbnailsOnLostFocusCheckBox.AutoSize = true;
+            HideThumbnailsOnLostFocusCheckBox.Checked = true;
+            HideThumbnailsOnLostFocusCheckBox.CheckState = CheckState.Checked;
+            HideThumbnailsOnLostFocusCheckBox.Location = new Point(9, 147);
+            HideThumbnailsOnLostFocusCheckBox.Margin = new Padding(4, 3, 4, 3);
+            HideThumbnailsOnLostFocusCheckBox.Name = "HideThumbnailsOnLostFocusCheckBox";
+            HideThumbnailsOnLostFocusCheckBox.Size = new Size(252, 19);
+            HideThumbnailsOnLostFocusCheckBox.TabIndex = 22;
+            HideThumbnailsOnLostFocusCheckBox.Text = "Hide previews when EVE client is not active";
+            HideThumbnailsOnLostFocusCheckBox.UseVisualStyleBackColor = true;
+            HideThumbnailsOnLostFocusCheckBox.CheckedChanged += OptionChanged_Handler;
             // 
             // EnablePerClientThumbnailsLayoutsCheckBox
             // 
-            this.EnablePerClientThumbnailsLayoutsCheckBox.AutoSize = true;
-            this.EnablePerClientThumbnailsLayoutsCheckBox.Checked = true;
-            this.EnablePerClientThumbnailsLayoutsCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.EnablePerClientThumbnailsLayoutsCheckBox.Location = new System.Drawing.Point(8, 151);
-            this.EnablePerClientThumbnailsLayoutsCheckBox.Name = "EnablePerClientThumbnailsLayoutsCheckBox";
-            this.EnablePerClientThumbnailsLayoutsCheckBox.Size = new System.Drawing.Size(185, 17);
-            this.EnablePerClientThumbnailsLayoutsCheckBox.TabIndex = 23;
-            this.EnablePerClientThumbnailsLayoutsCheckBox.Text = "Unique layout for each EVE client";
-            this.EnablePerClientThumbnailsLayoutsCheckBox.UseVisualStyleBackColor = true;
-            this.EnablePerClientThumbnailsLayoutsCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            EnablePerClientThumbnailsLayoutsCheckBox.AutoSize = true;
+            EnablePerClientThumbnailsLayoutsCheckBox.Checked = true;
+            EnablePerClientThumbnailsLayoutsCheckBox.CheckState = CheckState.Checked;
+            EnablePerClientThumbnailsLayoutsCheckBox.Location = new Point(9, 174);
+            EnablePerClientThumbnailsLayoutsCheckBox.Margin = new Padding(4, 3, 4, 3);
+            EnablePerClientThumbnailsLayoutsCheckBox.Name = "EnablePerClientThumbnailsLayoutsCheckBox";
+            EnablePerClientThumbnailsLayoutsCheckBox.Size = new Size(200, 19);
+            EnablePerClientThumbnailsLayoutsCheckBox.TabIndex = 23;
+            EnablePerClientThumbnailsLayoutsCheckBox.Text = "Unique layout for each EVE client";
+            EnablePerClientThumbnailsLayoutsCheckBox.UseVisualStyleBackColor = true;
+            EnablePerClientThumbnailsLayoutsCheckBox.CheckedChanged += OptionChanged_Handler;
             // 
             // MinimizeToTrayCheckBox
             // 
-            this.MinimizeToTrayCheckBox.AutoSize = true;
-            this.MinimizeToTrayCheckBox.Location = new System.Drawing.Point(8, 7);
-            this.MinimizeToTrayCheckBox.Name = "MinimizeToTrayCheckBox";
-            this.MinimizeToTrayCheckBox.Size = new System.Drawing.Size(139, 17);
-            this.MinimizeToTrayCheckBox.TabIndex = 18;
-            this.MinimizeToTrayCheckBox.Text = "Minimize to System Tray";
-            this.MinimizeToTrayCheckBox.UseVisualStyleBackColor = true;
-            this.MinimizeToTrayCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            MinimizeToTrayCheckBox.AutoSize = true;
+            MinimizeToTrayCheckBox.Location = new Point(9, 8);
+            MinimizeToTrayCheckBox.Margin = new Padding(4, 3, 4, 3);
+            MinimizeToTrayCheckBox.Name = "MinimizeToTrayCheckBox";
+            MinimizeToTrayCheckBox.Size = new Size(155, 19);
+            MinimizeToTrayCheckBox.TabIndex = 18;
+            MinimizeToTrayCheckBox.Text = "Minimize to System Tray";
+            MinimizeToTrayCheckBox.UseVisualStyleBackColor = true;
+            MinimizeToTrayCheckBox.CheckedChanged += OptionChanged_Handler;
             // 
             // ThumbnailTabPage
             // 
-            ThumbnailTabPage.BackColor = System.Drawing.SystemColors.Control;
+            ThumbnailTabPage.BackColor = SystemColors.Control;
             ThumbnailTabPage.Controls.Add(ThumbnailSettingsPanel);
-            ThumbnailTabPage.Location = new System.Drawing.Point(124, 4);
+            ThumbnailTabPage.Location = new Point(124, 4);
+            ThumbnailTabPage.Margin = new Padding(4, 3, 4, 3);
             ThumbnailTabPage.Name = "ThumbnailTabPage";
-            ThumbnailTabPage.Padding = new System.Windows.Forms.Padding(3);
-            ThumbnailTabPage.Size = new System.Drawing.Size(266, 353);
+            ThumbnailTabPage.Padding = new Padding(4, 3, 4, 3);
+            ThumbnailTabPage.Size = new Size(332, 409);
             ThumbnailTabPage.TabIndex = 1;
             ThumbnailTabPage.Text = "Thumbnail";
             // 
             // ThumbnailSettingsPanel
             // 
-            ThumbnailSettingsPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            ThumbnailSettingsPanel.BorderStyle = BorderStyle.FixedSingle;
             ThumbnailSettingsPanel.Controls.Add(HeigthLabel);
             ThumbnailSettingsPanel.Controls.Add(WidthLabel);
-            ThumbnailSettingsPanel.Controls.Add(this.ThumbnailsWidthNumericEdit);
-            ThumbnailSettingsPanel.Controls.Add(this.ThumbnailsHeightNumericEdit);
-            ThumbnailSettingsPanel.Controls.Add(this.ThumbnailOpacityTrackBar);
+            ThumbnailSettingsPanel.Controls.Add(ThumbnailsWidthNumericEdit);
+            ThumbnailSettingsPanel.Controls.Add(ThumbnailsHeightNumericEdit);
+            ThumbnailSettingsPanel.Controls.Add(ThumbnailOpacityTrackBar);
             ThumbnailSettingsPanel.Controls.Add(OpacityLabel);
-            ThumbnailSettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            ThumbnailSettingsPanel.Location = new System.Drawing.Point(3, 3);
+            ThumbnailSettingsPanel.Dock = DockStyle.Fill;
+            ThumbnailSettingsPanel.Location = new Point(4, 3);
+            ThumbnailSettingsPanel.Margin = new Padding(4, 3, 4, 3);
             ThumbnailSettingsPanel.Name = "ThumbnailSettingsPanel";
-            ThumbnailSettingsPanel.Size = new System.Drawing.Size(260, 347);
+            ThumbnailSettingsPanel.Size = new Size(324, 403);
             ThumbnailSettingsPanel.TabIndex = 19;
             // 
             // HeigthLabel
             // 
             HeigthLabel.AutoSize = true;
-            HeigthLabel.Location = new System.Drawing.Point(8, 57);
+            HeigthLabel.Location = new Point(9, 66);
+            HeigthLabel.Margin = new Padding(4, 0, 4, 0);
             HeigthLabel.Name = "HeigthLabel";
-            HeigthLabel.Size = new System.Drawing.Size(90, 13);
+            HeigthLabel.Size = new Size(104, 15);
             HeigthLabel.TabIndex = 24;
             HeigthLabel.Text = "Thumbnail Heigth";
             // 
             // WidthLabel
             // 
             WidthLabel.AutoSize = true;
-            WidthLabel.Location = new System.Drawing.Point(8, 33);
+            WidthLabel.Location = new Point(9, 38);
+            WidthLabel.Margin = new Padding(4, 0, 4, 0);
             WidthLabel.Name = "WidthLabel";
-            WidthLabel.Size = new System.Drawing.Size(87, 13);
+            WidthLabel.Size = new Size(100, 15);
             WidthLabel.TabIndex = 23;
             WidthLabel.Text = "Thumbnail Width";
             // 
             // ThumbnailsWidthNumericEdit
             // 
-            this.ThumbnailsWidthNumericEdit.BackColor = System.Drawing.SystemColors.Window;
-            this.ThumbnailsWidthNumericEdit.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.ThumbnailsWidthNumericEdit.CausesValidation = false;
-            this.ThumbnailsWidthNumericEdit.Increment = new decimal(new int[] {
-            10,
-            0,
-            0,
-            0});
-            this.ThumbnailsWidthNumericEdit.Location = new System.Drawing.Point(105, 31);
-            this.ThumbnailsWidthNumericEdit.Maximum = new decimal(new int[] {
-            999999,
-            0,
-            0,
-            0});
-            this.ThumbnailsWidthNumericEdit.Name = "ThumbnailsWidthNumericEdit";
-            this.ThumbnailsWidthNumericEdit.Size = new System.Drawing.Size(48, 20);
-            this.ThumbnailsWidthNumericEdit.TabIndex = 21;
-            this.ThumbnailsWidthNumericEdit.Value = new decimal(new int[] {
-            100,
-            0,
-            0,
-            0});
-            this.ThumbnailsWidthNumericEdit.ValueChanged += new System.EventHandler(this.ThumbnailSizeChanged_Handler);
+            ThumbnailsWidthNumericEdit.BackColor = SystemColors.Window;
+            ThumbnailsWidthNumericEdit.BorderStyle = BorderStyle.FixedSingle;
+            ThumbnailsWidthNumericEdit.CausesValidation = false;
+            ThumbnailsWidthNumericEdit.Increment = new decimal(new int[] { 10, 0, 0, 0 });
+            ThumbnailsWidthNumericEdit.Location = new Point(122, 36);
+            ThumbnailsWidthNumericEdit.Margin = new Padding(4, 3, 4, 3);
+            ThumbnailsWidthNumericEdit.Maximum = new decimal(new int[] { 999999, 0, 0, 0 });
+            ThumbnailsWidthNumericEdit.Name = "ThumbnailsWidthNumericEdit";
+            ThumbnailsWidthNumericEdit.Size = new Size(56, 23);
+            ThumbnailsWidthNumericEdit.TabIndex = 21;
+            ThumbnailsWidthNumericEdit.Value = new decimal(new int[] { 100, 0, 0, 0 });
+            ThumbnailsWidthNumericEdit.ValueChanged += ThumbnailSizeChanged_Handler;
             // 
             // ThumbnailsHeightNumericEdit
             // 
-            this.ThumbnailsHeightNumericEdit.BackColor = System.Drawing.SystemColors.Window;
-            this.ThumbnailsHeightNumericEdit.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.ThumbnailsHeightNumericEdit.CausesValidation = false;
-            this.ThumbnailsHeightNumericEdit.Increment = new decimal(new int[] {
-            10,
-            0,
-            0,
-            0});
-            this.ThumbnailsHeightNumericEdit.Location = new System.Drawing.Point(105, 55);
-            this.ThumbnailsHeightNumericEdit.Maximum = new decimal(new int[] {
-            99999999,
-            0,
-            0,
-            0});
-            this.ThumbnailsHeightNumericEdit.Name = "ThumbnailsHeightNumericEdit";
-            this.ThumbnailsHeightNumericEdit.Size = new System.Drawing.Size(48, 20);
-            this.ThumbnailsHeightNumericEdit.TabIndex = 22;
-            this.ThumbnailsHeightNumericEdit.Value = new decimal(new int[] {
-            70,
-            0,
-            0,
-            0});
-            this.ThumbnailsHeightNumericEdit.ValueChanged += new System.EventHandler(this.ThumbnailSizeChanged_Handler);
+            ThumbnailsHeightNumericEdit.BackColor = SystemColors.Window;
+            ThumbnailsHeightNumericEdit.BorderStyle = BorderStyle.FixedSingle;
+            ThumbnailsHeightNumericEdit.CausesValidation = false;
+            ThumbnailsHeightNumericEdit.Increment = new decimal(new int[] { 10, 0, 0, 0 });
+            ThumbnailsHeightNumericEdit.Location = new Point(122, 63);
+            ThumbnailsHeightNumericEdit.Margin = new Padding(4, 3, 4, 3);
+            ThumbnailsHeightNumericEdit.Maximum = new decimal(new int[] { 99999999, 0, 0, 0 });
+            ThumbnailsHeightNumericEdit.Name = "ThumbnailsHeightNumericEdit";
+            ThumbnailsHeightNumericEdit.Size = new Size(56, 23);
+            ThumbnailsHeightNumericEdit.TabIndex = 22;
+            ThumbnailsHeightNumericEdit.Value = new decimal(new int[] { 70, 0, 0, 0 });
+            ThumbnailsHeightNumericEdit.ValueChanged += ThumbnailSizeChanged_Handler;
             // 
             // ThumbnailOpacityTrackBar
             // 
-            this.ThumbnailOpacityTrackBar.AutoSize = false;
-            this.ThumbnailOpacityTrackBar.LargeChange = 10;
-            this.ThumbnailOpacityTrackBar.Location = new System.Drawing.Point(61, 6);
-            this.ThumbnailOpacityTrackBar.Maximum = 100;
-            this.ThumbnailOpacityTrackBar.Minimum = 20;
-            this.ThumbnailOpacityTrackBar.Name = "ThumbnailOpacityTrackBar";
-            this.ThumbnailOpacityTrackBar.Size = new System.Drawing.Size(191, 22);
-            this.ThumbnailOpacityTrackBar.TabIndex = 20;
-            this.ThumbnailOpacityTrackBar.TickFrequency = 10;
-            this.ThumbnailOpacityTrackBar.Value = 20;
-            this.ThumbnailOpacityTrackBar.ValueChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ThumbnailOpacityTrackBar.AutoSize = false;
+            ThumbnailOpacityTrackBar.LargeChange = 10;
+            ThumbnailOpacityTrackBar.Location = new Point(71, 7);
+            ThumbnailOpacityTrackBar.Margin = new Padding(4, 3, 4, 3);
+            ThumbnailOpacityTrackBar.Maximum = 100;
+            ThumbnailOpacityTrackBar.Minimum = 20;
+            ThumbnailOpacityTrackBar.Name = "ThumbnailOpacityTrackBar";
+            ThumbnailOpacityTrackBar.Size = new Size(223, 25);
+            ThumbnailOpacityTrackBar.TabIndex = 20;
+            ThumbnailOpacityTrackBar.TickFrequency = 10;
+            ThumbnailOpacityTrackBar.Value = 20;
+            ThumbnailOpacityTrackBar.ValueChanged += OptionChanged_Handler;
             // 
             // OpacityLabel
             // 
             OpacityLabel.AutoSize = true;
-            OpacityLabel.Location = new System.Drawing.Point(8, 9);
+            OpacityLabel.Location = new Point(9, 10);
+            OpacityLabel.Margin = new Padding(4, 0, 4, 0);
             OpacityLabel.Name = "OpacityLabel";
-            OpacityLabel.Size = new System.Drawing.Size(43, 13);
+            OpacityLabel.Size = new Size(48, 15);
             OpacityLabel.TabIndex = 19;
             OpacityLabel.Text = "Opacity";
             // 
             // ZoomSettingsPanel
             // 
-            ZoomSettingsPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            ZoomSettingsPanel.BorderStyle = BorderStyle.FixedSingle;
             ZoomSettingsPanel.Controls.Add(ZoomFactorLabel);
-            ZoomSettingsPanel.Controls.Add(this.ZoomAnchorPanel);
+            ZoomSettingsPanel.Controls.Add(ZoomAnchorPanel);
             ZoomSettingsPanel.Controls.Add(ZoomAnchorLabel);
-            ZoomSettingsPanel.Controls.Add(this.EnableThumbnailZoomCheckBox);
-            ZoomSettingsPanel.Controls.Add(this.ThumbnailZoomFactorNumericEdit);
-            ZoomSettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            ZoomSettingsPanel.Location = new System.Drawing.Point(0, 0);
+            ZoomSettingsPanel.Controls.Add(EnableThumbnailZoomCheckBox);
+            ZoomSettingsPanel.Controls.Add(ThumbnailZoomFactorNumericEdit);
+            ZoomSettingsPanel.Dock = DockStyle.Fill;
+            ZoomSettingsPanel.Location = new Point(0, 0);
+            ZoomSettingsPanel.Margin = new Padding(4, 3, 4, 3);
             ZoomSettingsPanel.Name = "ZoomSettingsPanel";
-            ZoomSettingsPanel.Size = new System.Drawing.Size(266, 353);
+            ZoomSettingsPanel.Size = new Size(332, 409);
             ZoomSettingsPanel.TabIndex = 36;
             // 
             // ZoomFactorLabel
             // 
             ZoomFactorLabel.AutoSize = true;
-            ZoomFactorLabel.Location = new System.Drawing.Point(8, 33);
+            ZoomFactorLabel.Location = new Point(9, 38);
+            ZoomFactorLabel.Margin = new Padding(4, 0, 4, 0);
             ZoomFactorLabel.Name = "ZoomFactorLabel";
-            ZoomFactorLabel.Size = new System.Drawing.Size(67, 13);
+            ZoomFactorLabel.Size = new Size(75, 15);
             ZoomFactorLabel.TabIndex = 39;
             ZoomFactorLabel.Text = "Zoom Factor";
             // 
             // ZoomAnchorPanel
             // 
-            this.ZoomAnchorPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.ZoomAnchorPanel.Controls.Add(this.ZoomAanchorNWRadioButton);
-            this.ZoomAnchorPanel.Controls.Add(this.ZoomAanchorNRadioButton);
-            this.ZoomAnchorPanel.Controls.Add(this.ZoomAanchorNERadioButton);
-            this.ZoomAnchorPanel.Controls.Add(this.ZoomAanchorWRadioButton);
-            this.ZoomAnchorPanel.Controls.Add(this.ZoomAanchorSERadioButton);
-            this.ZoomAnchorPanel.Controls.Add(this.ZoomAanchorCRadioButton);
-            this.ZoomAnchorPanel.Controls.Add(this.ZoomAanchorSRadioButton);
-            this.ZoomAnchorPanel.Controls.Add(this.ZoomAanchorERadioButton);
-            this.ZoomAnchorPanel.Controls.Add(this.ZoomAanchorSWRadioButton);
-            this.ZoomAnchorPanel.Location = new System.Drawing.Point(81, 54);
-            this.ZoomAnchorPanel.Name = "ZoomAnchorPanel";
-            this.ZoomAnchorPanel.Size = new System.Drawing.Size(77, 73);
-            this.ZoomAnchorPanel.TabIndex = 38;
+            ZoomAnchorPanel.BorderStyle = BorderStyle.FixedSingle;
+            ZoomAnchorPanel.Controls.Add(ZoomAanchorNWRadioButton);
+            ZoomAnchorPanel.Controls.Add(ZoomAanchorNRadioButton);
+            ZoomAnchorPanel.Controls.Add(ZoomAanchorNERadioButton);
+            ZoomAnchorPanel.Controls.Add(ZoomAanchorWRadioButton);
+            ZoomAnchorPanel.Controls.Add(ZoomAanchorSERadioButton);
+            ZoomAnchorPanel.Controls.Add(ZoomAanchorCRadioButton);
+            ZoomAnchorPanel.Controls.Add(ZoomAanchorSRadioButton);
+            ZoomAnchorPanel.Controls.Add(ZoomAanchorERadioButton);
+            ZoomAnchorPanel.Controls.Add(ZoomAanchorSWRadioButton);
+            ZoomAnchorPanel.Location = new Point(94, 62);
+            ZoomAnchorPanel.Margin = new Padding(4, 3, 4, 3);
+            ZoomAnchorPanel.Name = "ZoomAnchorPanel";
+            ZoomAnchorPanel.Size = new Size(90, 84);
+            ZoomAnchorPanel.TabIndex = 38;
             // 
             // ZoomAanchorNWRadioButton
             // 
-            this.ZoomAanchorNWRadioButton.AutoSize = true;
-            this.ZoomAanchorNWRadioButton.Location = new System.Drawing.Point(3, 3);
-            this.ZoomAanchorNWRadioButton.Name = "ZoomAanchorNWRadioButton";
-            this.ZoomAanchorNWRadioButton.Size = new System.Drawing.Size(14, 13);
-            this.ZoomAanchorNWRadioButton.TabIndex = 0;
-            this.ZoomAanchorNWRadioButton.TabStop = true;
-            this.ZoomAanchorNWRadioButton.UseVisualStyleBackColor = true;
-            this.ZoomAanchorNWRadioButton.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ZoomAanchorNWRadioButton.AutoSize = true;
+            ZoomAanchorNWRadioButton.Location = new Point(4, 3);
+            ZoomAanchorNWRadioButton.Margin = new Padding(4, 3, 4, 3);
+            ZoomAanchorNWRadioButton.Name = "ZoomAanchorNWRadioButton";
+            ZoomAanchorNWRadioButton.Size = new Size(14, 13);
+            ZoomAanchorNWRadioButton.TabIndex = 0;
+            ZoomAanchorNWRadioButton.TabStop = true;
+            ZoomAanchorNWRadioButton.UseVisualStyleBackColor = true;
+            ZoomAanchorNWRadioButton.CheckedChanged += OptionChanged_Handler;
             // 
             // ZoomAanchorNRadioButton
             // 
-            this.ZoomAanchorNRadioButton.AutoSize = true;
-            this.ZoomAanchorNRadioButton.Location = new System.Drawing.Point(31, 3);
-            this.ZoomAanchorNRadioButton.Name = "ZoomAanchorNRadioButton";
-            this.ZoomAanchorNRadioButton.Size = new System.Drawing.Size(14, 13);
-            this.ZoomAanchorNRadioButton.TabIndex = 1;
-            this.ZoomAanchorNRadioButton.TabStop = true;
-            this.ZoomAanchorNRadioButton.UseVisualStyleBackColor = true;
-            this.ZoomAanchorNRadioButton.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ZoomAanchorNRadioButton.AutoSize = true;
+            ZoomAanchorNRadioButton.Location = new Point(36, 3);
+            ZoomAanchorNRadioButton.Margin = new Padding(4, 3, 4, 3);
+            ZoomAanchorNRadioButton.Name = "ZoomAanchorNRadioButton";
+            ZoomAanchorNRadioButton.Size = new Size(14, 13);
+            ZoomAanchorNRadioButton.TabIndex = 1;
+            ZoomAanchorNRadioButton.TabStop = true;
+            ZoomAanchorNRadioButton.UseVisualStyleBackColor = true;
+            ZoomAanchorNRadioButton.CheckedChanged += OptionChanged_Handler;
             // 
             // ZoomAanchorNERadioButton
             // 
-            this.ZoomAanchorNERadioButton.AutoSize = true;
-            this.ZoomAanchorNERadioButton.Location = new System.Drawing.Point(59, 3);
-            this.ZoomAanchorNERadioButton.Name = "ZoomAanchorNERadioButton";
-            this.ZoomAanchorNERadioButton.Size = new System.Drawing.Size(14, 13);
-            this.ZoomAanchorNERadioButton.TabIndex = 2;
-            this.ZoomAanchorNERadioButton.TabStop = true;
-            this.ZoomAanchorNERadioButton.UseVisualStyleBackColor = true;
-            this.ZoomAanchorNERadioButton.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ZoomAanchorNERadioButton.AutoSize = true;
+            ZoomAanchorNERadioButton.Location = new Point(69, 3);
+            ZoomAanchorNERadioButton.Margin = new Padding(4, 3, 4, 3);
+            ZoomAanchorNERadioButton.Name = "ZoomAanchorNERadioButton";
+            ZoomAanchorNERadioButton.Size = new Size(14, 13);
+            ZoomAanchorNERadioButton.TabIndex = 2;
+            ZoomAanchorNERadioButton.TabStop = true;
+            ZoomAanchorNERadioButton.UseVisualStyleBackColor = true;
+            ZoomAanchorNERadioButton.CheckedChanged += OptionChanged_Handler;
             // 
             // ZoomAanchorWRadioButton
             // 
-            this.ZoomAanchorWRadioButton.AutoSize = true;
-            this.ZoomAanchorWRadioButton.Location = new System.Drawing.Point(3, 29);
-            this.ZoomAanchorWRadioButton.Name = "ZoomAanchorWRadioButton";
-            this.ZoomAanchorWRadioButton.Size = new System.Drawing.Size(14, 13);
-            this.ZoomAanchorWRadioButton.TabIndex = 3;
-            this.ZoomAanchorWRadioButton.TabStop = true;
-            this.ZoomAanchorWRadioButton.UseVisualStyleBackColor = true;
-            this.ZoomAanchorWRadioButton.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ZoomAanchorWRadioButton.AutoSize = true;
+            ZoomAanchorWRadioButton.Location = new Point(4, 33);
+            ZoomAanchorWRadioButton.Margin = new Padding(4, 3, 4, 3);
+            ZoomAanchorWRadioButton.Name = "ZoomAanchorWRadioButton";
+            ZoomAanchorWRadioButton.Size = new Size(14, 13);
+            ZoomAanchorWRadioButton.TabIndex = 3;
+            ZoomAanchorWRadioButton.TabStop = true;
+            ZoomAanchorWRadioButton.UseVisualStyleBackColor = true;
+            ZoomAanchorWRadioButton.CheckedChanged += OptionChanged_Handler;
             // 
             // ZoomAanchorSERadioButton
             // 
-            this.ZoomAanchorSERadioButton.AutoSize = true;
-            this.ZoomAanchorSERadioButton.Location = new System.Drawing.Point(59, 55);
-            this.ZoomAanchorSERadioButton.Name = "ZoomAanchorSERadioButton";
-            this.ZoomAanchorSERadioButton.Size = new System.Drawing.Size(14, 13);
-            this.ZoomAanchorSERadioButton.TabIndex = 8;
-            this.ZoomAanchorSERadioButton.TabStop = true;
-            this.ZoomAanchorSERadioButton.UseVisualStyleBackColor = true;
-            this.ZoomAanchorSERadioButton.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ZoomAanchorSERadioButton.AutoSize = true;
+            ZoomAanchorSERadioButton.Location = new Point(69, 63);
+            ZoomAanchorSERadioButton.Margin = new Padding(4, 3, 4, 3);
+            ZoomAanchorSERadioButton.Name = "ZoomAanchorSERadioButton";
+            ZoomAanchorSERadioButton.Size = new Size(14, 13);
+            ZoomAanchorSERadioButton.TabIndex = 8;
+            ZoomAanchorSERadioButton.TabStop = true;
+            ZoomAanchorSERadioButton.UseVisualStyleBackColor = true;
+            ZoomAanchorSERadioButton.CheckedChanged += OptionChanged_Handler;
             // 
             // ZoomAanchorCRadioButton
             // 
-            this.ZoomAanchorCRadioButton.AutoSize = true;
-            this.ZoomAanchorCRadioButton.Location = new System.Drawing.Point(31, 29);
-            this.ZoomAanchorCRadioButton.Name = "ZoomAanchorCRadioButton";
-            this.ZoomAanchorCRadioButton.Size = new System.Drawing.Size(14, 13);
-            this.ZoomAanchorCRadioButton.TabIndex = 4;
-            this.ZoomAanchorCRadioButton.TabStop = true;
-            this.ZoomAanchorCRadioButton.UseVisualStyleBackColor = true;
-            this.ZoomAanchorCRadioButton.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ZoomAanchorCRadioButton.AutoSize = true;
+            ZoomAanchorCRadioButton.Location = new Point(36, 33);
+            ZoomAanchorCRadioButton.Margin = new Padding(4, 3, 4, 3);
+            ZoomAanchorCRadioButton.Name = "ZoomAanchorCRadioButton";
+            ZoomAanchorCRadioButton.Size = new Size(14, 13);
+            ZoomAanchorCRadioButton.TabIndex = 4;
+            ZoomAanchorCRadioButton.TabStop = true;
+            ZoomAanchorCRadioButton.UseVisualStyleBackColor = true;
+            ZoomAanchorCRadioButton.CheckedChanged += OptionChanged_Handler;
             // 
             // ZoomAanchorSRadioButton
             // 
-            this.ZoomAanchorSRadioButton.AutoSize = true;
-            this.ZoomAanchorSRadioButton.Location = new System.Drawing.Point(31, 55);
-            this.ZoomAanchorSRadioButton.Name = "ZoomAanchorSRadioButton";
-            this.ZoomAanchorSRadioButton.Size = new System.Drawing.Size(14, 13);
-            this.ZoomAanchorSRadioButton.TabIndex = 7;
-            this.ZoomAanchorSRadioButton.TabStop = true;
-            this.ZoomAanchorSRadioButton.UseVisualStyleBackColor = true;
-            this.ZoomAanchorSRadioButton.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ZoomAanchorSRadioButton.AutoSize = true;
+            ZoomAanchorSRadioButton.Location = new Point(36, 63);
+            ZoomAanchorSRadioButton.Margin = new Padding(4, 3, 4, 3);
+            ZoomAanchorSRadioButton.Name = "ZoomAanchorSRadioButton";
+            ZoomAanchorSRadioButton.Size = new Size(14, 13);
+            ZoomAanchorSRadioButton.TabIndex = 7;
+            ZoomAanchorSRadioButton.TabStop = true;
+            ZoomAanchorSRadioButton.UseVisualStyleBackColor = true;
+            ZoomAanchorSRadioButton.CheckedChanged += OptionChanged_Handler;
             // 
             // ZoomAanchorERadioButton
             // 
-            this.ZoomAanchorERadioButton.AutoSize = true;
-            this.ZoomAanchorERadioButton.Location = new System.Drawing.Point(59, 29);
-            this.ZoomAanchorERadioButton.Name = "ZoomAanchorERadioButton";
-            this.ZoomAanchorERadioButton.Size = new System.Drawing.Size(14, 13);
-            this.ZoomAanchorERadioButton.TabIndex = 5;
-            this.ZoomAanchorERadioButton.TabStop = true;
-            this.ZoomAanchorERadioButton.UseVisualStyleBackColor = true;
-            this.ZoomAanchorERadioButton.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ZoomAanchorERadioButton.AutoSize = true;
+            ZoomAanchorERadioButton.Location = new Point(69, 33);
+            ZoomAanchorERadioButton.Margin = new Padding(4, 3, 4, 3);
+            ZoomAanchorERadioButton.Name = "ZoomAanchorERadioButton";
+            ZoomAanchorERadioButton.Size = new Size(14, 13);
+            ZoomAanchorERadioButton.TabIndex = 5;
+            ZoomAanchorERadioButton.TabStop = true;
+            ZoomAanchorERadioButton.UseVisualStyleBackColor = true;
+            ZoomAanchorERadioButton.CheckedChanged += OptionChanged_Handler;
             // 
             // ZoomAanchorSWRadioButton
             // 
-            this.ZoomAanchorSWRadioButton.AutoSize = true;
-            this.ZoomAanchorSWRadioButton.Location = new System.Drawing.Point(3, 55);
-            this.ZoomAanchorSWRadioButton.Name = "ZoomAanchorSWRadioButton";
-            this.ZoomAanchorSWRadioButton.Size = new System.Drawing.Size(14, 13);
-            this.ZoomAanchorSWRadioButton.TabIndex = 6;
-            this.ZoomAanchorSWRadioButton.TabStop = true;
-            this.ZoomAanchorSWRadioButton.UseVisualStyleBackColor = true;
-            this.ZoomAanchorSWRadioButton.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ZoomAanchorSWRadioButton.AutoSize = true;
+            ZoomAanchorSWRadioButton.Location = new Point(4, 63);
+            ZoomAanchorSWRadioButton.Margin = new Padding(4, 3, 4, 3);
+            ZoomAanchorSWRadioButton.Name = "ZoomAanchorSWRadioButton";
+            ZoomAanchorSWRadioButton.Size = new Size(14, 13);
+            ZoomAanchorSWRadioButton.TabIndex = 6;
+            ZoomAanchorSWRadioButton.TabStop = true;
+            ZoomAanchorSWRadioButton.UseVisualStyleBackColor = true;
+            ZoomAanchorSWRadioButton.CheckedChanged += OptionChanged_Handler;
             // 
             // ZoomAnchorLabel
             // 
             ZoomAnchorLabel.AutoSize = true;
-            ZoomAnchorLabel.Location = new System.Drawing.Point(8, 57);
+            ZoomAnchorLabel.Location = new Point(9, 66);
+            ZoomAnchorLabel.Margin = new Padding(4, 0, 4, 0);
             ZoomAnchorLabel.Name = "ZoomAnchorLabel";
-            ZoomAnchorLabel.Size = new System.Drawing.Size(41, 13);
+            ZoomAnchorLabel.Size = new Size(46, 15);
             ZoomAnchorLabel.TabIndex = 40;
             ZoomAnchorLabel.Text = "Anchor";
             // 
             // EnableThumbnailZoomCheckBox
             // 
-            this.EnableThumbnailZoomCheckBox.AutoSize = true;
-            this.EnableThumbnailZoomCheckBox.Checked = true;
-            this.EnableThumbnailZoomCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.EnableThumbnailZoomCheckBox.Location = new System.Drawing.Point(8, 7);
-            this.EnableThumbnailZoomCheckBox.Name = "EnableThumbnailZoomCheckBox";
-            this.EnableThumbnailZoomCheckBox.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.EnableThumbnailZoomCheckBox.Size = new System.Drawing.Size(98, 17);
-            this.EnableThumbnailZoomCheckBox.TabIndex = 36;
-            this.EnableThumbnailZoomCheckBox.Text = "Zoom on hover";
-            this.EnableThumbnailZoomCheckBox.UseVisualStyleBackColor = true;
-            this.EnableThumbnailZoomCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            EnableThumbnailZoomCheckBox.AutoSize = true;
+            EnableThumbnailZoomCheckBox.Checked = true;
+            EnableThumbnailZoomCheckBox.CheckState = CheckState.Checked;
+            EnableThumbnailZoomCheckBox.Location = new Point(9, 8);
+            EnableThumbnailZoomCheckBox.Margin = new Padding(4, 3, 4, 3);
+            EnableThumbnailZoomCheckBox.Name = "EnableThumbnailZoomCheckBox";
+            EnableThumbnailZoomCheckBox.RightToLeft = RightToLeft.No;
+            EnableThumbnailZoomCheckBox.Size = new Size(108, 19);
+            EnableThumbnailZoomCheckBox.TabIndex = 36;
+            EnableThumbnailZoomCheckBox.Text = "Zoom on hover";
+            EnableThumbnailZoomCheckBox.UseVisualStyleBackColor = true;
+            EnableThumbnailZoomCheckBox.CheckedChanged += OptionChanged_Handler;
             // 
             // ThumbnailZoomFactorNumericEdit
             // 
-            this.ThumbnailZoomFactorNumericEdit.BackColor = System.Drawing.SystemColors.Window;
-            this.ThumbnailZoomFactorNumericEdit.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.ThumbnailZoomFactorNumericEdit.Location = new System.Drawing.Point(81, 31);
-            this.ThumbnailZoomFactorNumericEdit.Maximum = new decimal(new int[] {
-            10,
-            0,
-            0,
-            0});
-            this.ThumbnailZoomFactorNumericEdit.Minimum = new decimal(new int[] {
-            2,
-            0,
-            0,
-            0});
-            this.ThumbnailZoomFactorNumericEdit.Name = "ThumbnailZoomFactorNumericEdit";
-            this.ThumbnailZoomFactorNumericEdit.Size = new System.Drawing.Size(38, 20);
-            this.ThumbnailZoomFactorNumericEdit.TabIndex = 37;
-            this.ThumbnailZoomFactorNumericEdit.Value = new decimal(new int[] {
-            2,
-            0,
-            0,
-            0});
-            this.ThumbnailZoomFactorNumericEdit.ValueChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ThumbnailZoomFactorNumericEdit.BackColor = SystemColors.Window;
+            ThumbnailZoomFactorNumericEdit.BorderStyle = BorderStyle.FixedSingle;
+            ThumbnailZoomFactorNumericEdit.Location = new Point(94, 36);
+            ThumbnailZoomFactorNumericEdit.Margin = new Padding(4, 3, 4, 3);
+            ThumbnailZoomFactorNumericEdit.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
+            ThumbnailZoomFactorNumericEdit.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
+            ThumbnailZoomFactorNumericEdit.Name = "ThumbnailZoomFactorNumericEdit";
+            ThumbnailZoomFactorNumericEdit.Size = new Size(44, 23);
+            ThumbnailZoomFactorNumericEdit.TabIndex = 37;
+            ThumbnailZoomFactorNumericEdit.Value = new decimal(new int[] { 2, 0, 0, 0 });
+            ThumbnailZoomFactorNumericEdit.ValueChanged += OptionChanged_Handler;
             // 
             // OverlayTabPage
             // 
-            OverlayTabPage.BackColor = System.Drawing.SystemColors.Control;
+            OverlayTabPage.BackColor = SystemColors.Control;
             OverlayTabPage.Controls.Add(OverlaySettingsPanel);
-            OverlayTabPage.Location = new System.Drawing.Point(124, 4);
+            OverlayTabPage.Location = new Point(124, 4);
+            OverlayTabPage.Margin = new Padding(4, 3, 4, 3);
             OverlayTabPage.Name = "OverlayTabPage";
-            OverlayTabPage.Size = new System.Drawing.Size(266, 353);
+            OverlayTabPage.Size = new Size(332, 409);
             OverlayTabPage.TabIndex = 3;
             OverlayTabPage.Text = "Overlay";
             // 
             // OverlaySettingsPanel
             // 
-            OverlaySettingsPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            OverlaySettingsPanel.Controls.Add(this.groupBoxOverlayFont);
-            OverlaySettingsPanel.Controls.Add(this.HighlightColorLabel);
-            OverlaySettingsPanel.Controls.Add(this.ActiveClientHighlightColorButton);
-            OverlaySettingsPanel.Controls.Add(this.EnableActiveClientHighlightCheckBox);
-            OverlaySettingsPanel.Controls.Add(this.ShowThumbnailOverlaysCheckBox);
-            OverlaySettingsPanel.Controls.Add(this.ShowThumbnailFramesCheckBox);
-            OverlaySettingsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            OverlaySettingsPanel.Location = new System.Drawing.Point(0, 0);
+            OverlaySettingsPanel.BorderStyle = BorderStyle.FixedSingle;
+            OverlaySettingsPanel.Controls.Add(groupBoxOverlayFont);
+            OverlaySettingsPanel.Controls.Add(HighlightColorLabel);
+            OverlaySettingsPanel.Controls.Add(ActiveClientHighlightColorButton);
+            OverlaySettingsPanel.Controls.Add(EnableActiveClientHighlightCheckBox);
+            OverlaySettingsPanel.Controls.Add(ShowThumbnailOverlaysCheckBox);
+            OverlaySettingsPanel.Controls.Add(ShowThumbnailFramesCheckBox);
+            OverlaySettingsPanel.Dock = DockStyle.Fill;
+            OverlaySettingsPanel.Location = new Point(0, 0);
+            OverlaySettingsPanel.Margin = new Padding(4, 3, 4, 3);
             OverlaySettingsPanel.Name = "OverlaySettingsPanel";
-            OverlaySettingsPanel.Size = new System.Drawing.Size(266, 353);
+            OverlaySettingsPanel.Size = new Size(332, 409);
             OverlaySettingsPanel.TabIndex = 25;
             // 
             // groupBoxOverlayFont
             // 
-            this.groupBoxOverlayFont.Controls.Add(this.lblTitleOffsetTop);
-            this.groupBoxOverlayFont.Controls.Add(this.txtTitleOffsetTop);
-            this.groupBoxOverlayFont.Controls.Add(this.lblTitleOffsetLeft);
-            this.groupBoxOverlayFont.Controls.Add(this.txtTitleOffsetLeft);
-            this.groupBoxOverlayFont.Controls.Add(this.lblTitleBorderWidth);
-            this.groupBoxOverlayFont.Controls.Add(this.txtFontOutlineWidth);
-            this.groupBoxOverlayFont.Controls.Add(this.btnFontOutlineColor);
-            this.groupBoxOverlayFont.Controls.Add(this.btnSetOverlayFontColor);
-            this.groupBoxOverlayFont.Controls.Add(this.lblDisplaySampleFont);
-            this.groupBoxOverlayFont.Controls.Add(this.btnSetOverlayFont);
-            this.groupBoxOverlayFont.Location = new System.Drawing.Point(8, 112);
-            this.groupBoxOverlayFont.Name = "groupBoxOverlayFont";
-            this.groupBoxOverlayFont.Size = new System.Drawing.Size(245, 132);
-            this.groupBoxOverlayFont.TabIndex = 33;
-            this.groupBoxOverlayFont.TabStop = false;
-            this.groupBoxOverlayFont.Text = "Title Font";
+            groupBoxOverlayFont.Controls.Add(lblTitleOffsetTop);
+            groupBoxOverlayFont.Controls.Add(txtTitleOffsetTop);
+            groupBoxOverlayFont.Controls.Add(lblTitleOffsetLeft);
+            groupBoxOverlayFont.Controls.Add(txtTitleOffsetLeft);
+            groupBoxOverlayFont.Controls.Add(lblTitleBorderWidth);
+            groupBoxOverlayFont.Controls.Add(txtFontOutlineWidth);
+            groupBoxOverlayFont.Controls.Add(btnFontOutlineColor);
+            groupBoxOverlayFont.Controls.Add(btnSetOverlayFontColor);
+            groupBoxOverlayFont.Controls.Add(lblDisplaySampleFont);
+            groupBoxOverlayFont.Controls.Add(btnSetOverlayFont);
+            groupBoxOverlayFont.Location = new Point(9, 129);
+            groupBoxOverlayFont.Margin = new Padding(4, 3, 4, 3);
+            groupBoxOverlayFont.Name = "groupBoxOverlayFont";
+            groupBoxOverlayFont.Padding = new Padding(4, 3, 4, 3);
+            groupBoxOverlayFont.Size = new Size(286, 152);
+            groupBoxOverlayFont.TabIndex = 33;
+            groupBoxOverlayFont.TabStop = false;
+            groupBoxOverlayFont.Text = "Title Font";
             // 
             // lblTitleOffsetTop
             // 
-            this.lblTitleOffsetTop.AutoSize = true;
-            this.lblTitleOffsetTop.Location = new System.Drawing.Point(105, 51);
-            this.lblTitleOffsetTop.Name = "lblTitleOffsetTop";
-            this.lblTitleOffsetTop.Size = new System.Drawing.Size(26, 13);
-            this.lblTitleOffsetTop.TabIndex = 39;
-            this.lblTitleOffsetTop.Text = "Top";
+            lblTitleOffsetTop.AutoSize = true;
+            lblTitleOffsetTop.Location = new Point(122, 59);
+            lblTitleOffsetTop.Margin = new Padding(4, 0, 4, 0);
+            lblTitleOffsetTop.Name = "lblTitleOffsetTop";
+            lblTitleOffsetTop.Size = new Size(27, 15);
+            lblTitleOffsetTop.TabIndex = 39;
+            lblTitleOffsetTop.Text = "Top";
             // 
             // txtTitleOffsetTop
             // 
-            this.txtTitleOffsetTop.Location = new System.Drawing.Point(137, 48);
-            this.txtTitleOffsetTop.Name = "txtTitleOffsetTop";
-            this.txtTitleOffsetTop.Size = new System.Drawing.Size(26, 20);
-            this.txtTitleOffsetTop.TabIndex = 38;
-            this.txtTitleOffsetTop.Text = "1";
-            this.txtTitleOffsetTop.Leave += new System.EventHandler(this.txtTitleOffsetTop_Leave);
+            txtTitleOffsetTop.Location = new Point(160, 55);
+            txtTitleOffsetTop.Margin = new Padding(4, 3, 4, 3);
+            txtTitleOffsetTop.Name = "txtTitleOffsetTop";
+            txtTitleOffsetTop.Size = new Size(30, 23);
+            txtTitleOffsetTop.TabIndex = 38;
+            txtTitleOffsetTop.Text = "1";
+            txtTitleOffsetTop.Leave += txtTitleOffsetTop_Leave;
             // 
             // lblTitleOffsetLeft
             // 
-            this.lblTitleOffsetLeft.AutoSize = true;
-            this.lblTitleOffsetLeft.Location = new System.Drawing.Point(11, 51);
-            this.lblTitleOffsetLeft.Name = "lblTitleOffsetLeft";
-            this.lblTitleOffsetLeft.Size = new System.Drawing.Size(56, 13);
-            this.lblTitleOffsetLeft.TabIndex = 37;
-            this.lblTitleOffsetLeft.Text = "Offset Left";
+            lblTitleOffsetLeft.AutoSize = true;
+            lblTitleOffsetLeft.Location = new Point(13, 59);
+            lblTitleOffsetLeft.Margin = new Padding(4, 0, 4, 0);
+            lblTitleOffsetLeft.Name = "lblTitleOffsetLeft";
+            lblTitleOffsetLeft.Size = new Size(62, 15);
+            lblTitleOffsetLeft.TabIndex = 37;
+            lblTitleOffsetLeft.Text = "Offset Left";
             // 
             // txtTitleOffsetLeft
             // 
-            this.txtTitleOffsetLeft.Location = new System.Drawing.Point(73, 48);
-            this.txtTitleOffsetLeft.Name = "txtTitleOffsetLeft";
-            this.txtTitleOffsetLeft.Size = new System.Drawing.Size(26, 20);
-            this.txtTitleOffsetLeft.TabIndex = 36;
-            this.txtTitleOffsetLeft.Text = "1";
-            this.txtTitleOffsetLeft.Leave += new System.EventHandler(this.txtTitleOffsetLeft_Leave);
+            txtTitleOffsetLeft.Location = new Point(85, 55);
+            txtTitleOffsetLeft.Margin = new Padding(4, 3, 4, 3);
+            txtTitleOffsetLeft.Name = "txtTitleOffsetLeft";
+            txtTitleOffsetLeft.Size = new Size(30, 23);
+            txtTitleOffsetLeft.TabIndex = 36;
+            txtTitleOffsetLeft.Text = "1";
+            txtTitleOffsetLeft.Leave += txtTitleOffsetLeft_Leave;
             // 
             // lblTitleBorderWidth
             // 
-            this.lblTitleBorderWidth.AutoSize = true;
-            this.lblTitleBorderWidth.Location = new System.Drawing.Point(169, 51);
-            this.lblTitleBorderWidth.Name = "lblTitleBorderWidth";
-            this.lblTitleBorderWidth.Size = new System.Drawing.Size(40, 13);
-            this.lblTitleBorderWidth.TabIndex = 35;
-            this.lblTitleBorderWidth.Text = "Outline";
+            lblTitleBorderWidth.AutoSize = true;
+            lblTitleBorderWidth.Location = new Point(197, 59);
+            lblTitleBorderWidth.Margin = new Padding(4, 0, 4, 0);
+            lblTitleBorderWidth.Name = "lblTitleBorderWidth";
+            lblTitleBorderWidth.Size = new Size(46, 15);
+            lblTitleBorderWidth.TabIndex = 35;
+            lblTitleBorderWidth.Text = "Outline";
             // 
             // txtFontOutlineWidth
             // 
-            this.txtFontOutlineWidth.Location = new System.Drawing.Point(215, 48);
-            this.txtFontOutlineWidth.Name = "txtFontOutlineWidth";
-            this.txtFontOutlineWidth.Size = new System.Drawing.Size(26, 20);
-            this.txtFontOutlineWidth.TabIndex = 34;
-            this.txtFontOutlineWidth.Text = "0";
-            this.txtFontOutlineWidth.Leave += new System.EventHandler(this.txtFontOutlineWidth_Leave);
+            txtFontOutlineWidth.Location = new Point(251, 55);
+            txtFontOutlineWidth.Margin = new Padding(4, 3, 4, 3);
+            txtFontOutlineWidth.Name = "txtFontOutlineWidth";
+            txtFontOutlineWidth.Size = new Size(30, 23);
+            txtFontOutlineWidth.TabIndex = 34;
+            txtFontOutlineWidth.Text = "0";
+            txtFontOutlineWidth.Leave += txtFontOutlineWidth_Leave;
             // 
             // btnFontOutlineColor
             // 
-            this.btnFontOutlineColor.Location = new System.Drawing.Point(163, 19);
-            this.btnFontOutlineColor.Name = "btnFontOutlineColor";
-            this.btnFontOutlineColor.Size = new System.Drawing.Size(76, 23);
-            this.btnFontOutlineColor.TabIndex = 33;
-            this.btnFontOutlineColor.Text = "Outline Color";
-            this.btnFontOutlineColor.UseVisualStyleBackColor = true;
-            this.btnFontOutlineColor.Click += new System.EventHandler(this.btnFontOutlineColor_Click);
+            btnFontOutlineColor.Location = new Point(190, 22);
+            btnFontOutlineColor.Margin = new Padding(4, 3, 4, 3);
+            btnFontOutlineColor.Name = "btnFontOutlineColor";
+            btnFontOutlineColor.Size = new Size(89, 27);
+            btnFontOutlineColor.TabIndex = 33;
+            btnFontOutlineColor.Text = "Outline Color";
+            btnFontOutlineColor.UseVisualStyleBackColor = true;
+            btnFontOutlineColor.Click += btnFontOutlineColor_Click;
             // 
             // btnSetOverlayFontColor
             // 
-            this.btnSetOverlayFontColor.Location = new System.Drawing.Point(84, 19);
-            this.btnSetOverlayFontColor.Name = "btnSetOverlayFontColor";
-            this.btnSetOverlayFontColor.Size = new System.Drawing.Size(59, 23);
-            this.btnSetOverlayFontColor.TabIndex = 31;
-            this.btnSetOverlayFontColor.Text = "Forecolor";
-            this.btnSetOverlayFontColor.UseVisualStyleBackColor = true;
-            this.btnSetOverlayFontColor.Click += new System.EventHandler(this.btnSetOverlayFontColor_Click);
+            btnSetOverlayFontColor.Location = new Point(98, 22);
+            btnSetOverlayFontColor.Margin = new Padding(4, 3, 4, 3);
+            btnSetOverlayFontColor.Name = "btnSetOverlayFontColor";
+            btnSetOverlayFontColor.Size = new Size(69, 27);
+            btnSetOverlayFontColor.TabIndex = 31;
+            btnSetOverlayFontColor.Text = "Forecolor";
+            btnSetOverlayFontColor.UseVisualStyleBackColor = true;
+            btnSetOverlayFontColor.Click += btnSetOverlayFontColor_Click;
+            // 
+            // lblDisplaySampleFont
+            // 
+            lblDisplaySampleFont.AutoSize = true;
+            lblDisplaySampleFont.BackColor = SystemColors.Control;
+            lblDisplaySampleFont.ForeColor = Color.FromArgb(255, 128, 0);
+            lblDisplaySampleFont.Location = new Point(7, 88);
+            lblDisplaySampleFont.Margin = new Padding(4, 0, 4, 0);
+            lblDisplaySampleFont.Name = "lblDisplaySampleFont";
+            lblDisplaySampleFont.Size = new Size(49, 15);
+            lblDisplaySampleFont.TabIndex = 32;
+            lblDisplaySampleFont.Text = "Sample.";
             // 
             // btnSetOverlayFont
             // 
-            this.btnSetOverlayFont.Location = new System.Drawing.Point(6, 19);
-            this.btnSetOverlayFont.Name = "btnSetOverlayFont";
-            this.btnSetOverlayFont.Size = new System.Drawing.Size(56, 23);
-            this.btnSetOverlayFont.TabIndex = 30;
-            this.btnSetOverlayFont.Text = "Set Font";
-            this.btnSetOverlayFont.UseVisualStyleBackColor = true;
-            this.btnSetOverlayFont.Click += new System.EventHandler(this.btnSetOverlayFont_Click);
+            btnSetOverlayFont.Location = new Point(7, 22);
+            btnSetOverlayFont.Margin = new Padding(4, 3, 4, 3);
+            btnSetOverlayFont.Name = "btnSetOverlayFont";
+            btnSetOverlayFont.Size = new Size(65, 27);
+            btnSetOverlayFont.TabIndex = 30;
+            btnSetOverlayFont.Text = "Set Font";
+            btnSetOverlayFont.UseVisualStyleBackColor = true;
+            btnSetOverlayFont.Click += btnSetOverlayFont_Click;
             // 
             // HighlightColorLabel
             // 
-            this.HighlightColorLabel.AutoSize = true;
-            this.HighlightColorLabel.Location = new System.Drawing.Point(5, 78);
-            this.HighlightColorLabel.Name = "HighlightColorLabel";
-            this.HighlightColorLabel.Size = new System.Drawing.Size(31, 13);
-            this.HighlightColorLabel.TabIndex = 29;
-            this.HighlightColorLabel.Text = "Color";
+            HighlightColorLabel.AutoSize = true;
+            HighlightColorLabel.Location = new Point(6, 90);
+            HighlightColorLabel.Margin = new Padding(4, 0, 4, 0);
+            HighlightColorLabel.Name = "HighlightColorLabel";
+            HighlightColorLabel.Size = new Size(36, 15);
+            HighlightColorLabel.TabIndex = 29;
+            HighlightColorLabel.Text = "Color";
             // 
             // ActiveClientHighlightColorButton
             // 
-            this.ActiveClientHighlightColorButton.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.ActiveClientHighlightColorButton.Location = new System.Drawing.Point(42, 77);
-            this.ActiveClientHighlightColorButton.Name = "ActiveClientHighlightColorButton";
-            this.ActiveClientHighlightColorButton.Size = new System.Drawing.Size(93, 17);
-            this.ActiveClientHighlightColorButton.TabIndex = 28;
-            this.ActiveClientHighlightColorButton.Click += new System.EventHandler(this.ActiveClientHighlightColorButton_Click);
+            ActiveClientHighlightColorButton.BorderStyle = BorderStyle.FixedSingle;
+            ActiveClientHighlightColorButton.Location = new Point(49, 89);
+            ActiveClientHighlightColorButton.Margin = new Padding(4, 3, 4, 3);
+            ActiveClientHighlightColorButton.Name = "ActiveClientHighlightColorButton";
+            ActiveClientHighlightColorButton.Size = new Size(108, 19);
+            ActiveClientHighlightColorButton.TabIndex = 28;
+            ActiveClientHighlightColorButton.Click += ActiveClientHighlightColorButton_Click;
             // 
             // EnableActiveClientHighlightCheckBox
             // 
-            this.EnableActiveClientHighlightCheckBox.AutoSize = true;
-            this.EnableActiveClientHighlightCheckBox.Checked = true;
-            this.EnableActiveClientHighlightCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.EnableActiveClientHighlightCheckBox.Location = new System.Drawing.Point(8, 55);
-            this.EnableActiveClientHighlightCheckBox.Name = "EnableActiveClientHighlightCheckBox";
-            this.EnableActiveClientHighlightCheckBox.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.EnableActiveClientHighlightCheckBox.Size = new System.Drawing.Size(127, 17);
-            this.EnableActiveClientHighlightCheckBox.TabIndex = 27;
-            this.EnableActiveClientHighlightCheckBox.Text = "Highlight active client";
-            this.EnableActiveClientHighlightCheckBox.UseVisualStyleBackColor = true;
-            this.EnableActiveClientHighlightCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            EnableActiveClientHighlightCheckBox.AutoSize = true;
+            EnableActiveClientHighlightCheckBox.Checked = true;
+            EnableActiveClientHighlightCheckBox.CheckState = CheckState.Checked;
+            EnableActiveClientHighlightCheckBox.Location = new Point(9, 63);
+            EnableActiveClientHighlightCheckBox.Margin = new Padding(4, 3, 4, 3);
+            EnableActiveClientHighlightCheckBox.Name = "EnableActiveClientHighlightCheckBox";
+            EnableActiveClientHighlightCheckBox.RightToLeft = RightToLeft.No;
+            EnableActiveClientHighlightCheckBox.Size = new Size(142, 19);
+            EnableActiveClientHighlightCheckBox.TabIndex = 27;
+            EnableActiveClientHighlightCheckBox.Text = "Highlight active client";
+            EnableActiveClientHighlightCheckBox.UseVisualStyleBackColor = true;
+            EnableActiveClientHighlightCheckBox.CheckedChanged += OptionChanged_Handler;
             // 
             // ShowThumbnailOverlaysCheckBox
             // 
-            this.ShowThumbnailOverlaysCheckBox.AutoSize = true;
-            this.ShowThumbnailOverlaysCheckBox.Checked = true;
-            this.ShowThumbnailOverlaysCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.ShowThumbnailOverlaysCheckBox.Location = new System.Drawing.Point(8, 7);
-            this.ShowThumbnailOverlaysCheckBox.Name = "ShowThumbnailOverlaysCheckBox";
-            this.ShowThumbnailOverlaysCheckBox.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.ShowThumbnailOverlaysCheckBox.Size = new System.Drawing.Size(90, 17);
-            this.ShowThumbnailOverlaysCheckBox.TabIndex = 25;
-            this.ShowThumbnailOverlaysCheckBox.Text = "Show overlay";
-            this.ShowThumbnailOverlaysCheckBox.UseVisualStyleBackColor = true;
-            this.ShowThumbnailOverlaysCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ShowThumbnailOverlaysCheckBox.AutoSize = true;
+            ShowThumbnailOverlaysCheckBox.Checked = true;
+            ShowThumbnailOverlaysCheckBox.CheckState = CheckState.Checked;
+            ShowThumbnailOverlaysCheckBox.Location = new Point(9, 8);
+            ShowThumbnailOverlaysCheckBox.Margin = new Padding(4, 3, 4, 3);
+            ShowThumbnailOverlaysCheckBox.Name = "ShowThumbnailOverlaysCheckBox";
+            ShowThumbnailOverlaysCheckBox.RightToLeft = RightToLeft.No;
+            ShowThumbnailOverlaysCheckBox.Size = new Size(96, 19);
+            ShowThumbnailOverlaysCheckBox.TabIndex = 25;
+            ShowThumbnailOverlaysCheckBox.Text = "Show overlay";
+            ShowThumbnailOverlaysCheckBox.UseVisualStyleBackColor = true;
+            ShowThumbnailOverlaysCheckBox.CheckedChanged += OptionChanged_Handler;
             // 
             // ShowThumbnailFramesCheckBox
             // 
-            this.ShowThumbnailFramesCheckBox.AutoSize = true;
-            this.ShowThumbnailFramesCheckBox.Checked = true;
-            this.ShowThumbnailFramesCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.ShowThumbnailFramesCheckBox.Location = new System.Drawing.Point(8, 31);
-            this.ShowThumbnailFramesCheckBox.Name = "ShowThumbnailFramesCheckBox";
-            this.ShowThumbnailFramesCheckBox.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.ShowThumbnailFramesCheckBox.Size = new System.Drawing.Size(87, 17);
-            this.ShowThumbnailFramesCheckBox.TabIndex = 26;
-            this.ShowThumbnailFramesCheckBox.Text = "Show frames";
-            this.ShowThumbnailFramesCheckBox.UseVisualStyleBackColor = true;
-            this.ShowThumbnailFramesCheckBox.CheckedChanged += new System.EventHandler(this.OptionChanged_Handler);
+            ShowThumbnailFramesCheckBox.AutoSize = true;
+            ShowThumbnailFramesCheckBox.Checked = true;
+            ShowThumbnailFramesCheckBox.CheckState = CheckState.Checked;
+            ShowThumbnailFramesCheckBox.Location = new Point(9, 36);
+            ShowThumbnailFramesCheckBox.Margin = new Padding(4, 3, 4, 3);
+            ShowThumbnailFramesCheckBox.Name = "ShowThumbnailFramesCheckBox";
+            ShowThumbnailFramesCheckBox.RightToLeft = RightToLeft.No;
+            ShowThumbnailFramesCheckBox.Size = new Size(94, 19);
+            ShowThumbnailFramesCheckBox.TabIndex = 26;
+            ShowThumbnailFramesCheckBox.Text = "Show frames";
+            ShowThumbnailFramesCheckBox.UseVisualStyleBackColor = true;
+            ShowThumbnailFramesCheckBox.CheckedChanged += OptionChanged_Handler;
             // 
             // ClientsPanel
             // 
-            ClientsPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            ClientsPanel.Controls.Add(this.activeClientsSplitContainer);
-            ClientsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            ClientsPanel.Location = new System.Drawing.Point(0, 0);
+            ClientsPanel.BorderStyle = BorderStyle.FixedSingle;
+            ClientsPanel.Controls.Add(activeClientsSplitContainer);
+            ClientsPanel.Dock = DockStyle.Fill;
+            ClientsPanel.Location = new Point(0, 0);
+            ClientsPanel.Margin = new Padding(4, 3, 4, 3);
             ClientsPanel.Name = "ClientsPanel";
-            ClientsPanel.Size = new System.Drawing.Size(266, 353);
+            ClientsPanel.Size = new Size(332, 409);
             ClientsPanel.TabIndex = 32;
             // 
             // activeClientsSplitContainer
             // 
-            this.activeClientsSplitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.activeClientsSplitContainer.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
-            this.activeClientsSplitContainer.Location = new System.Drawing.Point(0, 0);
-            this.activeClientsSplitContainer.Name = "activeClientsSplitContainer";
-            this.activeClientsSplitContainer.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            activeClientsSplitContainer.Dock = DockStyle.Fill;
+            activeClientsSplitContainer.FixedPanel = FixedPanel.Panel1;
+            activeClientsSplitContainer.Location = new Point(0, 0);
+            activeClientsSplitContainer.Margin = new Padding(4, 3, 4, 3);
+            activeClientsSplitContainer.Name = "activeClientsSplitContainer";
+            activeClientsSplitContainer.Orientation = Orientation.Horizontal;
             // 
             // activeClientsSplitContainer.Panel1
             // 
-            this.activeClientsSplitContainer.Panel1.Controls.Add(this.groupBoxToggleHideAllThumbnails);
-            this.activeClientsSplitContainer.Panel1.Controls.Add(ThumbnailsListLabel);
+            activeClientsSplitContainer.Panel1.Controls.Add(groupBoxToggleHideAllThumbnails);
+            activeClientsSplitContainer.Panel1.Controls.Add(ThumbnailsListLabel);
             // 
             // activeClientsSplitContainer.Panel2
             // 
-            this.activeClientsSplitContainer.Panel2.Controls.Add(this.ThumbnailsList);
-            this.activeClientsSplitContainer.Size = new System.Drawing.Size(264, 351);
-            this.activeClientsSplitContainer.SplitterDistance = 116;
-            this.activeClientsSplitContainer.TabIndex = 35;
+            activeClientsSplitContainer.Panel2.Controls.Add(ThumbnailsList);
+            activeClientsSplitContainer.Size = new Size(330, 407);
+            activeClientsSplitContainer.SplitterDistance = 134;
+            activeClientsSplitContainer.SplitterWidth = 5;
+            activeClientsSplitContainer.TabIndex = 35;
             // 
             // groupBoxToggleHideAllThumbnails
             // 
-            this.groupBoxToggleHideAllThumbnails.Controls.Add(this.btnMinimizeAllClients);
-            this.groupBoxToggleHideAllThumbnails.Controls.Add(this.lblMinimizeAllClientsHotkey);
-            this.groupBoxToggleHideAllThumbnails.Controls.Add(this.txtMinimizeAllClientsHotkey);
-            this.groupBoxToggleHideAllThumbnails.Controls.Add(this.btnToggleHideAll);
-            this.groupBoxToggleHideAllThumbnails.Controls.Add(this.lblToggleHideAllActiveHotkey);
-            this.groupBoxToggleHideAllThumbnails.Controls.Add(this.txtToggleHideAllActiveHotkey);
-            this.groupBoxToggleHideAllThumbnails.Location = new System.Drawing.Point(3, 3);
-            this.groupBoxToggleHideAllThumbnails.Name = "groupBoxToggleHideAllThumbnails";
-            this.groupBoxToggleHideAllThumbnails.Size = new System.Drawing.Size(250, 89);
-            this.groupBoxToggleHideAllThumbnails.TabIndex = 37;
-            this.groupBoxToggleHideAllThumbnails.TabStop = false;
-            this.groupBoxToggleHideAllThumbnails.Text = "All Clients";
+            groupBoxToggleHideAllThumbnails.Controls.Add(btnMinimizeAllClients);
+            groupBoxToggleHideAllThumbnails.Controls.Add(lblMinimizeAllClientsHotkey);
+            groupBoxToggleHideAllThumbnails.Controls.Add(txtMinimizeAllClientsHotkey);
+            groupBoxToggleHideAllThumbnails.Controls.Add(btnToggleHideAll);
+            groupBoxToggleHideAllThumbnails.Controls.Add(lblToggleHideAllActiveHotkey);
+            groupBoxToggleHideAllThumbnails.Controls.Add(txtToggleHideAllActiveHotkey);
+            groupBoxToggleHideAllThumbnails.Location = new Point(4, 3);
+            groupBoxToggleHideAllThumbnails.Margin = new Padding(4, 3, 4, 3);
+            groupBoxToggleHideAllThumbnails.Name = "groupBoxToggleHideAllThumbnails";
+            groupBoxToggleHideAllThumbnails.Padding = new Padding(4, 3, 4, 3);
+            groupBoxToggleHideAllThumbnails.Size = new Size(292, 103);
+            groupBoxToggleHideAllThumbnails.TabIndex = 37;
+            groupBoxToggleHideAllThumbnails.TabStop = false;
+            groupBoxToggleHideAllThumbnails.Text = "All Clients";
             // 
             // btnMinimizeAllClients
             // 
-            this.btnMinimizeAllClients.Location = new System.Drawing.Point(6, 51);
-            this.btnMinimizeAllClients.Name = "btnMinimizeAllClients";
-            this.btnMinimizeAllClients.Size = new System.Drawing.Size(96, 26);
-            this.btnMinimizeAllClients.TabIndex = 39;
-            this.btnMinimizeAllClients.Text = "Minimize";
-            this.btnMinimizeAllClients.UseVisualStyleBackColor = true;
-            this.btnMinimizeAllClients.Click += new System.EventHandler(this.btnMinimizeAllClients_Click);
+            btnMinimizeAllClients.Location = new Point(7, 59);
+            btnMinimizeAllClients.Margin = new Padding(4, 3, 4, 3);
+            btnMinimizeAllClients.Name = "btnMinimizeAllClients";
+            btnMinimizeAllClients.Size = new Size(112, 30);
+            btnMinimizeAllClients.TabIndex = 39;
+            btnMinimizeAllClients.Text = "Minimize";
+            btnMinimizeAllClients.UseVisualStyleBackColor = true;
+            btnMinimizeAllClients.Click += btnMinimizeAllClients_Click;
             // 
             // lblMinimizeAllClientsHotkey
             // 
-            this.lblMinimizeAllClientsHotkey.AutoSize = true;
-            this.lblMinimizeAllClientsHotkey.Location = new System.Drawing.Point(106, 58);
-            this.lblMinimizeAllClientsHotkey.Name = "lblMinimizeAllClientsHotkey";
-            this.lblMinimizeAllClientsHotkey.Size = new System.Drawing.Size(41, 13);
-            this.lblMinimizeAllClientsHotkey.TabIndex = 37;
-            this.lblMinimizeAllClientsHotkey.Text = "Hotkey";
+            lblMinimizeAllClientsHotkey.AutoSize = true;
+            lblMinimizeAllClientsHotkey.Location = new Point(124, 67);
+            lblMinimizeAllClientsHotkey.Margin = new Padding(4, 0, 4, 0);
+            lblMinimizeAllClientsHotkey.Name = "lblMinimizeAllClientsHotkey";
+            lblMinimizeAllClientsHotkey.Size = new Size(45, 15);
+            lblMinimizeAllClientsHotkey.TabIndex = 37;
+            lblMinimizeAllClientsHotkey.Text = "Hotkey";
             // 
             // txtMinimizeAllClientsHotkey
             // 
-            this.txtMinimizeAllClientsHotkey.BackColor = System.Drawing.SystemColors.Control;
-            this.txtMinimizeAllClientsHotkey.Location = new System.Drawing.Point(146, 54);
-            this.txtMinimizeAllClientsHotkey.Name = "txtMinimizeAllClientsHotkey";
-            this.txtMinimizeAllClientsHotkey.ReadOnly = true;
-            this.txtMinimizeAllClientsHotkey.Size = new System.Drawing.Size(94, 20);
-            this.txtMinimizeAllClientsHotkey.TabIndex = 38;
-            this.instantToolTip.SetToolTip(this.txtMinimizeAllClientsHotkey, "Double click to set");
-            this.txtMinimizeAllClientsHotkey.DoubleClick += new System.EventHandler(this.txtMinimizeAllClientsHotkey_DoubleClick);
+            txtMinimizeAllClientsHotkey.BackColor = SystemColors.Control;
+            txtMinimizeAllClientsHotkey.Location = new Point(170, 62);
+            txtMinimizeAllClientsHotkey.Margin = new Padding(4, 3, 4, 3);
+            txtMinimizeAllClientsHotkey.Name = "txtMinimizeAllClientsHotkey";
+            txtMinimizeAllClientsHotkey.ReadOnly = true;
+            txtMinimizeAllClientsHotkey.Size = new Size(109, 23);
+            txtMinimizeAllClientsHotkey.TabIndex = 38;
+            instantToolTip.SetToolTip(txtMinimizeAllClientsHotkey, "Double click to set");
+            txtMinimizeAllClientsHotkey.DoubleClick += txtMinimizeAllClientsHotkey_DoubleClick;
             // 
             // btnToggleHideAll
             // 
-            this.btnToggleHideAll.Location = new System.Drawing.Point(6, 19);
-            this.btnToggleHideAll.Name = "btnToggleHideAll";
-            this.btnToggleHideAll.Size = new System.Drawing.Size(96, 26);
-            this.btnToggleHideAll.TabIndex = 36;
-            this.btnToggleHideAll.Text = "Hide Thumbnails";
-            this.btnToggleHideAll.UseVisualStyleBackColor = true;
-            this.btnToggleHideAll.Click += new System.EventHandler(this.btnToggleHideAll_Click);
+            btnToggleHideAll.Location = new Point(7, 22);
+            btnToggleHideAll.Margin = new Padding(4, 3, 4, 3);
+            btnToggleHideAll.Name = "btnToggleHideAll";
+            btnToggleHideAll.Size = new Size(112, 30);
+            btnToggleHideAll.TabIndex = 36;
+            btnToggleHideAll.Text = "Hide Thumbnails";
+            btnToggleHideAll.UseVisualStyleBackColor = true;
+            btnToggleHideAll.Click += btnToggleHideAll_Click;
             // 
             // lblToggleHideAllActiveHotkey
             // 
-            this.lblToggleHideAllActiveHotkey.AutoSize = true;
-            this.lblToggleHideAllActiveHotkey.Location = new System.Drawing.Point(106, 26);
-            this.lblToggleHideAllActiveHotkey.Name = "lblToggleHideAllActiveHotkey";
-            this.lblToggleHideAllActiveHotkey.Size = new System.Drawing.Size(41, 13);
-            this.lblToggleHideAllActiveHotkey.TabIndex = 34;
-            this.lblToggleHideAllActiveHotkey.Text = "Hotkey";
+            lblToggleHideAllActiveHotkey.AutoSize = true;
+            lblToggleHideAllActiveHotkey.Location = new Point(124, 30);
+            lblToggleHideAllActiveHotkey.Margin = new Padding(4, 0, 4, 0);
+            lblToggleHideAllActiveHotkey.Name = "lblToggleHideAllActiveHotkey";
+            lblToggleHideAllActiveHotkey.Size = new Size(45, 15);
+            lblToggleHideAllActiveHotkey.TabIndex = 34;
+            lblToggleHideAllActiveHotkey.Text = "Hotkey";
             // 
             // txtToggleHideAllActiveHotkey
             // 
-            this.txtToggleHideAllActiveHotkey.BackColor = System.Drawing.SystemColors.Control;
-            this.txtToggleHideAllActiveHotkey.Location = new System.Drawing.Point(146, 22);
-            this.txtToggleHideAllActiveHotkey.Name = "txtToggleHideAllActiveHotkey";
-            this.txtToggleHideAllActiveHotkey.ReadOnly = true;
-            this.txtToggleHideAllActiveHotkey.Size = new System.Drawing.Size(94, 20);
-            this.txtToggleHideAllActiveHotkey.TabIndex = 35;
-            this.instantToolTip.SetToolTip(this.txtToggleHideAllActiveHotkey, "Double click to set");
-            this.txtToggleHideAllActiveHotkey.DoubleClick += new System.EventHandler(this.txtToggleHideAllActiveHotkey_DoubleClick);
+            txtToggleHideAllActiveHotkey.BackColor = SystemColors.Control;
+            txtToggleHideAllActiveHotkey.Location = new Point(170, 25);
+            txtToggleHideAllActiveHotkey.Margin = new Padding(4, 3, 4, 3);
+            txtToggleHideAllActiveHotkey.Name = "txtToggleHideAllActiveHotkey";
+            txtToggleHideAllActiveHotkey.ReadOnly = true;
+            txtToggleHideAllActiveHotkey.Size = new Size(109, 23);
+            txtToggleHideAllActiveHotkey.TabIndex = 35;
+            instantToolTip.SetToolTip(txtToggleHideAllActiveHotkey, "Double click to set");
+            txtToggleHideAllActiveHotkey.DoubleClick += txtToggleHideAllActiveHotkey_DoubleClick;
             // 
             // ThumbnailsListLabel
             // 
             ThumbnailsListLabel.AutoSize = true;
-            ThumbnailsListLabel.Location = new System.Drawing.Point(2, 97);
+            ThumbnailsListLabel.Location = new Point(2, 112);
+            ThumbnailsListLabel.Margin = new Padding(4, 0, 4, 0);
             ThumbnailsListLabel.Name = "ThumbnailsListLabel";
-            ThumbnailsListLabel.Size = new System.Drawing.Size(162, 13);
+            ThumbnailsListLabel.Size = new Size(182, 15);
             ThumbnailsListLabel.TabIndex = 33;
             ThumbnailsListLabel.Text = "Thumbnails (check to force hide)";
             // 
             // ThumbnailsList
             // 
-            this.ThumbnailsList.BackColor = System.Drawing.SystemColors.Window;
-            this.ThumbnailsList.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.ThumbnailsList.CheckOnClick = true;
-            this.ThumbnailsList.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ThumbnailsList.FormattingEnabled = true;
-            this.ThumbnailsList.IntegralHeight = false;
-            this.ThumbnailsList.Location = new System.Drawing.Point(0, 0);
-            this.ThumbnailsList.Name = "ThumbnailsList";
-            this.ThumbnailsList.Size = new System.Drawing.Size(264, 231);
-            this.ThumbnailsList.TabIndex = 34;
-            this.ThumbnailsList.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.ThumbnailsList_ItemCheck_Handler);
+            ThumbnailsList.BackColor = SystemColors.Window;
+            ThumbnailsList.BorderStyle = BorderStyle.FixedSingle;
+            ThumbnailsList.CheckOnClick = true;
+            ThumbnailsList.Dock = DockStyle.Fill;
+            ThumbnailsList.FormattingEnabled = true;
+            ThumbnailsList.IntegralHeight = false;
+            ThumbnailsList.Location = new Point(0, 0);
+            ThumbnailsList.Margin = new Padding(4, 3, 4, 3);
+            ThumbnailsList.Name = "ThumbnailsList";
+            ThumbnailsList.Size = new Size(330, 268);
+            ThumbnailsList.TabIndex = 34;
+            ThumbnailsList.ItemCheck += ThumbnailsList_ItemCheck_Handler;
             // 
             // CycleGroupTabPage
             // 
-            CycleGroupTabPage.Controls.Add(this.CycleGroupPanel);
-            CycleGroupTabPage.Location = new System.Drawing.Point(124, 4);
+            CycleGroupTabPage.Controls.Add(CycleGroupPanel);
+            CycleGroupTabPage.Location = new Point(124, 4);
+            CycleGroupTabPage.Margin = new Padding(4, 3, 4, 3);
             CycleGroupTabPage.Name = "CycleGroupTabPage";
-            CycleGroupTabPage.Size = new System.Drawing.Size(266, 353);
+            CycleGroupTabPage.Size = new Size(332, 409);
             CycleGroupTabPage.TabIndex = 6;
             CycleGroupTabPage.Text = "Cycle Groups";
             // 
             // CycleGroupPanel
             // 
-            this.CycleGroupPanel.Controls.Add(this.splitContainerMainCycleGroup);
-            this.CycleGroupPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.CycleGroupPanel.Location = new System.Drawing.Point(0, 0);
-            this.CycleGroupPanel.Name = "CycleGroupPanel";
-            this.CycleGroupPanel.Size = new System.Drawing.Size(266, 353);
-            this.CycleGroupPanel.TabIndex = 0;
+            CycleGroupPanel.Controls.Add(splitContainerMainCycleGroup);
+            CycleGroupPanel.Dock = DockStyle.Fill;
+            CycleGroupPanel.Location = new Point(0, 0);
+            CycleGroupPanel.Margin = new Padding(4, 3, 4, 3);
+            CycleGroupPanel.Name = "CycleGroupPanel";
+            CycleGroupPanel.Size = new Size(332, 409);
+            CycleGroupPanel.TabIndex = 0;
             // 
             // splitContainerMainCycleGroup
             // 
-            this.splitContainerMainCycleGroup.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainerMainCycleGroup.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
-            this.splitContainerMainCycleGroup.Location = new System.Drawing.Point(0, 0);
-            this.splitContainerMainCycleGroup.Name = "splitContainerMainCycleGroup";
-            this.splitContainerMainCycleGroup.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            splitContainerMainCycleGroup.Dock = DockStyle.Fill;
+            splitContainerMainCycleGroup.FixedPanel = FixedPanel.Panel1;
+            splitContainerMainCycleGroup.Location = new Point(0, 0);
+            splitContainerMainCycleGroup.Margin = new Padding(4, 3, 4, 3);
+            splitContainerMainCycleGroup.Name = "splitContainerMainCycleGroup";
+            splitContainerMainCycleGroup.Orientation = Orientation.Horizontal;
             // 
             // splitContainerMainCycleGroup.Panel1
             // 
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.CycleGroupLabel);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.removeGroupButton);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.addClientToCycleGroupButton);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupMoveClientOrderUpButton);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.selectCycleGroupComboBox);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.removeClientToCycleGroupButton);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupDescriptionLabel);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.addNewGroupButton);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupDescriptionText);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupClientOrderLabel);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupForwardHotkeyLabel);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupForwardHotkey1Text);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupBackwardHotkey2Text);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupForwardHotkey2Text);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupBackwardHotkey1Text);
-            this.splitContainerMainCycleGroup.Panel1.Controls.Add(this.cycleGroupBackHotkeyLabel);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(CycleGroupLabel);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(removeGroupButton);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(addClientToCycleGroupButton);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(cycleGroupMoveClientOrderUpButton);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(selectCycleGroupComboBox);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(removeClientToCycleGroupButton);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(cycleGroupDescriptionLabel);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(addNewGroupButton);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(cycleGroupDescriptionText);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(cycleGroupClientOrderLabel);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(cycleGroupForwardHotkeyLabel);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(cycleGroupForwardHotkey1Text);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(cycleGroupBackwardHotkey2Text);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(cycleGroupForwardHotkey2Text);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(cycleGroupBackwardHotkey1Text);
+            splitContainerMainCycleGroup.Panel1.Controls.Add(cycleGroupBackHotkeyLabel);
             // 
             // splitContainerMainCycleGroup.Panel2
             // 
-            this.splitContainerMainCycleGroup.Panel2.Controls.Add(this.cycleGroupClientOrderList);
-            this.splitContainerMainCycleGroup.Size = new System.Drawing.Size(266, 353);
-            this.splitContainerMainCycleGroup.SplitterDistance = 160;
-            this.splitContainerMainCycleGroup.TabIndex = 17;
+            splitContainerMainCycleGroup.Panel2.Controls.Add(cycleGroupClientOrderList);
+            splitContainerMainCycleGroup.Size = new Size(332, 409);
+            splitContainerMainCycleGroup.SplitterDistance = 185;
+            splitContainerMainCycleGroup.SplitterWidth = 5;
+            splitContainerMainCycleGroup.TabIndex = 17;
             // 
             // CycleGroupLabel
             // 
-            this.CycleGroupLabel.AutoSize = true;
-            this.CycleGroupLabel.Location = new System.Drawing.Point(13, 10);
-            this.CycleGroupLabel.Name = "CycleGroupLabel";
-            this.CycleGroupLabel.Size = new System.Drawing.Size(101, 13);
-            this.CycleGroupLabel.TabIndex = 2;
-            this.CycleGroupLabel.Text = "Select Cycle Group:";
+            CycleGroupLabel.AutoSize = true;
+            CycleGroupLabel.Location = new Point(15, 12);
+            CycleGroupLabel.Margin = new Padding(4, 0, 4, 0);
+            CycleGroupLabel.Name = "CycleGroupLabel";
+            CycleGroupLabel.Size = new Size(109, 15);
+            CycleGroupLabel.TabIndex = 2;
+            CycleGroupLabel.Text = "Select Cycle Group:";
             // 
             // removeGroupButton
             // 
-            this.removeGroupButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.removeGroupButton.Location = new System.Drawing.Point(210, 25);
-            this.removeGroupButton.Name = "removeGroupButton";
-            this.removeGroupButton.Size = new System.Drawing.Size(24, 23);
-            this.removeGroupButton.TabIndex = 16;
-            this.removeGroupButton.Text = "-";
-            this.removeGroupButton.UseVisualStyleBackColor = true;
-            this.removeGroupButton.Click += new System.EventHandler(this.removeGroupButton_Click);
+            removeGroupButton.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            removeGroupButton.Location = new Point(245, 29);
+            removeGroupButton.Margin = new Padding(4, 3, 4, 3);
+            removeGroupButton.Name = "removeGroupButton";
+            removeGroupButton.Size = new Size(28, 27);
+            removeGroupButton.TabIndex = 16;
+            removeGroupButton.Text = "-";
+            removeGroupButton.UseVisualStyleBackColor = true;
+            removeGroupButton.Click += removeGroupButton_Click;
             // 
             // addClientToCycleGroupButton
             // 
-            this.addClientToCycleGroupButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.addClientToCycleGroupButton.Location = new System.Drawing.Point(233, 132);
-            this.addClientToCycleGroupButton.Name = "addClientToCycleGroupButton";
-            this.addClientToCycleGroupButton.Size = new System.Drawing.Size(22, 23);
-            this.addClientToCycleGroupButton.TabIndex = 0;
-            this.addClientToCycleGroupButton.Text = "+";
-            this.addClientToCycleGroupButton.UseVisualStyleBackColor = true;
-            this.addClientToCycleGroupButton.Click += new System.EventHandler(this.addClientToCycleGroupButton_Click);
+            addClientToCycleGroupButton.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            addClientToCycleGroupButton.Location = new Point(272, 152);
+            addClientToCycleGroupButton.Margin = new Padding(4, 3, 4, 3);
+            addClientToCycleGroupButton.Name = "addClientToCycleGroupButton";
+            addClientToCycleGroupButton.Size = new Size(26, 27);
+            addClientToCycleGroupButton.TabIndex = 0;
+            addClientToCycleGroupButton.Text = "+";
+            addClientToCycleGroupButton.UseVisualStyleBackColor = true;
+            addClientToCycleGroupButton.Click += addClientToCycleGroupButton_Click;
             // 
             // cycleGroupMoveClientOrderUpButton
             // 
-            this.cycleGroupMoveClientOrderUpButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cycleGroupMoveClientOrderUpButton.Location = new System.Drawing.Point(175, 132);
-            this.cycleGroupMoveClientOrderUpButton.Name = "cycleGroupMoveClientOrderUpButton";
-            this.cycleGroupMoveClientOrderUpButton.Size = new System.Drawing.Size(33, 23);
-            this.cycleGroupMoveClientOrderUpButton.TabIndex = 15;
-            this.cycleGroupMoveClientOrderUpButton.Text = "Up";
-            this.cycleGroupMoveClientOrderUpButton.UseVisualStyleBackColor = true;
-            this.cycleGroupMoveClientOrderUpButton.Click += new System.EventHandler(this.cycleGroupMoveClientOrderUpButton_Click);
+            cycleGroupMoveClientOrderUpButton.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            cycleGroupMoveClientOrderUpButton.Location = new Point(204, 152);
+            cycleGroupMoveClientOrderUpButton.Margin = new Padding(4, 3, 4, 3);
+            cycleGroupMoveClientOrderUpButton.Name = "cycleGroupMoveClientOrderUpButton";
+            cycleGroupMoveClientOrderUpButton.Size = new Size(38, 27);
+            cycleGroupMoveClientOrderUpButton.TabIndex = 15;
+            cycleGroupMoveClientOrderUpButton.Text = "Up";
+            cycleGroupMoveClientOrderUpButton.UseVisualStyleBackColor = true;
+            cycleGroupMoveClientOrderUpButton.Click += cycleGroupMoveClientOrderUpButton_Click;
             // 
             // selectCycleGroupComboBox
             // 
-            this.selectCycleGroupComboBox.FormattingEnabled = true;
-            this.selectCycleGroupComboBox.Location = new System.Drawing.Point(16, 26);
-            this.selectCycleGroupComboBox.Name = "selectCycleGroupComboBox";
-            this.selectCycleGroupComboBox.Size = new System.Drawing.Size(192, 21);
-            this.selectCycleGroupComboBox.TabIndex = 1;
-            this.selectCycleGroupComboBox.SelectedValueChanged += new System.EventHandler(this.selectCycleGroupComboBox_SelectedValueChanged);
+            selectCycleGroupComboBox.FormattingEnabled = true;
+            selectCycleGroupComboBox.Location = new Point(19, 30);
+            selectCycleGroupComboBox.Margin = new Padding(4, 3, 4, 3);
+            selectCycleGroupComboBox.Name = "selectCycleGroupComboBox";
+            selectCycleGroupComboBox.Size = new Size(223, 23);
+            selectCycleGroupComboBox.TabIndex = 1;
+            selectCycleGroupComboBox.SelectedValueChanged += selectCycleGroupComboBox_SelectedValueChanged;
             // 
             // removeClientToCycleGroupButton
             // 
-            this.removeClientToCycleGroupButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.removeClientToCycleGroupButton.Location = new System.Drawing.Point(210, 132);
-            this.removeClientToCycleGroupButton.Name = "removeClientToCycleGroupButton";
-            this.removeClientToCycleGroupButton.Size = new System.Drawing.Size(22, 23);
-            this.removeClientToCycleGroupButton.TabIndex = 14;
-            this.removeClientToCycleGroupButton.Text = "-";
-            this.removeClientToCycleGroupButton.UseVisualStyleBackColor = true;
-            this.removeClientToCycleGroupButton.Click += new System.EventHandler(this.removeClientToCycleGroupButton_Click);
+            removeClientToCycleGroupButton.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            removeClientToCycleGroupButton.Location = new Point(245, 152);
+            removeClientToCycleGroupButton.Margin = new Padding(4, 3, 4, 3);
+            removeClientToCycleGroupButton.Name = "removeClientToCycleGroupButton";
+            removeClientToCycleGroupButton.Size = new Size(26, 27);
+            removeClientToCycleGroupButton.TabIndex = 14;
+            removeClientToCycleGroupButton.Text = "-";
+            removeClientToCycleGroupButton.UseVisualStyleBackColor = true;
+            removeClientToCycleGroupButton.Click += removeClientToCycleGroupButton_Click;
             // 
             // cycleGroupDescriptionLabel
             // 
-            this.cycleGroupDescriptionLabel.AutoSize = true;
-            this.cycleGroupDescriptionLabel.Location = new System.Drawing.Point(13, 57);
-            this.cycleGroupDescriptionLabel.Name = "cycleGroupDescriptionLabel";
-            this.cycleGroupDescriptionLabel.Size = new System.Drawing.Size(63, 13);
-            this.cycleGroupDescriptionLabel.TabIndex = 3;
-            this.cycleGroupDescriptionLabel.Text = "Description:";
+            cycleGroupDescriptionLabel.AutoSize = true;
+            cycleGroupDescriptionLabel.Location = new Point(15, 66);
+            cycleGroupDescriptionLabel.Margin = new Padding(4, 0, 4, 0);
+            cycleGroupDescriptionLabel.Name = "cycleGroupDescriptionLabel";
+            cycleGroupDescriptionLabel.Size = new Size(70, 15);
+            cycleGroupDescriptionLabel.TabIndex = 3;
+            cycleGroupDescriptionLabel.Text = "Description:";
             // 
             // addNewGroupButton
             // 
-            this.addNewGroupButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.addNewGroupButton.Location = new System.Drawing.Point(233, 25);
-            this.addNewGroupButton.Name = "addNewGroupButton";
-            this.addNewGroupButton.Size = new System.Drawing.Size(24, 23);
-            this.addNewGroupButton.TabIndex = 13;
-            this.addNewGroupButton.Text = "+";
-            this.addNewGroupButton.UseVisualStyleBackColor = true;
-            this.addNewGroupButton.Click += new System.EventHandler(this.addNewGroupButton_Click);
+            addNewGroupButton.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            addNewGroupButton.Location = new Point(272, 29);
+            addNewGroupButton.Margin = new Padding(4, 3, 4, 3);
+            addNewGroupButton.Name = "addNewGroupButton";
+            addNewGroupButton.Size = new Size(28, 27);
+            addNewGroupButton.TabIndex = 13;
+            addNewGroupButton.Text = "+";
+            addNewGroupButton.UseVisualStyleBackColor = true;
+            addNewGroupButton.Click += addNewGroupButton_Click;
             // 
             // cycleGroupDescriptionText
             // 
-            this.cycleGroupDescriptionText.Location = new System.Drawing.Point(92, 54);
-            this.cycleGroupDescriptionText.Name = "cycleGroupDescriptionText";
-            this.cycleGroupDescriptionText.Size = new System.Drawing.Size(163, 20);
-            this.cycleGroupDescriptionText.TabIndex = 4;
-            this.cycleGroupDescriptionText.Leave += new System.EventHandler(this.cycleGroupDescriptionText_Leave);
+            cycleGroupDescriptionText.Location = new Point(107, 62);
+            cycleGroupDescriptionText.Margin = new Padding(4, 3, 4, 3);
+            cycleGroupDescriptionText.Name = "cycleGroupDescriptionText";
+            cycleGroupDescriptionText.Size = new Size(190, 23);
+            cycleGroupDescriptionText.TabIndex = 4;
+            cycleGroupDescriptionText.Leave += cycleGroupDescriptionText_Leave;
             // 
             // cycleGroupClientOrderLabel
             // 
-            this.cycleGroupClientOrderLabel.AutoSize = true;
-            this.cycleGroupClientOrderLabel.Location = new System.Drawing.Point(13, 137);
-            this.cycleGroupClientOrderLabel.Name = "cycleGroupClientOrderLabel";
-            this.cycleGroupClientOrderLabel.Size = new System.Drawing.Size(91, 13);
-            this.cycleGroupClientOrderLabel.TabIndex = 12;
-            this.cycleGroupClientOrderLabel.Text = "Clients and Order:";
+            cycleGroupClientOrderLabel.AutoSize = true;
+            cycleGroupClientOrderLabel.Location = new Point(15, 158);
+            cycleGroupClientOrderLabel.Margin = new Padding(4, 0, 4, 0);
+            cycleGroupClientOrderLabel.Name = "cycleGroupClientOrderLabel";
+            cycleGroupClientOrderLabel.Size = new Size(102, 15);
+            cycleGroupClientOrderLabel.TabIndex = 12;
+            cycleGroupClientOrderLabel.Text = "Clients and Order:";
             // 
             // cycleGroupForwardHotkeyLabel
             // 
-            this.cycleGroupForwardHotkeyLabel.AutoSize = true;
-            this.cycleGroupForwardHotkeyLabel.Location = new System.Drawing.Point(13, 83);
-            this.cycleGroupForwardHotkeyLabel.Name = "cycleGroupForwardHotkeyLabel";
-            this.cycleGroupForwardHotkeyLabel.Size = new System.Drawing.Size(69, 13);
-            this.cycleGroupForwardHotkeyLabel.TabIndex = 5;
-            this.cycleGroupForwardHotkeyLabel.Text = "Forward Key:";
+            cycleGroupForwardHotkeyLabel.AutoSize = true;
+            cycleGroupForwardHotkeyLabel.Location = new Point(15, 96);
+            cycleGroupForwardHotkeyLabel.Margin = new Padding(4, 0, 4, 0);
+            cycleGroupForwardHotkeyLabel.Name = "cycleGroupForwardHotkeyLabel";
+            cycleGroupForwardHotkeyLabel.Size = new Size(75, 15);
+            cycleGroupForwardHotkeyLabel.TabIndex = 5;
+            cycleGroupForwardHotkeyLabel.Text = "Forward Key:";
             // 
             // cycleGroupForwardHotkey1Text
             // 
-            this.cycleGroupForwardHotkey1Text.BackColor = System.Drawing.SystemColors.Control;
-            this.cycleGroupForwardHotkey1Text.Location = new System.Drawing.Point(92, 80);
-            this.cycleGroupForwardHotkey1Text.Name = "cycleGroupForwardHotkey1Text";
-            this.cycleGroupForwardHotkey1Text.ReadOnly = true;
-            this.cycleGroupForwardHotkey1Text.Size = new System.Drawing.Size(80, 20);
-            this.cycleGroupForwardHotkey1Text.TabIndex = 6;
-            this.instantToolTip.SetToolTip(this.cycleGroupForwardHotkey1Text, "Double click to set");
-            this.cycleGroupForwardHotkey1Text.DoubleClick += new System.EventHandler(this.cycleGroupForwardHotkey1Text_DoubleClick);
+            cycleGroupForwardHotkey1Text.BackColor = SystemColors.Control;
+            cycleGroupForwardHotkey1Text.Location = new Point(107, 92);
+            cycleGroupForwardHotkey1Text.Margin = new Padding(4, 3, 4, 3);
+            cycleGroupForwardHotkey1Text.Name = "cycleGroupForwardHotkey1Text";
+            cycleGroupForwardHotkey1Text.ReadOnly = true;
+            cycleGroupForwardHotkey1Text.Size = new Size(93, 23);
+            cycleGroupForwardHotkey1Text.TabIndex = 6;
+            instantToolTip.SetToolTip(cycleGroupForwardHotkey1Text, "Double click to set");
+            cycleGroupForwardHotkey1Text.DoubleClick += cycleGroupForwardHotkey1Text_DoubleClick;
             // 
             // cycleGroupBackwardHotkey2Text
             // 
-            this.cycleGroupBackwardHotkey2Text.BackColor = System.Drawing.SystemColors.Control;
-            this.cycleGroupBackwardHotkey2Text.Location = new System.Drawing.Point(175, 106);
-            this.cycleGroupBackwardHotkey2Text.Name = "cycleGroupBackwardHotkey2Text";
-            this.cycleGroupBackwardHotkey2Text.ReadOnly = true;
-            this.cycleGroupBackwardHotkey2Text.Size = new System.Drawing.Size(80, 20);
-            this.cycleGroupBackwardHotkey2Text.TabIndex = 10;
-            this.instantToolTip.SetToolTip(this.cycleGroupBackwardHotkey2Text, "Double click to set");
-            this.cycleGroupBackwardHotkey2Text.DoubleClick += new System.EventHandler(this.cycleGroupBackwardHotkey2Text_DoubleClick);
+            cycleGroupBackwardHotkey2Text.BackColor = SystemColors.Control;
+            cycleGroupBackwardHotkey2Text.Location = new Point(204, 122);
+            cycleGroupBackwardHotkey2Text.Margin = new Padding(4, 3, 4, 3);
+            cycleGroupBackwardHotkey2Text.Name = "cycleGroupBackwardHotkey2Text";
+            cycleGroupBackwardHotkey2Text.ReadOnly = true;
+            cycleGroupBackwardHotkey2Text.Size = new Size(93, 23);
+            cycleGroupBackwardHotkey2Text.TabIndex = 10;
+            instantToolTip.SetToolTip(cycleGroupBackwardHotkey2Text, "Double click to set");
+            cycleGroupBackwardHotkey2Text.DoubleClick += cycleGroupBackwardHotkey2Text_DoubleClick;
             // 
             // cycleGroupForwardHotkey2Text
             // 
-            this.cycleGroupForwardHotkey2Text.BackColor = System.Drawing.SystemColors.Control;
-            this.cycleGroupForwardHotkey2Text.Location = new System.Drawing.Point(175, 80);
-            this.cycleGroupForwardHotkey2Text.Name = "cycleGroupForwardHotkey2Text";
-            this.cycleGroupForwardHotkey2Text.ReadOnly = true;
-            this.cycleGroupForwardHotkey2Text.Size = new System.Drawing.Size(80, 20);
-            this.cycleGroupForwardHotkey2Text.TabIndex = 7;
-            this.instantToolTip.SetToolTip(this.cycleGroupForwardHotkey2Text, "Double click to set");
-            this.cycleGroupForwardHotkey2Text.DoubleClick += new System.EventHandler(this.cycleGroupForwardHotkey2Text_DoubleClick);
+            cycleGroupForwardHotkey2Text.BackColor = SystemColors.Control;
+            cycleGroupForwardHotkey2Text.Location = new Point(204, 92);
+            cycleGroupForwardHotkey2Text.Margin = new Padding(4, 3, 4, 3);
+            cycleGroupForwardHotkey2Text.Name = "cycleGroupForwardHotkey2Text";
+            cycleGroupForwardHotkey2Text.ReadOnly = true;
+            cycleGroupForwardHotkey2Text.Size = new Size(93, 23);
+            cycleGroupForwardHotkey2Text.TabIndex = 7;
+            instantToolTip.SetToolTip(cycleGroupForwardHotkey2Text, "Double click to set");
+            cycleGroupForwardHotkey2Text.DoubleClick += cycleGroupForwardHotkey2Text_DoubleClick;
             // 
             // cycleGroupBackwardHotkey1Text
             // 
-            this.cycleGroupBackwardHotkey1Text.BackColor = System.Drawing.SystemColors.Control;
-            this.cycleGroupBackwardHotkey1Text.Location = new System.Drawing.Point(92, 106);
-            this.cycleGroupBackwardHotkey1Text.Name = "cycleGroupBackwardHotkey1Text";
-            this.cycleGroupBackwardHotkey1Text.ReadOnly = true;
-            this.cycleGroupBackwardHotkey1Text.Size = new System.Drawing.Size(80, 20);
-            this.cycleGroupBackwardHotkey1Text.TabIndex = 9;
-            this.instantToolTip.SetToolTip(this.cycleGroupBackwardHotkey1Text, "Double click to set");
-            this.cycleGroupBackwardHotkey1Text.DoubleClick += new System.EventHandler(this.cycleGroupBackwardHotkey1Text_DoubleClick);
+            cycleGroupBackwardHotkey1Text.BackColor = SystemColors.Control;
+            cycleGroupBackwardHotkey1Text.Location = new Point(107, 122);
+            cycleGroupBackwardHotkey1Text.Margin = new Padding(4, 3, 4, 3);
+            cycleGroupBackwardHotkey1Text.Name = "cycleGroupBackwardHotkey1Text";
+            cycleGroupBackwardHotkey1Text.ReadOnly = true;
+            cycleGroupBackwardHotkey1Text.Size = new Size(93, 23);
+            cycleGroupBackwardHotkey1Text.TabIndex = 9;
+            instantToolTip.SetToolTip(cycleGroupBackwardHotkey1Text, "Double click to set");
+            cycleGroupBackwardHotkey1Text.DoubleClick += cycleGroupBackwardHotkey1Text_DoubleClick;
             // 
             // cycleGroupBackHotkeyLabel
             // 
-            this.cycleGroupBackHotkeyLabel.AutoSize = true;
-            this.cycleGroupBackHotkeyLabel.Location = new System.Drawing.Point(13, 109);
-            this.cycleGroupBackHotkeyLabel.Name = "cycleGroupBackHotkeyLabel";
-            this.cycleGroupBackHotkeyLabel.Size = new System.Drawing.Size(79, 13);
-            this.cycleGroupBackHotkeyLabel.TabIndex = 8;
-            this.cycleGroupBackHotkeyLabel.Text = "Backward Key:";
+            cycleGroupBackHotkeyLabel.AutoSize = true;
+            cycleGroupBackHotkeyLabel.Location = new Point(15, 126);
+            cycleGroupBackHotkeyLabel.Margin = new Padding(4, 0, 4, 0);
+            cycleGroupBackHotkeyLabel.Name = "cycleGroupBackHotkeyLabel";
+            cycleGroupBackHotkeyLabel.Size = new Size(83, 15);
+            cycleGroupBackHotkeyLabel.TabIndex = 8;
+            cycleGroupBackHotkeyLabel.Text = "Backward Key:";
             // 
             // cycleGroupClientOrderList
             // 
-            this.cycleGroupClientOrderList.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.cycleGroupClientOrderList.FormattingEnabled = true;
-            this.cycleGroupClientOrderList.Location = new System.Drawing.Point(0, 0);
-            this.cycleGroupClientOrderList.Name = "cycleGroupClientOrderList";
-            this.cycleGroupClientOrderList.Size = new System.Drawing.Size(266, 189);
-            this.cycleGroupClientOrderList.TabIndex = 11;
+            cycleGroupClientOrderList.Dock = DockStyle.Fill;
+            cycleGroupClientOrderList.FormattingEnabled = true;
+            cycleGroupClientOrderList.Location = new Point(0, 0);
+            cycleGroupClientOrderList.Margin = new Padding(4, 3, 4, 3);
+            cycleGroupClientOrderList.Name = "cycleGroupClientOrderList";
+            cycleGroupClientOrderList.Size = new Size(332, 219);
+            cycleGroupClientOrderList.TabIndex = 11;
             // 
             // label1
             // 
-            label1.BackColor = System.Drawing.Color.Transparent;
-            label1.Location = new System.Drawing.Point(-2, -2);
+            label1.BackColor = Color.Transparent;
+            label1.Location = new Point(-2, -2);
+            label1.Margin = new Padding(4, 0, 4, 0);
             label1.Name = "label1";
-            label1.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            label1.Size = new System.Drawing.Size(261, 145);
+            label1.Padding = new Padding(9, 3, 9, 3);
+            label1.Size = new Size(304, 167);
             label1.TabIndex = 6;
             label1.Text = resources.GetString("label1.Text");
             // 
             // lblFpsPredictiveLimit
             // 
             lblFpsPredictiveLimit.AutoSize = true;
-            lblFpsPredictiveLimit.Location = new System.Drawing.Point(11, 81);
+            lblFpsPredictiveLimit.Location = new Point(13, 93);
+            lblFpsPredictiveLimit.Margin = new Padding(4, 0, 4, 0);
             lblFpsPredictiveLimit.Name = "lblFpsPredictiveLimit";
-            lblFpsPredictiveLimit.Size = new System.Drawing.Size(81, 13);
+            lblFpsPredictiveLimit.Size = new Size(91, 15);
             lblFpsPredictiveLimit.TabIndex = 29;
             lblFpsPredictiveLimit.Text = "Predicted Client";
             // 
             // lblFpsBackgroundLimit
             // 
             lblFpsBackgroundLimit.AutoSize = true;
-            lblFpsBackgroundLimit.Location = new System.Drawing.Point(11, 50);
+            lblFpsBackgroundLimit.Location = new Point(13, 58);
+            lblFpsBackgroundLimit.Margin = new Padding(4, 0, 4, 0);
             lblFpsBackgroundLimit.Name = "lblFpsBackgroundLimit";
-            lblFpsBackgroundLimit.Size = new System.Drawing.Size(79, 13);
+            lblFpsBackgroundLimit.Size = new Size(87, 15);
             lblFpsBackgroundLimit.TabIndex = 27;
             lblFpsBackgroundLimit.Text = "Inactive Clients";
             // 
             // lblFpsForegroundLimit
             // 
             lblFpsForegroundLimit.AutoSize = true;
-            lblFpsForegroundLimit.Location = new System.Drawing.Point(11, 21);
+            lblFpsForegroundLimit.Location = new Point(13, 24);
+            lblFpsForegroundLimit.Margin = new Padding(4, 0, 4, 0);
             lblFpsForegroundLimit.Name = "lblFpsForegroundLimit";
-            lblFpsForegroundLimit.Size = new System.Drawing.Size(66, 13);
+            lblFpsForegroundLimit.Size = new Size(74, 15);
             lblFpsForegroundLimit.TabIndex = 25;
             lblFpsForegroundLimit.Text = "Active Client";
             // 
             // AboutTabPage
             // 
-            AboutTabPage.BackColor = System.Drawing.SystemColors.Control;
+            AboutTabPage.BackColor = SystemColors.Control;
             AboutTabPage.Controls.Add(AboutPanel);
-            AboutTabPage.Location = new System.Drawing.Point(124, 4);
+            AboutTabPage.Location = new Point(124, 4);
+            AboutTabPage.Margin = new Padding(4, 3, 4, 3);
             AboutTabPage.Name = "AboutTabPage";
-            AboutTabPage.Size = new System.Drawing.Size(266, 353);
+            AboutTabPage.Size = new Size(332, 409);
             AboutTabPage.TabIndex = 5;
             AboutTabPage.Text = "About";
             // 
             // AboutPanel
             // 
-            AboutPanel.BackColor = System.Drawing.Color.Transparent;
-            AboutPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            AboutPanel.BackColor = Color.Transparent;
+            AboutPanel.BorderStyle = BorderStyle.FixedSingle;
             AboutPanel.Controls.Add(lblLiabilityDisclaimer);
             AboutPanel.Controls.Add(CreditMaintLabel);
             AboutPanel.Controls.Add(DocumentationLinkLabel);
             AboutPanel.Controls.Add(DescriptionLabel);
-            AboutPanel.Controls.Add(this.VersionLabel);
+            AboutPanel.Controls.Add(VersionLabel);
             AboutPanel.Controls.Add(NameLabel);
-            AboutPanel.Controls.Add(this.DocumentationLink);
-            AboutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            AboutPanel.Location = new System.Drawing.Point(0, 0);
+            AboutPanel.Controls.Add(DocumentationLink);
+            AboutPanel.Dock = DockStyle.Fill;
+            AboutPanel.Location = new Point(0, 0);
+            AboutPanel.Margin = new Padding(4, 3, 4, 3);
             AboutPanel.Name = "AboutPanel";
-            AboutPanel.Size = new System.Drawing.Size(266, 353);
+            AboutPanel.Size = new Size(332, 409);
             AboutPanel.TabIndex = 2;
             // 
             // lblLiabilityDisclaimer
             // 
-            lblLiabilityDisclaimer.BackColor = System.Drawing.Color.Transparent;
-            lblLiabilityDisclaimer.Location = new System.Drawing.Point(5, 29);
+            lblLiabilityDisclaimer.BackColor = Color.Transparent;
+            lblLiabilityDisclaimer.Location = new Point(6, 33);
+            lblLiabilityDisclaimer.Margin = new Padding(4, 0, 4, 0);
             lblLiabilityDisclaimer.Name = "lblLiabilityDisclaimer";
-            lblLiabilityDisclaimer.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            lblLiabilityDisclaimer.Size = new System.Drawing.Size(261, 135);
+            lblLiabilityDisclaimer.Padding = new Padding(9, 3, 9, 3);
+            lblLiabilityDisclaimer.Size = new Size(304, 156);
             lblLiabilityDisclaimer.TabIndex = 9;
             lblLiabilityDisclaimer.Text = resources.GetString("lblLiabilityDisclaimer.Text");
             // 
             // CreditMaintLabel
             // 
             CreditMaintLabel.AutoSize = true;
-            CreditMaintLabel.Location = new System.Drawing.Point(5, 273);
+            CreditMaintLabel.Location = new Point(6, 315);
+            CreditMaintLabel.Margin = new Padding(4, 0, 4, 0);
             CreditMaintLabel.Name = "CreditMaintLabel";
-            CreditMaintLabel.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            CreditMaintLabel.Size = new System.Drawing.Size(258, 19);
+            CreditMaintLabel.Padding = new Padding(9, 3, 9, 3);
+            CreditMaintLabel.Size = new Size(292, 21);
             CreditMaintLabel.TabIndex = 7;
             CreditMaintLabel.Text = "Credit to previous maintainer: Phrynohyas Tig-Rah";
             // 
             // DocumentationLinkLabel
             // 
             DocumentationLinkLabel.AutoSize = true;
-            DocumentationLinkLabel.Location = new System.Drawing.Point(5, 292);
+            DocumentationLinkLabel.Location = new Point(6, 337);
+            DocumentationLinkLabel.Margin = new Padding(4, 0, 4, 0);
             DocumentationLinkLabel.Name = "DocumentationLinkLabel";
-            DocumentationLinkLabel.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            DocumentationLinkLabel.Size = new System.Drawing.Size(197, 19);
+            DocumentationLinkLabel.Padding = new Padding(9, 3, 9, 3);
+            DocumentationLinkLabel.Size = new Size(229, 21);
             DocumentationLinkLabel.TabIndex = 6;
             DocumentationLinkLabel.Text = "For more information visit our discord:";
             // 
             // DescriptionLabel
             // 
-            DescriptionLabel.BackColor = System.Drawing.Color.Transparent;
-            DescriptionLabel.Location = new System.Drawing.Point(5, 164);
+            DescriptionLabel.BackColor = Color.Transparent;
+            DescriptionLabel.Location = new Point(6, 189);
+            DescriptionLabel.Margin = new Padding(4, 0, 4, 0);
             DescriptionLabel.Name = "DescriptionLabel";
-            DescriptionLabel.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            DescriptionLabel.Size = new System.Drawing.Size(261, 120);
+            DescriptionLabel.Padding = new Padding(9, 3, 9, 3);
+            DescriptionLabel.Size = new Size(304, 138);
             DescriptionLabel.TabIndex = 5;
             DescriptionLabel.Text = resources.GetString("DescriptionLabel.Text");
             // 
             // VersionLabel
             // 
-            this.VersionLabel.AutoSize = true;
-            this.VersionLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.VersionLabel.Location = new System.Drawing.Point(133, 9);
-            this.VersionLabel.Name = "VersionLabel";
-            this.VersionLabel.Size = new System.Drawing.Size(49, 20);
-            this.VersionLabel.TabIndex = 4;
-            this.VersionLabel.Text = "1.0.0";
+            VersionLabel.AutoSize = true;
+            VersionLabel.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold, GraphicsUnit.Point, 204);
+            VersionLabel.Location = new Point(155, 10);
+            VersionLabel.Margin = new Padding(4, 0, 4, 0);
+            VersionLabel.Name = "VersionLabel";
+            VersionLabel.Size = new Size(49, 20);
+            VersionLabel.TabIndex = 4;
+            VersionLabel.Text = "1.0.0";
             // 
             // NameLabel
             // 
             NameLabel.AutoSize = true;
-            NameLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            NameLabel.Location = new System.Drawing.Point(4, 9);
+            NameLabel.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold, GraphicsUnit.Point, 204);
+            NameLabel.Location = new Point(5, 10);
+            NameLabel.Margin = new Padding(4, 0, 4, 0);
             NameLabel.Name = "NameLabel";
-            NameLabel.Size = new System.Drawing.Size(130, 20);
+            NameLabel.Size = new Size(130, 20);
             NameLabel.TabIndex = 3;
             NameLabel.Text = "EVE-O Preview";
             // 
             // DocumentationLink
             // 
-            this.DocumentationLink.Location = new System.Drawing.Point(5, 311);
-            this.DocumentationLink.Margin = new System.Windows.Forms.Padding(30, 3, 3, 3);
-            this.DocumentationLink.Name = "DocumentationLink";
-            this.DocumentationLink.Padding = new System.Windows.Forms.Padding(8, 3, 8, 3);
-            this.DocumentationLink.Size = new System.Drawing.Size(262, 33);
-            this.DocumentationLink.TabIndex = 2;
-            this.DocumentationLink.TabStop = true;
-            this.DocumentationLink.Text = "to be set from prresenter to be set from prresenter to be set from prresenter to " +
-    "be set from prresenter";
-            this.DocumentationLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.DocumentationLinkClicked_Handler);
+            DocumentationLink.Location = new Point(6, 359);
+            DocumentationLink.Margin = new Padding(35, 3, 4, 3);
+            DocumentationLink.Name = "DocumentationLink";
+            DocumentationLink.Padding = new Padding(9, 3, 9, 3);
+            DocumentationLink.Size = new Size(306, 38);
+            DocumentationLink.TabIndex = 2;
+            DocumentationLink.TabStop = true;
+            DocumentationLink.Text = "to be set from prresenter to be set from prresenter to be set from prresenter to be set from prresenter";
+            DocumentationLink.LinkClicked += DocumentationLinkClicked_Handler;
             // 
             // ClientsTabPage
             // 
-            this.ClientsTabPage.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientsTabPage.Controls.Add(ClientsPanel);
-            this.ClientsTabPage.Location = new System.Drawing.Point(124, 4);
-            this.ClientsTabPage.Name = "ClientsTabPage";
-            this.ClientsTabPage.Size = new System.Drawing.Size(266, 353);
-            this.ClientsTabPage.TabIndex = 4;
-            this.ClientsTabPage.Text = "Active Clients";
+            ClientsTabPage.BackColor = SystemColors.Control;
+            ClientsTabPage.Controls.Add(ClientsPanel);
+            ClientsTabPage.Location = new Point(124, 4);
+            ClientsTabPage.Margin = new Padding(4, 3, 4, 3);
+            ClientsTabPage.Name = "ClientsTabPage";
+            ClientsTabPage.Size = new Size(332, 409);
+            ClientsTabPage.TabIndex = 4;
+            ClientsTabPage.Text = "Active Clients";
             // 
             // ContentTabControl
             // 
-            this.ContentTabControl.Alignment = System.Windows.Forms.TabAlignment.Left;
-            this.ContentTabControl.Controls.Add(GeneralTabPage);
-            this.ContentTabControl.Controls.Add(ThumbnailTabPage);
-            this.ContentTabControl.Controls.Add(this.ZoomTabPage);
-            this.ContentTabControl.Controls.Add(OverlayTabPage);
-            this.ContentTabControl.Controls.Add(this.ClientsTabPage);
-            this.ContentTabControl.Controls.Add(CycleGroupTabPage);
-            this.ContentTabControl.Controls.Add(this.FpsLimiterTabPage);
-            this.ContentTabControl.Controls.Add(this.tabPageProfiles);
-            this.ContentTabControl.Controls.Add(AboutTabPage);
-            this.ContentTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ContentTabControl.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
-            this.ContentTabControl.ItemSize = new System.Drawing.Size(35, 120);
-            this.ContentTabControl.Location = new System.Drawing.Point(0, 0);
-            this.ContentTabControl.Multiline = true;
-            this.ContentTabControl.Name = "ContentTabControl";
-            this.ContentTabControl.SelectedIndex = 0;
-            this.ContentTabControl.Size = new System.Drawing.Size(394, 361);
-            this.ContentTabControl.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
-            this.ContentTabControl.TabIndex = 7;
-            this.ContentTabControl.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.ContentTabControl_DrawItem);
+            ContentTabControl.Alignment = TabAlignment.Left;
+            ContentTabControl.Controls.Add(GeneralTabPage);
+            ContentTabControl.Controls.Add(ThumbnailTabPage);
+            ContentTabControl.Controls.Add(ZoomTabPage);
+            ContentTabControl.Controls.Add(OverlayTabPage);
+            ContentTabControl.Controls.Add(ClientsTabPage);
+            ContentTabControl.Controls.Add(CycleGroupTabPage);
+            ContentTabControl.Controls.Add(FpsLimiterTabPage);
+            ContentTabControl.Controls.Add(tabPageProfiles);
+            ContentTabControl.Controls.Add(AboutTabPage);
+            ContentTabControl.Dock = DockStyle.Fill;
+            ContentTabControl.DrawMode = TabDrawMode.OwnerDrawFixed;
+            ContentTabControl.ItemSize = new Size(35, 120);
+            ContentTabControl.Location = new Point(0, 0);
+            ContentTabControl.Margin = new Padding(4, 3, 4, 3);
+            ContentTabControl.Multiline = true;
+            ContentTabControl.Name = "ContentTabControl";
+            ContentTabControl.SelectedIndex = 0;
+            ContentTabControl.Size = new Size(460, 417);
+            ContentTabControl.SizeMode = TabSizeMode.Fixed;
+            ContentTabControl.TabIndex = 7;
+            ContentTabControl.DrawItem += ContentTabControl_DrawItem;
+            ContentTabControl.DpiChangedAfterParent += ContentTabControl_DpiChangedAfterParent;
             // 
             // ZoomTabPage
             // 
-            this.ZoomTabPage.BackColor = System.Drawing.SystemColors.Control;
-            this.ZoomTabPage.Controls.Add(ZoomSettingsPanel);
-            this.ZoomTabPage.Location = new System.Drawing.Point(124, 4);
-            this.ZoomTabPage.Name = "ZoomTabPage";
-            this.ZoomTabPage.Size = new System.Drawing.Size(266, 353);
-            this.ZoomTabPage.TabIndex = 2;
-            this.ZoomTabPage.Text = "Zoom";
+            ZoomTabPage.BackColor = SystemColors.Control;
+            ZoomTabPage.Controls.Add(ZoomSettingsPanel);
+            ZoomTabPage.Location = new Point(124, 4);
+            ZoomTabPage.Margin = new Padding(4, 3, 4, 3);
+            ZoomTabPage.Name = "ZoomTabPage";
+            ZoomTabPage.Size = new Size(332, 409);
+            ZoomTabPage.TabIndex = 2;
+            ZoomTabPage.Text = "Zoom";
             // 
             // FpsLimiterTabPage
             // 
-            this.FpsLimiterTabPage.Controls.Add(this.fpsMainLayoutPanel);
-            this.FpsLimiterTabPage.Location = new System.Drawing.Point(124, 4);
-            this.FpsLimiterTabPage.Name = "FpsLimiterTabPage";
-            this.FpsLimiterTabPage.Size = new System.Drawing.Size(266, 353);
-            this.FpsLimiterTabPage.TabIndex = 7;
-            this.FpsLimiterTabPage.Text = "FPS / Audio";
-            this.FpsLimiterTabPage.UseVisualStyleBackColor = true;
+            FpsLimiterTabPage.Controls.Add(fpsMainLayoutPanel);
+            FpsLimiterTabPage.Location = new Point(124, 4);
+            FpsLimiterTabPage.Margin = new Padding(4, 3, 4, 3);
+            FpsLimiterTabPage.Name = "FpsLimiterTabPage";
+            FpsLimiterTabPage.Size = new Size(332, 409);
+            FpsLimiterTabPage.TabIndex = 7;
+            FpsLimiterTabPage.Text = "FPS / Audio";
+            FpsLimiterTabPage.UseVisualStyleBackColor = true;
             // 
             // fpsMainLayoutPanel
             // 
-            this.fpsMainLayoutPanel.ColumnCount = 1;
-            this.fpsMainLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 270F));
-            this.fpsMainLayoutPanel.Controls.Add(this.fpsTopPanel, 0, 0);
-            this.fpsMainLayoutPanel.Controls.Add(this.fpsBottomPanel, 0, 1);
-            this.fpsMainLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.fpsMainLayoutPanel.Location = new System.Drawing.Point(0, 0);
-            this.fpsMainLayoutPanel.Name = "fpsMainLayoutPanel";
-            this.fpsMainLayoutPanel.RowCount = 2;
-            this.fpsMainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 109F));
-            this.fpsMainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.fpsMainLayoutPanel.Size = new System.Drawing.Size(266, 353);
-            this.fpsMainLayoutPanel.TabIndex = 0;
+            fpsMainLayoutPanel.ColumnCount = 1;
+            fpsMainLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 315F));
+            fpsMainLayoutPanel.Controls.Add(fpsTopPanel, 0, 0);
+            fpsMainLayoutPanel.Controls.Add(fpsBottomPanel, 0, 1);
+            fpsMainLayoutPanel.Dock = DockStyle.Fill;
+            fpsMainLayoutPanel.Location = new Point(0, 0);
+            fpsMainLayoutPanel.Margin = new Padding(4, 3, 4, 3);
+            fpsMainLayoutPanel.Name = "fpsMainLayoutPanel";
+            fpsMainLayoutPanel.RowCount = 2;
+            fpsMainLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 126F));
+            fpsMainLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            fpsMainLayoutPanel.Size = new Size(332, 409);
+            fpsMainLayoutPanel.TabIndex = 0;
             // 
             // fpsTopPanel
             // 
-            this.fpsTopPanel.Controls.Add(label1);
-            this.fpsTopPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.fpsTopPanel.Location = new System.Drawing.Point(3, 3);
-            this.fpsTopPanel.Name = "fpsTopPanel";
-            this.fpsTopPanel.Size = new System.Drawing.Size(264, 103);
-            this.fpsTopPanel.TabIndex = 0;
+            fpsTopPanel.Controls.Add(label1);
+            fpsTopPanel.Dock = DockStyle.Fill;
+            fpsTopPanel.Location = new Point(4, 3);
+            fpsTopPanel.Margin = new Padding(4, 3, 4, 3);
+            fpsTopPanel.Name = "fpsTopPanel";
+            fpsTopPanel.Size = new Size(324, 120);
+            fpsTopPanel.TabIndex = 0;
             // 
             // fpsBottomPanel
             // 
-            this.fpsBottomPanel.Controls.Add(this.groupBoxAudioMuting);
-            this.fpsBottomPanel.Controls.Add(this.groupBoxFpsLimits);
-            this.fpsBottomPanel.Controls.Add(this.chbIsFpsThrottlingEnabled);
-            this.fpsBottomPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.fpsBottomPanel.Location = new System.Drawing.Point(3, 112);
-            this.fpsBottomPanel.Name = "fpsBottomPanel";
-            this.fpsBottomPanel.Size = new System.Drawing.Size(264, 238);
-            this.fpsBottomPanel.TabIndex = 1;
+            fpsBottomPanel.Controls.Add(groupBoxAudioMuting);
+            fpsBottomPanel.Controls.Add(groupBoxFpsLimits);
+            fpsBottomPanel.Controls.Add(chbIsFpsThrottlingEnabled);
+            fpsBottomPanel.Dock = DockStyle.Fill;
+            fpsBottomPanel.Location = new Point(4, 129);
+            fpsBottomPanel.Margin = new Padding(4, 3, 4, 3);
+            fpsBottomPanel.Name = "fpsBottomPanel";
+            fpsBottomPanel.Size = new Size(324, 277);
+            fpsBottomPanel.TabIndex = 1;
             // 
             // groupBoxAudioMuting
             // 
-            this.groupBoxAudioMuting.Controls.Add(this.chbIsLocationBannerMuted);
-            this.groupBoxAudioMuting.Controls.Add(this.chbIsGateTunnelMuted);
-            this.groupBoxAudioMuting.Location = new System.Drawing.Point(10, 158);
-            this.groupBoxAudioMuting.Name = "groupBoxAudioMuting";
-            this.groupBoxAudioMuting.Size = new System.Drawing.Size(241, 66);
-            this.groupBoxAudioMuting.TabIndex = 23;
-            this.groupBoxAudioMuting.TabStop = false;
-            this.groupBoxAudioMuting.Text = "Audio";
+            groupBoxAudioMuting.Controls.Add(chbIsLocationBannerMuted);
+            groupBoxAudioMuting.Controls.Add(chbIsGateTunnelMuted);
+            groupBoxAudioMuting.Location = new Point(12, 182);
+            groupBoxAudioMuting.Margin = new Padding(4, 3, 4, 3);
+            groupBoxAudioMuting.Name = "groupBoxAudioMuting";
+            groupBoxAudioMuting.Padding = new Padding(4, 3, 4, 3);
+            groupBoxAudioMuting.Size = new Size(281, 76);
+            groupBoxAudioMuting.TabIndex = 23;
+            groupBoxAudioMuting.TabStop = false;
+            groupBoxAudioMuting.Text = "Audio";
             // 
             // chbIsLocationBannerMuted
             // 
-            this.chbIsLocationBannerMuted.AutoSize = true;
-            this.chbIsLocationBannerMuted.Location = new System.Drawing.Point(14, 44);
-            this.chbIsLocationBannerMuted.Name = "chbIsLocationBannerMuted";
-            this.chbIsLocationBannerMuted.Size = new System.Drawing.Size(153, 17);
-            this.chbIsLocationBannerMuted.TabIndex = 23;
-            this.chbIsLocationBannerMuted.Text = "Mute Asteroid Belt Warp In";
-            this.chbIsLocationBannerMuted.UseVisualStyleBackColor = true;
-            this.chbIsLocationBannerMuted.CheckedChanged += new System.EventHandler(this.chbIsLocationBannerMuted_CheckedChanged);
+            chbIsLocationBannerMuted.AutoSize = true;
+            chbIsLocationBannerMuted.Location = new Point(16, 51);
+            chbIsLocationBannerMuted.Margin = new Padding(4, 3, 4, 3);
+            chbIsLocationBannerMuted.Name = "chbIsLocationBannerMuted";
+            chbIsLocationBannerMuted.Size = new Size(168, 19);
+            chbIsLocationBannerMuted.TabIndex = 23;
+            chbIsLocationBannerMuted.Text = "Mute Asteroid Belt Warp In";
+            chbIsLocationBannerMuted.UseVisualStyleBackColor = true;
+            chbIsLocationBannerMuted.CheckedChanged += chbIsLocationBannerMuted_CheckedChanged;
             // 
             // chbIsGateTunnelMuted
             // 
-            this.chbIsGateTunnelMuted.AutoSize = true;
-            this.chbIsGateTunnelMuted.Location = new System.Drawing.Point(14, 21);
-            this.chbIsGateTunnelMuted.Name = "chbIsGateTunnelMuted";
-            this.chbIsGateTunnelMuted.Size = new System.Drawing.Size(140, 17);
-            this.chbIsGateTunnelMuted.TabIndex = 22;
-            this.chbIsGateTunnelMuted.Text = "Mute Jump Gate Tunnel";
-            this.chbIsGateTunnelMuted.UseVisualStyleBackColor = true;
-            this.chbIsGateTunnelMuted.CheckedChanged += new System.EventHandler(this.chbIsGateTunnelMuted_CheckedChanged);
+            chbIsGateTunnelMuted.AutoSize = true;
+            chbIsGateTunnelMuted.Location = new Point(16, 24);
+            chbIsGateTunnelMuted.Margin = new Padding(4, 3, 4, 3);
+            chbIsGateTunnelMuted.Name = "chbIsGateTunnelMuted";
+            chbIsGateTunnelMuted.Size = new Size(153, 19);
+            chbIsGateTunnelMuted.TabIndex = 22;
+            chbIsGateTunnelMuted.Text = "Mute Jump Gate Tunnel";
+            chbIsGateTunnelMuted.UseVisualStyleBackColor = true;
+            chbIsGateTunnelMuted.CheckedChanged += chbIsGateTunnelMuted_CheckedChanged;
             // 
             // groupBoxFpsLimits
             // 
-            this.groupBoxFpsLimits.Controls.Add(this.btnDummyFpsSave);
-            this.groupBoxFpsLimits.Controls.Add(lblFpsPredictiveLimit);
-            this.groupBoxFpsLimits.Controls.Add(this.numericFpsPredictedLimit);
-            this.groupBoxFpsLimits.Controls.Add(lblFpsBackgroundLimit);
-            this.groupBoxFpsLimits.Controls.Add(this.numericFpsBackgroundLimit);
-            this.groupBoxFpsLimits.Controls.Add(lblFpsForegroundLimit);
-            this.groupBoxFpsLimits.Controls.Add(this.numericFpsForegroundLimit);
-            this.groupBoxFpsLimits.Controls.Add(this.lblFpsFeatureExpired);
-            this.groupBoxFpsLimits.Location = new System.Drawing.Point(10, 37);
-            this.groupBoxFpsLimits.Name = "groupBoxFpsLimits";
-            this.groupBoxFpsLimits.Size = new System.Drawing.Size(241, 114);
-            this.groupBoxFpsLimits.TabIndex = 22;
-            this.groupBoxFpsLimits.TabStop = false;
-            this.groupBoxFpsLimits.Text = "FPS Limits";
+            groupBoxFpsLimits.Controls.Add(btnDummyFpsSave);
+            groupBoxFpsLimits.Controls.Add(lblFpsPredictiveLimit);
+            groupBoxFpsLimits.Controls.Add(numericFpsPredictedLimit);
+            groupBoxFpsLimits.Controls.Add(lblFpsBackgroundLimit);
+            groupBoxFpsLimits.Controls.Add(numericFpsBackgroundLimit);
+            groupBoxFpsLimits.Controls.Add(lblFpsForegroundLimit);
+            groupBoxFpsLimits.Controls.Add(numericFpsForegroundLimit);
+            groupBoxFpsLimits.Controls.Add(lblFpsFeatureExpired);
+            groupBoxFpsLimits.Location = new Point(12, 43);
+            groupBoxFpsLimits.Margin = new Padding(4, 3, 4, 3);
+            groupBoxFpsLimits.Name = "groupBoxFpsLimits";
+            groupBoxFpsLimits.Padding = new Padding(4, 3, 4, 3);
+            groupBoxFpsLimits.Size = new Size(281, 132);
+            groupBoxFpsLimits.TabIndex = 22;
+            groupBoxFpsLimits.TabStop = false;
+            groupBoxFpsLimits.Text = "FPS Limits";
             // 
             // btnDummyFpsSave
             // 
-            this.btnDummyFpsSave.Location = new System.Drawing.Point(205, 76);
-            this.btnDummyFpsSave.Name = "btnDummyFpsSave";
-            this.btnDummyFpsSave.Size = new System.Drawing.Size(30, 23);
-            this.btnDummyFpsSave.TabIndex = 30;
-            this.btnDummyFpsSave.Text = "Go";
-            this.btnDummyFpsSave.UseVisualStyleBackColor = true;
+            btnDummyFpsSave.Location = new Point(239, 88);
+            btnDummyFpsSave.Margin = new Padding(4, 3, 4, 3);
+            btnDummyFpsSave.Name = "btnDummyFpsSave";
+            btnDummyFpsSave.Size = new Size(35, 27);
+            btnDummyFpsSave.TabIndex = 30;
+            btnDummyFpsSave.Text = "Go";
+            btnDummyFpsSave.UseVisualStyleBackColor = true;
             // 
             // numericFpsPredictedLimit
             // 
-            this.numericFpsPredictedLimit.BackColor = System.Drawing.SystemColors.Window;
-            this.numericFpsPredictedLimit.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.numericFpsPredictedLimit.CausesValidation = false;
-            this.numericFpsPredictedLimit.Location = new System.Drawing.Point(108, 79);
-            this.numericFpsPredictedLimit.Maximum = new decimal(new int[] {
-            500,
-            0,
-            0,
-            0});
-            this.numericFpsPredictedLimit.Name = "numericFpsPredictedLimit";
-            this.numericFpsPredictedLimit.Size = new System.Drawing.Size(48, 20);
-            this.numericFpsPredictedLimit.TabIndex = 28;
-            this.numericFpsPredictedLimit.Value = new decimal(new int[] {
-            30,
-            0,
-            0,
-            0});
-            this.numericFpsPredictedLimit.Leave += new System.EventHandler(this.numericFpsPredictedLimit_Leave);
+            numericFpsPredictedLimit.BackColor = SystemColors.Window;
+            numericFpsPredictedLimit.BorderStyle = BorderStyle.FixedSingle;
+            numericFpsPredictedLimit.CausesValidation = false;
+            numericFpsPredictedLimit.Location = new Point(126, 91);
+            numericFpsPredictedLimit.Margin = new Padding(4, 3, 4, 3);
+            numericFpsPredictedLimit.Maximum = new decimal(new int[] { 500, 0, 0, 0 });
+            numericFpsPredictedLimit.Name = "numericFpsPredictedLimit";
+            numericFpsPredictedLimit.Size = new Size(56, 23);
+            numericFpsPredictedLimit.TabIndex = 28;
+            numericFpsPredictedLimit.Value = new decimal(new int[] { 30, 0, 0, 0 });
+            numericFpsPredictedLimit.Leave += numericFpsPredictedLimit_Leave;
             // 
             // numericFpsBackgroundLimit
             // 
-            this.numericFpsBackgroundLimit.BackColor = System.Drawing.SystemColors.Window;
-            this.numericFpsBackgroundLimit.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.numericFpsBackgroundLimit.CausesValidation = false;
-            this.numericFpsBackgroundLimit.Location = new System.Drawing.Point(108, 48);
-            this.numericFpsBackgroundLimit.Maximum = new decimal(new int[] {
-            500,
-            0,
-            0,
-            0});
-            this.numericFpsBackgroundLimit.Name = "numericFpsBackgroundLimit";
-            this.numericFpsBackgroundLimit.Size = new System.Drawing.Size(48, 20);
-            this.numericFpsBackgroundLimit.TabIndex = 26;
-            this.numericFpsBackgroundLimit.Value = new decimal(new int[] {
-            60,
-            0,
-            0,
-            0});
-            this.numericFpsBackgroundLimit.Leave += new System.EventHandler(this.numericFpsBackgroundLimit_Leave);
+            numericFpsBackgroundLimit.BackColor = SystemColors.Window;
+            numericFpsBackgroundLimit.BorderStyle = BorderStyle.FixedSingle;
+            numericFpsBackgroundLimit.CausesValidation = false;
+            numericFpsBackgroundLimit.Location = new Point(126, 55);
+            numericFpsBackgroundLimit.Margin = new Padding(4, 3, 4, 3);
+            numericFpsBackgroundLimit.Maximum = new decimal(new int[] { 500, 0, 0, 0 });
+            numericFpsBackgroundLimit.Name = "numericFpsBackgroundLimit";
+            numericFpsBackgroundLimit.Size = new Size(56, 23);
+            numericFpsBackgroundLimit.TabIndex = 26;
+            numericFpsBackgroundLimit.Value = new decimal(new int[] { 60, 0, 0, 0 });
+            numericFpsBackgroundLimit.Leave += numericFpsBackgroundLimit_Leave;
             // 
             // numericFpsForegroundLimit
             // 
-            this.numericFpsForegroundLimit.BackColor = System.Drawing.SystemColors.Window;
-            this.numericFpsForegroundLimit.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.numericFpsForegroundLimit.CausesValidation = false;
-            this.numericFpsForegroundLimit.Location = new System.Drawing.Point(108, 19);
-            this.numericFpsForegroundLimit.Maximum = new decimal(new int[] {
-            500,
-            0,
-            0,
-            0});
-            this.numericFpsForegroundLimit.Name = "numericFpsForegroundLimit";
-            this.numericFpsForegroundLimit.Size = new System.Drawing.Size(48, 20);
-            this.numericFpsForegroundLimit.TabIndex = 24;
-            this.numericFpsForegroundLimit.Value = new decimal(new int[] {
-            144,
-            0,
-            0,
-            0});
-            this.numericFpsForegroundLimit.Leave += new System.EventHandler(this.numericFpsForegroundLimit_Leave);
+            numericFpsForegroundLimit.BackColor = SystemColors.Window;
+            numericFpsForegroundLimit.BorderStyle = BorderStyle.FixedSingle;
+            numericFpsForegroundLimit.CausesValidation = false;
+            numericFpsForegroundLimit.Location = new Point(126, 22);
+            numericFpsForegroundLimit.Margin = new Padding(4, 3, 4, 3);
+            numericFpsForegroundLimit.Maximum = new decimal(new int[] { 500, 0, 0, 0 });
+            numericFpsForegroundLimit.Name = "numericFpsForegroundLimit";
+            numericFpsForegroundLimit.Size = new Size(56, 23);
+            numericFpsForegroundLimit.TabIndex = 24;
+            numericFpsForegroundLimit.Value = new decimal(new int[] { 144, 0, 0, 0 });
+            numericFpsForegroundLimit.Leave += numericFpsForegroundLimit_Leave;
             // 
             // lblFpsFeatureExpired
             // 
-            this.lblFpsFeatureExpired.Location = new System.Drawing.Point(11, 21);
-            this.lblFpsFeatureExpired.Name = "lblFpsFeatureExpired";
-            this.lblFpsFeatureExpired.Size = new System.Drawing.Size(224, 68);
-            this.lblFpsFeatureExpired.TabIndex = 24;
-            this.lblFpsFeatureExpired.Text = "This experimental feature has expired.\r\nIf this is the first time running, please" +
-    " try closing and re-starting, or alternatively please update to the latest versi" +
-    "on.\r\n";
-            this.lblFpsFeatureExpired.Visible = false;
+            lblFpsFeatureExpired.Location = new Point(13, 24);
+            lblFpsFeatureExpired.Margin = new Padding(4, 0, 4, 0);
+            lblFpsFeatureExpired.Name = "lblFpsFeatureExpired";
+            lblFpsFeatureExpired.Size = new Size(261, 78);
+            lblFpsFeatureExpired.TabIndex = 24;
+            lblFpsFeatureExpired.Text = "This experimental feature has expired.\r\nIf this is the first time running, please try closing and re-starting, or alternatively please update to the latest version.\r\n";
+            lblFpsFeatureExpired.Visible = false;
             // 
             // chbIsFpsThrottlingEnabled
             // 
-            this.chbIsFpsThrottlingEnabled.AutoSize = true;
-            this.chbIsFpsThrottlingEnabled.Location = new System.Drawing.Point(10, 9);
-            this.chbIsFpsThrottlingEnabled.Name = "chbIsFpsThrottlingEnabled";
-            this.chbIsFpsThrottlingEnabled.Size = new System.Drawing.Size(149, 17);
-            this.chbIsFpsThrottlingEnabled.TabIndex = 21;
-            this.chbIsFpsThrottlingEnabled.Text = "Enable DirectX FPS Limits";
-            this.chbIsFpsThrottlingEnabled.UseVisualStyleBackColor = true;
-            this.chbIsFpsThrottlingEnabled.CheckedChanged += new System.EventHandler(this.chbIsFpsThrottlingEnabled_CheckedChanged);
+            chbIsFpsThrottlingEnabled.AutoSize = true;
+            chbIsFpsThrottlingEnabled.Location = new Point(12, 10);
+            chbIsFpsThrottlingEnabled.Margin = new Padding(4, 3, 4, 3);
+            chbIsFpsThrottlingEnabled.Name = "chbIsFpsThrottlingEnabled";
+            chbIsFpsThrottlingEnabled.Size = new Size(159, 19);
+            chbIsFpsThrottlingEnabled.TabIndex = 21;
+            chbIsFpsThrottlingEnabled.Text = "Enable DirectX FPS Limits";
+            chbIsFpsThrottlingEnabled.UseVisualStyleBackColor = true;
+            chbIsFpsThrottlingEnabled.CheckedChanged += chbIsFpsThrottlingEnabled_CheckedChanged;
             // 
             // tabPageProfiles
             // 
-            this.tabPageProfiles.Controls.Add(this.splitContainerMainProfiles);
-            this.tabPageProfiles.Location = new System.Drawing.Point(124, 4);
-            this.tabPageProfiles.Name = "tabPageProfiles";
-            this.tabPageProfiles.Size = new System.Drawing.Size(266, 353);
-            this.tabPageProfiles.TabIndex = 8;
-            this.tabPageProfiles.Text = "Profiles";
-            this.tabPageProfiles.UseVisualStyleBackColor = true;
+            tabPageProfiles.Controls.Add(splitContainerMainProfiles);
+            tabPageProfiles.Location = new Point(124, 4);
+            tabPageProfiles.Margin = new Padding(4, 3, 4, 3);
+            tabPageProfiles.Name = "tabPageProfiles";
+            tabPageProfiles.Size = new Size(332, 409);
+            tabPageProfiles.TabIndex = 8;
+            tabPageProfiles.Text = "Profiles";
+            tabPageProfiles.UseVisualStyleBackColor = true;
             // 
             // splitContainerMainProfiles
             // 
-            this.splitContainerMainProfiles.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainerMainProfiles.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
-            this.splitContainerMainProfiles.Location = new System.Drawing.Point(0, 0);
-            this.splitContainerMainProfiles.Name = "splitContainerMainProfiles";
-            this.splitContainerMainProfiles.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            splitContainerMainProfiles.Dock = DockStyle.Fill;
+            splitContainerMainProfiles.FixedPanel = FixedPanel.Panel1;
+            splitContainerMainProfiles.Location = new Point(0, 0);
+            splitContainerMainProfiles.Margin = new Padding(4, 3, 4, 3);
+            splitContainerMainProfiles.Name = "splitContainerMainProfiles";
+            splitContainerMainProfiles.Orientation = Orientation.Horizontal;
             // 
             // splitContainerMainProfiles.Panel1
             // 
-            this.splitContainerMainProfiles.Panel1.Controls.Add(this.lblProfilesExperimentalWarning);
-            this.splitContainerMainProfiles.Panel1.Controls.Add(this.lblLoadedProfileName);
-            this.splitContainerMainProfiles.Panel1.Controls.Add(this.btnDeleteProfile);
-            this.splitContainerMainProfiles.Panel1.Controls.Add(this.btnCloneProfile);
-            this.splitContainerMainProfiles.Panel1.Controls.Add(this.txtLoadedProfileName);
+            splitContainerMainProfiles.Panel1.Controls.Add(lblProfilesExperimentalWarning);
+            splitContainerMainProfiles.Panel1.Controls.Add(lblLoadedProfileName);
+            splitContainerMainProfiles.Panel1.Controls.Add(btnDeleteProfile);
+            splitContainerMainProfiles.Panel1.Controls.Add(btnCloneProfile);
+            splitContainerMainProfiles.Panel1.Controls.Add(txtLoadedProfileName);
             // 
             // splitContainerMainProfiles.Panel2
             // 
-            this.splitContainerMainProfiles.Panel2.Controls.Add(this.listBoxProfiles);
-            this.splitContainerMainProfiles.Size = new System.Drawing.Size(266, 353);
-            this.splitContainerMainProfiles.SplitterDistance = 89;
-            this.splitContainerMainProfiles.TabIndex = 0;
+            splitContainerMainProfiles.Panel2.Controls.Add(listBoxProfiles);
+            splitContainerMainProfiles.Size = new Size(332, 409);
+            splitContainerMainProfiles.SplitterDistance = 103;
+            splitContainerMainProfiles.SplitterWidth = 5;
+            splitContainerMainProfiles.TabIndex = 0;
             // 
             // lblProfilesExperimentalWarning
             // 
-            this.lblProfilesExperimentalWarning.Location = new System.Drawing.Point(5, 3);
-            this.lblProfilesExperimentalWarning.Name = "lblProfilesExperimentalWarning";
-            this.lblProfilesExperimentalWarning.Size = new System.Drawing.Size(196, 26);
-            this.lblProfilesExperimentalWarning.TabIndex = 5;
-            this.lblProfilesExperimentalWarning.Text = "This is a new experimental feature. Make sure you have backups!";
+            lblProfilesExperimentalWarning.Location = new Point(6, 3);
+            lblProfilesExperimentalWarning.Margin = new Padding(4, 0, 4, 0);
+            lblProfilesExperimentalWarning.Name = "lblProfilesExperimentalWarning";
+            lblProfilesExperimentalWarning.Size = new Size(229, 30);
+            lblProfilesExperimentalWarning.TabIndex = 5;
+            lblProfilesExperimentalWarning.Text = "This is a new experimental feature. Make sure you have backups!";
             // 
             // lblLoadedProfileName
             // 
-            this.lblLoadedProfileName.AutoSize = true;
-            this.lblLoadedProfileName.Location = new System.Drawing.Point(9, 70);
-            this.lblLoadedProfileName.Name = "lblLoadedProfileName";
-            this.lblLoadedProfileName.Size = new System.Drawing.Size(73, 13);
-            this.lblLoadedProfileName.TabIndex = 4;
-            this.lblLoadedProfileName.Text = "Current Profile";
+            lblLoadedProfileName.AutoSize = true;
+            lblLoadedProfileName.Location = new Point(10, 81);
+            lblLoadedProfileName.Margin = new Padding(4, 0, 4, 0);
+            lblLoadedProfileName.Name = "lblLoadedProfileName";
+            lblLoadedProfileName.Size = new Size(84, 15);
+            lblLoadedProfileName.TabIndex = 4;
+            lblLoadedProfileName.Text = "Current Profile";
             // 
             // btnDeleteProfile
             // 
-            this.btnDeleteProfile.Location = new System.Drawing.Point(134, 34);
-            this.btnDeleteProfile.Name = "btnDeleteProfile";
-            this.btnDeleteProfile.Size = new System.Drawing.Size(124, 29);
-            this.btnDeleteProfile.TabIndex = 3;
-            this.btnDeleteProfile.Text = "Delete Current Profile";
-            this.btnDeleteProfile.UseVisualStyleBackColor = true;
-            this.btnDeleteProfile.Click += new System.EventHandler(this.btnDeleteProfile_Click);
+            btnDeleteProfile.Location = new Point(156, 39);
+            btnDeleteProfile.Margin = new Padding(4, 3, 4, 3);
+            btnDeleteProfile.Name = "btnDeleteProfile";
+            btnDeleteProfile.Size = new Size(145, 33);
+            btnDeleteProfile.TabIndex = 3;
+            btnDeleteProfile.Text = "Delete Current Profile";
+            btnDeleteProfile.UseVisualStyleBackColor = true;
+            btnDeleteProfile.Click += btnDeleteProfile_Click;
             // 
             // btnCloneProfile
             // 
-            this.btnCloneProfile.Location = new System.Drawing.Point(3, 34);
-            this.btnCloneProfile.Name = "btnCloneProfile";
-            this.btnCloneProfile.Size = new System.Drawing.Size(124, 29);
-            this.btnCloneProfile.TabIndex = 2;
-            this.btnCloneProfile.Text = "Clone Current Profile";
-            this.btnCloneProfile.UseVisualStyleBackColor = true;
-            this.btnCloneProfile.Click += new System.EventHandler(this.btnCloneProfile_Click);
+            btnCloneProfile.Location = new Point(4, 39);
+            btnCloneProfile.Margin = new Padding(4, 3, 4, 3);
+            btnCloneProfile.Name = "btnCloneProfile";
+            btnCloneProfile.Size = new Size(145, 33);
+            btnCloneProfile.TabIndex = 2;
+            btnCloneProfile.Text = "Clone Current Profile";
+            btnCloneProfile.UseVisualStyleBackColor = true;
+            btnCloneProfile.Click += btnCloneProfile_Click;
             // 
             // txtLoadedProfileName
             // 
-            this.txtLoadedProfileName.Location = new System.Drawing.Point(88, 67);
-            this.txtLoadedProfileName.Name = "txtLoadedProfileName";
-            this.txtLoadedProfileName.Size = new System.Drawing.Size(170, 20);
-            this.txtLoadedProfileName.TabIndex = 0;
-            this.txtLoadedProfileName.Text = "Default";
-            this.txtLoadedProfileName.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtLoadedProfileName_KeyDown);
-            this.txtLoadedProfileName.Leave += new System.EventHandler(this.txtLoadedProfileName_Leave);
+            txtLoadedProfileName.Location = new Point(103, 77);
+            txtLoadedProfileName.Margin = new Padding(4, 3, 4, 3);
+            txtLoadedProfileName.Name = "txtLoadedProfileName";
+            txtLoadedProfileName.Size = new Size(198, 23);
+            txtLoadedProfileName.TabIndex = 0;
+            txtLoadedProfileName.Text = "Default";
+            txtLoadedProfileName.KeyDown += txtLoadedProfileName_KeyDown;
+            txtLoadedProfileName.Leave += txtLoadedProfileName_Leave;
             // 
             // listBoxProfiles
             // 
-            this.listBoxProfiles.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.listBoxProfiles.FormattingEnabled = true;
-            this.listBoxProfiles.Location = new System.Drawing.Point(0, 0);
-            this.listBoxProfiles.Name = "listBoxProfiles";
-            this.listBoxProfiles.Size = new System.Drawing.Size(266, 260);
-            this.listBoxProfiles.TabIndex = 0;
-            this.listBoxProfiles.Click += new System.EventHandler(this.listBoxProfiles_Click);
+            listBoxProfiles.Dock = DockStyle.Fill;
+            listBoxProfiles.FormattingEnabled = true;
+            listBoxProfiles.Location = new Point(0, 0);
+            listBoxProfiles.Margin = new Padding(4, 3, 4, 3);
+            listBoxProfiles.Name = "listBoxProfiles";
+            listBoxProfiles.Size = new Size(332, 301);
+            listBoxProfiles.TabIndex = 0;
+            listBoxProfiles.Click += listBoxProfiles_Click;
             // 
             // NotifyIcon
             // 
-            this.NotifyIcon.ContextMenuStrip = this.TrayMenu;
-            this.NotifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("NotifyIcon.Icon")));
-            this.NotifyIcon.Text = "EVE-O Preview";
-            this.NotifyIcon.Visible = true;
-            this.NotifyIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.RestoreMainForm_Handler);
+            NotifyIcon.ContextMenuStrip = TrayMenu;
+            NotifyIcon.Icon = (Icon)resources.GetObject("NotifyIcon.Icon");
+            NotifyIcon.Text = "EVE-O Preview";
+            NotifyIcon.Visible = true;
+            NotifyIcon.MouseDoubleClick += RestoreMainForm_Handler;
             // 
             // TrayMenu
             // 
-            this.TrayMenu.ImageScalingSize = new System.Drawing.Size(24, 24);
-            this.TrayMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            TitleMenuItem,
-            RestoreWindowMenuItem,
-            SeparatorMenuItem,
-            ExitMenuItem});
-            this.TrayMenu.Name = "contextMenuStrip1";
-            this.TrayMenu.Size = new System.Drawing.Size(152, 76);
+            TrayMenu.ImageScalingSize = new Size(24, 24);
+            TrayMenu.Items.AddRange(new ToolStripItem[] { TitleMenuItem, RestoreWindowMenuItem, SeparatorMenuItem, ExitMenuItem });
+            TrayMenu.Name = "contextMenuStrip1";
+            TrayMenu.Size = new Size(152, 76);
             // 
             // instantToolTip
             // 
-            this.instantToolTip.AutoPopDelay = 5000;
-            this.instantToolTip.InitialDelay = 0;
-            this.instantToolTip.ReshowDelay = 100;
-            // 
-            // lblDisplaySampleFont
-            // 
-            this.lblDisplaySampleFont.AutoSize = true;
-            this.lblDisplaySampleFont.BackColor = System.Drawing.SystemColors.Control;
-            this.lblDisplaySampleFont.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
-            this.lblDisplaySampleFont.Location = new System.Drawing.Point(6, 76);
-            this.lblDisplaySampleFont.Name = "lblDisplaySampleFont";
-            this.lblDisplaySampleFont.OutlineColor = System.Drawing.Color.White;
-            this.lblDisplaySampleFont.OutlineWidth = 1F;
-            this.lblDisplaySampleFont.Size = new System.Drawing.Size(45, 13);
-            this.lblDisplaySampleFont.TabIndex = 32;
-            this.lblDisplaySampleFont.Text = "Sample.";
+            instantToolTip.AutoPopDelay = 5000;
+            instantToolTip.InitialDelay = 0;
+            instantToolTip.ReshowDelay = 100;
             // 
             // MainForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(394, 361);
-            this.Controls.Add(this.ContentTabControl);
-            this.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Margin = new System.Windows.Forms.Padding(0);
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.MinimumSize = new System.Drawing.Size(410, 390);
-            this.Name = "MainForm";
-            this.Text = "EVE-O Preview";
-            this.TopMost = true;
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainFormClosing_Handler);
-            this.Load += new System.EventHandler(this.MainFormResize_Handler);
-            this.Resize += new System.EventHandler(this.MainFormResize_Handler);
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            BackColor = SystemColors.Control;
+            ClientSize = new Size(460, 417);
+            Controls.Add(ContentTabControl);
+            ForeColor = SystemColors.ControlText;
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            Margin = new Padding(0);
+            MaximizeBox = false;
+            MinimizeBox = false;
+            MinimumSize = new Size(476, 444);
+            Name = "MainForm";
+            Text = "EVE-O Preview";
+            TopMost = true;
+            FormClosing += MainFormClosing_Handler;
+            Load += MainFormResize_Handler;
+            Resize += MainFormResize_Handler;
             GeneralTabPage.ResumeLayout(false);
             GeneralSettingsPanel.ResumeLayout(false);
             GeneralSettingsPanel.PerformLayout();
             ThumbnailTabPage.ResumeLayout(false);
             ThumbnailSettingsPanel.ResumeLayout(false);
             ThumbnailSettingsPanel.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.ThumbnailsWidthNumericEdit)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ThumbnailsHeightNumericEdit)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ThumbnailOpacityTrackBar)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)ThumbnailsWidthNumericEdit).EndInit();
+            ((System.ComponentModel.ISupportInitialize)ThumbnailsHeightNumericEdit).EndInit();
+            ((System.ComponentModel.ISupportInitialize)ThumbnailOpacityTrackBar).EndInit();
             ZoomSettingsPanel.ResumeLayout(false);
             ZoomSettingsPanel.PerformLayout();
-            this.ZoomAnchorPanel.ResumeLayout(false);
-            this.ZoomAnchorPanel.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.ThumbnailZoomFactorNumericEdit)).EndInit();
+            ZoomAnchorPanel.ResumeLayout(false);
+            ZoomAnchorPanel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)ThumbnailZoomFactorNumericEdit).EndInit();
             OverlayTabPage.ResumeLayout(false);
             OverlaySettingsPanel.ResumeLayout(false);
             OverlaySettingsPanel.PerformLayout();
-            this.groupBoxOverlayFont.ResumeLayout(false);
-            this.groupBoxOverlayFont.PerformLayout();
+            groupBoxOverlayFont.ResumeLayout(false);
+            groupBoxOverlayFont.PerformLayout();
             ClientsPanel.ResumeLayout(false);
-            this.activeClientsSplitContainer.Panel1.ResumeLayout(false);
-            this.activeClientsSplitContainer.Panel1.PerformLayout();
-            this.activeClientsSplitContainer.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.activeClientsSplitContainer)).EndInit();
-            this.activeClientsSplitContainer.ResumeLayout(false);
-            this.groupBoxToggleHideAllThumbnails.ResumeLayout(false);
-            this.groupBoxToggleHideAllThumbnails.PerformLayout();
+            activeClientsSplitContainer.Panel1.ResumeLayout(false);
+            activeClientsSplitContainer.Panel1.PerformLayout();
+            activeClientsSplitContainer.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)activeClientsSplitContainer).EndInit();
+            activeClientsSplitContainer.ResumeLayout(false);
+            groupBoxToggleHideAllThumbnails.ResumeLayout(false);
+            groupBoxToggleHideAllThumbnails.PerformLayout();
             CycleGroupTabPage.ResumeLayout(false);
-            this.CycleGroupPanel.ResumeLayout(false);
-            this.splitContainerMainCycleGroup.Panel1.ResumeLayout(false);
-            this.splitContainerMainCycleGroup.Panel1.PerformLayout();
-            this.splitContainerMainCycleGroup.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerMainCycleGroup)).EndInit();
-            this.splitContainerMainCycleGroup.ResumeLayout(false);
+            CycleGroupPanel.ResumeLayout(false);
+            splitContainerMainCycleGroup.Panel1.ResumeLayout(false);
+            splitContainerMainCycleGroup.Panel1.PerformLayout();
+            splitContainerMainCycleGroup.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainerMainCycleGroup).EndInit();
+            splitContainerMainCycleGroup.ResumeLayout(false);
             AboutTabPage.ResumeLayout(false);
             AboutPanel.ResumeLayout(false);
             AboutPanel.PerformLayout();
-            this.ClientsTabPage.ResumeLayout(false);
-            this.ContentTabControl.ResumeLayout(false);
-            this.ZoomTabPage.ResumeLayout(false);
-            this.FpsLimiterTabPage.ResumeLayout(false);
-            this.fpsMainLayoutPanel.ResumeLayout(false);
-            this.fpsTopPanel.ResumeLayout(false);
-            this.fpsBottomPanel.ResumeLayout(false);
-            this.fpsBottomPanel.PerformLayout();
-            this.groupBoxAudioMuting.ResumeLayout(false);
-            this.groupBoxAudioMuting.PerformLayout();
-            this.groupBoxFpsLimits.ResumeLayout(false);
-            this.groupBoxFpsLimits.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericFpsPredictedLimit)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericFpsBackgroundLimit)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericFpsForegroundLimit)).EndInit();
-            this.tabPageProfiles.ResumeLayout(false);
-            this.splitContainerMainProfiles.Panel1.ResumeLayout(false);
-            this.splitContainerMainProfiles.Panel1.PerformLayout();
-            this.splitContainerMainProfiles.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerMainProfiles)).EndInit();
-            this.splitContainerMainProfiles.ResumeLayout(false);
-            this.TrayMenu.ResumeLayout(false);
-            this.ResumeLayout(false);
+            ClientsTabPage.ResumeLayout(false);
+            ContentTabControl.ResumeLayout(false);
+            ZoomTabPage.ResumeLayout(false);
+            FpsLimiterTabPage.ResumeLayout(false);
+            fpsMainLayoutPanel.ResumeLayout(false);
+            fpsTopPanel.ResumeLayout(false);
+            fpsBottomPanel.ResumeLayout(false);
+            fpsBottomPanel.PerformLayout();
+            groupBoxAudioMuting.ResumeLayout(false);
+            groupBoxAudioMuting.PerformLayout();
+            groupBoxFpsLimits.ResumeLayout(false);
+            groupBoxFpsLimits.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)numericFpsPredictedLimit).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numericFpsBackgroundLimit).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numericFpsForegroundLimit).EndInit();
+            tabPageProfiles.ResumeLayout(false);
+            splitContainerMainProfiles.Panel1.ResumeLayout(false);
+            splitContainerMainProfiles.Panel1.PerformLayout();
+            splitContainerMainProfiles.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainerMainProfiles).EndInit();
+            splitContainerMainProfiles.ResumeLayout(false);
+            TrayMenu.ResumeLayout(false);
+            ResumeLayout(false);
 
-		}
+        }
 
-		#endregion
-		private NotifyIcon NotifyIcon;
+        #endregion
+        private NotifyIcon NotifyIcon;
 		private ContextMenuStrip TrayMenu;
 		private TabPage ZoomTabPage;
 		private CheckBox EnableClientLayoutTrackingCheckBox;

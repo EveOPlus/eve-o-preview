@@ -29,6 +29,7 @@ namespace EveOPreview.View.CustomControl
         private Color outlineColor = Color.Black;
         private float outlineWidth = 1f;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Color OutlineColor
         {
             get { return outlineColor; }
@@ -39,6 +40,7 @@ namespace EveOPreview.View.CustomControl
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public float OutlineWidth
         {
             get { return outlineWidth; }

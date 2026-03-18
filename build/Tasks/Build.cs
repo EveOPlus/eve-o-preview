@@ -16,32 +16,33 @@
 
 using Cake.Common.Diagnostics;
 using Cake.Common.Tools.DotNet;
+using Cake.Common.Tools.DotNet.Build;
 using Cake.Common.Tools.DotNet.MSBuild;
 using Cake.Common.Tools.DotNet.Publish;
-using Cake.Common.Tools.MSBuild;
 using Cake.Frosting;
 
 namespace Build.Tasks
 {
-	[IsDependentOn(typeof(Restore))]
+	[IsDependentOn(typeof(Documentation))]
 	public sealed class Build : FrostingTask<Context>
 	{
 		public override void Run(Context context)
 		{
-			context.Information("Build started...");
+            context.Information("Build started for .NET 10...");
 
-			context.MSBuild(Configuration.SolutionName, settings =>
-			{
-				settings.Configuration = Configuration.BuildConfiguration;
-				settings.ToolVersion = MSBuildToolVersion.Default;
+            context.DotNetPublish(Configuration.MainSolutionName, new DotNetPublishSettings
+            {
+				Configuration = Configuration.BuildConfiguration,
+                Runtime = "win-x64",
+                OutputDirectory = Configuration.BinFolder,
+                MSBuildSettings = new DotNetMSBuildSettings()
+                    .WithProperty("PublishSingleFile", "true")
+                    .WithProperty("SelfContained", "false")
+                    .WithProperty("IncludeNativeLibrariesForSelfExtract", "true")
+                    .WithProperty("IncludeAllContentForSelfExtract", "true")
+            });
 
-				if (!string.IsNullOrEmpty(Configuration.BuildToolPath))
-				{
-					settings.ToolPath = Configuration.BuildToolPath;
-				}
-			});
-
-			context.DotNetPublish("./src/Eve-O-Preview.Robin/Eve-O-Preview.Robin.csproj", new DotNetPublishSettings
+			context.DotNetPublish(Configuration.RobinSolutionName, new DotNetPublishSettings
 			{
 				Configuration = Configuration.BuildConfiguration,
 				Runtime = "win-x64",

@@ -38,7 +38,7 @@ namespace EveOPreview.Mediator.Handlers.Configuration
             _hookService = hookService;
         }
 
-        public async Task<Unit> Handle(SetFpsLimiterEnabled request, CancellationToken cancellationToken)
+        public async Task Handle(SetFpsLimiterEnabled request, CancellationToken cancellationToken)
         {
             var allKnownClients = _processMonitor.GetAllProcesses();
 
@@ -52,8 +52,6 @@ namespace EveOPreview.Mediator.Handlers.Configuration
                 var tasks = allKnownClients.Select(client => _hookService.DisableFpsLimiterAsync(client.Handle));
                 await Task.WhenAll(tasks);
             }
-
-            return Unit.Value;
         }
     }
 }

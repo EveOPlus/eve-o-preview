@@ -14,6 +14,7 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System;
 using EveOPreview.Configuration;
 using EveOPreview.Helper;
 using EveOPreview.Mediator.Messages;
@@ -35,11 +36,17 @@ namespace EveOPreview.Mediator.Handlers.Configuration
             _config = config;
         }
 
-        public Task<Unit> Handle(SaveConfiguration message, CancellationToken cancellationToken)
+        public Task Handle(SaveConfiguration message, CancellationToken cancellationToken)
         {
-            this._storage.Save();
-            
-            return Unit.Task;
+            try
+            {
+                this._storage.Save();
+                return Task.CompletedTask;
+            }
+            catch (Exception exception)
+            {
+                return Task.FromException(exception);
+            }
         }
     }
 }

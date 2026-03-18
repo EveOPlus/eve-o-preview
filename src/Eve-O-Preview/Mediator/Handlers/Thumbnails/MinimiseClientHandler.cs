@@ -14,6 +14,7 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Services;
 using MediatR;
@@ -31,11 +32,17 @@ namespace EveOPreview.Mediator.Handlers.Thumbnails
             _windowManager = windowManager;
         }
 
-        public Task<Unit> Handle(MinimizeClient request, CancellationToken cancellationToken)
+        public Task Handle(MinimizeClient request, CancellationToken cancellationToken)
         {
-            _windowManager.MinimizeWindow(request.HandleToMinimize, true);
-
-            return Unit.Task;
+            try
+            {
+                _windowManager.MinimizeWindow(request.HandleToMinimize, true);
+                return Task.CompletedTask;
+            }
+            catch (Exception exception)
+            {
+                return Task.FromException(exception);
+            }
         }
     }
 }

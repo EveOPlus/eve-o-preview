@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using EveOPreview.Configuration;
 using EveOPreview.Configuration.Interface;
 using EveOPreview.Configuration.Model;
@@ -96,7 +97,7 @@ namespace EveOPreview.Presenters
             this.View.RenameCurrentProfile = this.RenameCurrentProfile;
 
             var currentProfile = _mediator.Send(new GetCurrentProfileLocation()).Result;
-            _ = _mediator.Send(new ChangeSelectedProfile(currentProfile)).Result;
+            _mediator.Send(new ChangeSelectedProfile(currentProfile)).GetAwaiter().GetResult();
             _profileManager.RefreshProfileLocations();
         }
 
@@ -170,7 +171,8 @@ namespace EveOPreview.Presenters
         {
             if (this._exitApplication || !this.View.MinimizeToTray)
             {
-                this._mediator.Send(new StopService()).Wait();
+                // we are closing so be careful not to block on the UI main thread
+                Task.Run(() => this._mediator.Send(new StopService())).GetAwaiter().GetResult();
 
                 this._configurationStorage.Save();
                 request.Allow = true;
@@ -369,8 +371,8 @@ namespace EveOPreview.Presenters
 
         private string GetApplicationVersion()
         {
-            Version version = System.Reflection.Assembly.GetEntryAssembly().GetName().Version;
-            return $"{version.Major}.{version.Minor}.{version.Build}";
+            var version = System.Windows.Forms.Application.ProductVersion;
+            return version;
         }
 
         private void TriggerSetFpsLimiter()

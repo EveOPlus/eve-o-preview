@@ -36,14 +36,12 @@ namespace EveOPreview.Mediator.Handlers.Thumbnails
             _logger = logger;
         }
 
-        public async Task<Unit> Handle(ChangeSelectedProfile notification, CancellationToken ct)
+        public async Task Handle(ChangeSelectedProfile notification, CancellationToken ct)
         {
             _configStorage.CurrentProfile = notification.NewProfileLocation;
             _configStorage.Load();
 
             await _publisher.Publish(new SelectedProfileChangedNotification(notification.NewProfileLocation), ct);
-
-            return Unit.Value;
         }
     }
 }

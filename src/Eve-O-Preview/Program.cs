@@ -14,7 +14,9 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using Autofac;
 using EveOPreview.Configuration;
+using EveOPreview.Configuration.Implementation;
 using EveOPreview.Configuration.Interface;
 using EveOPreview.Presenters;
 using EveOPreview.Services;
@@ -22,7 +24,6 @@ using EveOPreview.Services.Implementation;
 using EveOPreview.Services.Interface;
 using EveOPreview.View;
 using Gma.System.MouseKeyHook;
-using LightInject;
 using MediatR;
 using Serilog;
 using Serilog.Events;
@@ -30,6 +31,8 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
+using Autofac.Extensions.DependencyInjection;
+using MediatR.Extensions.Autofac.DependencyInjection;
 
 namespace EveOPreview
 {
@@ -128,46 +131,59 @@ namespace EveOPreview
 
         private static IApplicationController InitializeApplicationController()
         {
-            IIocContainer container = new LightInjectContainer();
-
-            container.RegisterInstance<ILogger>(Log.Logger);
-            container.RegisterInstance<IKeyboardMouseEvents>(Hook.GlobalEvents());
+            var builder = new ContainerBuilder();
+            var assembly = typeof(Program).Assembly;
+            
+            builder.RegisterInstance(Log.Logger).AsImplementedInterfaces().SingleInstance();
+            builder.RegisterInstance(Hook.GlobalEvents()).AsImplementedInterfaces().SingleInstance();
 
             // Singleton registration is used for services
             // Low-level services
-            container.Register<IWindowManager>();
-            container.Register<IHookService>();
-            container.Register<IProcessMonitor>();
-            container.Register<IPremiumService>();
+            builder.RegisterType<WindowManager>().As<IWindowManager>().SingleInstance();
+            builder.RegisterType<HookService>().As<IHookService>().SingleInstance();
+            builder.RegisterType<ProcessMonitor>().As<IProcessMonitor>().SingleInstance();
+            builder.RegisterType<PremiumService>().As<IPremiumService>().SingleInstance();
 
             // MediatR
-            container.Register<IMediator, MediatR.Mediator>();
-            container.RegisterInstance<ServiceFactory>(t => container.Resolve(t));
-            container.Register(typeof(INotificationHandler<>), typeof(Program).Assembly);
-            container.Register(typeof(IRequestHandler<>), typeof(Program).Assembly);
-            container.Register(typeof(IRequestHandler<,>), typeof(Program).Assembly);
+            MediatR.Mediator.LicenseKey = "Community";
+            
+            builder.Register(ctx => new AutofacServiceProvider(ctx.Resolve<ILifetimeScope>()))
+                .As<IServiceProvider>()
+                .InstancePerLifetimeScope();
+
+            var mediatrConfig = MediatR.Extensions.Autofac.DependencyInjection.Builder.MediatRConfigurationBuilder
+                .Create("Community", typeof(Program).Assembly)
+                .WithAllOpenGenericHandlerTypesRegistered()
+                .Build();
+
+            builder.RegisterMediatR(mediatrConfig);
 
             // Configuration services
-            container.Register<IProfileManager>();
-            container.Register<IConfigurationStorage>();
-            container.Register<IAppConfig>();
-            container.Register<IThumbnailConfiguration>();
-            container.Register<IGlobalEvents>();
+            builder.RegisterType<ProfileManager>().As<IProfileManager>().SingleInstance();
+            builder.RegisterType<ConfigurationStorage>().As<IConfigurationStorage>().SingleInstance();
+            builder.RegisterType<AppConfig>().As<IAppConfig>().SingleInstance();
+            builder.RegisterType<ThumbnailConfiguration>().As<IThumbnailConfiguration>().SingleInstance();
+            builder.RegisterType<GlobalEvents>().As<IGlobalEvents>().SingleInstance();
+
 
             // Application services
-            container.Register<IThumbnailManager>();
-            container.Register<IThumbnailViewFactory>();
-            container.Register<IThumbnailDescription>();
+            builder.RegisterType<ThumbnailManager>().As<IThumbnailManager>().SingleInstance();
+            builder.RegisterType<ThumbnailViewFactory>().As<IThumbnailViewFactory>().SingleInstance();
+            builder.RegisterType<ThumbnailDescription>().As<IThumbnailDescription>().SingleInstance();
 
-            IApplicationController controller = new ApplicationController(container);
+            // Views
+            builder.RegisterType<StaticThumbnailView>().AsSelf().InstancePerDependency();
+            builder.RegisterType<LiveThumbnailView>().AsSelf().InstancePerDependency();
+            builder.RegisterType<MainForm>().As<IMainFormView>().InstancePerDependency();
+            
+            // Main presenter and controller
+            builder.RegisterInstance(new ApplicationContext()).AsSelf().SingleInstance();
+            builder.RegisterType<MainFormPresenter>().AsSelf().SingleInstance();
+            builder.RegisterType<ApplicationController>().As<IApplicationController>().SingleInstance();
 
-            // UI classes
-            controller.RegisterView<StaticThumbnailView, StaticThumbnailView>();
-            controller.RegisterView<LiveThumbnailView, LiveThumbnailView>();
+            var container = builder.Build();
 
-            controller.RegisterView<IMainFormView, MainForm>();
-            controller.RegisterInstance(new ApplicationContext());
-
+            var controller = container.Resolve<IApplicationController>();
             return controller;
         }
     }

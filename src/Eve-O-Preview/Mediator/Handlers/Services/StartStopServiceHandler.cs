@@ -14,6 +14,7 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System;
 using System.Linq;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Services;
@@ -38,22 +39,26 @@ namespace EveOPreview.Mediator.Handlers.Services
             _hook = hook;
         }
 
-        public Task<Unit> Handle(StartService message, CancellationToken cancellationToken)
+        public Task Handle(StartService message, CancellationToken cancellationToken)
         {
-            this._manager.Start();
-
-            return Unit.Task;
+            try
+            {
+                this._manager.Start();
+                return Task.CompletedTask;
+            }
+            catch (Exception exception)
+            {
+                return Task.FromException(exception);
+            }
         }
 
-        public async Task<Unit> Handle(StopService message, CancellationToken cancellationToken)
+        public async Task Handle(StopService message, CancellationToken cancellationToken)
         {
             this._manager.Stop();
 
             var processes = _procMonitor.GetAllProcesses();
             var tasks = processes.Select(client => _hook.DisableFpsLimiterAsync(client.Handle));
             await Task.WhenAll(tasks).ConfigureAwait(false);
-
-            return Unit.Value;
         }
     }
 }

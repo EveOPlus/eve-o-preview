@@ -36,7 +36,7 @@ namespace EveOPreview.Mediator.Handlers.Configuration
             _hookService = hookService;
         }
 
-        public async Task<Unit> Handle(SetAudioSettings request, CancellationToken cancellationToken)
+        public async Task Handle(SetAudioSettings request, CancellationToken cancellationToken)
         {
             var allKnownClients = _processMonitor.GetAllProcesses();
 
@@ -45,8 +45,6 @@ namespace EveOPreview.Mediator.Handlers.Configuration
 
             var tasks = allKnownClients.Select(client => _hookService.UpdateMutedAudioAsync(client.Handle));
             await Task.WhenAll(tasks);
-
-            return Unit.Value;
         }
     }
 }
