@@ -19,9 +19,9 @@
     <TargetZone>LocalIntranet</TargetZone>
     <AssemblyOriginatorKeyFile />
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <FileVersion>10.0.0.2</FileVersion>
-    <AssemblyVersion>10.0.0.2</AssemblyVersion>
-    <Version>10.0.0.2</Version>
+    <FileVersion>10.0.0.3</FileVersion>
+    <AssemblyVersion>10.0.0.3</AssemblyVersion>
+    <Version>10.0.0.3</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>..\bin</OutputPath>

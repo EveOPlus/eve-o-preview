@@ -94,7 +94,8 @@ public class ProfileManager : IProfileManager
     private void MigrateLegacySingleProfile()
     {
         // The location we would expect to find EVE-O Preview.json before we started supporting multiple profiles.
-        string sourceFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, BASE_FILENAME);
+        string exePath = System.IO.Path.GetDirectoryName(System.Environment.ProcessPath);
+        string sourceFile = Path.Combine(exePath, BASE_FILENAME);
 
         string destDir = Path.Combine(ProfileRootDirectory, DEFAULT_PROFILE_DIR);
         string destFile = Path.Combine(destDir, BASE_FILENAME);
