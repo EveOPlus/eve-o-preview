@@ -202,7 +202,7 @@ namespace EveOPreview.Services.Implementation
                     }
                     else
                     {
-                        var basePath = AppContext.BaseDirectory;
+                        var basePath = System.IO.Path.GetDirectoryName(System.Environment.ProcessPath);
                         var dllPath = Path.Combine(basePath, "Eve-O-Preview.Robin.dll");
                         if (!File.Exists(dllPath)) throw new Exception($"Unable to find Eve-O-Preview.Robin.dll at: {dllPath}");
                         
