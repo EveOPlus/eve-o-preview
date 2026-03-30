@@ -14,6 +14,8 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System;
+using Cake.Common.Diagnostics;
 using Cake.Frosting;
 
 namespace Build.Tasks
@@ -21,5 +23,10 @@ namespace Build.Tasks
 	[IsDependentOn(typeof(Zip))]
 	public sealed class Default : FrostingTask<Context>
 	{
-	}
+        public override void Run(Context context)
+        {
+            context.Information("Completed... Press any key to exit.");
+            Console.ReadLine();
+        }
+    }
 }

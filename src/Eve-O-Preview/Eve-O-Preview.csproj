@@ -19,9 +19,9 @@
     <TargetZone>LocalIntranet</TargetZone>
     <AssemblyOriginatorKeyFile />
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <FileVersion>10.0.0.3</FileVersion>
+    <FileVersion>10.0.0.4</FileVersion>
     <AssemblyVersion>10.0.0.3</AssemblyVersion>
-    <Version>10.0.0.3</Version>
+    <Version>10.0.0.4</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>..\bin</OutputPath>
@@ -74,6 +74,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
+    <None Update="EveoPreviewRootCA.crt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Launch Eve-O Preview with Verbose Logging.cmd">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>

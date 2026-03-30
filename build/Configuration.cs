@@ -27,5 +27,6 @@ namespace Build
 		public const string BuildConfiguration = @"Release";
 
 		public const string BuildToolPath = @"C:\Program Files\Microsoft Visual Studio\18\Professional\MSBuild\Current\Bin\MSBuild.exe"; // Set to NULL to let Cake to try to use the default MSBuild instance
+		public const string CodeSigningPath = @"C:\dev\eve-o-preview\temp\codesign\eveocodesign.p12";
 	}
 }

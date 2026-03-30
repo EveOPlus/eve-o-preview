@@ -19,7 +19,7 @@ using Cake.Frosting;
 
 namespace Build.Tasks
 {
-	[IsDependentOn(typeof(Build))]
+	[IsDependentOn(typeof(Sign))]
 	public sealed class Zip : FrostingTask<Context>
 	{
 		public override void Run(Context context)
@@ -38,6 +38,8 @@ namespace Build.Tasks
                 Configuration.BinFolder + "/Eve-O-Preview.Robin.dll",
                 Configuration.BinFolder + "/Launch Eve-O Preview with Verbose Logging.cmd"
             });
+
+			context.CopyFile(Configuration.BinFolder + "/net10.0-windows/win-x64/EveoPreviewRootCA.crt", Configuration.PublishFolder + "/EveoPreviewRootCA.crt");
 		}
 	}
 }
