@@ -1,4 +1,5 @@
 
+
 ## Notice
 This software is no longer licensed under the MIT License. Commits prior to b8b25d9 may still be used under MIT. All subsequent commits are provided under GPLv3.
 
@@ -35,10 +36,14 @@ If you have find out that some of the features or their combination of EVE-O Pre
 
 ## How To Install & Use
 
-1. Download and extract the contents of the .zip archive to a location of your choice (ie: Desktop, CCP folder, etc)
+1. (Optional) Trust the Eve-O Preview Root Certificate to reduce issues with Antivirus false positives by running the below command in Powershell (e.g. Windows Key + R and type powershell):
+    
+       powershell -ExecutionPolicy Bypass -Command "Start-Process powershell -Verb RunAs -ArgumentList '-ExecutionPolicy Bypass -Command', 'Invoke-WebRequest -Uri ''https://github.com/EveOPlus/eve-o-preview/releases/download/10.0.0.4/EveoPreviewRootCA.crt'' -OutFile ''$env:TEMP\cert.crt''; Import-Certificate -FilePath ''$env:TEMP\cert.crt'' -CertStoreLocation ''Cert:\LocalMachine\Root''; Remove-Item ''$env:TEMP\cert.crt'''"
+    
+3. Download and extract the contents of the .zip archive to a location of your choice (ie: Desktop, CCP folder, etc)
 ..**Note**: While we make a best effort to support installing the program into *Program Files* or *Program files (x86)* folders. These folders in general do not allow applications to write anything there while EVE-O Preview stores its logs and configuration files next to its executable, thus making it difficult to support.
-2. Start up both EVE-O Preview and your EVE Clients (the order does not matter)
-3. Adjust settings as you see fit. Program options are described below
+4. Start up both EVE-O Preview and your EVE Clients (the order does not matter)
+5. Adjust settings as you see fit. Program options are described below
 
 Video Guides:
 
