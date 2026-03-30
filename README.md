@@ -101,6 +101,7 @@ and
 | Previews always on top | Determines whether EVE client thumbnails should stay on top of all other windows |
 | Hide previews when EVE client is not active | Determines whether all thumbnails should be visible only when an EVE client is active |
 | Unique layout for each EVE client | Determines whether thumbnails positions are different depending on the EVE client being active |
+| Dynamic CPU Affinity Strategy | Automatically manage and predict active and background clients, Then set the active client(s) run on Performance CPU Cores while background clients run on Efficient CPU Cores |
 
 #### **Thumbnail** Tab
 | Option | Description |
