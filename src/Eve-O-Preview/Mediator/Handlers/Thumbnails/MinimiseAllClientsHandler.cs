@@ -40,7 +40,7 @@ namespace EveOPreview.Mediator.Handlers.Thumbnails
             {
                 foreach (var process in _processMonitor.GetAllProcesses())
                 {
-                    _windowManager.MinimizeWindow(process.Handle, true);
+                    _windowManager.MinimizeWindow(process.MainWindowHandle, true);
                 }
 
                 return Task.CompletedTask;

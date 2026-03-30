@@ -95,6 +95,8 @@ namespace EveOPreview.Configuration.Implementation
             this.AudioMuteSettings = new AudioMuteSettings();
             this.PremiumLicenseKey = "1|Experimental|2026-06-04.UPA8aM6c39acLmzl10YBjFBDKjvdd6U4lxc7LH2TGtN6fVGQFLzvLbSkBpD8IDICWAODAVjWPmtkY2RItw9VpA==";
             this.IsPremium = false;
+
+            this.EnableAutomaticCpuAffinity = true;
         }
 
         [JsonProperty("ConfigVersion")]
@@ -208,6 +210,9 @@ namespace EveOPreview.Configuration.Implementation
         
         [JsonProperty]
         private List<string> PriorityClients { get; set; }
+
+        [JsonProperty]
+        public bool EnableAutomaticCpuAffinity { get; set; }
 
         public Point GetThumbnailLocation(string currentClient, string activeClient, Point defaultLocation)
         {

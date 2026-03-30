@@ -20,7 +20,15 @@ namespace EveOPreview.Services
 {
     public interface IProcessInfo
     {
-        IntPtr Handle { get; }
+        /// <summary>
+        /// Window handle (HWND) for the main window of the Eve Client.
+        /// </summary>
+        public IntPtr MainWindowHandle { get; }
+
+        /// <summary>
+        /// New Kernel MainWindowHandle that we open for process-level operations like CPU Affinity and Priority.
+        /// </summary>
+        public IntPtr ProcessHandle { get; }
         string Title { get; }
         int ProcessId { get; }
     }

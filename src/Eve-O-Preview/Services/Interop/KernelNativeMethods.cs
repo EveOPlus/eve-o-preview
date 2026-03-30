@@ -20,7 +20,7 @@ using static EveOPreview.Services.Implementation.DebuggerSidecar;
 
 namespace EveOPreview.Services.Interop
 {
-    public static class KernelNativeMethods
+    public static partial class KernelNativeMethods
     {
         public const int PROCESS_ALL_ACCESS = 0x1F0FFF;
         public const uint MEM_COMMIT_RESERVE = 0x3000;
@@ -83,5 +83,61 @@ namespace EveOPreview.Services.Interop
         {
             OutputDebug($"[EveClient_{targetClientHandle}] {message}");
         }
+
+        #region GetLogicalProcessorInformationEx Structures
+
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool GetLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP relationship, IntPtr buffer, ref uint returnedLength);
+
+        public enum LOGICAL_PROCESSOR_RELATIONSHIP
+        {
+            RelationProcessorCore = 0
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX
+        {
+            public LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
+            public int Size;
+            public PROCESSOR_RELATIONSHIP Processor;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct PROCESSOR_RELATIONSHIP
+        {
+            public byte Flags;
+            public byte EfficiencyClass;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 20)]
+            public byte[] Reserved;
+            public GROUP_MASK GroupMask;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct GROUP_MASK
+        {
+            public UIntPtr Mask;
+            public ushort Group;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+            public ushort[] Reserved;
+        }
+
+        #endregion
+
+        #region Set Process Affinity
+
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool SetProcessAffinityMask(IntPtr hProcess, IntPtr dwProcessAffinityMask);
+
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool SetPriorityClass(IntPtr hProcess, uint dwPriorityClass);
+        
+        public const uint HIGH_PRIORITY_CLASS = 0x00000080;
+        public const uint NORMAL_PRIORITY_CLASS = 0x00000020;
+        public const uint BELOW_NORMAL_PRIORITY_CLASS = 0x00004000;
+
+        #endregion
     }
 }

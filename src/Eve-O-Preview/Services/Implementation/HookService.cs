@@ -189,13 +189,13 @@ namespace EveOPreview.Services.Implementation
                 return;
             }
 
-            bool isFirstTimeInitializing = _initializedClients.TryAdd(procInfo.Handle, Guid.NewGuid());
+            bool isFirstTimeInitializing = _initializedClients.TryAdd(procInfo.MainWindowHandle, Guid.NewGuid());
 
             await Task.Run(() =>
             {
                 try
                 {
-                    if (!isFirstTimeInitializing || Ping(procInfo.Handle))
+                    if (!isFirstTimeInitializing || Ping(procInfo.MainWindowHandle))
                     {
                         // Already installed, as the pipe is active and responding. Don't try to install another hook.
                         // e.g. If Eve-O was previously running and started up again, while Eve clients are already initialized.
@@ -255,7 +255,7 @@ namespace EveOPreview.Services.Implementation
                 {
                     _logger.Error(ex, $"Unhandled exception in {nameof(TryInstallHooksAsync)}");
 
-                    _initializedClients.TryRemove(procInfo.Handle, out _);
+                    _initializedClients.TryRemove(procInfo.MainWindowHandle, out _);
                 }
             });
 
@@ -263,11 +263,11 @@ namespace EveOPreview.Services.Implementation
             await Task.Delay(1000);
             
             // Take ownership of the currently running hook.
-            await SendTakeOwnershipCommand(procInfo.Handle, Process.GetCurrentProcess().Id);
+            await SendTakeOwnershipCommand(procInfo.MainWindowHandle, Process.GetCurrentProcess().Id);
 
             // Regardless if we just installed it, or it was already installed, set the FPS to our target
-            await UpdateTargetFpsAsync(procInfo.Handle);
-            await UpdateMutedAudioAsync(procInfo.Handle);
+            await UpdateTargetFpsAsync(procInfo.MainWindowHandle);
+            await UpdateMutedAudioAsync(procInfo.MainWindowHandle);
         }
 
         private const uint jump_gates_start_play = 3689163958;

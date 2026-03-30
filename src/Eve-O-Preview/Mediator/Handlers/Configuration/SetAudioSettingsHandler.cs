@@ -43,7 +43,7 @@ namespace EveOPreview.Mediator.Handlers.Configuration
             var initTasks = allKnownClients.Select(client => _hookService.TryInstallHooksAsync(client));
             await Task.WhenAll(initTasks);
 
-            var tasks = allKnownClients.Select(client => _hookService.UpdateMutedAudioAsync(client.Handle));
+            var tasks = allKnownClients.Select(client => _hookService.UpdateMutedAudioAsync(client.MainWindowHandle));
             await Task.WhenAll(tasks);
         }
     }

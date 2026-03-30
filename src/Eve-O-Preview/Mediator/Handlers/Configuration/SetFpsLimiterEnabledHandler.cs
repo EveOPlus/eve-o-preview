@@ -49,7 +49,7 @@ namespace EveOPreview.Mediator.Handlers.Configuration
             }
             else
             {
-                var tasks = allKnownClients.Select(client => _hookService.DisableFpsLimiterAsync(client.Handle));
+                var tasks = allKnownClients.Select(client => _hookService.DisableFpsLimiterAsync(client.MainWindowHandle));
                 await Task.WhenAll(tasks);
             }
         }

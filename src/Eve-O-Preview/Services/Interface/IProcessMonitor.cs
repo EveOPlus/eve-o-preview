@@ -14,6 +14,7 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System;
 using System.Collections.Generic;
 
 namespace EveOPreview.Services
@@ -23,5 +24,6 @@ namespace EveOPreview.Services
         IProcessInfo GetMainProcess();
         ICollection<IProcessInfo> GetAllProcesses();
         void GetUpdatedProcesses(out ICollection<IProcessInfo> addedProcesses, out ICollection<IProcessInfo> updatedProcesses, out ICollection<IProcessInfo> removedProcesses);
+        IProcessInfo LookupCachedProcessByWindowHandle(IntPtr windowHandle);
     }
 }

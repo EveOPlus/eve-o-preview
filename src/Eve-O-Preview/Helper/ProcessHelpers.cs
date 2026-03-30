@@ -15,8 +15,10 @@
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using EveOPreview.Services;
-using System.Diagnostics;
 using EveOPreview.Services.Implementation;
+using EveOPreview.Services.Interop;
+using System;
+using System.Diagnostics;
 
 namespace EveOPreview.Helper
 {
@@ -28,8 +30,37 @@ namespace EveOPreview.Helper
             {
                 return null;
             }
-            
-            return new ProcessInfo(process.MainWindowHandle, process.Id, process.MainWindowTitle);
+
+            var kernelHandle = process.OpenKernelHandle();
+
+            return new ProcessInfo(process.MainWindowHandle, kernelHandle, process.Id, process.MainWindowTitle);
+        }
+
+        public static IntPtr OpenKernelHandle(this Process process)
+        {
+            // Open a lightweight Kernel MainWindowHandle for Affinity/Priority
+            // 0x0200 = PROCESS_SET_INFORMATION
+            // 0x1000 = PROCESS_QUERY_LIMITED_INFORMATION
+            IntPtr pHandle = KernelNativeMethods.OpenProcess(0x1200, false, process.Id);
+
+            return pHandle;
+        }
+
+        public static void CloseKernelHandle(this IProcessInfo processInfo)
+        {
+            if (processInfo == null || processInfo.ProcessHandle == IntPtr.Zero)
+            {
+                return;
+            }
+
+            try
+            {
+                KernelNativeMethods.CloseHandle(processInfo.ProcessHandle);
+            }
+            catch
+            {
+                // Nothing to do here, just don't crash anything else.
+            }
         }
     }
 }

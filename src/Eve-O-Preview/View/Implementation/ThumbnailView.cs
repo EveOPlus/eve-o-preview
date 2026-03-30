@@ -239,7 +239,7 @@ namespace EveOPreview.View
             base.Close();
         }
 
-        // This method is used to determine if the provided Handle is related to client or its thumbnail
+        // This method is used to determine if the provided MainWindowHandle is related to client or its thumbnail
         public bool IsKnownHandle(IntPtr handle)
         {
             return (this.Id == handle) || (this.Handle == handle) || (this._overlay.Handle == handle);

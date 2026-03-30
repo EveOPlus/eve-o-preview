@@ -20,15 +20,22 @@ namespace EveOPreview.Services.Implementation
 {
     sealed class ProcessInfo : IProcessInfo
     {
-        public ProcessInfo(IntPtr handle, int processId, string title)
+        public ProcessInfo(IntPtr mainWindowHandle, IntPtr processHandle, int processId, string title)
         {
-            this.Handle = handle;
+            this.MainWindowHandle = mainWindowHandle;
+            this.ProcessHandle = processHandle;
             this.ProcessId = processId;
             this.Title = title;
         }
 
-        public IntPtr Handle { get; }
+        /// <inheritdoc/>
+        public IntPtr MainWindowHandle { get; }
+
+        /// <inheritdoc/>
+        public IntPtr ProcessHandle { get; }
+
         public string Title { get; }
+
         public int ProcessId { get; }
     }
 }

@@ -83,6 +83,7 @@ namespace EveOPreview.Configuration
         bool IsPriorityClient(string currentClient);
 
         bool IsTemporarilyHidingAllThumbnails { get; set; }
+        bool EnableAutomaticCpuAffinity { get; set; }
         bool IsThumbnailDisabled(string currentClient);
         void ToggleThumbnail(string currentClient, bool isDisabled);
 

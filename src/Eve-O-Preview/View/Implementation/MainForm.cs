@@ -409,6 +409,18 @@ namespace EveOPreview.View
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public bool EnableAutomaticCpuAffinity
+        {
+            get => this.chbAutoCpuAffinity.Checked;
+            set
+            {
+                this._suppressEvents = true;
+                this.chbAutoCpuAffinity.Checked = value;
+                this._suppressEvents = false;
+            }
+        }
+
 
         private bool _isPremium;
 
@@ -434,6 +446,8 @@ namespace EveOPreview.View
                     lblFpsFeatureExpired.Visible = true;
                     groupBoxFpsLimits.Visible = false;
                     groupBoxAudioMuting.Visible = false;
+                    chbAutoCpuAffinity.Enabled = false;
+                    chbAutoCpuAffinity.Checked = false;
                 }
                 this._suppressEvents = false;
             }
@@ -1292,6 +1306,12 @@ namespace EveOPreview.View
 
             int originalHeight = 120;
             this.ContentTabControl.ItemSize = new Size(this.ContentTabControl.ItemSize.Width, (int)(originalHeight * scaleFactor));
+        }
+
+        private void chbAutoCpuAffinity_CheckedChanged(object sender, EventArgs e)
+        {
+            this.EnableAutomaticCpuAffinity = chbAutoCpuAffinity.Checked;
+            this.ApplicationSettingsChanged?.Invoke();
         }
     }
 }

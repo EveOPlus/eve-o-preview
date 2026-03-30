@@ -17,10 +17,12 @@
 using EveOPreview.Configuration;
 using EveOPreview.Configuration.Implementation;
 using EveOPreview.Mediator.Messages;
+using EveOPreview.Mediator.Messages.Process;
 using EveOPreview.Services.Interface;
 using EveOPreview.View;
 using Gma.System.MouseKeyHook;
 using MediatR;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -28,7 +30,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Threading;
-using Serilog;
 
 namespace EveOPreview.Services
 {
@@ -158,6 +159,8 @@ namespace EveOPreview.Services
             var lastClient = _activeClient;
 
             _logger.Verbose($"CycleNextClient Direction IsForward = [{isForwards}]. Next client is [{nextClientTitle}] and next, next client is [{nextNextClientTitle}]");
+
+            _mediator.Send(new UpdateCpuAffinity(nextClient.Key, nextNextClient.Key, lastClient.Handle));
 
             SetActive(nextClient);
             this._windowManager.PredictUpcomingClient(nextNextClient.Key);
@@ -329,7 +332,7 @@ namespace EveOPreview.Services
 
             foreach (IProcessInfo process in addedProcesses)
             {
-                IThumbnailView view = this._thumbnailViewFactory.Create(process.Handle, process.Title, this._configuration.ThumbnailSize);
+                IThumbnailView view = this._thumbnailViewFactory.Create(process.MainWindowHandle, process.Title, this._configuration.ThumbnailSize);
                 view.IsOverlayEnabled = this._configuration.ShowThumbnailOverlays;
                 view.SetFrames(this._configuration.ShowThumbnailFrames);
                 // Max/Min size limitations should be set AFTER the frames are disabled
@@ -363,7 +366,7 @@ namespace EveOPreview.Services
 
             foreach (IProcessInfo process in updatedProcesses)
             {
-                this._thumbnailViews.TryGetValue(process.Handle, out IThumbnailView view);
+                this._thumbnailViews.TryGetValue(process.MainWindowHandle, out IThumbnailView view);
 
                 if (view == null)
                 {
@@ -383,7 +386,7 @@ namespace EveOPreview.Services
 
             foreach (IProcessInfo process in removedProcesses)
             {
-                IThumbnailView view = this._thumbnailViews[process.Handle];
+                IThumbnailView view = this._thumbnailViews[process.MainWindowHandle];
 
                 this._thumbnailViews.Remove(view.Id);
                 if (view.Title != ThumbnailManager.DEFAULT_CLIENT_TITLE)
@@ -664,6 +667,7 @@ namespace EveOPreview.Services
 
             Task.Run(() =>
                 {
+                    this._mediator.Send(new UpdateCpuAffinity(view.Id, IntPtr.Zero, IntPtr.Zero));
                     this._windowManager.ActivateWindow(view.Id);
                 })
                 .ContinueWith((task) =>
@@ -745,7 +749,7 @@ namespace EveOPreview.Services
         // Check whether the currently active window belongs to EVE-O Preview itself
         private bool IsMainWindowActive(IntPtr windowHandle)
         {
-            return (this._processMonitor.GetMainProcess().Handle == windowHandle);
+            return (this._processMonitor.GetMainProcess().MainWindowHandle == windowHandle);
         }
 
         private void ThumbnailZoomIn(IThumbnailView view)

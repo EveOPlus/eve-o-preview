@@ -60,8 +60,9 @@ namespace EveOPreview.View
         string LoadedProfileName { get; set; }
 
         List<CycleGroup> CycleGroups { get; set; }
-
-		void SetDocumentationUrl(string url);
+        bool EnableAutomaticCpuAffinity { get; set; }
+        
+        void SetDocumentationUrl(string url);
 		void SetVersionInfo(string version);
 		void SetThumbnailSizeLimitations(Size minimumSize, Size maximumSize);
 
@@ -70,8 +71,8 @@ namespace EveOPreview.View
 		void AddThumbnails(IList<IThumbnailDescription> thumbnails);
 		void RemoveThumbnails(IList<IThumbnailDescription> thumbnails);
 		void RefreshZoomSettings();
-
-		Action ApplicationExitRequested { get; set; }
+        
+        Action ApplicationExitRequested { get; set; }
 		Action FormActivated { get; set; }
 		Action FormMinimized { get; set; }
 		Action<ViewCloseRequest> FormCloseRequested { get; set; }

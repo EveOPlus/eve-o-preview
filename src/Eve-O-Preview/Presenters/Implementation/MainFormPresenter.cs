@@ -24,6 +24,7 @@ using EveOPreview.Configuration;
 using EveOPreview.Configuration.Interface;
 using EveOPreview.Configuration.Model;
 using EveOPreview.Mediator.Messages;
+using EveOPreview.Mediator.Messages.Process;
 using EveOPreview.Services.Interface;
 using EveOPreview.View;
 using MediatR;
@@ -232,6 +233,7 @@ namespace EveOPreview.Presenters
             this.View.FpsLimiterSettings = this._configuration.FpsLimiterSettings;
             this.View.AudioMuteSettings = this._configuration.AudioMuteSettings;
             this.View.LoadedProfileName = this._configurationStorage.CurrentProfile.FriendlyName;
+            this.View.EnableAutomaticCpuAffinity = this._configuration.EnableAutomaticCpuAffinity;
         }
 
         private async void SaveApplicationSettings()
@@ -268,7 +270,9 @@ namespace EveOPreview.Presenters
             this._configuration.TitleFontSettings = this.View.TitleFontSettings;
             this._configuration.ToggleHideActiveClientsHotkey = this.View.ToggleHideAllActiveHotkey;
             this._configuration.MinimizeAllClientsHotkey = this.View.MinimizeAllClientsHotkey;
-            
+
+            this._configuration.EnableAutomaticCpuAffinity = this.View.EnableAutomaticCpuAffinity;
+
             //this._configurationStorage.Save();
 
             this.View.RefreshZoomSettings();
@@ -277,6 +281,11 @@ namespace EveOPreview.Presenters
             
             await this._mediator.Send(new RefreshHotkeys());
             await this._mediator.Send(new SaveConfiguration());
+
+            if (!this._configuration.EnableAutomaticCpuAffinity)
+            {
+                await this._mediator.Send(new ResetAllCpuAffinity());
+            }
         }
 
         public void AddThumbnails(IList<string> thumbnailTitles)

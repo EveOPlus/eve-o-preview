@@ -64,6 +64,7 @@ namespace EveOPreview.View
             Label DocumentationLinkLabel;
             Label DescriptionLabel;
             Label NameLabel;
+            chbAutoCpuAffinity = new CheckBox();
             MinimizeInactiveClientsCheckBox = new CheckBox();
             EnableClientLayoutTrackingCheckBox = new CheckBox();
             HideActiveClientThumbnailCheckBox = new CheckBox();
@@ -278,6 +279,7 @@ namespace EveOPreview.View
             // GeneralSettingsPanel
             // 
             GeneralSettingsPanel.BorderStyle = BorderStyle.FixedSingle;
+            GeneralSettingsPanel.Controls.Add(chbAutoCpuAffinity);
             GeneralSettingsPanel.Controls.Add(MinimizeInactiveClientsCheckBox);
             GeneralSettingsPanel.Controls.Add(EnableClientLayoutTrackingCheckBox);
             GeneralSettingsPanel.Controls.Add(HideActiveClientThumbnailCheckBox);
@@ -291,6 +293,21 @@ namespace EveOPreview.View
             GeneralSettingsPanel.Name = "GeneralSettingsPanel";
             GeneralSettingsPanel.Size = new Size(324, 403);
             GeneralSettingsPanel.TabIndex = 18;
+            // 
+            // chbAutoCpuAffinity
+            // 
+            chbAutoCpuAffinity.AutoSize = true;
+            chbAutoCpuAffinity.Checked = true;
+            chbAutoCpuAffinity.CheckState = CheckState.Checked;
+            chbAutoCpuAffinity.Location = new Point(9, 199);
+            chbAutoCpuAffinity.Margin = new Padding(4, 3, 4, 3);
+            chbAutoCpuAffinity.Name = "chbAutoCpuAffinity";
+            chbAutoCpuAffinity.Size = new Size(187, 19);
+            chbAutoCpuAffinity.TabIndex = 25;
+            chbAutoCpuAffinity.Text = "Dynamic CPU Affinity Strategy";
+            instantToolTip.SetToolTip(chbAutoCpuAffinity, "Automatically manage and predict the active and background clients so the active clients run on Performance cores while background move to Efficient Cores");
+            chbAutoCpuAffinity.UseVisualStyleBackColor = true;
+            chbAutoCpuAffinity.CheckedChanged += chbAutoCpuAffinity_CheckedChanged;
             // 
             // MinimizeInactiveClientsCheckBox
             // 
@@ -1954,5 +1971,6 @@ namespace EveOPreview.View
         private ListBox listBoxProfiles;
         private Label lblLoadedProfileName;
         private Label lblProfilesExperimentalWarning;
+        private CheckBox chbAutoCpuAffinity;
     }
 }

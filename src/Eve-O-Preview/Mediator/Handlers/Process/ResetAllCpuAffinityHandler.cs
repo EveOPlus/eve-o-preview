@@ -14,34 +14,35 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using EveOPreview.Configuration;
-using EveOPreview.Mediator.Messages;
+using System.Threading;
+using System.Threading.Tasks;
+using EveOPreview.Mediator.Messages.Process;
 using EveOPreview.Services;
 using EveOPreview.Services.Interface;
 using MediatR;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using Serilog;
 
-namespace EveOPreview.Mediator.Handlers.Configuration
+namespace EveOPreview.Mediator.Handlers.Process;
+
+public class ResetAllCpuAffinityHandler : IRequestHandler<ResetAllCpuAffinity>
 {
-    sealed class SetFpsLimiterHandler : IRequestHandler<SetFpsLimiter>
+    private readonly ILogger _logger;
+    private readonly IProcessMonitor _processMonitor;
+    private readonly ICpuAffinityService _cpyAffinityService;
+
+    public ResetAllCpuAffinityHandler(ILogger logger, IProcessMonitor processMonitor, ICpuAffinityService cpyAffinityService)
     {
-        private readonly IProcessMonitor _processMonitor;
-        private readonly IHookService _hookService;
+        _logger = logger;
+        _processMonitor = processMonitor;
+        _cpyAffinityService = cpyAffinityService;
+    }
 
-        public SetFpsLimiterHandler(IProcessMonitor processMonitor, IHookService hookService)
-        {
-            _processMonitor = processMonitor;
-            _hookService = hookService;
-        }
+    public Task Handle(ResetAllCpuAffinity request, CancellationToken cancellationToken)
+    {
+        var allProcesses = _processMonitor.GetAllProcesses();
 
-        public async Task Handle(SetFpsLimiter request, CancellationToken cancellationToken)
-        {
-            var allKnownClients = _processMonitor.GetAllProcesses();
+        _cpyAffinityService.ResetAll(allProcesses);
 
-            var tasks = allKnownClients.Select(client => _hookService.UpdateTargetFpsAsync(client.MainWindowHandle));
-            await Task.WhenAll(tasks);
-        }
+        return Task.CompletedTask;
     }
 }
