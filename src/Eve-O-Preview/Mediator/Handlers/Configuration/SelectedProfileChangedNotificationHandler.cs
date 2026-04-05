@@ -27,11 +27,13 @@ namespace EveOPreview.Mediator.Handlers.Configuration;
 public class SelectedProfileChangedNotificationHandler : INotificationHandler<SelectedProfileChangedNotification>
 {
     private readonly IGlobalEvents _globalEvents;
+    private readonly IMediator _mediator;
     private readonly ILogger _logger;
 
-    public SelectedProfileChangedNotificationHandler(IGlobalEvents globalEvents, ILogger logger)
+    public SelectedProfileChangedNotificationHandler(IGlobalEvents globalEvents, IMediator mediator, ILogger logger)
     {
         _globalEvents = globalEvents;
+        _mediator = mediator;
         _logger = logger;
     }
 
@@ -39,6 +41,7 @@ public class SelectedProfileChangedNotificationHandler : INotificationHandler<Se
     {
         _logger.WithCallerInfo().Information("SelectedProfileChangedNotification: Profile changed to {ProfileLocation}", notification.NewProfileLocation);
         _globalEvents.PublishCurrentProfileChanged(notification);
+        _mediator.Publish(new ThumbnailFontTitleSettingsUpdated(), cancellationToken); // Make sure the font is updated on all the existing thumbnails. 
 
         return Task.CompletedTask;
     }
