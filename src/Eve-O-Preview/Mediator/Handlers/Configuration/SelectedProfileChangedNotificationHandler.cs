@@ -14,9 +14,11 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using EveOPreview.Helper;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Services.Interface;
 using MediatR;
+using Serilog;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,14 +27,17 @@ namespace EveOPreview.Mediator.Handlers.Configuration;
 public class SelectedProfileChangedNotificationHandler : INotificationHandler<SelectedProfileChangedNotification>
 {
     private readonly IGlobalEvents _globalEvents;
+    private readonly ILogger _logger;
 
-    public SelectedProfileChangedNotificationHandler(IGlobalEvents globalEvents)
+    public SelectedProfileChangedNotificationHandler(IGlobalEvents globalEvents, ILogger logger)
     {
         _globalEvents = globalEvents;
+        _logger = logger;
     }
 
     public Task Handle(SelectedProfileChangedNotification notification, CancellationToken cancellationToken)
     {
+        _logger.WithCallerInfo().Information("SelectedProfileChangedNotification: Profile changed to {ProfileLocation}", notification.NewProfileLocation);
         _globalEvents.PublishCurrentProfileChanged(notification);
 
         return Task.CompletedTask;

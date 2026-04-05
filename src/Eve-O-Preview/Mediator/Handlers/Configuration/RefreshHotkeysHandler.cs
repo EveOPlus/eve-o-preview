@@ -22,22 +22,28 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using EveOPreview.Helper;
+using Serilog;
 
 namespace EveOPreview.Mediator.Handlers.Configuration
 {
     sealed class RefreshHotkeysHandler : IRequestHandler<RefreshHotkeys>
     {
         private readonly IThumbnailConfiguration _config;
+        private readonly ILogger _logger;
 
-        public RefreshHotkeysHandler(IThumbnailConfiguration Config)
+        public RefreshHotkeysHandler(IThumbnailConfiguration Config, ILogger logger)
         {
             _config = Config;
+            _logger = logger;
         }
 
         public Task Handle(RefreshHotkeys request, CancellationToken cancellationToken)
         {
             try
             {
+                _logger.Verbose("RefreshHotkeys: Refreshing all hotkey configurations");
+                int cycleGroupCount = _config.CycleGroups.Count;
+
                 foreach (var cycleGroup in _config.CycleGroups)
                 {
                     cycleGroup.ForwardHotkeys.RemoveAll(x => x == null);
@@ -57,14 +63,20 @@ namespace EveOPreview.Mediator.Handlers.Configuration
                     {
                         cycleGroup.BackwardHotkeysParsedAndOrdered.AddRange(backwardHotkeys);
                     }
+
+                    _logger.Verbose("Cycle group '{Description}': Forward={ForwardCount}, Backward={BackwardCount}",
+                        cycleGroup.Description, cycleGroup.ForwardHotkeysParsedAndOrdered.Count, cycleGroup.BackwardHotkeysParsedAndOrdered.Count);
                 }
 
                 _config.ToggleHideActiveClientsHotkeyParsed = _config.ToggleHideActiveClientsHotkey.ToHotkeys();
                 _config.MinimizeAllClientsHotkeyParsed = _config.MinimizeAllClientsHotkey.ToHotkeys();
+                
+                _logger.Information("Hotkeys refreshed successfully: {CycleGroupCount} groups configured", cycleGroupCount);
                 return Task.CompletedTask;
             }
             catch (Exception exception)
             {
+                _logger.Error(exception, "Error refreshing hotkeys");
                 return Task.FromException(exception);
             }
         }

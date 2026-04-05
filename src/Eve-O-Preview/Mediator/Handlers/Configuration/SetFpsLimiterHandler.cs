@@ -22,6 +22,7 @@ using MediatR;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace EveOPreview.Mediator.Handlers.Configuration
 {
@@ -29,19 +30,24 @@ namespace EveOPreview.Mediator.Handlers.Configuration
     {
         private readonly IProcessMonitor _processMonitor;
         private readonly IHookService _hookService;
+        private readonly ILogger _logger;
 
-        public SetFpsLimiterHandler(IProcessMonitor processMonitor, IHookService hookService)
+        public SetFpsLimiterHandler(IProcessMonitor processMonitor, IHookService hookService, ILogger logger)
         {
             _processMonitor = processMonitor;
             _hookService = hookService;
+            _logger = logger;
         }
 
         public async Task Handle(SetFpsLimiter request, CancellationToken cancellationToken)
         {
             var allKnownClients = _processMonitor.GetAllProcesses();
+            _logger.Verbose("SetFpsLimiter: Updating FPS limiter settings for {ClientCount} clients", allKnownClients.Count);
 
             var tasks = allKnownClients.Select(client => _hookService.UpdateTargetFpsAsync(client.MainWindowHandle));
             await Task.WhenAll(tasks);
+            
+            _logger.Verbose("FPS limiter settings updated for {ClientCount} clients", allKnownClients.Count);
         }
     }
 }

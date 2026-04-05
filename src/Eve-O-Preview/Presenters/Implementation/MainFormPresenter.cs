@@ -28,6 +28,7 @@ using EveOPreview.Mediator.Messages.Process;
 using EveOPreview.Services.Interface;
 using EveOPreview.View;
 using MediatR;
+using Serilog;
 
 namespace EveOPreview.Presenters
 {
@@ -44,6 +45,7 @@ namespace EveOPreview.Presenters
         private readonly IGlobalEvents _globalEvents;
         private readonly IProfileManager _profileManager;
         private readonly IDictionary<string, IThumbnailDescription> _descriptionsCache;
+        private readonly ILogger _logger;
         private bool _suppressSizeNotifications;
 
         private bool _exitApplication;
@@ -56,7 +58,8 @@ namespace EveOPreview.Presenters
             IThumbnailConfiguration configuration, 
             IConfigurationStorage configurationStorage,
             IGlobalEvents globalEvents,
-            IProfileManager profileManager)
+            IProfileManager profileManager,
+            ILogger logger)
             : base(controller, view)
         {
             this._mediator = mediator;
@@ -64,6 +67,9 @@ namespace EveOPreview.Presenters
             this._configurationStorage = configurationStorage;
             _globalEvents = globalEvents;
             _profileManager = profileManager;
+            _logger = logger;
+            
+            _logger.Verbose("MainFormPresenter: Constructor initializing");
             
             _globalEvents.CurrentProfileChanged += HandleSelectedProfileChangedNotification;
             _globalEvents.ProfileListChanged += HandleProfileListChangedNotification;
@@ -98,88 +104,111 @@ namespace EveOPreview.Presenters
             this.View.RenameCurrentProfile = this.RenameCurrentProfile;
 
             var currentProfile = _mediator.Send(new GetCurrentProfileLocation()).Result;
+            _logger.Verbose("MainFormPresenter: Current profile retrieved: {ProfilePath}", currentProfile?.FullPath ?? "(null)");
             _mediator.Send(new ChangeSelectedProfile(currentProfile)).GetAwaiter().GetResult();
             _profileManager.RefreshProfileLocations();
+            _logger.Verbose("MainFormPresenter: Constructor completed");
         }
 
         private void RenameCurrentProfile(string newProfileName)
         {
+            _logger.Verbose("MainFormPresenter.RenameCurrentProfile: Renaming profile to {NewName}", newProfileName);
             _mediator.Send(new RenameCurrentProfile(newProfileName));
         }
 
         private void ActionDeleteCurrentProfile()
         {
+            _logger.Verbose("MainFormPresenter.ActionDeleteCurrentProfile: Deleting current profile");
             _mediator.Send(new DeleteCurrentProfile());
 
         }
 
         private void ActionCloneCurrentProfile()
         {
+            _logger.Verbose("MainFormPresenter.ActionCloneCurrentProfile: Cloning current profile");
             _mediator.Send(new CloneCurrentProfile());
         }
 
         public void HandleSelectedProfileChangedNotification(SelectedProfileChangedNotification notification)
         {
+            _logger.Verbose("MainFormPresenter.HandleSelectedProfileChangedNotification: Profile changed notification received");
             ReloadApplicationSettings();
         }
 
         private void ActionSwitchToNewProfile(ProfileLocation newProfileLocation)
         {
+            _logger.Verbose("MainFormPresenter.ActionSwitchToNewProfile: Switching to profile {ProfilePath}", newProfileLocation?.FullPath ?? "(null)");
             _mediator.Send(new ChangeSelectedProfile(newProfileLocation));
         }
 
         public void HandleThumbnailToggleHideAllChangedNotification(ThumbnailToggleHideAllChangedNotification notification)
         {
+            _logger.Verbose("MainFormPresenter.HandleThumbnailToggleHideAllChanged: IsHidden={IsHidden}", notification.IsHidden);
             this.View.UpdateThumbnailToggleHideAllStatus(notification.IsHidden);
         }
 
         public void HandleProfileListChangedNotification(ProfileListChangedNotification notification)
         {
+            _logger.Verbose("MainFormPresenter.HandleProfileListChanged: Updating profile list in view");
             this.View.UpdateProfileList(notification.NewProfileLocations);
         }
 
         private CaptureNewHotkeyResponse SendCaptureNewHotkeyRequest(string currentKey)
         {
-            return _mediator.Send(new CaptureNewHotkey(currentKey, 10000)).ConfigureAwait(false).GetAwaiter().GetResult();
+            _logger.Verbose("MainFormPresenter.SendCaptureNewHotkeyRequest: Capturing hotkey. Current: {CurrentKey}", currentKey);
+            var response = _mediator.Send(new CaptureNewHotkey(currentKey, 10000)).ConfigureAwait(false).GetAwaiter().GetResult();
+            _logger.Verbose("MainFormPresenter.SendCaptureNewHotkeyRequest: Hotkey capture result: Valid={IsValid}, Captured={KeyString}", response.IsValid, response.KeyString);
+            return response;
         }
 
         private void Activate()
         {
+            _logger.Verbose("MainFormPresenter.Activate: Activating main form");
             this._suppressSizeNotifications = true;
             this.LoadApplicationSettings();
             this.View.SetDocumentationUrl(MainFormPresenter.DISCORD_URL);
             this.View.SetVersionInfo(this.GetApplicationVersion());
             if (this._configuration.MinimizeToTray)
             {
+                _logger.Verbose("MainFormPresenter.Activate: Minimizing to tray on startup");
                 this.View.Minimize();
             }
 
+            _logger.Verbose("MainFormPresenter.Activate: Starting service");
             this._mediator.Send(new StartService());
             this._suppressSizeNotifications = false;
+            _logger.Verbose("MainFormPresenter.Activate: Activation complete");
         }
 
         private void Minimize()
         {
             if (!this._configuration.MinimizeToTray)
             {
+                _logger.Verbose("MainFormPresenter.Minimize: MinimizeToTray disabled, skipping minimize");
                 return;
             }
 
+            _logger.Verbose("MainFormPresenter.Minimize: Minimizing to tray");
             this.View.Hide();
         }
 
         private void Close(ViewCloseRequest request)
         {
+            _logger.Verbose("MainFormPresenter.Close: Close requested. ExitApplication={ExitApplication}, MinimizeToTray={MinimizeToTray}", this._exitApplication, this.View.MinimizeToTray);
+            
             if (this._exitApplication || !this.View.MinimizeToTray)
             {
+                _logger.Verbose("MainFormPresenter.Close: Performing full application shutdown");
                 // we are closing so be careful not to block on the UI main thread
                 Task.Run(() => this._mediator.Send(new StopService())).GetAwaiter().GetResult();
 
                 this._configurationStorage.Save();
                 request.Allow = true;
+                _logger.Verbose("MainFormPresenter.Close: Application shutdown complete");
                 return;
             }
 
+            _logger.Verbose("MainFormPresenter.Close: Minimizing instead of closing");
             request.Allow = false;
             this.View.Minimize();
         }
@@ -188,6 +217,7 @@ namespace EveOPreview.Presenters
         {
             if (!this._suppressSizeNotifications)
             {
+                _logger.Verbose("MainFormPresenter.UpdateThumbnailsSize: Thumbnail size changed, saving settings");
                 this.SaveApplicationSettings();
                 await this._mediator.Publish(new ThumbnailConfiguredSizeUpdated());
             }
@@ -195,12 +225,15 @@ namespace EveOPreview.Presenters
 
         private void LoadApplicationSettings()
         {
+            _logger.Verbose("MainFormPresenter.LoadApplicationSettings: Loading configuration from storage");
             this._configurationStorage.Load();
             ReloadApplicationSettings();
+            _logger.Verbose("MainFormPresenter.LoadApplicationSettings: Configuration loaded and reloaded to UI");
         }
 
         private void ReloadApplicationSettings()
         {
+            _logger.Verbose("MainFormPresenter.ReloadApplicationSettings: Reloading all settings to UI components");
             this.View.CycleGroups = this._configuration.CycleGroups;
 
             this.View.MinimizeToTray = this._configuration.MinimizeToTray;
@@ -238,6 +271,7 @@ namespace EveOPreview.Presenters
 
         private async void SaveApplicationSettings()
         {
+            _logger.Verbose("MainFormPresenter.SaveApplicationSettings: Saving all application settings");
             this._configuration.CycleGroups = this.View.CycleGroups;
 
             this._configuration.MinimizeToTray = this.View.MinimizeToTray;
@@ -260,6 +294,7 @@ namespace EveOPreview.Presenters
             this._configuration.ShowThumbnailOverlays = this.View.ShowThumbnailOverlays;
             if (this._configuration.ShowThumbnailFrames != this.View.ShowThumbnailFrames)
             {
+                _logger.Verbose("MainFormPresenter.SaveApplicationSettings: Thumbnail frame settings changed");
                 this._configuration.ShowThumbnailFrames = this.View.ShowThumbnailFrames;
                 await this._mediator.Publish(new ThumbnailFrameSettingsUpdated());
             }
@@ -284,12 +319,16 @@ namespace EveOPreview.Presenters
 
             if (!this._configuration.EnableAutomaticCpuAffinity)
             {
+                _logger.Verbose("MainFormPresenter.SaveApplicationSettings: CPU affinity disabled, resetting all");
                 await this._mediator.Send(new ResetAllCpuAffinity());
             }
+            
+            _logger.Verbose("MainFormPresenter.SaveApplicationSettings: Settings saved complete");
         }
 
         public void AddThumbnails(IList<string> thumbnailTitles)
         {
+            _logger.Verbose("MainFormPresenter.AddThumbnails: Adding {ThumbnailCount} thumbnails", thumbnailTitles.Count);
             IList<IThumbnailDescription> descriptions = new List<IThumbnailDescription>(thumbnailTitles.Count);
 
             lock (this._descriptionsCache)
@@ -300,6 +339,7 @@ namespace EveOPreview.Presenters
                     this._descriptionsCache[title] = description;
 
                     descriptions.Add(description);
+                    _logger.Verbose("MainFormPresenter.AddThumbnails: Added {Title} (IsDisabled={IsDisabled})", title, description.IsDisabled);
                 }
             }
 
@@ -308,6 +348,7 @@ namespace EveOPreview.Presenters
 
         public void RemoveThumbnails(IList<string> thumbnailTitles)
         {
+            _logger.Verbose("MainFormPresenter.RemoveThumbnails: Removing {ThumbnailCount} thumbnails", thumbnailTitles.Count);
             IList<IThumbnailDescription> descriptions = new List<IThumbnailDescription>(thumbnailTitles.Count);
 
             lock (this._descriptionsCache)
@@ -316,11 +357,13 @@ namespace EveOPreview.Presenters
                 {
                     if (!this._descriptionsCache.TryGetValue(title, out IThumbnailDescription description))
                     {
+                        _logger.Warning("MainFormPresenter.RemoveThumbnails: Thumbnail {Title} not found in cache", title);
                         continue;
                     }
 
                     this._descriptionsCache.Remove(title);
                     descriptions.Add(description);
+                    _logger.Verbose("MainFormPresenter.RemoveThumbnails: Removed {Title}", title);
                 }
             }
 
@@ -330,11 +373,13 @@ namespace EveOPreview.Presenters
         private IThumbnailDescription CreateThumbnailDescription(string title)
         {
             bool isDisabled = this._configuration.IsThumbnailDisabled(title);
+            _logger.Verbose("MainFormPresenter.CreateThumbnailDescription: {Title} (IsDisabled={IsDisabled})", title, isDisabled);
             return new ThumbnailDescription(title, isDisabled);
         }
 
         private async void UpdateThumbnailState(String title)
         {
+            _logger.Verbose("MainFormPresenter.UpdateThumbnailState: Updating state for {Title}", title);
             bool exists;
             IThumbnailDescription description;
 
@@ -345,7 +390,12 @@ namespace EveOPreview.Presenters
             
             if (exists)
             {
+                _logger.Verbose("MainFormPresenter.UpdateThumbnailState: {Title} disabled state toggled to {IsDisabled}", title, description.IsDisabled);
                 this._configuration.ToggleThumbnail(title, description.IsDisabled);
+            }
+            else
+            {
+                _logger.Warning("MainFormPresenter.UpdateThumbnailState: {Title} not found in cache", title);
             }
 
             await this._mediator.Send(new SaveConfiguration());
@@ -353,6 +403,7 @@ namespace EveOPreview.Presenters
 
         public void UpdateThumbnailSize(Size size)
         {
+            _logger.Verbose("MainFormPresenter.UpdateThumbnailSize: Setting size to {Width}x{Height}", size.Width, size.Height);
             this._suppressSizeNotifications = true;
             this.View.ThumbnailSize = size;
             this._suppressSizeNotifications = false;
@@ -360,6 +411,7 @@ namespace EveOPreview.Presenters
 
         public string GetClientDescriptionFromInputBox()
         {
+            _logger.Verbose("MainFormPresenter.GetClientDescriptionFromInputBox: Opening client selection dialog");
             var input = new ClientNameInputBox();
             lock (_descriptionsCache)
             {
@@ -368,11 +420,13 @@ namespace EveOPreview.Presenters
 
             input.ShowDialog();
 
+            _logger.Verbose("MainFormPresenter.GetClientDescriptionFromInputBox: User selected {SelectedClient}", input.SelectedClientName ?? "(cancelled)");
             return input.SelectedClientName;
         }
 
         private void OpenDocumentationLink()
         {
+            _logger.Verbose("MainFormPresenter.OpenDocumentationLink: Opening Discord documentation link");
             // TODO Move out to a separate service / presenter / message handler
             ProcessStartInfo processStartInfo = new ProcessStartInfo(new Uri(MainFormPresenter.DISCORD_URL).AbsoluteUri);
             Process.Start(processStartInfo);
@@ -381,36 +435,43 @@ namespace EveOPreview.Presenters
         private string GetApplicationVersion()
         {
             var version = System.Windows.Forms.Application.ProductVersion;
+            _logger.Verbose("MainFormPresenter.GetApplicationVersion: {Version}", version);
             return version;
         }
 
         private void TriggerSetFpsLimiter()
         {
+            _logger.Verbose("MainFormPresenter.TriggerSetFpsLimiter: Triggering FPS limiter update");
             this._mediator.Send(new SetFpsLimiter());
         }
 
         private void TriggerSetFpsLimiterEnabled()
         {
+            _logger.Verbose("MainFormPresenter.TriggerSetFpsLimiterEnabled: Toggling FPS limiter enabled state");
             this._mediator.Send(new SetFpsLimiterEnabled());
         }
 
         private void TriggerSetAudioSettings()
         {
+            _logger.Verbose("MainFormPresenter.TriggerSetAudioSettings: Triggering audio settings update");
             this._mediator.Send(new SetAudioSettings());
         }
 
         private void TriggerToggleHideAllActiveClients()
         {
+            _logger.Verbose("MainFormPresenter.TriggerToggleHideAllActiveClients: Toggling hide all active clients");
             this._mediator.Send(new ThumbnailToggleHideAll());
         }
 
         private void TriggerMinimizeAllClientsHotkey()
         {
+            _logger.Verbose("MainFormPresenter.TriggerMinimizeAllClientsHotkey: Minimizing all client windows");
             this._mediator.Send(new MinimizeAllClients());
         }
 
         private void ExitApplication()
         {
+            _logger.Verbose("MainFormPresenter.ExitApplication: User requested application exit");
             this._exitApplication = true;
             this.View.Close();
         }

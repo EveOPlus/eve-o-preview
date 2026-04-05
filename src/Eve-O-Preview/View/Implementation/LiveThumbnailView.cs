@@ -20,6 +20,7 @@ using EveOPreview.Configuration;
 using EveOPreview.Services;
 using Gma.System.MouseKeyHook;
 using MediatR;
+using Serilog;
 
 namespace EveOPreview.View
 {
@@ -30,14 +31,17 @@ namespace EveOPreview.View
         private Point _startLocation;
         private Point _endLocation;
         private IThumbnailConfiguration _config;
+        private readonly ILogger _logger;
         #endregion
 
-        public LiveThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager, IMediator mediator, IKeyboardMouseEvents kbmEvents)
+        public LiveThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager, IMediator mediator, IKeyboardMouseEvents kbmEvents, ILogger logger)
             : base(windowManager, config, thumbnailManager, mediator, kbmEvents)
         {
+            _logger = logger;
             this._startLocation = new Point(0, 0);
             this._endLocation = new Point(this.ClientSize);
             this._config = config;
+            _logger.Verbose("LiveThumbnailView created for window 0x{Handle:X}", this.Id);
         }
 
         protected override void RefreshThumbnail(bool forceRefresh)
@@ -47,6 +51,7 @@ namespace EveOPreview.View
 
             if ((this._thumbnail == null) || forceRefresh)
             {
+                _logger.Verbose("Registering/refreshing DWM thumbnail for 0x{Handle:X}", this.Id);
                 this.RegisterThumbnail();
             }
 
@@ -64,6 +69,8 @@ namespace EveOPreview.View
             {
                 return; // No update required
             }
+            
+            _logger.Verbose("Resizing thumbnail for 0x{Handle:X}: ({Left},{Top}) -> ({Right},{Bottom})", this.Id, left, top, right, bottom);
             this._startLocation = new Point(left, top);
             this._endLocation = new Point(right, bottom);
 
@@ -76,6 +83,8 @@ namespace EveOPreview.View
             this._thumbnail = this.WindowManager.GetLiveThumbnail(this.Handle, this.Id);
             this._thumbnail.Move(this._startLocation.X, this._startLocation.Y, this._endLocation.X, this._endLocation.Y);
             this._thumbnail.Update();
+            _logger.Verbose("DWM thumbnail registered and moved for 0x{Handle:X}", this.Id);
         }
     }
+
 }

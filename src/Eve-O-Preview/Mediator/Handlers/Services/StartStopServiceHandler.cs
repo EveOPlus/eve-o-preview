@@ -22,6 +22,7 @@ using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
 using EveOPreview.Services.Interface;
+using Serilog;
 
 namespace EveOPreview.Mediator.Handlers.Services
 {
@@ -31,36 +32,53 @@ namespace EveOPreview.Mediator.Handlers.Services
         private readonly IProcessMonitor _procMonitor;
         private readonly IHookService _hook;
         private readonly ICpuAffinityService _cpuAffinityService;
+        private readonly ILogger _logger;
 
-        public StartStopServiceHandler(IThumbnailManager manager, IProcessMonitor procMonitor, IHookService hook, ICpuAffinityService cpuAffinityService)
+        public StartStopServiceHandler(IThumbnailManager manager, IProcessMonitor procMonitor, IHookService hook, ICpuAffinityService cpuAffinityService, ILogger logger)
         {
             this._manager = manager;
             _procMonitor = procMonitor;
             _hook = hook;
             _cpuAffinityService = cpuAffinityService;
+            _logger = logger;
         }
 
         public Task Handle(StartService message, CancellationToken cancellationToken)
         {
             try
             {
+                _logger.Verbose("StartStopServiceHandler: Starting thumbnail manager service");
                 this._manager.Start();
+                _logger.Verbose("Thumbnail manager service started successfully");
                 return Task.CompletedTask;
             }
             catch (Exception exception)
             {
+                _logger.Error(exception, "Error starting thumbnail manager service");
                 return Task.FromException(exception);
             }
         }
 
         public async Task Handle(StopService message, CancellationToken cancellationToken)
         {
-            this._manager.Stop();
+            try
+            {
+                _logger.Information("StartStopServiceHandler: Stopping thumbnail manager service");
+                this._manager.Stop();
 
-            var processes = _procMonitor.GetAllProcesses();
-            _cpuAffinityService.ResetAll(processes);
-            var tasks = processes.Select(client => _hook.DisableFpsLimiterAsync(client.MainWindowHandle));
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+                var processes = _procMonitor.GetAllProcesses();
+                _logger.Information("Resetting CPU affinity and FPS limiter for {ProcessCount} clients", processes.Count);
+                
+                _cpuAffinityService.ResetAll(processes);
+                var tasks = processes.Select(client => _hook.DisableFpsLimiterAsync(client.MainWindowHandle));
+                await Task.WhenAll(tasks).ConfigureAwait(false);
+                
+                _logger.Information("Thumbnail manager service stopped successfully");
+            }
+            catch (Exception exception)
+            {
+                _logger.Error(exception, "Error stopping thumbnail manager service");
+            }
         }
     }
 }

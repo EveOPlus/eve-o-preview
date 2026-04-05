@@ -20,6 +20,7 @@ using MediatR;
 using Serilog;
 using System.Threading;
 using System.Threading.Tasks;
+using EveOPreview.Helper;
 
 namespace EveOPreview.Mediator.Handlers.Thumbnails
 {
@@ -38,10 +39,13 @@ namespace EveOPreview.Mediator.Handlers.Thumbnails
 
         public async Task Handle(ChangeSelectedProfile notification, CancellationToken ct)
         {
+            _logger.WithCallerInfo().Information("ChangeSelectedProfileHandler: Switching to profile location: {ProfileLocation}", notification.NewProfileLocation);
             _configStorage.CurrentProfile = notification.NewProfileLocation;
+            _logger.Verbose("Loading configuration from new profile");
             _configStorage.Load();
 
             await _publisher.Publish(new SelectedProfileChangedNotification(notification.NewProfileLocation), ct);
+            _logger.Verbose("Profile change completed successfully");
         }
     }
 }

@@ -17,6 +17,7 @@
 using System;
 using System.Runtime.InteropServices;
 using EveOPreview.Services.Interop;
+using Serilog;
 
 namespace EveOPreview.Services.Implementation
 {
@@ -24,18 +25,22 @@ namespace EveOPreview.Services.Implementation
     {
         #region Private fields
         private readonly IWindowManager _windowManager;
+        private readonly ILogger _logger;
         private IntPtr _handle;
         private DWM_THUMBNAIL_PROPERTIES _properties;
         #endregion
 
-        public DwmThumbnail(IWindowManager windowManager)
+        public DwmThumbnail(IWindowManager windowManager, ILogger logger)
         {
             this._windowManager = windowManager;
+            _logger = logger;
             this._handle = IntPtr.Zero;
         }
 
         public void Register(IntPtr destination, IntPtr source)
         {
+            _logger.Verbose("Registering DWM thumbnail: Destination=0x{Destination:X}, Source=0x{Source:X}", destination, source);
+            
             this._properties = new DWM_THUMBNAIL_PROPERTIES();
             this._properties.dwFlags = DWM_TNP_CONSTANTS.DWM_TNP_VISIBLE
                                       + DWM_TNP_CONSTANTS.DWM_TNP_OPACITY
@@ -47,25 +52,23 @@ namespace EveOPreview.Services.Implementation
 
             if (!this._windowManager.IsCompositionEnabled)
             {
+                _logger.Verbose("DWM composition not enabled, skipping thumbnail registration");
                 return;
             }
 
             try
             {
                 this._handle = DwmNativeMethods.DwmRegisterThumbnail(destination, source);
+                _logger.Verbose("DWM thumbnail registered successfully: Handle=0x{Handle:X}", this._handle);
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
-                // This exception is raised if the source client is already closed
-                // Can happen on a really slow CPU's that the window is still being
-                // listed in the process list yet it already cannot be used as
-                // a thumbnail source
+                _logger.Warning(ex, "DWM thumbnail registration failed: Source window may be closed. Destination=0x{Destination:X}, Source=0x{Source:X}", destination, source);
                 this._handle = IntPtr.Zero;
             }
-            catch (COMException)
+            catch (COMException ex)
             {
-                // This exception is raised if DWM is suddenly not available
-                // (f.e. when switching between Windows user accounts)
+                _logger.Warning(ex, "DWM thumbnail registration failed: DWM unavailable (possibly user account switch)");
                 this._handle = IntPtr.Zero;
             }
         }
@@ -74,19 +77,22 @@ namespace EveOPreview.Services.Implementation
         {
             if ((!this._windowManager.IsCompositionEnabled) || (this._handle == IntPtr.Zero))
             {
+                _logger.Verbose("DWM thumbnail unregister: Skipped (Composition={IsEnabled}, Handle={Handle})", this._windowManager.IsCompositionEnabled, this._handle);
                 return;
             }
 
             try
             {
+                _logger.Verbose("Unregistering DWM thumbnail: Handle=0x{Handle:X}", this._handle);
                 DwmNativeMethods.DwmUnregisterThumbnail(this._handle);
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
+                _logger.Warning(ex, "Error unregistering DWM thumbnail");
             }
-            catch (COMException)
+            catch (COMException ex)
             {
-                // This exception is raised when DWM is not available for some reason
+                _logger.Warning(ex, "DWM unavailable while unregistering thumbnail");
             }
         }
 
@@ -106,13 +112,13 @@ namespace EveOPreview.Services.Implementation
             {
                 DwmNativeMethods.DwmUpdateThumbnailProperties(this._handle, this._properties);
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
-                // This exception will be thrown if the EVE client disappears while this method is running
+                _logger.Verbose(ex, "DWM thumbnail update failed: Source window may have been closed. Handle=0x{Handle:X}", this._handle);
             }
-            catch (COMException)
+            catch (COMException ex)
             {
-                // This exception is raised when DWM is not available for some reason
+                _logger.Warning(ex, "DWM thumbnail update failed: DWM unavailable");
             }
         }
     }

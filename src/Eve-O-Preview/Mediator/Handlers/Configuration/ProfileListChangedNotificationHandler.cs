@@ -19,20 +19,24 @@ using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
 using EveOPreview.Mediator.Messages;
+using Serilog;
 
 namespace EveOPreview.Mediator.Handlers.Configuration;
 
 public class ProfileListChangedNotificationHandler : INotificationHandler<ProfileListChangedNotification>
 {
     private readonly IGlobalEvents _globalEvents;
+    private readonly ILogger _logger;
 
-    public ProfileListChangedNotificationHandler(IGlobalEvents globalEvents)
+    public ProfileListChangedNotificationHandler(IGlobalEvents globalEvents, ILogger logger)
     {
         _globalEvents = globalEvents;
+        _logger = logger;
     }
 
     public Task Handle(ProfileListChangedNotification notification, CancellationToken cancellationToken)
     {
+        _logger.Verbose("ProfileListChangedNotification: Publishing profile list change");
         _globalEvents.PublishProfileListChanged(notification);
         return Task.CompletedTask;
     }

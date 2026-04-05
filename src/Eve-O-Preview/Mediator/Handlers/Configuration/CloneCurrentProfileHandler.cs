@@ -20,27 +20,33 @@ using System.Threading.Tasks;
 using EveOPreview.Configuration.Interface;
 using EveOPreview.Mediator.Messages;
 using MediatR;
+using Serilog;
 
 namespace EveOPreview.Mediator.Handlers.Configuration;
 
 public class CloneCurrentProfileHandler : IRequestHandler<CloneCurrentProfile>
 {
     private readonly IProfileManager _profileManager;
+    private readonly ILogger _logger;
 
-    public CloneCurrentProfileHandler(IProfileManager profileManager)
+    public CloneCurrentProfileHandler(IProfileManager profileManager, ILogger logger)
     {
         _profileManager = profileManager;
+        _logger = logger;
     }
 
     public Task Handle(CloneCurrentProfile request, CancellationToken cancellationToken)
     {
         try
         {
+            _logger.Information("CloneCurrentProfile: Starting profile clone operation");
             _profileManager.CloneCurrentProfile();
+            _logger.Verbose("Profile cloned successfully");
             return Task.CompletedTask;
         }
         catch (Exception exception)
         {
+            _logger.Error(exception, "Error cloning current profile");
             return Task.FromException(exception);
         }
     }

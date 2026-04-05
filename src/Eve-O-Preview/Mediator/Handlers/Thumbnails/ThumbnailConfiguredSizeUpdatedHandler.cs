@@ -14,25 +14,30 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System.Threading;
-using System.Threading.Tasks;
+using EveOPreview.Helper;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Services;
 using MediatR;
+using Serilog;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EveOPreview.Mediator.Handlers.Thumbnails
 {
     sealed class ThumbnailConfiguredSizeUpdatedHandler : INotificationHandler<ThumbnailConfiguredSizeUpdated>
     {
         private readonly IThumbnailManager _manager;
+        private readonly ILogger _logger;
 
-        public ThumbnailConfiguredSizeUpdatedHandler(IThumbnailManager manager)
+        public ThumbnailConfiguredSizeUpdatedHandler(IThumbnailManager manager, ILogger logger)
         {
             this._manager = manager;
+            _logger = logger;
         }
 
         public Task Handle(ThumbnailConfiguredSizeUpdated notification, CancellationToken cancellationToken)
         {
+            _logger.WithCallerInfo().Verbose("ThumbnailConfiguredSizeUpdated: Updating thumbnail sizes for all clients");
             this._manager.UpdateThumbnailsSize();
 
             return Task.CompletedTask;

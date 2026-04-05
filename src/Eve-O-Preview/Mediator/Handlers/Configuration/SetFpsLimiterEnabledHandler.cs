@@ -22,6 +22,7 @@ using MediatR;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace EveOPreview.Mediator.Handlers.Configuration
 {
@@ -30,12 +31,14 @@ namespace EveOPreview.Mediator.Handlers.Configuration
         private readonly IThumbnailConfiguration _config;
         private readonly IProcessMonitor _processMonitor;
         private readonly IHookService _hookService;
+        private readonly ILogger _logger;
 
-        public SetFpsLimiterEnabledHandler(IThumbnailConfiguration config, IProcessMonitor processMonitor, IHookService hookService)
+        public SetFpsLimiterEnabledHandler(IThumbnailConfiguration config, IProcessMonitor processMonitor, IHookService hookService, ILogger logger)
         {
             _config = config;
             _processMonitor = processMonitor;
             _hookService = hookService;
+            _logger = logger;
         }
 
         public async Task Handle(SetFpsLimiterEnabled request, CancellationToken cancellationToken)
@@ -44,13 +47,18 @@ namespace EveOPreview.Mediator.Handlers.Configuration
 
             if (_config.FpsLimiterSettings.IsEnabled && _config.IsPremium)
             {
+                _logger.Verbose("SetFpsLimiterEnabled: Enabling FPS limiter for {ClientCount} clients", allKnownClients.Count);
                 var tasks = allKnownClients.Select(client => _hookService.TryInstallHooksAsync(client));
                 await Task.WhenAll(tasks);
+                _logger.Verbose("FPS limiter enabled successfully");
             }
             else
             {
+                _logger.Verbose("SetFpsLimiterEnabled: Disabling FPS limiter for {ClientCount} clients (Enabled={IsEnabled}, Premium={IsPremium})",
+                    allKnownClients.Count, _config.FpsLimiterSettings.IsEnabled, _config.IsPremium);
                 var tasks = allKnownClients.Select(client => _hookService.DisableFpsLimiterAsync(client.MainWindowHandle));
                 await Task.WhenAll(tasks);
+                _logger.Verbose("FPS limiter disabled successfully");
             }
         }
     }

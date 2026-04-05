@@ -14,11 +14,13 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System.Threading;
-using System.Threading.Tasks;
 using EveOPreview.Configuration;
+using EveOPreview.Helper;
 using EveOPreview.Mediator.Messages;
 using MediatR;
+using Serilog;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EveOPreview.Mediator.Handlers.Thumbnails
 {
@@ -26,15 +28,20 @@ namespace EveOPreview.Mediator.Handlers.Thumbnails
     {
         private readonly IMediator _mediator;
         private readonly IThumbnailConfiguration _configuration;
+        private readonly ILogger _logger;
 
-        public ThumbnailLocationUpdatedHandler(IMediator mediator, IThumbnailConfiguration configuration)
+        public ThumbnailLocationUpdatedHandler(IMediator mediator, IThumbnailConfiguration configuration, ILogger logger)
         {
             this._mediator = mediator;
             this._configuration = configuration;
+            _logger = logger;
         }
 
         public Task Handle(ThumbnailLocationUpdated notification, CancellationToken cancellationToken)
         {
+            _logger.WithCallerInfo().Verbose("Thumbnail location updated: {ThumbnailName} ActiveClient={ActiveClientName} Location=({X},{Y})", 
+                notification.ThumbnailName, notification.ActiveClientName, notification.Location.X, notification.Location.Y);
+            
             this._configuration.SetThumbnailLocation(notification.ThumbnailName, notification.ActiveClientName, notification.Location);
 
             return this._mediator.Send(new SaveConfiguration(), cancellationToken);

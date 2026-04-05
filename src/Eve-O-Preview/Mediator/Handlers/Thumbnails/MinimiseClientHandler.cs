@@ -20,27 +20,32 @@ using EveOPreview.Services;
 using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace EveOPreview.Mediator.Handlers.Thumbnails
 {
     public class MinimizeClientHandler : IRequestHandler<MinimizeClient>
     {
         private readonly IWindowManager _windowManager;
+        private readonly ILogger _logger;
 
-        public MinimizeClientHandler(IWindowManager windowManager)
+        public MinimizeClientHandler(IWindowManager windowManager, ILogger logger)
         {
             _windowManager = windowManager;
+            _logger = logger;
         }
 
         public Task Handle(MinimizeClient request, CancellationToken cancellationToken)
         {
             try
             {
+                _logger.Verbose("MinimizeClient: Minimizing window handle 0x{Handle:X}", request.HandleToMinimize);
                 _windowManager.MinimizeWindow(request.HandleToMinimize, true);
                 return Task.CompletedTask;
             }
             catch (Exception exception)
             {
+                _logger.Error(exception, "Error minimizing client window 0x{Handle:X}", request.HandleToMinimize);
                 return Task.FromException(exception);
             }
         }

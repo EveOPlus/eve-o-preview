@@ -21,6 +21,7 @@ using EveOPreview.Configuration;
 using EveOPreview.Services;
 using Gma.System.MouseKeyHook;
 using MediatR;
+using Serilog;
 
 namespace EveOPreview.View
 {
@@ -29,11 +30,13 @@ namespace EveOPreview.View
         #region Private fields
         private readonly PictureBox _thumbnail;
         private IThumbnailConfiguration _config;
+        private readonly ILogger _logger;
         #endregion
 
-        public StaticThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager, IMediator mediator, IKeyboardMouseEvents kbmEvents)
+        public StaticThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager, IMediator mediator, IKeyboardMouseEvents kbmEvents, ILogger logger)
             : base(windowManager, config, thumbnailManager, mediator, kbmEvents)
         {
+            _logger = logger;
             this._thumbnail = new StaticThumbnailImage
             {
                 TabStop = false,
@@ -43,6 +46,7 @@ namespace EveOPreview.View
             };
             this.Controls.Add(this._thumbnail);
             this._config = config;
+            _logger.Verbose("StaticThumbnailView created for window 0x{Handle:X}", this.Id);
         }
 
         protected override void RefreshThumbnail(bool forceRefresh)
@@ -52,12 +56,18 @@ namespace EveOPreview.View
                 return;
             }
 
+            _logger.Verbose("Refreshing static thumbnail for 0x{Handle:X}", this.Id);
             var thumbnail = this.WindowManager.GetStaticThumbnail(this.Id);
             if (thumbnail != null)
             {
                 var oldImage = this._thumbnail.Image;
                 this._thumbnail.Image = thumbnail;
                 oldImage?.Dispose();
+                _logger.Verbose("Static thumbnail refreshed successfully for 0x{Handle:X}", this.Id);
+            }
+            else
+            {
+                _logger.Warning("Failed to capture static thumbnail for 0x{Handle:X}", this.Id);
             }
         }
 
@@ -67,6 +77,7 @@ namespace EveOPreview.View
             var top = 0 + highlightWidthTop;
             if (this.IsLocationUpdateRequired(this._thumbnail.Location, left, top))
             {
+                _logger.Verbose("Resizing static thumbnail location for 0x{Handle:X} to ({Left},{Top})", this.Id, left, top);
                 this._thumbnail.Location = new Point(left, top);
             }
 
@@ -74,9 +85,12 @@ namespace EveOPreview.View
             var height = baseHeight - highlightWidthTop - highlightWidthBottom;
             if (this.IsSizeUpdateRequired(this._thumbnail.Size, width, height))
             {
+                _logger.Verbose("Resizing static thumbnail size for 0x{Handle:X} to {Width}x{Height}", this.Id, width, height);
                 this._thumbnail.Size = new Size(width, height);
             }
         }
+
+
 
         private bool IsLocationUpdateRequired(Point currentLocation, int left, int top)
         {

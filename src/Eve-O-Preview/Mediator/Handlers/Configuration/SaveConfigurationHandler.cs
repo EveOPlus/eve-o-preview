@@ -22,6 +22,7 @@ using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Serilog;
 
 namespace EveOPreview.Mediator.Handlers.Configuration
 {
@@ -29,22 +30,26 @@ namespace EveOPreview.Mediator.Handlers.Configuration
     {
         private readonly IConfigurationStorage _storage;
         private readonly IThumbnailConfiguration _config;
+        private readonly ILogger _logger;
 
-        public SaveConfigurationHandler(IConfigurationStorage storage, IThumbnailConfiguration config)
+        public SaveConfigurationHandler(IConfigurationStorage storage, IThumbnailConfiguration config, ILogger logger)
         {
             this._storage = storage;
             _config = config;
+            _logger = logger;
         }
 
         public Task Handle(SaveConfiguration message, CancellationToken cancellationToken)
         {
             try
             {
+                _logger.WithCallerInfo().Verbose("Saving configuration to storage");
                 this._storage.Save();
                 return Task.CompletedTask;
             }
             catch (Exception exception)
             {
+                _logger.Error(exception, "Failed to save configuration");
                 return Task.FromException(exception);
             }
         }

@@ -21,6 +21,7 @@ using EveOPreview.Configuration.Interface;
 using EveOPreview.Configuration.Model;
 using EveOPreview.Mediator.Messages;
 using MediatR;
+using Serilog;
 
 namespace EveOPreview.Mediator.Handlers.Configuration;
 
@@ -28,11 +29,13 @@ public class GetCurrentProfileLocationHandler : IRequestHandler<GetCurrentProfil
 {
     private readonly IConfigurationStorage _configStorage;
     private readonly IProfileManager _profileManager;
+    private readonly ILogger _logger;
 
-    public GetCurrentProfileLocationHandler(IConfigurationStorage configStorage, IProfileManager profileManager)
+    public GetCurrentProfileLocationHandler(IConfigurationStorage configStorage, IProfileManager profileManager, ILogger logger)
     {
         _configStorage = configStorage;
         _profileManager = profileManager;
+        _logger = logger;
     }
 
     public Task<ProfileLocation> Handle(GetCurrentProfileLocation request, CancellationToken cancellationToken)
@@ -41,7 +44,13 @@ public class GetCurrentProfileLocationHandler : IRequestHandler<GetCurrentProfil
 
         if (string.IsNullOrWhiteSpace(currentConfigProfile?.FullPath))
         {
+            _logger.Verbose("GetCurrentProfileLocation: Current profile path is null/empty, retrieving default profile");
             currentConfigProfile = _profileManager.GetDefaultProfileLocation();
+            _logger.Information("GetCurrentProfileLocation: Using default profile: {ProfilePath}", currentConfigProfile?.FullPath);
+        }
+        else
+        {
+            _logger.Verbose("GetCurrentProfileLocation: Current profile: {ProfilePath}", currentConfigProfile.FullPath);
         }
 
         return Task.FromResult(currentConfigProfile);

@@ -20,27 +20,33 @@ using EveOPreview.Mediator.Messages;
 using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace EveOPreview.Mediator.Handlers.Configuration;
 
 public class RenameCurrentProfileHandler : IRequestHandler<RenameCurrentProfile>
 {
     private readonly IProfileManager _profileManager;
+    private readonly ILogger _logger;
 
-    public RenameCurrentProfileHandler(IProfileManager profileManager)
+    public RenameCurrentProfileHandler(IProfileManager profileManager, ILogger logger)
     {
         _profileManager = profileManager;
+        _logger = logger;
     }
 
     public Task Handle(RenameCurrentProfile request, CancellationToken cancellationToken)
     {
         try
         {
+            _logger.Information("RenameCurrentProfile: Starting profile rename operation");
             _profileManager.RenameCurrentProfile(request);
+            _logger.Verbose("Profile renamed successfully");
             return Task.CompletedTask;
         }
         catch (Exception exception)
         {
+            _logger.Error(exception, "Error renaming current profile");
             return Task.FromException(exception);
         }
     }

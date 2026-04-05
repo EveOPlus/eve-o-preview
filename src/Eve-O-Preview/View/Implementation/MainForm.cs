@@ -25,6 +25,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.ComponentModel;
+using Serilog;
 
 namespace EveOPreview.View
 {
@@ -37,16 +38,20 @@ namespace EveOPreview.View
         private bool _suppressEvents;
         private Size _minimumSize;
         private Size _maximumSize;
+        private readonly ILogger _logger;
         #endregion
 
-        public MainForm(ApplicationContext context)
+        public MainForm(ApplicationContext context, ILogger logger)
         {
+            _logger = logger;
             this._context = context;
             this._zoomAnchorMap = new Dictionary<ViewZoomAnchor, RadioButton>();
             this._cachedThumbnailZoomAnchor = ViewZoomAnchor.NW;
             this._suppressEvents = false;
             this._minimumSize = new Size(80, 60);
             this._maximumSize = new Size(80, 60);
+
+            _logger.Verbose("MainForm: Initializing main window form");
 
             InitializeComponent();
 
@@ -455,6 +460,7 @@ namespace EveOPreview.View
 
         public new void Show()
         {
+            _logger.Verbose("MainForm.Show: Registering as application main form");
             // Registers the current instance as the application's Main Form
             this._context.MainForm = this;
 
@@ -462,32 +468,38 @@ namespace EveOPreview.View
             this.FormActivated?.Invoke();
             this._suppressEvents = false;
 
+            _logger.Verbose("MainForm.Show: Running application");
             Application.Run(this._context);
         }
 
         public void SetThumbnailSizeLimitations(Size minimumSize, Size maximumSize)
         {
+            _logger.Verbose("MainForm.SetThumbnailSizeLimitations: Min={Min}, Max={Max}", minimumSize, maximumSize);
             this._minimumSize = minimumSize;
             this._maximumSize = maximumSize;
         }
 
         public void Minimize()
         {
+            _logger.Verbose("MainForm.Minimize: Minimizing window");
             this.WindowState = FormWindowState.Minimized;
         }
 
         public void SetVersionInfo(string version)
         {
+            _logger.Verbose("MainForm.SetVersionInfo: {Version}", version);
             this.VersionLabel.Text = version;
         }
 
         public void SetDocumentationUrl(string url)
         {
+            _logger.Verbose("MainForm.SetDocumentationUrl: {Url}", url);
             this.DocumentationLink.Text = url;
         }
 
         public void AddThumbnails(IList<IThumbnailDescription> thumbnails)
         {
+            _logger.Verbose("MainForm.AddThumbnails: Adding {ThumbnailCount} thumbnails", thumbnails.Count);
             this.ThumbnailsList.BeginUpdate();
 
             foreach (IThumbnailDescription view in thumbnails)
@@ -500,6 +512,7 @@ namespace EveOPreview.View
 
         public void RemoveThumbnails(IList<IThumbnailDescription> thumbnails)
         {
+            _logger.Verbose("MainForm.RemoveThumbnails: Removing {ThumbnailCount} thumbnails", thumbnails.Count);
             this.ThumbnailsList.BeginUpdate();
 
             foreach (IThumbnailDescription view in thumbnails)
@@ -512,6 +525,7 @@ namespace EveOPreview.View
 
         public void RefreshZoomSettings()
         {
+            _logger.Verbose("MainForm.RefreshZoomSettings: EnableThumbnailZoom={EnableZoom}", this.EnableThumbnailZoom);
             bool enableControls = this.EnableThumbnailZoom;
             this.ThumbnailZoomFactorNumericEdit.Enabled = enableControls;
             this.ZoomAnchorPanel.Enabled = enableControls;
@@ -570,6 +584,7 @@ namespace EveOPreview.View
         #region UI events
         private void ContentTabControl_DrawItem(object sender, DrawItemEventArgs e)
         {
+            _logger.Verbose("MainForm.ContentTabControl_DrawItem: Drawing tab index {TabIndex}", e.Index);
             TabControl control = (TabControl)sender;
             TabPage page = control.TabPages[e.Index];
             Rectangle bounds = control.GetTabRect(e.Index);
@@ -600,6 +615,7 @@ namespace EveOPreview.View
                 return;
             }
 
+            _logger.Verbose("MainForm: OptionChanged");
             this.ApplicationSettingsChanged?.Invoke();
         }
 
@@ -610,6 +626,7 @@ namespace EveOPreview.View
                 return;
             }
 
+            _logger.Verbose("MainForm: ThumbnailSizeChanged");
             // Perform some View work that is not properly done in the Control
             this._suppressEvents = true;
             Size thumbnailSize = this.ThumbnailSize;
@@ -623,6 +640,7 @@ namespace EveOPreview.View
 
         private void ActiveClientHighlightColorButton_Click(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: ActiveClientHighlightColorButton_Click");
             using (ColorDialog dialog = new ColorDialog())
             {
                 dialog.Color = this.ActiveClientHighlightColor;
@@ -645,6 +663,7 @@ namespace EveOPreview.View
                 return;
             }
 
+            _logger.Verbose("MainForm: ThumbnailsList_ItemCheck - {Title} (Checked={IsDisabled})", selectedItem.Title, (e.NewValue == CheckState.Checked));
             selectedItem.IsDisabled = (e.NewValue == CheckState.Checked);
 
             this.ThumbnailStateChanged?.Invoke(selectedItem.Title);
@@ -652,6 +671,7 @@ namespace EveOPreview.View
 
         private void DocumentationLinkClicked_Handler(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            _logger.Verbose("MainForm: DocumentationLinkClicked");
             this.DocumentationLinkActivated?.Invoke();
         }
 
@@ -662,6 +682,7 @@ namespace EveOPreview.View
                 return;
             }
 
+            _logger.Verbose("MainForm: Window minimized");
             RefreshCycleGroups();
 
             this.FormMinimized?.Invoke();
@@ -669,6 +690,7 @@ namespace EveOPreview.View
 
         private void RefreshCycleGroups()
         {
+            _logger.Verbose("MainForm: RefreshCycleGroups - {GroupCount} groups", CycleGroups.Count);
             selectCycleGroupComboBox.DataSource = null;
             selectCycleGroupComboBox.DataSource = CycleGroups;
             selectCycleGroupComboBox.DisplayMember = "Description";
@@ -682,9 +704,11 @@ namespace EveOPreview.View
 
             if (selectedGroup == null)
             {
+                _logger.Verbose("MainForm: RefreshSelectedCycleGroup - no group selected");
                 return;
             }
 
+            _logger.Verbose("MainForm: RefreshSelectedCycleGroup - {Description} ({ClientCount} clients)", selectedGroup.Description, selectedGroup.ClientsOrder.Count);
             cycleGroupDescriptionText.Text = selectedGroup.Description;
             cycleGroupForwardHotkey1Text.Text = selectedGroup.ForwardHotkeys.FirstOrDefault();
             cycleGroupForwardHotkey2Text.Text = selectedGroup.ForwardHotkeys.Skip(1).FirstOrDefault();
@@ -700,6 +724,7 @@ namespace EveOPreview.View
 
         private void MainFormClosing_Handler(object sender, FormClosingEventArgs e)
         {
+            _logger.Verbose("MainForm: Form closing requested");
             ViewCloseRequest request = new ViewCloseRequest();
 
             this.FormCloseRequested?.Invoke(request);
@@ -709,6 +734,7 @@ namespace EveOPreview.View
 
         private void RestoreMainForm_Handler(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: Restoring main window");
             // This is form's GUI lifecycle event that is invariant to the Form data
             base.Show();
             this.WindowState = FormWindowState.Normal;
@@ -717,12 +743,14 @@ namespace EveOPreview.View
 
         private void ExitMenuItemClick_Handler(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: Exit menu clicked");
             this.ApplicationExitRequested?.Invoke();
         }
         #endregion
 
         private void InitZoomAnchorMap()
         {
+            _logger.Verbose("MainForm.InitZoomAnchorMap: Initializing 9 zoom anchor radio buttons");
             this._zoomAnchorMap[ViewZoomAnchor.NW] = this.ZoomAanchorNWRadioButton;
             this._zoomAnchorMap[ViewZoomAnchor.N] = this.ZoomAanchorNRadioButton;
             this._zoomAnchorMap[ViewZoomAnchor.NE] = this.ZoomAanchorNERadioButton;
@@ -736,6 +764,7 @@ namespace EveOPreview.View
 
         private void addClientToCycleGroupButton_Click(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: addClientToCycleGroupButton_Click");
             var toonToAdd = this.GetClientNameFromInput();
 
             var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
@@ -747,6 +776,7 @@ namespace EveOPreview.View
 
             if (selectedGroup.ClientsOrder.ContainsValue(toonToAdd))
             {
+                _logger.Verbose("MainForm: Client {Client} already in group", toonToAdd);
                 MessageBox.Show($"{toonToAdd} is already part of this group.");
                 return;
             }
@@ -754,12 +784,14 @@ namespace EveOPreview.View
             var nextOrderNumber = selectedGroup.ClientsOrder.Any() ? selectedGroup.ClientsOrder.Max(x => x.Key) + 1 : 1;
             selectedGroup.ClientsOrder.Add(nextOrderNumber, toonToAdd);
 
+            _logger.Verbose("MainForm: Added {Client} to group {GroupName}", toonToAdd, selectedGroup.Description);
             RefreshSelectedCycleGroup();
             this.ApplicationSettingsChanged?.Invoke();
         }
 
         private void removeClientToCycleGroupButton_Click(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: removeClientToCycleGroupButton_Click");
             var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
 
             if (selectedGroup == null)
@@ -773,19 +805,23 @@ namespace EveOPreview.View
             }
 
             var KeyToRemove = ((KeyValuePair<int, string>)cycleGroupClientOrderList.SelectedItem).Key;
+            var clientToRemove = selectedGroup.ClientsOrder[KeyToRemove];
             selectedGroup.ClientsOrder.Remove(KeyToRemove);
 
+            _logger.Verbose("MainForm: Removed {Client} from group {GroupName}", clientToRemove, selectedGroup.Description);
             RefreshSelectedCycleGroup();
             this.ApplicationSettingsChanged?.Invoke();
         }
 
         private void selectCycleGroupComboBox_SelectedValueChanged(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: selectCycleGroupComboBox_SelectedValueChanged");
             RefreshSelectedCycleGroup();
         }
 
         private void cycleGroupMoveClientOrderUpButton_Click(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: cycleGroupMoveClientOrderUpButton_Click");
             var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
 
             if (selectedGroup == null)
@@ -822,12 +858,14 @@ namespace EveOPreview.View
             selectedGroup.ClientsOrder[previousKey] = valueToMoveUp;
             selectedGroup.ClientsOrder[KeyToMoveUpOne] = previousValue;
 
+            _logger.Verbose("MainForm: Moved {Client} up in cycle order", valueToMoveUp);
             RefreshSelectedCycleGroup();
             this.ApplicationSettingsChanged?.Invoke();
         }
 
         private void cycleGroupDescriptionText_Leave(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: cycleGroupDescriptionText_Leave");
             var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
 
             if (selectedGroup == null)
@@ -842,6 +880,7 @@ namespace EveOPreview.View
                 return;
             }
 
+            _logger.Verbose("MainForm: Renamed cycle group to {NewName}", cycleGroupDescriptionText.Text);
             selectedGroup.Description = cycleGroupDescriptionText.Text;
 
             this.ApplicationSettingsChanged?.Invoke();
@@ -850,6 +889,7 @@ namespace EveOPreview.View
 
         private void addNewGroupButton_Click(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: addNewGroupButton_Click");
             var newName = "New Cycle Group";
             var countGroupsWithSameName = CycleGroups.Count(x => x.Description.StartsWith(newName));
 
@@ -860,12 +900,14 @@ namespace EveOPreview.View
 
             CycleGroups.Add(new CycleGroup { Description = newName });
 
+            _logger.Verbose("MainForm: Created new cycle group: {GroupName}", newName);
             this.ApplicationSettingsChanged?.Invoke();
             RefreshCycleGroups();
         }
 
         private void removeGroupButton_Click(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: removeGroupButton_Click");
             var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
 
             if (selectedGroup == null)
@@ -873,6 +915,7 @@ namespace EveOPreview.View
                 return;
             }
 
+            _logger.Verbose("MainForm: Removing cycle group: {GroupName}", selectedGroup.Description);
             CycleGroups.Remove(selectedGroup);
 
             this.ApplicationSettingsChanged?.Invoke();
@@ -882,6 +925,7 @@ namespace EveOPreview.View
 
         private void cycleGroupForwardHotkey1Text_DoubleClick(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: cycleGroupForwardHotkey1Text_DoubleClick");
             var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
 
             if (selectedGroup == null)
@@ -904,6 +948,7 @@ namespace EveOPreview.View
                 selectedGroup.ForwardHotkeys[0] = captureHotkeyResponse.KeyString;
             }
 
+            _logger.Verbose("MainForm: Set forward hotkey 1 to {Hotkey}", captureHotkeyResponse.KeyString);
             this.ApplicationSettingsChanged?.Invoke();
         }
 
@@ -936,6 +981,7 @@ namespace EveOPreview.View
 
         private bool WaitForHotkeyCapture(TextBox inputBox, out CaptureNewHotkeyResponse captureHotkeyResponse)
         {
+            _logger.Verbose("MainForm.WaitForHotkeyCapture: Waiting for hotkey input");
             var previousValue = inputBox.Text;
             inputBox.Text = "Listening...";
             this.Enabled = false;
@@ -945,15 +991,18 @@ namespace EveOPreview.View
             if (!captureHotkeyResponse.IsValid)
             {
                 inputBox.Text = previousValue;
+                _logger.Verbose("MainForm.WaitForHotkeyCapture: Hotkey capture failed: {ErrorMessage}", captureHotkeyResponse.ErrorMessage);
                 MessageBox.Show(captureHotkeyResponse.ErrorMessage);
                 return true;
             }
 
+            _logger.Verbose("MainForm.WaitForHotkeyCapture: Captured hotkey: {KeyString}", captureHotkeyResponse.KeyString);
             return false;
         }
 
         private void cycleGroupBackwardHotkey1Text_DoubleClick(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: cycleGroupBackwardHotkey1Text_DoubleClick");
             var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
 
             if (selectedGroup == null)
@@ -976,11 +1025,13 @@ namespace EveOPreview.View
                 selectedGroup.BackwardHotkeys[0] = captureHotkeyResponse.KeyString;
             }
 
+            _logger.Verbose("MainForm: Set backward hotkey 1 to {Hotkey}", captureHotkeyResponse.KeyString);
             this.ApplicationSettingsChanged?.Invoke();
         }
 
         private void cycleGroupBackwardHotkey2Text_DoubleClick(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: cycleGroupBackwardHotkey2Text_DoubleClick");
             var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
 
             if (selectedGroup == null)
@@ -1003,16 +1054,19 @@ namespace EveOPreview.View
                 selectedGroup.BackwardHotkeys[1] = captureHotkeyResponse.KeyString;
             }
 
+            _logger.Verbose("MainForm: Set backward hotkey 2 to {Hotkey}", captureHotkeyResponse.KeyString);
             this.ApplicationSettingsChanged?.Invoke();
         }
 
         private void btnSetOverlayFont_Click(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: btnSetOverlayFont_Click");
             FontDialog fontDialog = new FontDialog();
             fontDialog.Font = lblDisplaySampleFont.Font;
 
             if (fontDialog.ShowDialog() == DialogResult.OK)
             {
+                _logger.Verbose("MainForm: Font selected: {FontName}, {Size}", fontDialog.Font.FontFamily.Name, fontDialog.Font.Size);
                 lblDisplaySampleFont.Font = fontDialog.Font;
 
                 this.ApplicationSettingsChanged?.Invoke();
@@ -1021,11 +1075,13 @@ namespace EveOPreview.View
 
         private void btnSetOverlayFontColor_Click(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: btnSetOverlayFontColor_Click");
             ColorDialog colorDialog = new ColorDialog();
             colorDialog.Color = lblDisplaySampleFont.ForeColor;
 
             if (colorDialog.ShowDialog() == DialogResult.OK)
             {
+                _logger.Verbose("MainForm: Font color selected: RGB({R},{G},{B})", colorDialog.Color.R, colorDialog.Color.G, colorDialog.Color.B);
                 lblDisplaySampleFont.ForeColor = colorDialog.Color;
                 this.ApplicationSettingsChanged?.Invoke();
             }
@@ -1033,11 +1089,13 @@ namespace EveOPreview.View
 
         private void btnFontOutlineColor_Click(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: btnFontOutlineColor_Click");
             ColorDialog colorDialog = new ColorDialog();
             colorDialog.Color = lblDisplaySampleFont.OutlineColor;
 
             if (colorDialog.ShowDialog() == DialogResult.OK)
             {
+                _logger.Verbose("MainForm: Outline color selected: RGB({R},{G},{B})", colorDialog.Color.R, colorDialog.Color.G, colorDialog.Color.B);
                 lblDisplaySampleFont.OutlineColor = colorDialog.Color;
                 this.ApplicationSettingsChanged?.Invoke();
             }
@@ -1045,6 +1103,7 @@ namespace EveOPreview.View
 
         private void UpdateFontOutlineWidth()
         {
+            _logger.Verbose("MainForm: UpdateFontOutlineWidth");
             var newValue = new string(txtFontOutlineWidth.Text.TakeWhile(char.IsNumber).ToArray());
             txtFontOutlineWidth.Text = newValue;
 
@@ -1056,6 +1115,7 @@ namespace EveOPreview.View
 
         private void UpdateTitleOffset()
         {
+            _logger.Verbose("MainForm: UpdateTitleOffset");
             var cleanOffsetLeft = new string(txtTitleOffsetLeft.Text.TakeWhile(char.IsNumber).ToArray());
             var cleanOffsetTop = new string(txtTitleOffsetTop.Text.TakeWhile(char.IsNumber).ToArray());
 
@@ -1065,6 +1125,7 @@ namespace EveOPreview.View
             var offsetLeft = int.Parse(cleanOffsetLeft);
             var offsetTop = int.Parse(cleanOffsetTop);
 
+            _logger.Verbose("MainForm: Title offset set to ({Left},{Top})", offsetLeft, offsetTop);
             this.TitleFontSettings.PositionOffsetFromLeft = offsetLeft;
             this.TitleFontSettings.PositionOffsetFromTop = offsetTop;
             this.ApplicationSettingsChanged?.Invoke();
@@ -1072,16 +1133,19 @@ namespace EveOPreview.View
 
         private void txtTitleOffsetLeft_Leave(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: txtTitleOffsetLeft_Leave");
             UpdateTitleOffset();
         }
 
         private void txtTitleOffsetTop_Leave(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: txtTitleOffsetTop_Leave");
             UpdateTitleOffset();
         }
 
         private void txtFontOutlineWidth_Leave(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: txtFontOutlineWidth_Leave");
             UpdateFontOutlineWidth();
         }
 
@@ -1092,6 +1156,7 @@ namespace EveOPreview.View
                 return;
             }
 
+            _logger.Verbose("MainForm: chbIsFpsThrottlingEnabled_CheckedChanged: {IsEnabled}", chbIsFpsThrottlingEnabled.Checked);
             FpsLimiterSettings.IsEnabled = chbIsFpsThrottlingEnabled.Checked;
             this.ApplicationSettingsChanged?.Invoke();
             this.FpsLimiterEnabledChanged?.Invoke();
@@ -1099,6 +1164,7 @@ namespace EveOPreview.View
 
         private void numericFpsForegroundLimit_Leave(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: numericFpsForegroundLimit_Leave: {Value}", (int)numericFpsForegroundLimit.Value);
             FpsLimiterSettings.FpsFocused = (int)numericFpsForegroundLimit.Value;
             this.ApplicationSettingsChanged?.Invoke();
             this.FpsLimiterChanged?.Invoke();
@@ -1106,6 +1172,7 @@ namespace EveOPreview.View
 
         private void numericFpsBackgroundLimit_Leave(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: numericFpsBackgroundLimit_Leave: {Value}", (int)numericFpsBackgroundLimit.Value);
             FpsLimiterSettings.FpsBackground = (int)numericFpsBackgroundLimit.Value;
             this.ApplicationSettingsChanged?.Invoke();
             this.FpsLimiterChanged?.Invoke();
@@ -1113,6 +1180,7 @@ namespace EveOPreview.View
 
         private void numericFpsPredictedLimit_Leave(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: numericFpsPredictedLimit_Leave: {Value}", (int)numericFpsPredictedLimit.Value);
             FpsLimiterSettings.FpsPredictingFocus = (int)numericFpsPredictedLimit.Value;
             this.ApplicationSettingsChanged?.Invoke();
             this.FpsLimiterChanged?.Invoke();
@@ -1125,6 +1193,7 @@ namespace EveOPreview.View
                 return;
             }
 
+            _logger.Verbose("MainForm: chbIsGateTunnelMuted_CheckedChanged: {IsChecked}", chbIsGateTunnelMuted.Checked);
             AnyAudioSettings_CheckedChanged();
         }
 
@@ -1135,11 +1204,14 @@ namespace EveOPreview.View
                 return;
             }
 
+            _logger.Verbose("MainForm: chbIsLocationBannerMuted_CheckedChanged: {IsChecked}", chbIsLocationBannerMuted.Checked);
             AnyAudioSettings_CheckedChanged();
         }
 
         private void AnyAudioSettings_CheckedChanged()
         {
+            _logger.Verbose("MainForm: AnyAudioSettings_CheckedChanged - JumpGate={JumpGate}, LocationBanner={LocationBanner}", 
+                chbIsGateTunnelMuted.Checked, chbIsLocationBannerMuted.Checked);
             this.AudioMuteSettings.MuteJumpGateTunnel = chbIsGateTunnelMuted.Checked;
             this.AudioMuteSettings.MuteLocationBanner = chbIsLocationBannerMuted.Checked;
 
@@ -1149,6 +1221,7 @@ namespace EveOPreview.View
 
         public void UpdateThumbnailToggleHideAllStatus(bool notificationIsHidden)
         {
+            _logger.Verbose("MainForm.UpdateThumbnailToggleHideAllStatus: IsHidden={IsHidden}", notificationIsHidden);
             this.btnToggleHideAll.Text = notificationIsHidden ? "Show All" : "Hide All";
             this.btnToggleHideAll.BackColor = notificationIsHidden ? Color.RosyBrown : SystemColors.Control;
             this.ClientsTabPage.Text = notificationIsHidden ? "ALL HIDDEN" : "All Clients";
@@ -1156,6 +1229,7 @@ namespace EveOPreview.View
 
         public void UpdateProfileList(List<ProfileLocation> notificationNewProfileLocations)
         {
+            _logger.Verbose("MainForm.UpdateProfileList: Updating profile list with {ProfileCount} profiles", notificationNewProfileLocations.Count);
             var selectedProfile = txtLoadedProfileName.Text;
 
             notificationNewProfileLocations =
@@ -1170,64 +1244,77 @@ namespace EveOPreview.View
             var itemToSelect = notificationNewProfileLocations.FirstOrDefault(x => x.FriendlyName == selectedProfile);
             if (itemToSelect != null)
             {
+                _logger.Verbose("MainForm.UpdateProfileList: Selected profile: {ProfileName}", itemToSelect.FriendlyName);
                 listBoxProfiles.SelectedItem = itemToSelect;
             }
         }
 
         private void btnToggleHideAll_Click(object sender, EventArgs e)
         {
-            this.ToggleHideAllActiveClients();
+            _logger.Verbose("MainForm: btnToggleHideAll_Click");
+            this.ToggleHideAllActiveClients?.Invoke();
         }
 
         private void txtToggleHideAllActiveHotkey_DoubleClick(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: txtToggleHideAllActiveHotkey_DoubleClick");
             if (WaitForHotkeyCapture(txtToggleHideAllActiveHotkey, out var captureHotkeyResponse))
             {
                 return;
             }
 
             txtToggleHideAllActiveHotkey.Text = captureHotkeyResponse.KeyString;
+            _logger.Verbose("MainForm: Set toggle hide all hotkey to {Hotkey}", captureHotkeyResponse.KeyString);
 
             this.ApplicationSettingsChanged?.Invoke();
         }
 
         private void txtMinimizeAllClientsHotkey_DoubleClick(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: txtMinimizeAllClientsHotkey_DoubleClick");
             if (WaitForHotkeyCapture(txtMinimizeAllClientsHotkey, out var captureHotkeyResponse))
             {
                 return;
             }
 
             txtMinimizeAllClientsHotkey.Text = captureHotkeyResponse.KeyString;
+            _logger.Verbose("MainForm: Set minimize all clients hotkey to {Hotkey}", captureHotkeyResponse.KeyString);
 
             this.ApplicationSettingsChanged?.Invoke();
         }
 
         private void btnMinimizeAllClients_Click(object sender, EventArgs e)
         {
-            this.MinimizeAllClients();
+            _logger.Verbose("MainForm: btnMinimizeAllClients_Click");
+            this.MinimizeAllClients?.Invoke();
         }
 
         private void listBoxProfiles_Click(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: listBoxProfiles_Click");
             var selectedProfile = listBoxProfiles.SelectedItem as ProfileLocation;
             if (selectedProfile == null)
             {
+                _logger.Verbose("MainForm: No profile selected");
                 return;
             }
 
-            this.SwitchToProfile(selectedProfile);
+            _logger.Verbose("MainForm: Switching to profile: {ProfileName}", selectedProfile.FriendlyName);
+            this.SwitchToProfile?.Invoke(selectedProfile);
         }
 
         private void btnCloneProfile_Click(object sender, EventArgs e)
         {
-            this.CloneCurrentProfile();
+            _logger.Verbose("MainForm: btnCloneProfile_Click");
+            this.CloneCurrentProfile?.Invoke();
         }
 
         private void btnDeleteProfile_Click(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: btnDeleteProfile_Click");
             if (this.txtLoadedProfileName.Text == "Default")
             {
+                _logger.Verbose("MainForm: Cannot delete Default profile");
                 MessageBox.Show("Cannot delete the Default profile");
                 return;
             }
@@ -1240,12 +1327,14 @@ namespace EveOPreview.View
 
             if (result == DialogResult.Yes)
             {
-                this.DeleteCurrentProfile();
+                _logger.Verbose("MainForm: Deleting profile: {ProfileName}", this.txtLoadedProfileName.Text);
+                this.DeleteCurrentProfile?.Invoke();
             }
         }
 
         private void txtLoadedProfileName_Leave(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: txtLoadedProfileName_Leave");
             UI_RenameCurrentProfile();
         }
 
@@ -1253,6 +1342,7 @@ namespace EveOPreview.View
         {
             if (e.KeyCode == Keys.Enter)
             {
+                _logger.Verbose("MainForm: txtLoadedProfileName_KeyDown - Enter pressed");
                 UI_RenameCurrentProfile();
                 e.Handled = true;
                 e.SuppressKeyPress = true;
@@ -1261,24 +1351,29 @@ namespace EveOPreview.View
 
         private void UI_RenameCurrentProfile()
         {
+            _logger.Verbose("MainForm: UI_RenameCurrentProfile");
             var newName = txtLoadedProfileName.Text.Trim();
 
             if (!ValidateProfileName(newName, out var message))
             {
+                _logger.Verbose("MainForm: Profile name validation failed: {Message}", message);
                 MessageBox.Show(message);
                 return;
             }
 
-            this.RenameCurrentProfile(newName);
+            _logger.Verbose("MainForm: Renaming profile to: {NewName}", newName);
+            this.RenameCurrentProfile?.Invoke(newName);
         }
 
         private bool ValidateProfileName(string name, out string errorMessage)
         {
+            _logger.Verbose("MainForm: ValidateProfileName: {Name}", name);
             errorMessage = string.Empty;
 
             if (name.Length > 50)
             {
                 errorMessage = "Profile name cannot exceed 50 characters.";
+                _logger.Verbose("MainForm: Profile name too long ({Length} chars)", name.Length);
                 return false;
             }
 
@@ -1286,23 +1381,28 @@ namespace EveOPreview.View
             if (name.IndexOfAny(invalidChars) >= 0)
             {
                 errorMessage = "Name contains invalid characters (\\ / : * ? \" < > |)";
+                _logger.Verbose("MainForm: Profile name contains invalid characters");
                 return false;
             }
 
             if (name.EndsWith(" ") || name.EndsWith("."))
             {
                 errorMessage = "Name cannot end with a space or a period.";
+                _logger.Verbose("MainForm: Profile name ends with space or period");
                 return false;
             }
 
+            _logger.Verbose("MainForm: Profile name validation passed");
             return true;
         }
 
         private void ContentTabControl_DpiChangedAfterParent(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: ContentTabControl_DpiChangedAfterParent");
             float newDpi = this.ContentTabControl.DeviceDpi;
 
             float scaleFactor = newDpi / 96f;
+            _logger.Verbose("MainForm: DPI changed - NewDpi={NewDpi}, ScaleFactor={ScaleFactor}", newDpi, scaleFactor);
 
             int originalHeight = 120;
             this.ContentTabControl.ItemSize = new Size(this.ContentTabControl.ItemSize.Width, (int)(originalHeight * scaleFactor));
@@ -1310,6 +1410,7 @@ namespace EveOPreview.View
 
         private void chbAutoCpuAffinity_CheckedChanged(object sender, EventArgs e)
         {
+            _logger.Verbose("MainForm: chbAutoCpuAffinity_CheckedChanged: {IsChecked}", chbAutoCpuAffinity.Checked);
             this.EnableAutomaticCpuAffinity = chbAutoCpuAffinity.Checked;
             this.ApplicationSettingsChanged?.Invoke();
         }

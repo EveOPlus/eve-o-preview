@@ -14,11 +14,13 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System.Threading;
-using System.Threading.Tasks;
+using EveOPreview.Helper;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Presenters;
 using MediatR;
+using Serilog;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EveOPreview.Mediator.Handlers.Thumbnails
 {
@@ -26,22 +28,29 @@ namespace EveOPreview.Mediator.Handlers.Thumbnails
     {
         #region Private fields
         private readonly IMainFormPresenter _presenter;
+        private readonly ILogger _logger;
         #endregion
 
-        public ThumbnailListUpdatedHandler(MainFormPresenter presenter)
+        public ThumbnailListUpdatedHandler(MainFormPresenter presenter, ILogger logger)
         {
             this._presenter = presenter;
+            _logger = logger;
         }
 
         public Task Handle(ThumbnailListUpdated notification, CancellationToken cancellationToken)
         {
+            _logger.WithCallerInfo().Verbose("ThumbnailListUpdated notification: Added={AddedCount}, Removed={RemovedCount}", 
+                notification.Added.Count, notification.Removed.Count);
+
             if (notification.Added.Count > 0)
             {
+                _logger.Verbose("Adding thumbnails: {Titles}", string.Join(", ", notification.Added));
                 this._presenter.AddThumbnails(notification.Added);
             }
 
             if (notification.Removed.Count > 0)
             {
+                _logger.Verbose("Removing thumbnails: {Titles}", string.Join(", ", notification.Removed));
                 this._presenter.RemoveThumbnails(notification.Removed);
             }
             

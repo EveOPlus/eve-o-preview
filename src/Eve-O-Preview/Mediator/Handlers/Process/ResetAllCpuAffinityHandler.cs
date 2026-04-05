@@ -14,13 +14,14 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System.Threading;
-using System.Threading.Tasks;
+using EveOPreview.Helper;
 using EveOPreview.Mediator.Messages.Process;
 using EveOPreview.Services;
 using EveOPreview.Services.Interface;
 using MediatR;
 using Serilog;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EveOPreview.Mediator.Handlers.Process;
 
@@ -39,7 +40,10 @@ public class ResetAllCpuAffinityHandler : IRequestHandler<ResetAllCpuAffinity>
 
     public Task Handle(ResetAllCpuAffinity request, CancellationToken cancellationToken)
     {
+        _logger.WithCallerInfo().Verbose("ResetAllCpuAffinity handler invoked");
+        
         var allProcesses = _processMonitor.GetAllProcesses();
+        _logger.Verbose("Retrieved {ProcessCount} processes for CPU affinity reset", allProcesses.Count);
 
         _cpyAffinityService.ResetAll(allProcesses);
 

@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using EveOPreview.Helper;
+using Serilog;
 
 namespace EveOPreview.Services.Implementation
 {
@@ -33,15 +34,19 @@ namespace EveOPreview.Services.Implementation
         private readonly object _lockObj = new object();
         public IDictionary<IntPtr, IProcessInfo> ProcessCache { get; }
         private IProcessInfo _currentProcessInfo;
+        private readonly ILogger _logger;
         #endregion
 
-        public ProcessMonitor()
+        public ProcessMonitor(ILogger logger)
         {
+            _logger = logger;
             this.ProcessCache = new Dictionary<IntPtr, IProcessInfo>(512);
             
             // This field cannot be initialized properly in constructor
             // At the moment this code is executed the main application window is not yet initialized
             this._currentProcessInfo = new ProcessInfo(IntPtr.Zero, IntPtr.Zero, 0, "");
+            
+            _logger.Verbose("ProcessMonitor initialized");
         }
 
         private bool IsMonitoredProcess(string processName)
@@ -65,6 +70,7 @@ namespace EveOPreview.Services.Implementation
                 // Are we initialized yet?
                 if (processInfo.Title != "")
                 {
+                    _logger.Verbose("Main application window initialized: {Title} (Handle: 0x{Handle:X})", processInfo.Title, processInfo.MainWindowHandle);
                     this._currentProcessInfo = processInfo;
                 }
             }
@@ -120,12 +126,16 @@ namespace EveOPreview.Services.Implementation
                     // This is a new process in the list
                     this.ProcessCache.Add(mainWindowHandle, processInfo);
                     addedProcesses.Add(processInfo);
+                    _logger.Verbose("New EVE client process detected: {Title} (Handle: 0x{Handle:X}, PID: {ProcessId})", 
+                        processInfo.Title, mainWindowHandle, processInfo.ProcessId);
                 }
                 else
                 {
                     // This is an already known process
                     if (cachedProcess.Title != processInfo.Title)
                     {
+                        _logger.Verbose("EVE client window title changed: 0x{Handle:X} - Old: {OldTitle} -> New: {NewTitle}", 
+                            mainWindowHandle, cachedProcess.Title, processInfo.Title);
                         this.ProcessCache[mainWindowHandle] = processInfo;
                         updatedProcesses.Add(new ProcessInfo(mainWindowHandle, processInfo.ProcessHandle, processInfo.ProcessId, processInfo.Title));
                     }
@@ -139,11 +149,19 @@ namespace EveOPreview.Services.Implementation
                 var cachedProcess = this.ProcessCache[index];
                 removedProcesses.Add(new ProcessInfo(index, cachedProcess.ProcessHandle, cachedProcess.ProcessId, cachedProcess.Title));
                 this.ProcessCache.Remove(index);
+                _logger.Verbose("EVE client process removed: {Title} (Handle: 0x{Handle:X}, PID: {ProcessId})", 
+                    cachedProcess.Title, index, cachedProcess.ProcessId);
             }
 
             foreach (var removedProcess in removedProcesses)
             {
                 removedProcess.CloseKernelHandle();
+            }
+
+            if (_logger.IsEnabled(Serilog.Events.LogEventLevel.Verbose))
+            {
+                _logger.Verbose("Process update cycle complete: Added={AddedCount}, Updated={UpdatedCount}, Removed={RemovedCount}, Total={TotalCount}",
+                    addedProcesses.Count, updatedProcesses.Count, removedProcesses.Count, this.ProcessCache.Count);
             }
         }
 
@@ -151,10 +169,16 @@ namespace EveOPreview.Services.Implementation
         {
             if (windowHandle == IntPtr.Zero)
             {
+                _logger.Verbose("Lookup called with null window handle");
                 return null;
             }
 
             ProcessCache.TryGetValue(windowHandle, out var procInfo);
+
+            if (procInfo == null)
+            {
+                _logger.Verbose("Window handle 0x{Handle:X} not found in process cache", windowHandle);
+            }
 
             return procInfo;
         }

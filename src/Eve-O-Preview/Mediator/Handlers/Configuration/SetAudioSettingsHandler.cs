@@ -22,6 +22,7 @@ using MediatR;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace EveOPreview.Mediator.Handlers.Configuration
 {
@@ -29,22 +30,29 @@ namespace EveOPreview.Mediator.Handlers.Configuration
     {
         private readonly IProcessMonitor _processMonitor;
         private readonly IHookService _hookService;
+        private readonly ILogger _logger;
 
-        public SetAudioSettingsHandler(IProcessMonitor processMonitor, IHookService hookService)
+        public SetAudioSettingsHandler(IProcessMonitor processMonitor, IHookService hookService, ILogger logger)
         {
             _processMonitor = processMonitor;
             _hookService = hookService;
+            _logger = logger;
         }
 
         public async Task Handle(SetAudioSettings request, CancellationToken cancellationToken)
         {
             var allKnownClients = _processMonitor.GetAllProcesses();
+            _logger.Verbose("SetAudioSettings: Updating audio settings for {ClientCount} clients", allKnownClients.Count);
 
+            _logger.Verbose("Installing/updating hooks for audio control");
             var initTasks = allKnownClients.Select(client => _hookService.TryInstallHooksAsync(client));
             await Task.WhenAll(initTasks);
 
+            _logger.Verbose("Applying audio mute settings to all clients");
             var tasks = allKnownClients.Select(client => _hookService.UpdateMutedAudioAsync(client.MainWindowHandle));
             await Task.WhenAll(tasks);
+            
+            _logger.Verbose("Audio settings update completed for {ClientCount} clients", allKnownClients.Count);
         }
     }
 }

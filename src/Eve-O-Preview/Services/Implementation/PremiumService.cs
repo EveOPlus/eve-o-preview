@@ -20,25 +20,30 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using EveOPreview.Services.Interop;
+using Serilog;
 
 namespace EveOPreview.Services.Implementation
 {
     public class PremiumService : IPremiumService
     {
         private readonly byte[] _publicKey;
+        private readonly ILogger _logger;
         
-        public PremiumService()
+        public PremiumService(ILogger logger)
         {
+            _logger = logger;
             _publicKey = GetEmbeddedPublicKey();
+            _logger.Verbose("PremiumService initialized");
         }
 
         public bool ValidateSignature(string licenseKey)
         {
             try
             {
-                KernelNativeMethods.OutputDebug($"Validating licenseKey: {licenseKey}");
+                _logger.Verbose("Validating premium license signature");
                 if (string.IsNullOrEmpty(licenseKey) || !licenseKey.Contains("."))
                 {
+                    _logger.Warning("License key validation failed: malformed license key");
                     return false;
                 }
 
@@ -48,12 +53,14 @@ namespace EveOPreview.Services.Implementation
                 {
                     byte[] dataBytes = Encoding.UTF8.GetBytes(parts[0]);
                     byte[] signatureBytes = Convert.FromBase64String(parts[1]);
-                    return dsa.VerifyData(dataBytes, signatureBytes, HashAlgorithmName.SHA256);
+                    bool isValid = dsa.VerifyData(dataBytes, signatureBytes, HashAlgorithmName.SHA256);
+                    _logger.Verbose("License signature validation: {IsValid}", isValid);
+                    return isValid;
                 }
             }
             catch (Exception ex)
             {
-                KernelNativeMethods.OutputDebug($"Unhandled error in {nameof(PremiumService)}.{nameof(ValidateSignature)} processing licenseKey: {licenseKey}");
+                _logger.Error(ex, "Error validating license signature");
                 return false;
             }
         }
@@ -76,7 +83,9 @@ namespace EveOPreview.Services.Implementation
         public bool IsLicenseValidAndCurrent(string licenseKey)
         {
             var now = DateTime.UtcNow;
-            var isPremium = now < GetPremiumExpirationUtcDate(licenseKey);
+            var expirationDate = GetPremiumExpirationUtcDate(licenseKey);
+            var isPremium = now < expirationDate;
+            _logger.Verbose("Premium license check: Valid={IsValid}, ExpiresAt={ExpirationDate}", isPremium, expirationDate);
             return isPremium;
         }
 

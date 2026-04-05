@@ -83,6 +83,9 @@ namespace EveOPreview.Services
             _globalEvents = globalEvents;
             _logger = logger;
 
+            _logger.Verbose("ThumbnailManager: Constructor initializing. RefreshPeriod={RefreshPeriod}ms, ThumbnailSize={Width}x{Height}", 
+                configuration.ThumbnailRefreshPeriod, configuration.ThumbnailSize.Width, configuration.ThumbnailSize.Height);
+
             this._activeClient = (IntPtr.Zero, ThumbnailManager.DEFAULT_CLIENT_TITLE);
 
             this.EnableViewEvents();
@@ -104,66 +107,100 @@ namespace EveOPreview.Services
             this._globalEvents.CurrentProfileChanged += HandleCurrentProfileChanged;
 
             RegisterAllHotkeys();
+            
+            _logger.Verbose("ThumbnailManager: Constructor completed");
         }
 
         private void HandleCurrentProfileChanged(SelectedProfileChangedNotification obj)
         {
+            _logger.Verbose("ThumbnailManager: Profile changed, re-registering hotkeys");
             RegisterAllHotkeys();
         }
 
         public IThumbnailView GetClientByTitle(string title)
         {
-            return _thumbnailViews.FirstOrDefault(x => x.Value.Title == title).Value;
+            _logger.Verbose("ThumbnailManager.GetClientByTitle: Looking up client by title: {Title}", title);
+            var result = _thumbnailViews.FirstOrDefault(x => x.Value.Title == title).Value;
+            _logger.Verbose("ThumbnailManager.GetClientByTitle: Found: {Result}", result != null ? "Yes" : "No");
+            return result;
         }
 
         public IThumbnailView GetClientByPointer(IntPtr ptr)
         {
-            return _thumbnailViews.FirstOrDefault(x => x.Key == ptr).Value;
+            _logger.Verbose("ThumbnailManager.GetClientByPointer: Looking up client by handle 0x{Handle:X}", ptr);
+            var result = _thumbnailViews.FirstOrDefault(x => x.Key == ptr).Value;
+            _logger.Verbose("ThumbnailManager.GetClientByPointer: Found: {Result}", result != null ? "Yes" : "No");
+            return result;
         }
 
         public IThumbnailView GetActiveClient()
         {
-            return GetClientByPointer(this._activeClient.Handle);
+            var result = GetClientByPointer(this._activeClient.Handle);
+            _logger.Verbose("ThumbnailManager.GetActiveClient: Active client handle 0x{Handle:X}, Result: {Result}", this._activeClient.Handle, result?.Title ?? "(null)");
+            return result;
         }
 
         public Dictionary<IntPtr, IThumbnailView> GetAllKnownClients()
         {
+            _logger.Verbose("ThumbnailManager.GetAllKnownClients: Returning {Count} known clients", _thumbnailViews.Count);
             return _thumbnailViews;
         }
 
         public void SetActive(KeyValuePair<IntPtr, IThumbnailView> newClient)
         {
-            _logger.Verbose($"Setting active client to {newClient.Value?.Title}");
+            string clientTitle = newClient.Value?.Title ?? "(NULL)";
+            _logger.Verbose("ThumbnailManager.SetActive: Setting active client to {ClientTitle} (Handle: 0x{Handle:X})", clientTitle, newClient.Key);
 
             if (newClient.Value == null)
             {
+                _logger.Warning("ThumbnailManager.SetActive: Cannot activate null client");
                 return;
             }
 
-            this.GetActiveClient()?.ClearBorder();
+            IThumbnailView previousActiveClient = this.GetActiveClient();
+            if (previousActiveClient != null)
+            {
+                _logger.Verbose("ThumbnailManager.SetActive: Clearing border from previous active client: {PreviousClient}", previousActiveClient.Title);
+                previousActiveClient.ClearBorder();
+            }
 
+            _logger.Verbose("ThumbnailManager.SetActive: Activating window for handle 0x{Handle:X}", newClient.Key);
             this._windowManager.ActivateWindow(newClient.Key);
             this.SwitchActiveClient(newClient.Key, newClient.Value.Title);
 
+            _logger.Verbose("ThumbnailManager.SetActive: Setting highlight on active client");
             newClient.Value.SetHighlight();
+
+            _logger.Verbose("ThumbnailManager.SetActive: Refreshing active client thumbnail");
             newClient.Value.Refresh(true);
+            
+            _logger.Verbose("ThumbnailManager.SetActive: Active client set successfully");
         }
 
         public void CycleNextClient(bool isForwards, SortedDictionary<int, string> cycleOrder)
         {
-            var nextClientTitle = FindNextClientInCycleGroup(isForwards, _activeClient.Title, cycleOrder);
-            var nextNextClientTitle = FindNextClientInCycleGroup(isForwards, nextClientTitle, cycleOrder);
+            string activeClientTitle = _activeClient.Title ?? "(LOGIN SCREEN)";
+            _logger.Verbose("ThumbnailManager.CycleNextClient: Cycling clients. Direction={Direction}, ActiveClient={ActiveClient}", isForwards ? "Forward" : "Backward", activeClientTitle);
 
-            var nextClient = _thumbnailViews.FirstOrDefault(x => x.Value.Title == nextClientTitle);
-            var nextNextClient = _thumbnailViews.FirstOrDefault(x => x.Value.Title == nextNextClientTitle);
-            var lastClient = _activeClient;
+            string nextClientTitle = FindNextClientInCycleGroup(isForwards, activeClientTitle, cycleOrder);
+            string nextNextClientTitle = FindNextClientInCycleGroup(isForwards, nextClientTitle, cycleOrder);
 
-            _logger.Verbose($"CycleNextClient Direction IsForward = [{isForwards}]. Next client is [{nextClientTitle}] and next, next client is [{nextNextClientTitle}]");
+            _logger.Verbose("ThumbnailManager.CycleNextClient: Next={NextClient}, NextNext={NextNextClient}", nextClientTitle, nextNextClientTitle);
 
-            _mediator.Send(new UpdateCpuAffinity(nextClient.Key, nextNextClient.Key, lastClient.Handle));
+            KeyValuePair<IntPtr, IThumbnailView> nextClient = _thumbnailViews.FirstOrDefault(x => x.Value.Title == nextClientTitle);
+            KeyValuePair<IntPtr, IThumbnailView> nextNextClient = _thumbnailViews.FirstOrDefault(x => x.Value.Title == nextNextClientTitle);
+
+            if (nextClient.Value != null)
+            {
+                _logger.Verbose("ThumbnailManager.CycleNextClient: Updating CPU affinity. Active=0x{Active:X}, Next=0x{Next:X}, Prev=0x{Prev:X}",
+                    _activeClient.Handle, nextClient.Key, IntPtr.Zero);
+                _mediator.Send(new UpdateCpuAffinity(nextClient.Key, nextNextClient.Key, _activeClient.Handle));
+            }
 
             SetActive(nextClient);
             this._windowManager.PredictUpcomingClient(nextNextClient.Key);
+            
+            _logger.Verbose("ThumbnailManager.CycleNextClient: Cycle completed");
         }
 
         private string FindNextClientInCycleGroup(bool isForwards, string findThisTitleFirst, SortedDictionary<int, string> cycleOrder)
@@ -184,7 +221,7 @@ namespace EveOPreview.Services
             var cycleGroups = this._configuration.CycleGroups;
             UnregisterExistingHotkeys();
 
-            _logger.Verbose("Registering all hotkeys.");
+            _logger.Verbose("ThumbnailManager.RegisterAllHotkeys: Registering all hotkeys for {GroupCount} cycle groups", cycleGroups.Count);
 
             foreach (var cycleGroup in cycleGroups)
             {
@@ -192,11 +229,15 @@ namespace EveOPreview.Services
             }
 
             RegisterGeneralHotkeys();
+            
+            _logger.Verbose("ThumbnailManager.RegisterAllHotkeys: Hotkey registration completed. Total tracked: Down={DownCount}, Up={UpCount}", 
+                _trackedHotkeyDownDelegates.Count, _trackedHotkeyUpDelegates.Count);
         }
 
         private void UnregisterExistingHotkeys()
         {
-            _logger.Verbose("Unregistering any existing hotkeys");
+            _logger.Verbose("ThumbnailManager.UnregisterExistingHotkeys: Unregistering {DownCount} down hotkeys and {UpCount} up hotkeys",
+                _trackedHotkeyDownDelegates.Count, _trackedHotkeyUpDelegates.Count);
 
             foreach (var existingDown in _trackedHotkeyDownDelegates)
             {
@@ -213,13 +254,16 @@ namespace EveOPreview.Services
 
         public void RegisterCycleClientHotkey(CycleGroup cycleGroup)
         {
+            _logger.Verbose("ThumbnailManager.RegisterCycleClientHotkey: Registering cycle group: {Description}", cycleGroup.Description);
             RegisterCycleClientHotkey(cycleGroup.ForwardHotkeysParsedAndOrdered, true, cycleGroup.ClientsOrder);
             RegisterCycleClientHotkey(cycleGroup.BackwardHotkeysParsedAndOrdered, false, cycleGroup.ClientsOrder);
         }
 
-
         internal void RegisterCycleClientHotkey(List<Keys> keys, bool isForwards, SortedDictionary<int, string> cycleOrder)
         {
+            _logger.Verbose("ThumbnailManager.RegisterCycleClientHotkey: Registering hotkeys. Direction={Direction}, KeyCount={KeyCount}", 
+                isForwards ? "Forward" : "Backward", keys.Count);
+            
             KeyEventHandler newDownDelegate = (sender, e) =>
             {
                 try
@@ -228,10 +272,11 @@ namespace EveOPreview.Services
                     {
                         if (e.KeyData == hotkey)
                         {
-                            _logger.Verbose($"Hotkey down pressed KeyData = [{e.KeyData}] for Cycle Group. Direction IsForward = [{isForwards}]");
+                            _logger.Verbose("ThumbnailManager: Cycle hotkey down pressed. Direction={Direction}", isForwards ? "Forward" : "Backward");
 
                             if (this._windowManager.IsCurrentlySwitching)
                             {
+                                _logger.Verbose("ThumbnailManager: Window switch in progress, ignoring hotkey");
                                 return;
                             }
 
@@ -243,7 +288,7 @@ namespace EveOPreview.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, "Error while handling hotkey down.");
+                    _logger.Error(ex, "ThumbnailManager: Error while handling cycle hotkey down");
                 }
             };
 
@@ -258,7 +303,7 @@ namespace EveOPreview.Services
                     {
                         if (e.KeyCode == hotkey)
                         {
-                            _logger.Verbose($"Hotkey up for KeyData = [{e.KeyData}] handled");
+                            _logger.Verbose("ThumbnailManager: Cycle hotkey up. Direction={Direction}", isForwards ? "Forward" : "Backward");
                             e.Handled = true;
                             return;
                         }
@@ -266,7 +311,7 @@ namespace EveOPreview.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, "Error while handling hotkey up.");
+                    _logger.Error(ex, "ThumbnailManager: Error while handling cycle hotkey up");
                 }
             };
 
@@ -276,6 +321,8 @@ namespace EveOPreview.Services
 
         public void RegisterGeneralHotkeys()
         {
+            _logger.Verbose("ThumbnailManager.RegisterGeneralHotkeys: Registering general hotkeys (hide all, minimize all)");
+            
             // Using the KeyUp for this one so it has less chance of impacting the flow of other more important hotkeys (like client cycling)
             KeyEventHandler newUpDelegate = (sender, e) =>
             {
@@ -283,20 +330,20 @@ namespace EveOPreview.Services
                 {
                     if (e.KeyData == _configuration.ToggleHideActiveClientsHotkeyParsed)
                     {
-                        _logger.Verbose($"Hotkey pressed KeyData = [{e.KeyData}] for Toggle Hide Active Clients");
+                        _logger.Verbose("ThumbnailManager: Toggle hide all active clients hotkey pressed");
                         _mediator.Send(new ThumbnailToggleHideAll());
                         e.Handled = true;
                     }
                     else if (e.KeyData == _configuration.MinimizeAllClientsHotkeyParsed)
                     {
-                        _logger.Verbose($"Hotkey pressed KeyData = [{e.KeyData}] for Minimize All Clients");
+                        _logger.Verbose("ThumbnailManager: Minimize all clients hotkey pressed");
                         _mediator.Send(new MinimizeAllClients());
                         e.Handled = true;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, "Error handling general hotkey");
+                    _logger.Error(ex, "ThumbnailManager: Error handling general hotkey");
                 }
 
             };
@@ -307,36 +354,46 @@ namespace EveOPreview.Services
 
         public void Start()
         {
+            _logger.Verbose("ThumbnailManager.Start: Starting thumbnail manager. RefreshPeriod={RefreshPeriod}ms", this._configuration.ThumbnailRefreshPeriod);
             this._thumbnailUpdateTimer.Start();
 
             this.RefreshThumbnails();
+            _logger.Verbose("ThumbnailManager.Start: Service started successfully");
         }
 
         public void Stop()
         {
+            _logger.Verbose("ThumbnailManager.Stop: Stopping thumbnail manager");
             this._thumbnailUpdateTimer.Stop();
+            _logger.Verbose("ThumbnailManager.Stop: Service stopped");
         }
 
         private void ThumbnailUpdateTimerTick(object sender, EventArgs e)
         {
+            _logger.Verbose("ThumbnailManager.ThumbnailUpdateTimerTick: Timer tick - updating thumbnails list and refreshing");
             this.UpdateThumbnailsList();
             this.RefreshThumbnails();
         }
 
         private async void UpdateThumbnailsList()
         {
+            _logger.Verbose("ThumbnailManager.UpdateThumbnailsList: Updating thumbnails list");
             this._processMonitor.GetUpdatedProcesses(out ICollection<IProcessInfo> addedProcesses, out ICollection<IProcessInfo> updatedProcesses, out ICollection<IProcessInfo> removedProcesses);
 
             List<string> viewsAdded = new List<string>();
             List<string> viewsRemoved = new List<string>();
 
+            _logger.Verbose("ThumbnailManager.UpdateThumbnailsList: Processing changes. Added={AddedCount}, Updated={UpdatedCount}, Removed={RemovedCount}",
+                addedProcesses?.Count ?? 0, updatedProcesses?.Count ?? 0, removedProcesses?.Count ?? 0);
+
             foreach (IProcessInfo process in addedProcesses)
             {
+                _logger.Verbose("ThumbnailManager.UpdateThumbnailsList: Creating thumbnail view for {Title} (PID={PID}, Handle=0x{Handle:X})", 
+                    process.Title, process.ProcessId, process.MainWindowHandle);
+                
                 IThumbnailView view = this._thumbnailViewFactory.Create(process.MainWindowHandle, process.Title, this._configuration.ThumbnailSize);
                 view.IsOverlayEnabled = this._configuration.ShowThumbnailOverlays;
                 view.SetFrames(this._configuration.ShowThumbnailFrames);
-                // Max/Min size limitations should be set AFTER the frames are disabled
-                // Otherwise thumbnail window will be unnecessary resized
                 view.SetSizeLimitations(this._configuration.ThumbnailMinimumSize, this._configuration.ThumbnailMaximumSize);
                 view.SetTopMost(this._configuration.ShowThumbnailsAlwaysOnTop);
 
@@ -355,7 +412,6 @@ namespace EveOPreview.Services
 
                 this.ApplyClientLayout(view.Id, view.Title);
 
-                // TODO Add extension filter here later
                 if (view.Title != ThumbnailManager.DEFAULT_CLIENT_TITLE)
                 {
                     viewsAdded.Add(view.Title);
@@ -370,12 +426,13 @@ namespace EveOPreview.Services
 
                 if (view == null)
                 {
-                    // Something went terribly wrong
+                    _logger.Warning("ThumbnailManager.UpdateThumbnailsList: Updated process {Title} (PID={PID}) has no corresponding thumbnail view", process.Title, process.ProcessId);
                     continue;
                 }
 
-                if (process.Title != view.Title) // update thumbnail title
+                if (process.Title != view.Title)
                 {
+                    _logger.Verbose("ThumbnailManager.UpdateThumbnailsList: Thumbnail title changed: {OldTitle} -> {NewTitle}", view.Title, process.Title);
                     viewsRemoved.Add(view.Title);
                     view.Title = process.Title;
                     viewsAdded.Add(view.Title);
@@ -388,6 +445,7 @@ namespace EveOPreview.Services
             {
                 IThumbnailView view = this._thumbnailViews[process.MainWindowHandle];
 
+                _logger.Verbose("ThumbnailManager.UpdateThumbnailsList: Removing thumbnail view: {Title} (Handle: 0x{Handle:X})", view.Title, view.Id);
                 this._thumbnailViews.Remove(view.Id);
                 if (view.Title != ThumbnailManager.DEFAULT_CLIENT_TITLE)
                 {
@@ -405,21 +463,28 @@ namespace EveOPreview.Services
 
             if ((viewsAdded.Count > 0) || (viewsRemoved.Count > 0))
             {
+                _logger.Verbose("ThumbnailManager.UpdateThumbnailsList: Publishing thumbnail list update. Added={AddedCount}, Removed={RemovedCount}", 
+                    viewsAdded.Count, viewsRemoved.Count);
                 await this._mediator.Publish(new ThumbnailListUpdated(viewsAdded, viewsRemoved));
             }
         }
 
         private void RefreshThumbnails()
         {
-            // TODO Split this method
+            _logger.Verbose("ThumbnailManager.RefreshThumbnails: Starting refresh cycle. CurrentCount={RefreshCount}, ThumbnailCount={ThumbnailCount}", 
+                this._refreshCycleCount, this._thumbnailViews.Count);
+            
             IntPtr foregroundWindowHandle = this._windowManager.GetForegroundWindowHandle();
 
             // The foreground window can be NULL in certain circumstances, such as when a window is losing activation.
             // It is safer to just skip this refresh round than to do something while the system state is undefined
             if (foregroundWindowHandle == IntPtr.Zero)
             {
+                _logger.Verbose("ThumbnailManager.RefreshThumbnails: Foreground window is null, skipping refresh");
                 return;
             }
+
+            _logger.Verbose("ThumbnailManager.RefreshThumbnails: Foreground window handle: 0x{Handle:X}", foregroundWindowHandle);
 
             string foregroundWindowTitle = null;
 
@@ -427,17 +492,22 @@ namespace EveOPreview.Services
             bool isClientWindow = this.IsClientWindowActive(foregroundWindowHandle);
             bool isMainWindowActive = this.IsMainWindowActive(foregroundWindowHandle);
 
+            _logger.Verbose("ThumbnailManager.RefreshThumbnails: Window state - IsClientWindow={IsClient}, IsMainWindow={IsMain}", isClientWindow, isMainWindowActive);
+
             if (foregroundWindowHandle == this._activeClient.Handle)
             {
                 foregroundWindowTitle = this._activeClient.Title;
+                _logger.Verbose("ThumbnailManager.RefreshThumbnails: Active client window is foreground: {Title}", foregroundWindowTitle);
             }
             else if (this._thumbnailViews.TryGetValue(foregroundWindowHandle, out IThumbnailView foregroundView))
             {
                 // This code will work only on Alt+Tab switch between clients
                 foregroundWindowTitle = foregroundView.Title;
+                _logger.Verbose("ThumbnailManager.RefreshThumbnails: Thumbnail window is foreground: {Title}", foregroundWindowTitle);
             }
             else if (!isClientWindow)
             {
+                _logger.Verbose("ThumbnailManager.RefreshThumbnails: External application activated: 0x{Handle:X}", foregroundWindowHandle);
                 this._externalApplication = foregroundWindowHandle;
             }
 
@@ -449,17 +519,23 @@ namespace EveOPreview.Services
 
             bool hideAllThumbnails = this._configuration.HideThumbnailsOnLostFocus && !(isClientWindow || isMainWindowActive);
 
+            _logger.Verbose("ThumbnailManager.RefreshThumbnails: HideAllThumbnails={HideAll} (OnLostFocus={OnLostFocus})", hideAllThumbnails, this._configuration.HideThumbnailsOnLostFocus);
+
             // Wait for some time before hiding all previews
             if (hideAllThumbnails)
             {
                 this._hideThumbnailsDelay--;
+                _logger.Verbose("ThumbnailManager.RefreshThumbnails: Hide delay decremented to {Delay}", this._hideThumbnailsDelay);
+                
                 if (this._hideThumbnailsDelay > 0)
                 {
                     hideAllThumbnails = false; // Postpone the 'hide all' operation
+                    _logger.Verbose("ThumbnailManager.RefreshThumbnails: Postponing hide operation");
                 }
                 else
                 {
                     this._hideThumbnailsDelay = 0; // Stop the counter
+                    _logger.Information("ThumbnailManager.RefreshThumbnails: Hiding all thumbnails due to focus loss");
                 }
             }
             else
@@ -474,6 +550,7 @@ namespace EveOPreview.Services
             {
                 this._refreshCycleCount = 0;
                 forceRefresh = true;
+                _logger.Verbose("ThumbnailManager.RefreshThumbnails: Force refresh triggered");
             }
             else
             {
@@ -486,6 +563,8 @@ namespace EveOPreview.Services
             // No need to update Thumbnails while one of them is highlighted
             if ((!this._isHoverEffectActive) && this.TryDequeueLocationChange(out var locationChange))
             {
+                _logger.Verbose("ThumbnailManager.RefreshThumbnails: Processing dequeued location change for {Title}", locationChange.Title);
+                
                 if ((locationChange.ActiveClient == this._activeClient.Title) && this._thumbnailViews.TryGetValue(locationChange.Handle, out var view))
                 {
                     this.SnapThumbnailView(view);
@@ -499,6 +578,9 @@ namespace EveOPreview.Services
             }
 
             // Hide, show, resize and move
+            int visibleCount = 0;
+            int hiddenCount = 0;
+            
             foreach (KeyValuePair<IntPtr, IThumbnailView> entry in this._thumbnailViews)
             {
                 IThumbnailView view = entry.Value;
@@ -507,7 +589,10 @@ namespace EveOPreview.Services
                 {
                     if (view.IsActive)
                     {
+                        _logger.Verbose("ThumbnailManager.RefreshThumbnails: Hiding {Title} (HideAll={HideAll}, Disabled={IsDisabled})", 
+                            view.Title, hideAllThumbnails, this._configuration.IsThumbnailDisabled(view.Title));
                         view.Hide();
+                        hiddenCount++;
                     }
                     continue;
                 }
@@ -516,7 +601,9 @@ namespace EveOPreview.Services
                 {
                     if (view.IsActive)
                     {
+                        _logger.Verbose("ThumbnailManager.RefreshThumbnails: Hiding active client thumbnail {Title}", view.Title);
                         view.Hide();
+                        hiddenCount++;
                     }
                     continue;
                 }
@@ -542,24 +629,32 @@ namespace EveOPreview.Services
 
                 if (!view.IsActive)
                 {
+                    _logger.Verbose("ThumbnailManager.RefreshThumbnails: Showing {Title}", view.Title);
                     view.Show();
+                    visibleCount++;
                 }
                 else
                 {
                     view.Refresh(forceRefresh);
+                    visibleCount++;
                 }
             }
 
             this.EnableViewEvents();
+            
+            _logger.Verbose("ThumbnailManager.RefreshThumbnails: Refresh cycle complete. Visible={Visible}, Hidden={Hidden}, ForceRefresh={ForceRefresh}", 
+                visibleCount, hiddenCount, forceRefresh);
         }
 
         public void UpdateThumbnailsSize()
         {
+            _logger.Verbose("ThumbnailManager.UpdateThumbnailsSize: Updating thumbnail size to {Width}x{Height}", this._configuration.ThumbnailSize.Width, this._configuration.ThumbnailSize.Height);
             this.SetThumbnailsSize(this._configuration.ThumbnailSize);
         }
 
         private void SetThumbnailsSize(Size size)
         {
+            _logger.Verbose("ThumbnailManager.SetThumbnailsSize: Setting size for {ThumbnailCount} thumbnails to {Width}x{Height}", this._thumbnailViews.Count, size.Width, size.Height);
             this.DisableViewEvents();
 
             foreach (KeyValuePair<IntPtr, IThumbnailView> entry in this._thumbnailViews)
@@ -573,6 +668,8 @@ namespace EveOPreview.Services
         
         public void UpdateThumbnailFrames()
         {
+            _logger.Verbose("ThumbnailManager.UpdateThumbnailFrames: Updating frames for {ThumbnailCount} thumbnails. ShowFrames={ShowFrames}", 
+                this._thumbnailViews.Count, this._configuration.ShowThumbnailFrames);
             this.DisableViewEvents();
 
             foreach (KeyValuePair<IntPtr, IThumbnailView> entry in this._thumbnailViews)
@@ -585,6 +682,7 @@ namespace EveOPreview.Services
 
         public void UpdateThumbnailTitleFont()
         {
+            _logger.Verbose("ThumbnailManager.UpdateThumbnailTitleFont: Updating title font for {ThumbnailCount} thumbnails", this._thumbnailViews.Count);
             this.DisableViewEvents();
 
             foreach (KeyValuePair<IntPtr, IThumbnailView> entry in this._thumbnailViews)
@@ -597,25 +695,29 @@ namespace EveOPreview.Services
 
         private void EnableViewEvents()
         {
+            _logger.Verbose("ThumbnailManager: Enabling view events");
             this._ignoreViewEvents = false;
         }
 
         private void DisableViewEvents()
         {
+            _logger.Verbose("ThumbnailManager: Disabling view events");
             this._ignoreViewEvents = true;
         }
 
         private void SwitchActiveClient(IntPtr foregroundClientHandle, string foregroundClientTitle)
         {
-            // Check if any actions are needed
             if (this._activeClient.Handle == foregroundClientHandle)
             {
+                _logger.Verbose("ThumbnailManager.SwitchActiveClient: Client already active, skipping");
                 return;
             }
 
-            // Minimize the currently active client if needed
+            _logger.Verbose("ThumbnailManager.SwitchActiveClient: Switching active client to {Title} (Handle: 0x{Handle:X})", foregroundClientTitle, foregroundClientHandle);
+
             if (this._configuration.MinimizeInactiveClients && !this._configuration.IsPriorityClient(this._activeClient.Title))
             {
+                _logger.Verbose("ThumbnailManager.SwitchActiveClient: Minimizing previous active client {Title}", this._activeClient.Title);
                 this._windowManager.MinimizeWindow(this._activeClient.Handle, false);
             }
 
@@ -626,9 +728,11 @@ namespace EveOPreview.Services
         {
             if (this._isHoverEffectActive)
             {
+                _logger.Verbose("ThumbnailManager.ThumbnailViewFocused: Hover already active, skipping");
                 return;
             }
 
+            _logger.Verbose("ThumbnailManager.ThumbnailViewFocused: Thumbnail focused (Handle: 0x{Handle:X})", id);
             this._isHoverEffectActive = true;
 
             IThumbnailView view = this._thumbnailViews[id];
@@ -638,6 +742,7 @@ namespace EveOPreview.Services
 
             if (this._configuration.ThumbnailZoomEnabled)
             {
+                _logger.Verbose("ThumbnailManager.ThumbnailViewFocused: Zooming in with factor {Factor}", this._configuration.ThumbnailZoomFactor);
                 this.ThumbnailZoomIn(view);
             }
         }
@@ -646,9 +751,11 @@ namespace EveOPreview.Services
         {
             if (!this._isHoverEffectActive)
             {
+                _logger.Verbose("ThumbnailManager.ThumbnailViewLostFocus: Hover not active, skipping");
                 return;
             }
 
+            _logger.Verbose("ThumbnailManager.ThumbnailViewLostFocus: Thumbnail lost focus (Handle: 0x{Handle:X})", id);
             IThumbnailView view = this._thumbnailViews[id];
 
             if (this._configuration.ThumbnailZoomEnabled)
@@ -663,6 +770,7 @@ namespace EveOPreview.Services
 
         private void ThumbnailActivated(IntPtr id)
         {
+            _logger.Verbose("ThumbnailManager.ThumbnailActivated: Thumbnail activated (Handle: 0x{Handle:X})", id);
             IThumbnailView view = this._thumbnailViews[id];
 
             Task.Run(() =>
@@ -672,7 +780,6 @@ namespace EveOPreview.Services
                 })
                 .ContinueWith((task) =>
                 {
-                    // This code should be executed on UI thread
                     this.SwitchActiveClient(view.Id, view.Title);
                     this.UpdateClientLayouts();
                     this.RefreshThumbnails();
@@ -681,17 +788,22 @@ namespace EveOPreview.Services
 
         private void ThumbnailDeactivated(IntPtr id, bool switchOut)
         {
+            _logger.Verbose("ThumbnailManager.ThumbnailDeactivated: Thumbnail deactivated (Handle: 0x{Handle:X}, SwitchOut={SwitchOut})", id, switchOut);
+            
             if (switchOut)
             {
+                _logger.Verbose("ThumbnailManager.ThumbnailDeactivated: Activating external application");
                 this._windowManager.ActivateWindow(this._externalApplication);
             }
             else
             {
                 if (!this._thumbnailViews.TryGetValue(id, out IThumbnailView view))
                 {
+                    _logger.Warning("ThumbnailManager.ThumbnailDeactivated: Thumbnail view not found for handle 0x{Handle:X}", id);
                     return;
                 }
 
+                _logger.Verbose("ThumbnailManager.ThumbnailDeactivated: Minimizing window {Title}", view.Title);
                 this._windowManager.MinimizeWindow(view.Id, true);
                 this.RefreshThumbnails();
             }
@@ -701,9 +813,11 @@ namespace EveOPreview.Services
         {
             if (this._ignoreViewEvents)
             {
+                _logger.Verbose("ThumbnailManager.ThumbnailViewResized: View events disabled, ignoring");
                 return;
             }
 
+            _logger.Verbose("ThumbnailManager.ThumbnailViewResized: Thumbnail resized (Handle: 0x{Handle:X})", id);
             IThumbnailView view = this._thumbnailViews[id];
 
             this.SetThumbnailsSize(view.ThumbnailSize);
@@ -717,9 +831,11 @@ namespace EveOPreview.Services
         {
             if (this._ignoreViewEvents)
             {
+                _logger.Verbose("ThumbnailManager.ThumbnailViewMoved: View events disabled, ignoring");
                 return;
             }
 
+            _logger.Verbose("ThumbnailManager.ThumbnailViewMoved: Thumbnail moved (Handle: 0x{Handle:X})", id);
             IThumbnailView view = this._thumbnailViews[id];
             view.Refresh(false);
             this.EnqueueLocationChange(view);
@@ -754,6 +870,7 @@ namespace EveOPreview.Services
 
         private void ThumbnailZoomIn(IThumbnailView view)
         {
+            _logger.Verbose("ThumbnailManager.ThumbnailZoomIn: Zooming in on thumbnail {Title}", view.Title);
             this.DisableViewEvents();
 
             view.ZoomIn(ViewZoomAnchorConverter.Convert(this._configuration.ThumbnailZoomAnchor), this._configuration.ThumbnailZoomFactor);
@@ -764,6 +881,7 @@ namespace EveOPreview.Services
 
         private void ThumbnailZoomOut(IThumbnailView view)
         {
+            _logger.Verbose("ThumbnailManager.ThumbnailZoomOut: Zooming out on thumbnail {Title}", view.Title);
             this.DisableViewEvents();
 
             view.ZoomOut();
@@ -774,28 +892,28 @@ namespace EveOPreview.Services
 
         private void SnapThumbnailView(IThumbnailView view)
         {
-            // Check if this feature is enabled
             if (!this._configuration.EnableThumbnailSnap)
             {
+                _logger.Verbose("ThumbnailManager.SnapThumbnailView: Thumbnail snap disabled, skipping");
                 return;
             }
 
-            // Only borderless thumbnails can be docked
             if (this._configuration.ShowThumbnailFrames)
             {
+                _logger.Verbose("ThumbnailManager.SnapThumbnailView: Frames enabled, cannot snap borderless thumbnails");
                 return;
             }
 
+            _logger.Verbose("ThumbnailManager.SnapThumbnailView: Snapping thumbnail {Title} to nearby thumbnails", view.Title);
+            
             int width = this._configuration.ThumbnailSize.Width;
             int height = this._configuration.ThumbnailSize.Height;
 
-            // TODO Extract method
             int baseX = view.ThumbnailLocation.X;
             int baseY = view.ThumbnailLocation.Y;
 
             Point[] viewPoints = { new Point(baseX, baseY), new Point(baseX + width, baseY), new Point(baseX, baseY + height), new Point(baseX + width, baseY + height) };
 
-            // TODO Extract constants
             int thresholdX = Math.Max(20, width / 10);
             int thresholdY = Math.Max(20, height / 10);
 
@@ -820,6 +938,9 @@ namespace EveOPreview.Services
                     continue;
                 }
 
+                _logger.Verbose("ThumbnailManager.SnapThumbnailView: Snapped {Title} to {Target} with delta ({DeltaX},{DeltaY})", 
+                    view.Title, testView.Title, delta.X, delta.Y);
+                
                 view.ThumbnailLocation = new Point(view.ThumbnailLocation.X + delta.X, view.ThumbnailLocation.Y + delta.Y);
                 this._configuration.SetThumbnailLocation(view.Title, this._activeClient.Title, view.ThumbnailLocation);
                 break;
@@ -856,12 +977,14 @@ namespace EveOPreview.Services
         {
             if (!this._configuration.EnableClientLayoutTracking)
             {
+                _logger.Verbose("ThumbnailManager.ApplyClientLayout: Client layout tracking disabled, skipping");
                 return;
             }
 
             // No need to apply layout for not yet logged-in clients
             if (clientTitle == ThumbnailManager.DEFAULT_CLIENT_TITLE)
             {
+                _logger.Verbose("ThumbnailManager.ApplyClientLayout: Default client title, skipping layout");
                 return;
             }
 
@@ -869,15 +992,19 @@ namespace EveOPreview.Services
 
             if (clientLayout == null)
             {
+                _logger.Verbose("ThumbnailManager.ApplyClientLayout: No layout found for {Title}", clientTitle);
                 return;
             }
 
             if (clientLayout.IsMaximized)
             {
+                _logger.Verbose("ThumbnailManager.ApplyClientLayout: Maximizing window for {Title}", clientTitle);
                 this._windowManager.MaximizeWindow(clientHandle);
             }
             else
             {
+                _logger.Verbose("ThumbnailManager.ApplyClientLayout: Restoring window for {Title} to ({X},{Y}) {Width}x{Height}", 
+                    clientTitle, clientLayout.X, clientLayout.Y, clientLayout.Width, clientLayout.Height);
                 this._windowManager.MoveWindow(clientHandle, clientLayout.X, clientLayout.Y, clientLayout.Width, clientLayout.Height);
             }
         }
@@ -886,8 +1013,11 @@ namespace EveOPreview.Services
         {
             if (!this._configuration.EnableClientLayoutTracking)
             {
+                _logger.Verbose("ThumbnailManager.UpdateClientLayouts: Client layout tracking disabled, skipping");
                 return;
             }
+
+            _logger.Verbose("ThumbnailManager.UpdateClientLayouts: Updating layouts for {ThumbnailCount} clients", this._thumbnailViews.Count);
 
             foreach (KeyValuePair<IntPtr, IThumbnailView> entry in this._thumbnailViews)
             {
@@ -907,17 +1037,23 @@ namespace EveOPreview.Services
 
                 if (!(isMaximized || this.IsValidWindowPosition(position.Left, position.Top, width, height)))
                 {
+                    _logger.Verbose("ThumbnailManager.UpdateClientLayouts: Invalid window position for {Title}, skipping", view.Title);
                     continue;
                 }
 
+                _logger.Verbose("ThumbnailManager.UpdateClientLayouts: Saved layout for {Title}: ({X},{Y}) {Width}x{Height}, Maximized={IsMaximized}",
+                    view.Title, position.Left, position.Top, width, height, isMaximized);
+                
                 this._configuration.SetClientLayout(view.Title, new ClientLayout(position.Left, position.Top, width, height, isMaximized));
             }
         }
 
         private void EnqueueLocationChange(IThumbnailView view)
         {
+            _logger.Verbose("ThumbnailManager.EnqueueLocationChange: Enqueueing location change for {Title} at ({X},{Y})", 
+                view.Title, view.ThumbnailLocation.X, view.ThumbnailLocation.Y);
+            
             string activeClientTitle = this._activeClient.Title;
-            // TODO ??
             this._configuration.SetThumbnailLocation(view.Title, activeClientTitle, view.ThumbnailLocation);
 
             lock (this._locationChangeNotificationSyncRoot)
@@ -928,14 +1064,16 @@ namespace EveOPreview.Services
                     return;
                 }
 
-                // Reset the delay and exit
                 if ((this._enqueuedLocationChangeNotification.Handle == view.Id) &&
                     (this._enqueuedLocationChangeNotification.ActiveClient == activeClientTitle))
                 {
+                    _logger.Verbose("ThumbnailManager.EnqueueLocationChange: Resetting delay for {Title}", view.Title);
                     this._enqueuedLocationChangeNotification.Delay = ThumbnailManager.DEFAULT_LOCATION_CHANGE_NOTIFICATION_DELAY;
                     return;
                 }
 
+                _logger.Verbose("ThumbnailManager.EnqueueLocationChange: Publishing previous queued notification for {Title}", 
+                    this._enqueuedLocationChangeNotification.Title);
                 this.RaiseThumbnailLocationUpdatedNotification(this._enqueuedLocationChangeNotification.Title);
                 this._enqueuedLocationChangeNotification = (view.Id, view.Title, activeClientTitle, view.ThumbnailLocation, ThumbnailManager.DEFAULT_LOCATION_CHANGE_NOTIFICATION_DELAY);
             }
@@ -960,6 +1098,7 @@ namespace EveOPreview.Services
                 }
 
                 change = (this._enqueuedLocationChangeNotification.Handle, this._enqueuedLocationChangeNotification.Title, this._enqueuedLocationChangeNotification.ActiveClient, this._enqueuedLocationChangeNotification.Location);
+                _logger.Verbose("ThumbnailManager.TryDequeueLocationChange: Dequeueing location change for {Title}", change.Title);
                 this._enqueuedLocationChangeNotification = (IntPtr.Zero, null, null, Point.Empty, -1);
 
                 return true;
@@ -970,25 +1109,32 @@ namespace EveOPreview.Services
         {
             if (string.IsNullOrEmpty(title) || (title == ThumbnailManager.DEFAULT_CLIENT_TITLE))
             {
+                _logger.Verbose("ThumbnailManager.RaiseThumbnailLocationUpdatedNotification: Invalid title, skipping");
                 return;
             }
 
+            _logger.Verbose("ThumbnailManager.RaiseThumbnailLocationUpdatedNotification: Saving configuration");
             await this._mediator.Send(new SaveConfiguration());
         }
 
-        // We shouldn't manage some thumbnails (like thumbnail of the EVE client sitting on the login screen)
-        // TODO Move to a service (?)
         private bool IsManageableThumbnail(IThumbnailView view)
         {
-            return view.Title != ThumbnailManager.DEFAULT_CLIENT_TITLE;
+            bool result = view.Title != ThumbnailManager.DEFAULT_CLIENT_TITLE;
+            _logger.Verbose("ThumbnailManager.IsManageableThumbnail: {Title} - Manageable={Result}", view.Title, result);
+            return result;
         }
 
-        // Quick sanity check that the window is not minimized
         private bool IsValidWindowPosition(int left, int top, int width, int height)
         {
-            return (left > ThumbnailManager.WINDOW_POSITION_THRESHOLD_LOW) && (left < ThumbnailManager.WINDOW_POSITION_THRESHOLD_HIGH)
+            bool valid = (left > ThumbnailManager.WINDOW_POSITION_THRESHOLD_LOW) && (left < ThumbnailManager.WINDOW_POSITION_THRESHOLD_HIGH)
                     && (top > ThumbnailManager.WINDOW_POSITION_THRESHOLD_LOW) && (top < ThumbnailManager.WINDOW_POSITION_THRESHOLD_HIGH)
                     && (width > ThumbnailManager.WINDOW_SIZE_THRESHOLD) && (height > ThumbnailManager.WINDOW_SIZE_THRESHOLD);
+            
+            if (!valid)
+            {
+                _logger.Verbose("ThumbnailManager.IsValidWindowPosition: Invalid position ({Left},{Top}) {Width}x{Height}", left, top, width, height);
+            }
+            return valid;
         }
     }
 }

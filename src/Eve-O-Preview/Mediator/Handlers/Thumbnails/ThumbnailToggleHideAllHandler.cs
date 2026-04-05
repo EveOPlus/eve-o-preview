@@ -15,8 +15,10 @@
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using EveOPreview.Configuration;
+using EveOPreview.Helper;
 using EveOPreview.Mediator.Messages;
 using MediatR;
+using Serilog;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -26,11 +28,13 @@ namespace EveOPreview.Mediator.Handlers.Thumbnails
     {
         private readonly IThumbnailConfiguration _thumbnailConfiguration;
         private readonly IPublisher _publisher;
+        private readonly ILogger _logger;
 
-        public ThumbnailToggleHideAllHandler(IThumbnailConfiguration thumbnailConfiguration, IMediator publisher)
+        public ThumbnailToggleHideAllHandler(IThumbnailConfiguration thumbnailConfiguration, IMediator publisher, ILogger logger)
         {
             _thumbnailConfiguration = thumbnailConfiguration;
             _publisher = publisher;
+            _logger = logger;
         }
 
         public async Task Handle(ThumbnailToggleHideAll notification, CancellationToken ct)
@@ -38,6 +42,8 @@ namespace EveOPreview.Mediator.Handlers.Thumbnails
             bool isHidden = 
                 _thumbnailConfiguration.IsTemporarilyHidingAllThumbnails = 
                 !_thumbnailConfiguration.IsTemporarilyHidingAllThumbnails;
+            
+            _logger.WithCallerInfo().Verbose("ThumbnailToggleHideAll: All thumbnails are now {Status}", isHidden ? "HIDDEN" : "VISIBLE");
             
             await _publisher.Publish(new ThumbnailToggleHideAllChangedNotification(isHidden), ct);
         }

@@ -97,6 +97,8 @@ namespace EveOPreview
                     restrictedToMinimumLevel: minimumLevel,
                     outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] {Properties:j} {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
+
+            Log.Logger.Information("Logger initialized. Application arguments: {Arguments}", string.Join(", ", args ?? Array.Empty<string>()));
         }
 
         private static Mutex GetInstanceToken()

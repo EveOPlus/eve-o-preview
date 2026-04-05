@@ -14,12 +14,14 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System;
+using EveOPreview.Helper;
 using EveOPreview.Mediator.Messages;
+using EveOPreview.Services;
 using MediatR;
+using Serilog;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using EveOPreview.Services;
 
 namespace EveOPreview.Mediator.Handlers.Thumbnails
 {
@@ -27,26 +29,36 @@ namespace EveOPreview.Mediator.Handlers.Thumbnails
     {
         private readonly IWindowManager _windowManager;
         private readonly IProcessMonitor _processMonitor;
+        private readonly ILogger _logger;
 
-        public MinimizeAllClientsHandler(IWindowManager windowManager, IProcessMonitor processMonitor)
+        public MinimizeAllClientsHandler(IWindowManager windowManager, IProcessMonitor processMonitor, ILogger logger)
         {
             _windowManager = windowManager;
             _processMonitor = processMonitor;
+            _logger = logger;
         }
 
         public Task Handle(MinimizeAllClients request, CancellationToken cancellationToken)
         {
             try
             {
-                foreach (var process in _processMonitor.GetAllProcesses())
+                var allProcesses = _processMonitor.GetAllProcesses();
+                _logger.WithCallerInfo().Verbose("MinimizeAllClients handler: Minimizing {ProcessCount} processes", allProcesses.Count);
+                
+                int minimizedCount = 0;
+                foreach (var process in allProcesses)
                 {
+                    _logger.Verbose("Minimizing process: {Title} (Handle: 0x{Handle:X})", process.Title, process.MainWindowHandle);
                     _windowManager.MinimizeWindow(process.MainWindowHandle, true);
+                    minimizedCount++;
                 }
 
+                _logger.Verbose("MinimizeAllClients completed: {MinimizedCount} processes minimized", minimizedCount);
                 return Task.CompletedTask;
             }
             catch (Exception exception)
             {
+                _logger.Error(exception, "Error while minimizing all clients");
                 return Task.FromException(exception);
             }
         }

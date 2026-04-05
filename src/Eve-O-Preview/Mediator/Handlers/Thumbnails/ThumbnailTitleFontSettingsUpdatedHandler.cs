@@ -14,25 +14,30 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System.Threading;
-using System.Threading.Tasks;
+using EveOPreview.Helper;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Services;
 using MediatR;
+using Serilog;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EveOPreview.Mediator.Handlers.Thumbnails
 {
     sealed class ThumbnailTitleFontSettingsUpdatedHandler : INotificationHandler<ThumbnailFontTitleSettingsUpdated>
     {
         private readonly IThumbnailManager _manager;
+        private readonly ILogger _logger;
 
-        public ThumbnailTitleFontSettingsUpdatedHandler(IThumbnailManager manager)
+        public ThumbnailTitleFontSettingsUpdatedHandler(IThumbnailManager manager, ILogger logger)
         {
             this._manager = manager;
+            _logger = logger;
         }
 
         public Task Handle(ThumbnailFontTitleSettingsUpdated notification, CancellationToken cancellationToken)
         {
+            _logger.WithCallerInfo().Verbose("ThumbnailTitleFontSettingsUpdated: Updating thumbnail title font settings");
             this._manager.UpdateThumbnailTitleFont();
 
             return Task.CompletedTask;

@@ -56,7 +56,7 @@ public class CpuAffinityService : ICpuAffinityService
         _logger = logger;
         _config = config;
         DetectCores();
-        _logger.Information($"Auto detected CPU Architecture with {PCores.Count} Performance Cores and {ECores} Efficiency Cores.");
+        _logger.WithCallerInfo().Verbose($"Auto detected CPU Architecture with {PCores.Count} Performance Cores and {ECores.Count} Efficiency Cores.");
 
         PreCalculateZones();
     }
@@ -65,7 +65,8 @@ public class CpuAffinityService : ICpuAffinityService
     {
         if (!_isOurCpuAbleToSupportAffinity || !_config.IsPremium || !_config.EnableAutomaticCpuAffinity)
         {
-            _logger.Verbose("EnableAutomaticCpuAffinity is disabled, or not supported. Skipping...");
+            _logger.Verbose("UpdateAffinity skipped: CpuSupported={CpuSupported}, Premium={Premium}, Enabled={Enabled}",
+                _isOurCpuAbleToSupportAffinity, _config.IsPremium, _config.EnableAutomaticCpuAffinity);
             return;
         }
 
@@ -115,8 +116,10 @@ public class CpuAffinityService : ICpuAffinityService
             ApplyFast(processInfo?.ProcessHandle, _backgroundMask);
         }
 
-        _logger.Verbose($"Set Affinity as: Active Pid = {active?.ProcessId}, Next Pid = {next?.ProcessId}, Previous Pid = {prev?.ProcessId}");
+        _logger.Verbose("CPU Affinity updated: Active PID={ActivePid}, Next PID={NextPid}, Previous PID={PrevPid}",
+            active?.ProcessId ?? 0, next?.ProcessId ?? 0, prev?.ProcessId ?? 0);
     }
+
     public void ResetAll(IEnumerable<IProcessInfo> allClients)
     {
         lock (_lock)
@@ -124,12 +127,12 @@ public class CpuAffinityService : ICpuAffinityService
             if (!_isRunning)
             {
                 // If we never touched the affinity, we have nothing to reset.
+                _logger.Verbose("ResetAll skipped: Affinity was never applied");
                 return;
             }
         }
 
-        _logger.WithCallerInfo().Information($"Resetting CPU Affinity to all cores.");
-
+        _logger.Verbose("Resetting CPU Affinity to all cores for all clients");
 
         foreach (var client in allClients)
         {
@@ -147,6 +150,8 @@ public class CpuAffinityService : ICpuAffinityService
             _currentBackgroundHandles.Clear();
             _isRunning = false;
         }
+
+        _logger.Information("CPU Affinity reset completed");
     }
 
     private void ApplyFast(IntPtr? hProcess, IntPtr mask, uint priority = NORMAL_PRIORITY_CLASS)

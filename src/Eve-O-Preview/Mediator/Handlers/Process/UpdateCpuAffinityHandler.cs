@@ -14,13 +14,14 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System.Threading;
-using System.Threading.Tasks;
+using EveOPreview.Helper;
 using EveOPreview.Mediator.Messages.Process;
 using EveOPreview.Services;
 using EveOPreview.Services.Interface;
 using MediatR;
 using Serilog;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EveOPreview.Mediator.Handlers.Process;
 
@@ -39,11 +40,16 @@ public class UpdateCpuAffinityHandler : IRequestHandler<UpdateCpuAffinity>
 
     public Task Handle(UpdateCpuAffinity request, CancellationToken cancellationToken)
     {
+        _logger.WithCallerInfo().Verbose("UpdateCpuAffinity handler: Active=0x{ActiveHandle:X}, Next=0x{NextHandle:X}, Prev=0x{PrevHandle:X}",
+            request.ActiveWindowHandle, request.NextWindowHandle, request.PrevWindowHandle);
+
         var active = _processMonitor.LookupCachedProcessByWindowHandle(request.ActiveWindowHandle);
         var next = _processMonitor.LookupCachedProcessByWindowHandle(request.NextWindowHandle);
         var prev = _processMonitor.LookupCachedProcessByWindowHandle(request.PrevWindowHandle);
 
         var allProcesses = _processMonitor.GetAllProcesses();
+
+        _logger.Verbose("UpdateCpuAffinity lookup complete: Found {ProcessCount} total processes", allProcesses.Count);
 
         _cpuAffinityService.UpdateAffinity(active, next, prev, allProcesses);
 

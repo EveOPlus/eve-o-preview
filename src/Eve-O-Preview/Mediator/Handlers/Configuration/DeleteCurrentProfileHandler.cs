@@ -20,27 +20,33 @@ using System.Threading.Tasks;
 using EveOPreview.Configuration.Interface;
 using EveOPreview.Mediator.Messages;
 using MediatR;
+using Serilog;
 
 namespace EveOPreview.Mediator.Handlers.Configuration;
 
 public class DeleteCurrentProfileHandler : IRequestHandler<DeleteCurrentProfile>
 {
     private readonly IProfileManager _profileManager;
+    private readonly ILogger _logger;
 
-    public DeleteCurrentProfileHandler(IProfileManager profileManager)
+    public DeleteCurrentProfileHandler(IProfileManager profileManager, ILogger logger)
     {
         _profileManager = profileManager;
+        _logger = logger;
     }
 
     public Task Handle(DeleteCurrentProfile request, CancellationToken cancellationToken)
     {
         try
         {
+            _logger.Information("DeleteCurrentProfile: Starting profile deletion");
             _profileManager.DeleteCurrentProfile();
+            _logger.Verbose("Profile deleted successfully");
             return Task.CompletedTask;
         }
         catch (Exception exception)
         {
+            _logger.Error(exception, "Error deleting current profile");
             return Task.FromException(exception);
         }
     }
