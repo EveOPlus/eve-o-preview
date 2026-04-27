@@ -268,6 +268,11 @@ namespace EveOPreview.Services
             {
                 try
                 {
+                    if (e.KeyData == Keys.None)
+                    {
+                        return;
+                    }
+
                     foreach (var hotkey in keys)
                     {
                         if (e.KeyData == hotkey)
@@ -299,6 +304,11 @@ namespace EveOPreview.Services
             {
                 try
                 {
+                    if (e.KeyData == Keys.None)
+                    {
+                        return;
+                    }
+
                     foreach (var hotkey in keys)
                     {
                         if (e.KeyCode == hotkey)
@@ -328,13 +338,18 @@ namespace EveOPreview.Services
             {
                 try
                 {
+                    if (e.KeyData == Keys.None)
+                    {
+                        return;
+                    }
+
                     if (e.KeyData == _configuration.ToggleHideActiveClientsHotkeyParsed)
                     {
                         _logger.Verbose("ThumbnailManager: Toggle hide all active clients hotkey pressed");
                         _mediator.Send(new ThumbnailToggleHideAll());
                         e.Handled = true;
                     }
-                    else if (e.KeyData == _configuration.MinimizeAllClientsHotkeyParsed)
+                    else if (e.KeyCode == _configuration.MinimizeAllClientsHotkeyParsed)
                     {
                         _logger.Verbose("ThumbnailManager: Minimize all clients hotkey pressed");
                         _mediator.Send(new MinimizeAllClients());
