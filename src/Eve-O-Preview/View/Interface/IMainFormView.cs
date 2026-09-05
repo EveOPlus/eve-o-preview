@@ -91,7 +91,6 @@ namespace EveOPreview.View
         public Action DeleteCurrentProfile { get; set; }
         Action<string> RenameCurrentProfile { get; set; }
         Action<ProfileLocation> SwitchToProfile { get; set; }
-        bool IsPremium { get; set; }
         void UpdateThumbnailToggleHideAllStatus(bool notificationIsHidden);
         void UpdateProfileList(List<ProfileLocation> notificationNewProfileLocations);
     }

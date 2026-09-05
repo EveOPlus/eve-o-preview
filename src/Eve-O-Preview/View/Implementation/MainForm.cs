@@ -374,6 +374,8 @@ namespace EveOPreview.View
                 _audioMuteSettings = value;
                 chbIsGateTunnelMuted.Checked = value.MuteJumpGateTunnel;
                 chbIsLocationBannerMuted.Checked = value.MuteLocationBanner;
+                txtCustomMutedEventIds.Text = string.Join(", ", value.CustomMutedEventIds);
+                UpdateCustomMutedEventIdsHint(true);
                 this._suppressEvents = false;
             }
         }
@@ -426,37 +428,6 @@ namespace EveOPreview.View
             }
         }
 
-
-        private bool _isPremium;
-
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public bool IsPremium
-        {
-            get
-            {
-                return _isPremium;
-            }
-            set
-            {
-                this._suppressEvents = true;
-                _isPremium = value;
-
-                if (!value)
-                {
-                    numericFpsForegroundLimit.Enabled = false;
-                    numericFpsBackgroundLimit.Enabled = false;
-                    numericFpsPredictedLimit.Enabled = false;
-                    chbIsFpsThrottlingEnabled.Enabled = false;
-                    chbIsFpsThrottlingEnabled.Checked = false;
-                    lblFpsFeatureExpired.Visible = true;
-                    groupBoxFpsLimits.Visible = false;
-                    groupBoxAudioMuting.Visible = false;
-                    chbAutoCpuAffinity.Enabled = false;
-                    chbAutoCpuAffinity.Checked = false;
-                }
-                this._suppressEvents = false;
-            }
-        }
 
         public new void Show()
         {
@@ -724,6 +695,7 @@ namespace EveOPreview.View
 
         private void MainFormClosing_Handler(object sender, FormClosingEventArgs e)
         {
+            SaveCustomMutedEventIds();
             _logger.Verbose("MainForm: Form closing requested");
             ViewCloseRequest request = new ViewCloseRequest();
 
@@ -1206,6 +1178,44 @@ namespace EveOPreview.View
 
             _logger.Verbose("MainForm: chbIsLocationBannerMuted_CheckedChanged: {IsChecked}", chbIsLocationBannerMuted.Checked);
             AnyAudioSettings_CheckedChanged();
+        }
+
+        private void txtCustomMutedEventIds_TextChanged(object sender, EventArgs e)
+        {
+            if (this._suppressEvents) return;
+            UpdateCustomMutedEventIdsHint(AudioMuteSettings.TryParseCustomMutedEventIds(txtCustomMutedEventIds.Text, out _));
+        }
+
+        private void txtCustomMutedEventIds_Leave(object sender, EventArgs e) => SaveCustomMutedEventIds();
+
+        private void txtCustomMutedEventIds_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode != Keys.Enter) return;
+            SaveCustomMutedEventIds();
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+        }
+
+        private void UpdateCustomMutedEventIdsHint(bool valid)
+        {
+            lblCustomMutedEventIdsHint.ForeColor = valid ? SystemColors.GrayText : Color.Firebrick;
+            lblCustomMutedEventIdsHint.Text = valid
+                ? "Saves on Enter or leaving this field.\nClear the list to use only the presets."
+                : "Invalid ID: use 0 to 4294967295.\nSeparate with commas; changes not saved.";
+        }
+
+        private void SaveCustomMutedEventIds()
+        {
+            if (this._suppressEvents || this._audioMuteSettings == null) return;
+            bool valid = AudioMuteSettings.TryParseCustomMutedEventIds(txtCustomMutedEventIds.Text, out var eventIds);
+            UpdateCustomMutedEventIdsHint(valid);
+            if (!valid) return;
+
+            txtCustomMutedEventIds.Text = string.Join(", ", eventIds);
+            if (this._audioMuteSettings.CustomMutedEventIds.SequenceEqual(eventIds)) return;
+            this._audioMuteSettings.CustomMutedEventIds = eventIds;
+            this.ApplicationSettingsChanged?.Invoke();
+            this.AudioSettingsChanged?.Invoke();
         }
 
         private void AnyAudioSettings_CheckedChanged()

@@ -144,7 +144,6 @@ namespace EveOPreview
             builder.RegisterType<WindowManager>().As<IWindowManager>().SingleInstance();
             builder.RegisterType<HookService>().As<IHookService>().SingleInstance();
             builder.RegisterType<ProcessMonitor>().As<IProcessMonitor>().SingleInstance();
-            builder.RegisterType<PremiumService>().As<IPremiumService>().SingleInstance();
             builder.RegisterType<CpuAffinityService>().As<ICpuAffinityService>().SingleInstance();
 
             // MediatR

@@ -24,6 +24,6 @@ namespace EveOPreview.Services
         void Unregister();
 
         void Move(int left, int top, int right, int bottom);
-        void Update();
+        bool Update();
     }
 }

@@ -18,6 +18,7 @@ using EveOPreview.Configuration;
 using EveOPreview.Configuration.Implementation;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Services;
+using EveOPreview.Services.Interop;
 using EveOPreview.View.CustomControl;
 using Gma.System.MouseKeyHook;
 using MediatR;
@@ -310,6 +311,45 @@ namespace EveOPreview.View
             this._isTopMost = enableTopmost;
         }
 
+        public bool RestoreAndBringToFront()
+        {
+            // IsActive describes the manager's intent, not the native window's visibility.
+            // Never restore a preview that the manager deliberately hid.
+            if (!this.IsActive)
+            {
+                return true;
+            }
+
+            this.SuppressResizeEvent();
+            if (User32NativeMethods.IsIconic(this.Handle))
+            {
+                User32NativeMethods.ShowWindow(this.Handle, InteropConstants.SW_SHOWNOACTIVATE);
+            }
+            if (User32NativeMethods.IsIconic(this._overlay.Handle))
+            {
+                User32NativeMethods.ShowWindow(this._overlay.Handle, InteropConstants.SW_SHOWNOACTIVATE);
+            }
+            this.SetTopMost(true);
+            // The native calls below show both windows. Avoid Form.Show here: an
+            // owned form can focus its active control even with ShowWithoutActivation.
+            this._isOverlayVisible = true;
+            // Reordering/restoring windows must leave their existing rendered images
+            // intact. Image maintenance belongs to the normal refresh path.
+
+            // Reassert native visibility and z-order even when WinForms' cached state
+            // says the window is already visible/topmost. Keep keyboard focus on EVE.
+            const uint flags = InteropConstants.SWP_NOMOVE | InteropConstants.SWP_NOSIZE
+                | InteropConstants.SWP_NOACTIVATE | InteropConstants.SWP_SHOWWINDOW | InteropConstants.SWP_NOOWNERZORDER;
+            if (!User32NativeMethods.SetWindowPos(this.Handle, InteropConstants.HWND_TOPMOST, 0, 0, 0, 0, flags))
+            {
+                return false;
+            }
+
+            // Keep this preview's label above its image without moving the owner again.
+            return User32NativeMethods.SetWindowPos(this._overlay.Handle, InteropConstants.HWND_TOPMOST,
+                0, 0, 0, 0, flags);
+        }
+
         public void SetHighlight()
         {
             SetHighlight(_config.EnableActiveClientHighlight, _config.ActiveClientHighlightThickness);
@@ -340,7 +380,7 @@ namespace EveOPreview.View
         public void ClearBorder()
         {
             this.SetHighlight(false, 0);
-            this.Refresh(true);
+            this.Refresh(false);
         }
 
         public void ZoomIn(ViewZoomAnchor anchor, int zoomFactor)
@@ -483,6 +523,8 @@ namespace EveOPreview.View
         }
 
         #region GUI events
+        protected override bool ShowWithoutActivation => true;
+
         protected override CreateParams CreateParams
         {
             get
@@ -695,7 +737,7 @@ namespace EveOPreview.View
                         var oldWindow = this._thumbnailManager.GetActiveClient();
                         this.ThumbnailActivated?.Invoke(this.Id);
                         this.SetHighlight();
-                        this.Refresh(true);
+                        this.Refresh(false);
 
                         oldWindow?.ClearBorder();
                         break;

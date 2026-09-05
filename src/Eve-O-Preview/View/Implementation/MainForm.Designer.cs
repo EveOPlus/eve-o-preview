@@ -141,6 +141,9 @@ namespace EveOPreview.View
             fpsTopPanel = new Panel();
             fpsBottomPanel = new Panel();
             groupBoxAudioMuting = new GroupBox();
+            lblCustomMutedEventIds = new Label();
+            txtCustomMutedEventIds = new TextBox();
+            lblCustomMutedEventIdsHint = new Label();
             chbIsLocationBannerMuted = new CheckBox();
             chbIsGateTunnelMuted = new CheckBox();
             groupBoxFpsLimits = new GroupBox();
@@ -148,7 +151,6 @@ namespace EveOPreview.View
             numericFpsPredictedLimit = new NumericUpDown();
             numericFpsBackgroundLimit = new NumericUpDown();
             numericFpsForegroundLimit = new NumericUpDown();
-            lblFpsFeatureExpired = new Label();
             chbIsFpsThrottlingEnabled = new CheckBox();
             tabPageProfiles = new TabPage();
             splitContainerMainProfiles = new SplitContainer();
@@ -1300,18 +1302,19 @@ namespace EveOPreview.View
             // label1
             // 
             label1.BackColor = Color.Transparent;
-            label1.Location = new Point(-2, -2);
+            label1.Dock = DockStyle.Fill;
+            label1.Location = new Point(0, 0);
             label1.Margin = new Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Padding = new Padding(9, 3, 9, 3);
-            label1.Size = new Size(304, 167);
+            label1.Size = new Size(324, 52);
             label1.TabIndex = 6;
             label1.Text = resources.GetString("label1.Text");
             // 
             // lblFpsPredictiveLimit
             // 
             lblFpsPredictiveLimit.AutoSize = true;
-            lblFpsPredictiveLimit.Location = new Point(13, 93);
+            lblFpsPredictiveLimit.Location = new Point(13, 81);
             lblFpsPredictiveLimit.Margin = new Padding(4, 0, 4, 0);
             lblFpsPredictiveLimit.Name = "lblFpsPredictiveLimit";
             lblFpsPredictiveLimit.Size = new Size(91, 15);
@@ -1321,7 +1324,7 @@ namespace EveOPreview.View
             // lblFpsBackgroundLimit
             // 
             lblFpsBackgroundLimit.AutoSize = true;
-            lblFpsBackgroundLimit.Location = new Point(13, 58);
+            lblFpsBackgroundLimit.Location = new Point(13, 52);
             lblFpsBackgroundLimit.Margin = new Padding(4, 0, 4, 0);
             lblFpsBackgroundLimit.Name = "lblFpsBackgroundLimit";
             lblFpsBackgroundLimit.Size = new Size(87, 15);
@@ -1507,7 +1510,7 @@ namespace EveOPreview.View
             // fpsMainLayoutPanel
             // 
             fpsMainLayoutPanel.ColumnCount = 1;
-            fpsMainLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 315F));
+            fpsMainLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             fpsMainLayoutPanel.Controls.Add(fpsTopPanel, 0, 0);
             fpsMainLayoutPanel.Controls.Add(fpsBottomPanel, 0, 1);
             fpsMainLayoutPanel.Dock = DockStyle.Fill;
@@ -1515,7 +1518,7 @@ namespace EveOPreview.View
             fpsMainLayoutPanel.Margin = new Padding(4, 3, 4, 3);
             fpsMainLayoutPanel.Name = "fpsMainLayoutPanel";
             fpsMainLayoutPanel.RowCount = 2;
-            fpsMainLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 126F));
+            fpsMainLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 58F));
             fpsMainLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             fpsMainLayoutPanel.Size = new Size(332, 409);
             fpsMainLayoutPanel.TabIndex = 0;
@@ -1527,7 +1530,7 @@ namespace EveOPreview.View
             fpsTopPanel.Location = new Point(4, 3);
             fpsTopPanel.Margin = new Padding(4, 3, 4, 3);
             fpsTopPanel.Name = "fpsTopPanel";
-            fpsTopPanel.Size = new Size(324, 120);
+            fpsTopPanel.Size = new Size(324, 52);
             fpsTopPanel.TabIndex = 0;
             // 
             // fpsBottomPanel
@@ -1535,26 +1538,63 @@ namespace EveOPreview.View
             fpsBottomPanel.Controls.Add(groupBoxAudioMuting);
             fpsBottomPanel.Controls.Add(groupBoxFpsLimits);
             fpsBottomPanel.Controls.Add(chbIsFpsThrottlingEnabled);
+            fpsBottomPanel.AutoScroll = true;
             fpsBottomPanel.Dock = DockStyle.Fill;
-            fpsBottomPanel.Location = new Point(4, 129);
+            fpsBottomPanel.Location = new Point(4, 61);
             fpsBottomPanel.Margin = new Padding(4, 3, 4, 3);
             fpsBottomPanel.Name = "fpsBottomPanel";
-            fpsBottomPanel.Size = new Size(324, 277);
+            fpsBottomPanel.Size = new Size(324, 345);
             fpsBottomPanel.TabIndex = 1;
             // 
             // groupBoxAudioMuting
             // 
+            groupBoxAudioMuting.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            groupBoxAudioMuting.Controls.Add(lblCustomMutedEventIds);
+            groupBoxAudioMuting.Controls.Add(txtCustomMutedEventIds);
+            groupBoxAudioMuting.Controls.Add(lblCustomMutedEventIdsHint);
             groupBoxAudioMuting.Controls.Add(chbIsLocationBannerMuted);
             groupBoxAudioMuting.Controls.Add(chbIsGateTunnelMuted);
-            groupBoxAudioMuting.Location = new Point(12, 182);
+            groupBoxAudioMuting.Location = new Point(12, 154);
             groupBoxAudioMuting.Margin = new Padding(4, 3, 4, 3);
             groupBoxAudioMuting.Name = "groupBoxAudioMuting";
             groupBoxAudioMuting.Padding = new Padding(4, 3, 4, 3);
-            groupBoxAudioMuting.Size = new Size(281, 76);
+            groupBoxAudioMuting.Size = new Size(300, 180);
             groupBoxAudioMuting.TabIndex = 23;
             groupBoxAudioMuting.TabStop = false;
-            groupBoxAudioMuting.Text = "Audio";
-            // 
+            groupBoxAudioMuting.Text = "Audio muting";
+            //
+            // lblCustomMutedEventIds
+            //
+            lblCustomMutedEventIds.AutoSize = true;
+            lblCustomMutedEventIds.Location = new Point(16, 76);
+            lblCustomMutedEventIds.Name = "lblCustomMutedEventIds";
+            lblCustomMutedEventIds.Text = "Custom event IDs (comma-separated)";
+            lblCustomMutedEventIds.TabIndex = 24;
+            //
+            // txtCustomMutedEventIds
+            //
+            txtCustomMutedEventIds.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            txtCustomMutedEventIds.Location = new Point(16, 96);
+            txtCustomMutedEventIds.Multiline = true;
+            txtCustomMutedEventIds.ScrollBars = ScrollBars.Vertical;
+            txtCustomMutedEventIds.Name = "txtCustomMutedEventIds";
+            txtCustomMutedEventIds.Size = new Size(268, 42);
+            txtCustomMutedEventIds.TabIndex = 25;
+            txtCustomMutedEventIds.AccessibleName = "Custom muted sound event IDs";
+            txtCustomMutedEventIds.TextChanged += txtCustomMutedEventIds_TextChanged;
+            txtCustomMutedEventIds.Leave += txtCustomMutedEventIds_Leave;
+            txtCustomMutedEventIds.KeyDown += txtCustomMutedEventIds_KeyDown;
+            //
+            // lblCustomMutedEventIdsHint
+            //
+            lblCustomMutedEventIdsHint.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            lblCustomMutedEventIdsHint.ForeColor = SystemColors.GrayText;
+            lblCustomMutedEventIdsHint.Location = new Point(16, 143);
+            lblCustomMutedEventIdsHint.Name = "lblCustomMutedEventIdsHint";
+            lblCustomMutedEventIdsHint.Size = new Size(268, 32);
+            lblCustomMutedEventIdsHint.Text = "Saves on Enter or leaving this field.\r\nClear the list to use only the presets.";
+            lblCustomMutedEventIdsHint.TabIndex = 26;
+            //
             // chbIsLocationBannerMuted
             // 
             chbIsLocationBannerMuted.AutoSize = true;
@@ -1581,6 +1621,7 @@ namespace EveOPreview.View
             // 
             // groupBoxFpsLimits
             // 
+            groupBoxFpsLimits.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             groupBoxFpsLimits.Controls.Add(btnDummyFpsSave);
             groupBoxFpsLimits.Controls.Add(lblFpsPredictiveLimit);
             groupBoxFpsLimits.Controls.Add(numericFpsPredictedLimit);
@@ -1588,19 +1629,18 @@ namespace EveOPreview.View
             groupBoxFpsLimits.Controls.Add(numericFpsBackgroundLimit);
             groupBoxFpsLimits.Controls.Add(lblFpsForegroundLimit);
             groupBoxFpsLimits.Controls.Add(numericFpsForegroundLimit);
-            groupBoxFpsLimits.Controls.Add(lblFpsFeatureExpired);
-            groupBoxFpsLimits.Location = new Point(12, 43);
+            groupBoxFpsLimits.Location = new Point(12, 34);
             groupBoxFpsLimits.Margin = new Padding(4, 3, 4, 3);
             groupBoxFpsLimits.Name = "groupBoxFpsLimits";
             groupBoxFpsLimits.Padding = new Padding(4, 3, 4, 3);
-            groupBoxFpsLimits.Size = new Size(281, 132);
+            groupBoxFpsLimits.Size = new Size(300, 112);
             groupBoxFpsLimits.TabIndex = 22;
             groupBoxFpsLimits.TabStop = false;
             groupBoxFpsLimits.Text = "FPS Limits";
             // 
             // btnDummyFpsSave
             // 
-            btnDummyFpsSave.Location = new Point(239, 88);
+            btnDummyFpsSave.Location = new Point(249, 77);
             btnDummyFpsSave.Margin = new Padding(4, 3, 4, 3);
             btnDummyFpsSave.Name = "btnDummyFpsSave";
             btnDummyFpsSave.Size = new Size(35, 27);
@@ -1613,7 +1653,7 @@ namespace EveOPreview.View
             numericFpsPredictedLimit.BackColor = SystemColors.Window;
             numericFpsPredictedLimit.BorderStyle = BorderStyle.FixedSingle;
             numericFpsPredictedLimit.CausesValidation = false;
-            numericFpsPredictedLimit.Location = new Point(126, 91);
+            numericFpsPredictedLimit.Location = new Point(126, 79);
             numericFpsPredictedLimit.Margin = new Padding(4, 3, 4, 3);
             numericFpsPredictedLimit.Maximum = new decimal(new int[] { 500, 0, 0, 0 });
             numericFpsPredictedLimit.Name = "numericFpsPredictedLimit";
@@ -1627,7 +1667,7 @@ namespace EveOPreview.View
             numericFpsBackgroundLimit.BackColor = SystemColors.Window;
             numericFpsBackgroundLimit.BorderStyle = BorderStyle.FixedSingle;
             numericFpsBackgroundLimit.CausesValidation = false;
-            numericFpsBackgroundLimit.Location = new Point(126, 55);
+            numericFpsBackgroundLimit.Location = new Point(126, 50);
             numericFpsBackgroundLimit.Margin = new Padding(4, 3, 4, 3);
             numericFpsBackgroundLimit.Maximum = new decimal(new int[] { 500, 0, 0, 0 });
             numericFpsBackgroundLimit.Name = "numericFpsBackgroundLimit";
@@ -1649,16 +1689,6 @@ namespace EveOPreview.View
             numericFpsForegroundLimit.TabIndex = 24;
             numericFpsForegroundLimit.Value = new decimal(new int[] { 144, 0, 0, 0 });
             numericFpsForegroundLimit.Leave += numericFpsForegroundLimit_Leave;
-            // 
-            // lblFpsFeatureExpired
-            // 
-            lblFpsFeatureExpired.Location = new Point(13, 24);
-            lblFpsFeatureExpired.Margin = new Padding(4, 0, 4, 0);
-            lblFpsFeatureExpired.Name = "lblFpsFeatureExpired";
-            lblFpsFeatureExpired.Size = new Size(261, 78);
-            lblFpsFeatureExpired.TabIndex = 24;
-            lblFpsFeatureExpired.Text = "This experimental feature has expired.\r\nIf this is the first time running, please try closing and re-starting, or alternatively please update to the latest version.\r\n";
-            lblFpsFeatureExpired.Visible = false;
             // 
             // chbIsFpsThrottlingEnabled
             // 
@@ -1949,8 +1979,10 @@ namespace EveOPreview.View
         private NumericUpDown numericFpsBackgroundLimit;
         private ToolTip instantToolTip;
         private Button btnDummyFpsSave;
-        private Label lblFpsFeatureExpired;
         private GroupBox groupBoxAudioMuting;
+        private Label lblCustomMutedEventIds;
+        private TextBox txtCustomMutedEventIds;
+        private Label lblCustomMutedEventIdsHint;
         private CheckBox chbIsLocationBannerMuted;
         private CheckBox chbIsGateTunnelMuted;
         private TextBox txtToggleHideAllActiveHotkey;

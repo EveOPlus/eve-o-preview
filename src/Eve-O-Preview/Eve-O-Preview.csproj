@@ -19,9 +19,9 @@
     <TargetZone>LocalIntranet</TargetZone>
     <AssemblyOriginatorKeyFile />
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <FileVersion>10.0.0.8</FileVersion>
-    <AssemblyVersion>10.0.0.8</AssemblyVersion>
-    <Version>10.0.0.8</Version>
+    <FileVersion>10.0.0.9</FileVersion>
+    <AssemblyVersion>10.0.0.9</AssemblyVersion>
+    <Version>10.0.0.9</Version>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -70,7 +70,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="app.manifest" />
-    <EmbeddedResource Include="PremiumLicenseValidationPublicKey.bin" />
     <Content Include="LICENSE.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>

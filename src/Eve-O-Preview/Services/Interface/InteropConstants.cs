@@ -24,6 +24,14 @@ namespace EveOPreview.Services
         public const int GWL_STYLE = (-16);
         public const int GWL_EXSTYLE = (-20);
 
+        public static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+        public const uint SWP_NOSIZE = 0x0001;
+        public const uint SWP_NOMOVE = 0x0002;
+        public const uint SWP_NOACTIVATE = 0x0010;
+        public const uint SWP_SHOWWINDOW = 0x0040;
+        public const uint SWP_NOOWNERZORDER = 0x0200;
+        public const int SW_SHOWNOACTIVATE = 4;
+
         // Window Styles 
         public const UInt32 WS_OVERLAPPED = 0;
         public const UInt32 WS_POPUP = 0x80000000;

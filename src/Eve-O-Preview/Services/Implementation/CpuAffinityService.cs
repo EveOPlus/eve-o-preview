@@ -63,10 +63,10 @@ public class CpuAffinityService : ICpuAffinityService
 
     public void UpdateAffinity(IProcessInfo active, IProcessInfo next, IProcessInfo prev, IEnumerable<IProcessInfo> allClients)
     {
-        if (!_isOurCpuAbleToSupportAffinity || !_config.IsPremium || !_config.EnableAutomaticCpuAffinity)
+        if (!_isOurCpuAbleToSupportAffinity || !_config.EnableAutomaticCpuAffinity)
         {
-            _logger.Verbose("UpdateAffinity skipped: CpuSupported={CpuSupported}, Premium={Premium}, Enabled={Enabled}",
-                _isOurCpuAbleToSupportAffinity, _config.IsPremium, _config.EnableAutomaticCpuAffinity);
+            _logger.Verbose("UpdateAffinity skipped: CpuSupported={CpuSupported}, Enabled={Enabled}",
+                _isOurCpuAbleToSupportAffinity, _config.EnableAutomaticCpuAffinity);
             return;
         }
 

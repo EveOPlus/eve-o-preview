@@ -46,15 +46,17 @@ namespace EveOPreview.View
 
         protected override void RefreshThumbnail(bool forceRefresh)
         {
-            // To prevent flickering the old broken thumbnail is removed AFTER the new shiny one is created
-            IDwmThumbnail obsoleteThumbnail = forceRefresh ? this._thumbnail : null;
-
-            if ((this._thumbnail == null) || forceRefresh)
+            if (this._thumbnail != null)
             {
-                _logger.Verbose("Registering/refreshing DWM thumbnail for 0x{Handle:X}", this.Id);
-                this.RegisterThumbnail();
+                // DWM maintains the live image. Reapply properties during maintenance,
+                // but replace the relationship only if Windows reports it is unusable.
+                // Re-registering a healthy image can produce a visible gap during switching.
+                if (!forceRefresh || this._thumbnail.Update()) return;
             }
 
+            IDwmThumbnail obsoleteThumbnail = this._thumbnail;
+            _logger.Verbose("Registering/recovering DWM thumbnail for 0x{Handle:X}", this.Id);
+            this.RegisterThumbnail();
             obsoleteThumbnail?.Unregister();
         }
 

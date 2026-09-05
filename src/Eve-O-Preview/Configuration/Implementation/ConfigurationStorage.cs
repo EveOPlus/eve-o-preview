@@ -36,18 +36,16 @@ namespace EveOPreview.Configuration.Implementation
 
         private readonly IAppConfig _appConfig;
         private readonly IThumbnailConfiguration _thumbnailConfiguration;
-        private readonly IPremiumService _premiumService;
         private readonly IMediator _mediator;
         private readonly ILogger _logger;
         private readonly IGlobalEvents _globalEvents;
 
         public ProfileLocation CurrentProfile { get; set; }
 
-        public ConfigurationStorage(IAppConfig appConfig, IThumbnailConfiguration thumbnailConfiguration, IPremiumService premiumService, IMediator mediator, IProfileManager profileManager, ILogger logger, IGlobalEvents globalEvents)
+        public ConfigurationStorage(IAppConfig appConfig, IThumbnailConfiguration thumbnailConfiguration, IMediator mediator, IProfileManager profileManager, ILogger logger, IGlobalEvents globalEvents)
         {
             this._appConfig = appConfig;
             this._thumbnailConfiguration = thumbnailConfiguration;
-            _premiumService = premiumService;
             _mediator = mediator;
             _logger = logger;
             _globalEvents = globalEvents;
@@ -88,7 +86,6 @@ namespace EveOPreview.Configuration.Implementation
             }
             finally
             {
-                this._thumbnailConfiguration.IsPremium = _premiumService.IsLicenseValidAndCurrent(this._thumbnailConfiguration.PremiumLicenseKey);
                 this._mediator.Send(new RefreshHotkeys()).GetAwaiter().GetResult();
             }
         }

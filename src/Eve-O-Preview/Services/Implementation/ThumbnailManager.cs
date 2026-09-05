@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Threading;
@@ -53,6 +54,11 @@ namespace EveOPreview.Services
         private readonly DispatcherTimer _thumbnailUpdateTimer;
         private readonly IThumbnailViewFactory _thumbnailViewFactory;
         private readonly Dictionary<IntPtr, IThumbnailView> _thumbnailViews;
+        // Oldest activation first; the most recently active preview is raised last.
+        private readonly List<IntPtr> _thumbnailActivationOrder = new List<IntPtr>();
+        private bool _refreshThumbnailZOrder;
+        private bool _wasAlwaysOnTop;
+        private IntPtr _lastForegroundWindowHandle;
         private IKeyboardMouseEvents _keyboardMouseEvents;
         private readonly IHookService _hookService;
         private readonly IGlobalEvents _globalEvents;
@@ -164,15 +170,18 @@ namespace EveOPreview.Services
                 previousActiveClient.ClearBorder();
             }
 
+            this.RaiseActivatedThumbnail(newClient.Value);
+
             _logger.Verbose("ThumbnailManager.SetActive: Activating window for handle 0x{Handle:X}", newClient.Key);
             this._windowManager.ActivateWindow(newClient.Key);
             this.SwitchActiveClient(newClient.Key, newClient.Value.Title);
+            this._refreshThumbnailZOrder = true;
 
             _logger.Verbose("ThumbnailManager.SetActive: Setting highlight on active client");
             newClient.Value.SetHighlight();
 
             _logger.Verbose("ThumbnailManager.SetActive: Refreshing active client thumbnail");
-            newClient.Value.Refresh(true);
+            newClient.Value.Refresh(false);
             
             _logger.Verbose("ThumbnailManager.SetActive: Active client set successfully");
         }
@@ -417,6 +426,7 @@ namespace EveOPreview.Services
                                             : this._configuration.LoginThumbnailLocation;
 
                 this._thumbnailViews.Add(view.Id, view);
+                this._thumbnailActivationOrder.Insert(0, view.Id);
 
                 view.ThumbnailResized = this.ThumbnailViewResized;
                 view.ThumbnailMoved = this.ThumbnailViewMoved;
@@ -462,6 +472,7 @@ namespace EveOPreview.Services
 
                 _logger.Verbose("ThumbnailManager.UpdateThumbnailsList: Removing thumbnail view: {Title} (Handle: 0x{Handle:X})", view.Title, view.Id);
                 this._thumbnailViews.Remove(view.Id);
+                this._thumbnailActivationOrder.Remove(view.Id);
                 if (view.Title != ThumbnailManager.DEFAULT_CLIENT_TITLE)
                 {
                     viewsRemoved.Add(view.Title);
@@ -506,6 +517,14 @@ namespace EveOPreview.Services
             // Check if the foreground window handle is one of the known handles for client windows or their thumbnails
             bool isClientWindow = this.IsClientWindowActive(foregroundWindowHandle);
             bool isMainWindowActive = this.IsMainWindowActive(foregroundWindowHandle);
+
+            if ((foregroundWindowHandle != this._lastForegroundWindowHandle && (isClientWindow || isMainWindowActive))
+                || this._wasAlwaysOnTop != this._configuration.ShowThumbnailsAlwaysOnTop)
+            {
+                this._refreshThumbnailZOrder = true;
+            }
+            this._lastForegroundWindowHandle = foregroundWindowHandle;
+            this._wasAlwaysOnTop = this._configuration.ShowThumbnailsAlwaysOnTop;
 
             _logger.Verbose("ThumbnailManager.RefreshThumbnails: Window state - IsClientWindow={IsClient}, IsMainWindow={IsMain}", isClientWindow, isMainWindowActive);
 
@@ -646,6 +665,7 @@ namespace EveOPreview.Services
                 {
                     _logger.Verbose("ThumbnailManager.RefreshThumbnails: Showing {Title}", view.Title);
                     view.Show();
+                    this._refreshThumbnailZOrder = true;
                     visibleCount++;
                 }
                 else
@@ -655,10 +675,56 @@ namespace EveOPreview.Services
                 }
             }
 
+            this.RestoreThumbnailZOrder();
             this.EnableViewEvents();
-            
-            _logger.Verbose("ThumbnailManager.RefreshThumbnails: Refresh cycle complete. Visible={Visible}, Hidden={Hidden}, ForceRefresh={ForceRefresh}", 
+
+            _logger.Verbose("ThumbnailManager.RefreshThumbnails: Refresh cycle complete. Visible={Visible}, Hidden={Hidden}, ForceRefresh={ForceRefresh}",
                 visibleCount, hiddenCount, forceRefresh);
+        }
+
+        private void RaiseActivatedThumbnail(IThumbnailView view)
+        {
+            // Give activation the same immediate feedback as highlighting. Do not wait
+            // for client activation, layout updates, or the periodic refresh to raise it.
+            this._thumbnailActivationOrder.Remove(view.Id);
+            this._thumbnailActivationOrder.Add(view.Id);
+            this._refreshThumbnailZOrder = true;
+
+            if (!this._configuration.ShowThumbnailsAlwaysOnTop || !view.IsActive
+                || this._configuration.IsThumbnailDisabled(view.Title)
+                || this._configuration.HideActiveClientThumbnail)
+            {
+                return;
+            }
+
+            if (!view.RestoreAndBringToFront())
+            {
+                _logger.Warning("ThumbnailManager.RaiseActivatedThumbnail: Failed to raise {Title}. Win32Error={Error}",
+                    view.Title, Marshal.GetLastWin32Error());
+            }
+        }
+
+        private void RestoreThumbnailZOrder()
+        {
+            if (!this._refreshThumbnailZOrder || !this._configuration.ShowThumbnailsAlwaysOnTop)
+            {
+                return;
+            }
+
+            this._refreshThumbnailZOrder = false;
+            foreach (IntPtr handle in this._thumbnailActivationOrder)
+            {
+                if (this._thumbnailViews.TryGetValue(handle, out IThumbnailView view) && view.IsActive)
+                {
+                    _logger.Verbose("ThumbnailManager.RestoreThumbnailZOrder: Restoring and raising {Title}", view.Title);
+                    if (!view.RestoreAndBringToFront())
+                    {
+                        _logger.Warning("ThumbnailManager.RestoreThumbnailZOrder: Failed to raise {Title}. Win32Error={Error}",
+                            view.Title, Marshal.GetLastWin32Error());
+                        this._refreshThumbnailZOrder = true;
+                    }
+                }
+            }
         }
 
         public void UpdateThumbnailsSize()
@@ -737,6 +803,9 @@ namespace EveOPreview.Services
             }
 
             this._activeClient = (foregroundClientHandle, foregroundClientTitle);
+            this._thumbnailActivationOrder.Remove(foregroundClientHandle);
+            this._thumbnailActivationOrder.Add(foregroundClientHandle);
+            this._refreshThumbnailZOrder = true;
         }
 
         private void ThumbnailViewFocused(IntPtr id)
@@ -781,12 +850,15 @@ namespace EveOPreview.Services
             view.SetOpacity(this._configuration.ThumbnailOpacity);
 
             this._isHoverEffectActive = false;
+            this._refreshThumbnailZOrder = true;
         }
 
         private void ThumbnailActivated(IntPtr id)
         {
             _logger.Verbose("ThumbnailManager.ThumbnailActivated: Thumbnail activated (Handle: 0x{Handle:X})", id);
             IThumbnailView view = this._thumbnailViews[id];
+
+            this.RaiseActivatedThumbnail(view);
 
             Task.Run(() =>
                 {
@@ -796,6 +868,7 @@ namespace EveOPreview.Services
                 .ContinueWith((task) =>
                 {
                     this.SwitchActiveClient(view.Id, view.Title);
+                    this._refreshThumbnailZOrder = true;
                     this.UpdateClientLayouts();
                     this.RefreshThumbnails();
                 }, TaskScheduler.FromCurrentSynchronizationContext());

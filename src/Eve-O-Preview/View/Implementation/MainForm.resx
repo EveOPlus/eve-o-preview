@@ -307,11 +307,8 @@
     <value>True</value>
   </metadata>
   <data name="label1.Text" xml:space="preserve">
-    <value>Note: These are experimental Premium features.
-A free license has been temporarily provided.
-
-FPS Limiting is accomplished by hooking into DirectX to limit maximum FPS, and Audio muting by monitoring then muting audio events.
-</value>
+    <value>Limit client FPS and choose sounds to mute.
+Audio settings apply to all EVE clients.</value>
   </data>
   <metadata name="lblFpsPredictiveLimit.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>False</value>
@@ -339,8 +336,6 @@ FPS Limiting is accomplished by hooking into DirectX to limit maximum FPS, and A
   </metadata>
   <data name="lblLiabilityDisclaimer.Text" xml:space="preserve">
     <value>Eve-O Preview is developed by Aura Asuna
-
-A Premium License is required to access certain features in exchange for Isk or donation. Bypassing this license is strictly prohibited.
 
 This program comes with ABSOLUTELY NO WARRANTY. This program is licensed under GPLv3 (see https://www.gnu.org/licenses/)
 

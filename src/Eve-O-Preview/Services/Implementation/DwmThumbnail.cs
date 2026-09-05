@@ -101,16 +101,17 @@ namespace EveOPreview.Services.Implementation
             this._properties.rcDestination = new RECT(left, top, right, bottom);
         }
 
-        public void Update()
+        public bool Update()
         {
             if ((!this._windowManager.IsCompositionEnabled) || (this._handle == IntPtr.Zero))
             {
-                return;
+                return false;
             }
 
             try
             {
                 DwmNativeMethods.DwmUpdateThumbnailProperties(this._handle, this._properties);
+                return true;
             }
             catch (ArgumentException ex)
             {
@@ -120,6 +121,7 @@ namespace EveOPreview.Services.Implementation
             {
                 _logger.Warning(ex, "DWM thumbnail update failed: DWM unavailable");
             }
+            return false;
         }
     }
 }

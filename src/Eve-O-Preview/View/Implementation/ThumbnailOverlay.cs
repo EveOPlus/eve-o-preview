@@ -61,6 +61,8 @@ namespace EveOPreview.View
             this.OverlayLabel.Visible = enable;
         }
 
+        protected override bool ShowWithoutActivation => true;
+
         protected override CreateParams CreateParams
         {
             get

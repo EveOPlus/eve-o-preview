@@ -45,7 +45,7 @@ namespace EveOPreview.Mediator.Handlers.Configuration
         {
             var allKnownClients = _processMonitor.GetAllProcesses();
 
-            if (_config.FpsLimiterSettings.IsEnabled && _config.IsPremium)
+            if (_config.FpsLimiterSettings.IsEnabled)
             {
                 _logger.Verbose("SetFpsLimiterEnabled: Enabling FPS limiter for {ClientCount} clients", allKnownClients.Count);
                 var tasks = allKnownClients.Select(client => _hookService.TryInstallHooksAsync(client));
@@ -54,8 +54,8 @@ namespace EveOPreview.Mediator.Handlers.Configuration
             }
             else
             {
-                _logger.Verbose("SetFpsLimiterEnabled: Disabling FPS limiter for {ClientCount} clients (Enabled={IsEnabled}, Premium={IsPremium})",
-                    allKnownClients.Count, _config.FpsLimiterSettings.IsEnabled, _config.IsPremium);
+                _logger.Verbose("SetFpsLimiterEnabled: Disabling FPS limiter for {ClientCount} clients (Enabled={IsEnabled})",
+                    allKnownClients.Count, _config.FpsLimiterSettings.IsEnabled);
                 var tasks = allKnownClients.Select(client => _hookService.DisableFpsLimiterAsync(client.MainWindowHandle));
                 await Task.WhenAll(tasks);
                 _logger.Verbose("FPS limiter disabled successfully");

@@ -67,8 +67,6 @@ namespace EveOPreview.Configuration
         FpsLimiterSettings FpsLimiterSettings { get; set; }
         AudioMuteSettings AudioMuteSettings { get; set; }
 
-        string PremiumLicenseKey { get; set; }
-        bool IsPremium { get; set; }
         string ToggleHideActiveClientsHotkey { get; set; }
         string MinimizeAllClientsHotkey { get; set; }
         Keys ToggleHideActiveClientsHotkeyParsed { get; set; }

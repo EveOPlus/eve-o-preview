@@ -93,8 +93,6 @@ namespace EveOPreview.Configuration.Implementation
 
             this.FpsLimiterSettings = new FpsLimiterSettings();
             this.AudioMuteSettings = new AudioMuteSettings();
-            this.PremiumLicenseKey = "1|Experimental|2026-06-04.UPA8aM6c39acLmzl10YBjFBDKjvdd6U4lxc7LH2TGtN6fVGQFLzvLbSkBpD8IDICWAODAVjWPmtkY2RItw9VpA==";
-            this.IsPremium = false;
 
             this.EnableAutomaticCpuAffinity = true;
         }
@@ -190,10 +188,7 @@ namespace EveOPreview.Configuration.Implementation
 
         public AudioMuteSettings AudioMuteSettings { get; set; }
 
-        public string PremiumLicenseKey { get; set; }
 
-        [JsonIgnore]
-        public bool IsPremium { get; set; }
 
 
         [JsonProperty]

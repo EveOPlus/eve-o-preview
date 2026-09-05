@@ -14,6 +14,10 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+
 namespace EveOPreview.Configuration.Implementation
 {
     public class AudioMuteSettings
@@ -21,5 +25,27 @@ namespace EveOPreview.Configuration.Implementation
         public bool MuteJumpGateTunnel { get; set; } = false;
         
         public bool MuteLocationBanner { get; set; } = false;
+
+        public List<uint> CustomMutedEventIds
+        {
+            get;
+            set => field = value ?? [];
+        } = [];
+
+        public static bool TryParseCustomMutedEventIds(string text, out List<uint> eventIds)
+        {
+            eventIds = [];
+            var seen = new HashSet<uint>();
+            foreach (string part in (text ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (!uint.TryParse(part, NumberStyles.None, CultureInfo.InvariantCulture, out uint id))
+                {
+                    eventIds.Clear();
+                    return false;
+                }
+                if (seen.Add(id)) eventIds.Add(id);
+            }
+            return true;
+        }
     }
 }

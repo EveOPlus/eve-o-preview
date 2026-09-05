@@ -38,6 +38,7 @@ namespace EveOPreview.View
         void SetOpacity(double opacity);
         void SetFrames(bool enable);
         void SetTopMost(bool enableTopmost);
+        bool RestoreAndBringToFront();
         void SetHighlight();
         void SetHighlight(bool enabled, int width);
 

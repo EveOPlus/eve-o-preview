@@ -66,7 +66,7 @@ namespace EveOPreview.Services.Implementation
         {
             _configuration = configuration;
             _logger = logger;
-            _logger.Information("HookService: Initialized. Premium={Premium}, FpsLimiterEnabled={FpsLimiterEnabled}", configuration.IsPremium, configuration.FpsLimiterSettings.IsEnabled);
+            _logger.Information("HookService: Initialized. FpsLimiterEnabled={FpsLimiterEnabled}", configuration.FpsLimiterSettings.IsEnabled);
         }
         
         public bool Ping(IntPtr handle)
@@ -109,9 +109,9 @@ namespace EveOPreview.Services.Implementation
         {
             _logger.Verbose("HookService.TellEveClientFocusIsComingAsync: Notifying Robin of incoming focus for handle 0x{Handle:X}", handle);
 
-            if (!CanAccessFpsLimiter())
+            if (!_configuration.FpsLimiterSettings.IsEnabled)
             {
-                _logger.Verbose("HookService.TellEveClientFocusIsComingAsync: Cannot access FPS limiter (Premium={Premium}, FpsEnabled={FpsEnabled}). Skipping notification.", _configuration.IsPremium, _configuration.FpsLimiterSettings.IsEnabled);
+                _logger.Verbose("HookService.TellEveClientFocusIsComingAsync: FPS limiter is disabled. Skipping notification.");
                 return;
             }
 
@@ -147,9 +147,9 @@ namespace EveOPreview.Services.Implementation
         {
             _logger.Verbose("HookService.TellEveClientFocusIsMaybeComingSoonAsync: Predicting focus for handle 0x{Handle:X} with timeout {TimeoutMs}ms", handle, timeoutMs);
             
-            if (!CanAccessFpsLimiter())
+            if (!_configuration.FpsLimiterSettings.IsEnabled)
             {
-                _logger.Verbose("HookService.TellEveClientFocusIsMaybeComingSoonAsync: Cannot access FPS limiter. Skipping prediction.");
+                _logger.Verbose("HookService.TellEveClientFocusIsMaybeComingSoonAsync: FPS limiter is disabled. Skipping prediction.");
                 return;
             }
 
@@ -184,9 +184,9 @@ namespace EveOPreview.Services.Implementation
         {
             _logger.Verbose("HookService.UpdateTargetFpsAsync: Updating FPS settings for handle 0x{Handle:X}", handle);
             
-            if (!CanAccessFpsLimiter())
+            if (!_configuration.FpsLimiterSettings.IsEnabled)
             {
-                _logger.Verbose("HookService.UpdateTargetFpsAsync: Cannot access FPS limiter. Skipping update.");
+                _logger.Verbose("HookService.UpdateTargetFpsAsync: FPS limiter is disabled. Skipping update.");
                 return false;
             }
 
@@ -216,12 +216,6 @@ namespace EveOPreview.Services.Implementation
         {
             _logger.Verbose("HookService.TryInstallHooksAsync: Attempting to install hooks for process {Title} (PID: {PID}, Handle: 0x{Handle:X})", procInfo.Title, procInfo.ProcessId, procInfo.MainWindowHandle);
             
-            if (!CanAccessFpsLimiter() && !CanAccessAudioMute())
-            {
-                _logger.Verbose("HookService.TryInstallHooksAsync: Cannot access FPS limiter or audio mute. Skipping hook installation.");
-                return;
-            }
-
             bool isFirstTimeInitializing = _initializedClients.TryAdd(procInfo.MainWindowHandle, Guid.NewGuid());
             _logger.Verbose("HookService.TryInstallHooksAsync: Is first time initializing: {IsFirstTime}", isFirstTimeInitializing);
 
@@ -321,15 +315,9 @@ namespace EveOPreview.Services.Implementation
         {
             _logger.Verbose("HookService.UpdateMutedAudioAsync: Updating muted audio for handle 0x{Handle:X}", handle);
             
-            if (!CanAccessAudioMute())
-            {
-                _logger.Verbose("HookService.UpdateMutedAudioAsync: Cannot access audio mute (not premium). Skipping.");
-                return false;
-            }
-
             await ClearMutedAudioListAsync(handle);
 
-            var mutedEventIds = new List<uint>();
+            var mutedEventIds = new List<uint>(_configuration.AudioMuteSettings.CustomMutedEventIds);
 
             if (_configuration.AudioMuteSettings.MuteJumpGateTunnel)
             {
@@ -348,6 +336,7 @@ namespace EveOPreview.Services.Implementation
                 _logger.Verbose("HookService.UpdateMutedAudioAsync: Adding location banner sounds to mute list (2 event IDs)");
             }
 
+            mutedEventIds = mutedEventIds.Distinct().ToList();
             _logger.Verbose("HookService.UpdateMutedAudioAsync: Setting {EventCount} muted audio event IDs for handle 0x{Handle:X}", mutedEventIds.Count, handle);
             var result = await SetMutedAudioListAsync(handle, mutedEventIds);
             _logger.Verbose("HookService.UpdateMutedAudioAsync: Result: {Result}", result);
@@ -536,24 +525,5 @@ namespace EveOPreview.Services.Implementation
             return $"EveoRobin_{handle}";
         }
 
-        private bool CanAccessFpsLimiter()
-        {
-            bool canAccess = _configuration.IsPremium && _configuration.FpsLimiterSettings.IsEnabled;
-            if (!canAccess)
-            {
-                _logger.Verbose("HookService.CanAccessFpsLimiter: Access denied (Premium={Premium}, FpsEnabled={FpsEnabled})", _configuration.IsPremium, _configuration.FpsLimiterSettings.IsEnabled);
-            }
-            return canAccess;
-        }
-
-        private bool CanAccessAudioMute()
-        {
-            bool canAccess = _configuration.IsPremium;
-            if (!canAccess)
-            {
-                _logger.Verbose("HookService.CanAccessAudioMute: Access denied (Premium={Premium})", _configuration.IsPremium);
-            }
-            return canAccess;
-        }
     }
 }

@@ -261,7 +261,6 @@ namespace EveOPreview.Presenters
             this.View.TitleFontSettings = this._configuration.TitleFontSettings;
             this.View.ToggleHideAllActiveHotkey = this._configuration.ToggleHideActiveClientsHotkey;
             this.View.MinimizeAllClientsHotkey = this._configuration.MinimizeAllClientsHotkey;
-            this.View.IsPremium = this._configuration.IsPremium;
 
             this.View.FpsLimiterSettings = this._configuration.FpsLimiterSettings;
             this.View.AudioMuteSettings = this._configuration.AudioMuteSettings;
