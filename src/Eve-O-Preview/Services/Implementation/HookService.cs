@@ -18,512 +18,314 @@ using EveOPreview.Configuration;
 using EveOPreview.Services.Interface;
 using EveOPreview.Services.Interop;
 using Serilog;
-using Serilog.Core;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace EveOPreview.Services.Implementation
+namespace EveOPreview.Services.Implementation;
+
+public class HookService : IHookService
 {
-    public class HookService : IHookService
+    private const int PipeTimeoutMs = 1000;
+    private const int MaxMutedIds = 1024;
+    private readonly IThumbnailConfiguration _configuration;
+    private readonly ILogger _logger;
+    private readonly ConcurrentDictionary<IntPtr, SemaphoreSlim> _pipeGates = new();
+    private readonly ConcurrentDictionary<(int Pid, IntPtr Window), Lazy<Task>> _installations = new();
+    private readonly ConcurrentDictionary<IntPtr, bool> _supportsReplaceAudio = new();
+    private volatile bool _stopping;
+
+    public HookService(IThumbnailConfiguration configuration, ILogger logger)
     {
-        private const byte PIPE_FIRE_AND_FORGET = 0xA3;
-        private const byte PIPE_SET_FOCUSED_COMMAND = 0xB1;
-        private const byte PIPE_PREDICT_FOCUS_COMMAND = 0xB3;
+        _configuration = configuration;
+        _logger = logger;
+    }
 
-        private const byte PIPE_QUERY = 0xA1;
-        private const byte PIPE_PING_REQUEST_CODE = 0xB2;
+    public bool Ping(IntPtr handle) => PingAsync(handle).GetAwaiter().GetResult();
+    private async Task<bool> PingAsync(IntPtr handle) =>
+        await SendAsync(handle, w => { w.Write((byte)0xA1); w.Write((byte)0xB2); }).ConfigureAwait(false) == 1;
 
-        private const byte PIPE_UPDATE = 0xA2;
-        private const byte PIPE_FPS_PREFIX_BYTE_FOCUSED = 0xF1;
-        private const byte PIPE_FPS_PREFIX_BYTE_BACKGROUND = 0xF2;
-        private const byte PIPE_FPS_PREFIX_BYTE_PREDICT = 0xF3;
-        private const byte PIPE_TAKE_OWNERSHIP_COMMAND = 0xB4;
-
-        private const byte PIPE_SOUND_UNMUTE_ALL = 0xC1;
-        private const byte PIPE_SOUND_MUTE_LIST = 0xC3;
-
-        private const byte PIPE_SUCCESS_RESPONSE_CODE = 0x01;
-
-        private const uint jump_gates_start_play = 3689163958;
-        private const uint jump_gates_exit_play = 1537508544;
-        private const uint jump_gates_lightning_play = 1768044352;
-        private const uint location_banner_play = 2377891014;
-        private const uint location_banner_data_clicks_play = 3090840445;
-        
-        private readonly IThumbnailConfiguration _configuration;
-        private readonly ILogger _logger;
-        private readonly ConcurrentDictionary<IntPtr, Guid> _initializedClients = new ConcurrentDictionary<IntPtr, Guid>();
-        private readonly object _lock = new object();
-        
-        public HookService(IThumbnailConfiguration configuration, ILogger logger)
+    public async Task<string> GetVersionAsync(IntPtr handle)
+    {
+        var gate = _pipeGates.GetOrAdd(handle, _ => new SemaphoreSlim(1, 1));
+        bool entered = false;
+        using var timeout = new CancellationTokenSource(PipeTimeoutMs);
+        try
         {
-            _configuration = configuration;
-            _logger = logger;
-            _logger.Information("HookService: Initialized. FpsLimiterEnabled={FpsLimiterEnabled}", configuration.FpsLimiterSettings.IsEnabled);
+            await gate.WaitAsync(timeout.Token).ConfigureAwait(false);
+            entered = true;
+            using var client = new NamedPipeClientStream(".", $"EveoRobin_{handle}", PipeDirection.InOut, PipeOptions.Asynchronous);
+            await client.ConnectAsync(100, timeout.Token).ConfigureAwait(false);
+            await client.WriteAsync(new byte[] { 0xA1, 0xB7 }, timeout.Token).ConfigureAwait(false);
+            var lengthBytes = new byte[4];
+            await client.ReadExactlyAsync(lengthBytes, timeout.Token).ConfigureAwait(false);
+            int length = System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(lengthBytes);
+            if (length < 1 || length > 512) return null;
+            var bytes = new byte[length];
+            await client.ReadExactlyAsync(bytes, timeout.Token).ConfigureAwait(false);
+            return Encoding.UTF8.GetString(bytes);
         }
-        
-        public bool Ping(IntPtr handle)
-        {
-            _logger.Verbose("HookService.Ping: Attempting to ping Robin for handle 0x{Handle:X}", handle);
+        catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is OperationCanceledException || ex is UnauthorizedAccessException) { return null; }
+        finally { if (entered) gate.Release(); }
+    }
 
+    public async Task TellEveClientFocusIsComingAsync(IntPtr handle)
+    {
+        if (_stopping || !_configuration.FpsLimiterSettings.IsEnabled) return;
+        if (await TrySendFocusNowAsync(handle, new byte[] { 0xA3, 0xB1 }).ConfigureAwait(false)) return;
+        await SendAsync(handle, w => { w.Write((byte)0xA3); w.Write((byte)0xB1); }, reply: false, timeoutMs: 150, takeGate: false).ConfigureAwait(false);
+    }
+
+    public async Task TellEveClientFocusIsMaybeComingSoonAsync(IntPtr handle, int timeoutMs = 5000)
+    {
+        if (_stopping || !_configuration.FpsLimiterSettings.IsEnabled) return;
+        byte[] payload = new byte[6] { 0xA3, 0xB3, 0, 0, 0, 0 };
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(payload.AsSpan(2), Math.Clamp(timeoutMs, 1, 30000));
+        if (await TrySendFocusNowAsync(handle, payload).ConfigureAwait(false)) return;
+        await SendAsync(handle, w => { w.Write((byte)0xA3); w.Write((byte)0xB3); w.Write(Math.Clamp(timeoutMs, 1, 30000)); },
+            reply: false, timeoutMs: 150, takeGate: false).ConfigureAwait(false);
+    }
+
+    private static async Task<bool> TrySendFocusNowAsync(IntPtr handle, byte[] payload)
+    {
+        if (handle == IntPtr.Zero) return false;
+        try
+        {
+            // An available pipe accepts this tiny, buffered message inline. ConnectAsync
+            // dispatches the connect through the thread pool; don't put it ahead of focus.
+            using var client = new NamedPipeClientStream(".", $"EveoRobin_{handle}", PipeDirection.Out, PipeOptions.Asynchronous);
+            client.Connect(0);
+            using var timeout = new CancellationTokenSource(150);
+            // Issue the write now, but don't block the input thread on an old, zero-buffer
+            // or unresponsive server. Overlapped completion only owns cleanup afterward.
+            await client.WriteAsync(payload, timeout.Token).ConfigureAwait(false);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is UnauthorizedAccessException || ex is OperationCanceledException)
+        { return false; }
+    }
+
+    public Task<bool> UpdateTargetFpsAsync(IntPtr handle)
+    {
+        if (_stopping) return Task.FromResult(false);
+        var settings = _configuration.FpsLimiterSettings;
+        return SetExactTargetFpsAsync(handle, settings.IsEnabled ? settings.FpsFocused : 0,
+            settings.IsEnabled ? settings.FpsBackground : 0, settings.IsEnabled ? settings.FpsPredictingFocus : 0);
+    }
+        
+    public Task<bool> DisableFpsLimiterAsync(IntPtr handle) => SetExactTargetFpsAsync(handle, 0, 0, 0);
+
+    private async Task<bool> SetExactTargetFpsAsync(IntPtr handle, int foreground, int background, int predicted) =>
+        await SendAsync(handle, w =>
+        {
+            w.Write((byte)0xA2); w.Write((byte)0xF1); w.Write(foreground);
+            w.Write((byte)0xF2); w.Write(background); w.Write((byte)0xF3); w.Write(predicted);
+        }).ConfigureAwait(false) == 1;
+
+    public async Task TryInstallHooksAsync(IProcessInfo process)
+    {
+        if (_stopping || process == null || process.MainWindowHandle == IntPtr.Zero) return;
+        var key = (process.ProcessId, process.MainWindowHandle);
+        var installation = _installations.GetOrAdd(key, _ => new Lazy<Task>(() => InstallAndConfigureAsync(process)));
+        try { await installation.Value.ConfigureAwait(false); }
+        finally { _installations.TryRemove(new KeyValuePair<(int, IntPtr), Lazy<Task>>(key, installation)); }
+    }
+
+    private async Task InstallAndConfigureAsync(IProcessInfo process)
+    {
+        try
+        {
+            bool present = await PingAsync(process.MainWindowHandle).ConfigureAwait(false);
+            if (_stopping) return;
+            if (!present)
+            {
+                // When no native feature is requested, don't inject merely to send zero targets.
+                var audio = _configuration.AudioMuteSettings;
+                if (!_configuration.FpsLimiterSettings.IsEnabled && !audio.MuteJumpGateTunnel &&
+                    !audio.MuteLocationBanner && audio.CustomMutedEventIds.Count == 0) return;
+                await Task.Run(() => Inject(process)).ConfigureAwait(false);
+                bool ready = false;
+                for (int i = 0; i < 20 && !_stopping; i++)
+                {
+                    if (await PingAsync(process.MainWindowHandle).ConfigureAwait(false)) { ready = true; break; }
+                    await Task.Delay(50).ConfigureAwait(false);
+                }
+                if (!ready) throw new IOException("Robin did not become ready after initialization.");
+            }
+            if (_stopping) return;
+            if (await SendAsync(process.MainWindowHandle, w =>
+                { w.Write((byte)0xA2); w.Write((byte)0xB4); w.Write(Environment.ProcessId); }).ConfigureAwait(false) != 1) return;
+            string identity = await GetVersionAsync(process.MainWindowHandle).ConfigureAwait(false);
+            _logger.Information("Robin in PID {Pid}: {BuildIdentity}", process.ProcessId, identity ?? "Legacy build (no version query); restart this client to load the current DLL");
+            await UpdateTargetFpsAsync(process.MainWindowHandle).ConfigureAwait(false);
+            await UpdateMutedAudioAsync(process.MainWindowHandle).ConfigureAwait(false);
+        }
+        catch (Exception ex) { _logger.Error(ex, "Robin initialization failed for PID {Pid}", process.ProcessId); }
+    }
+        
+    private void Inject(IProcessInfo info)
+    {
+        using var process = Process.GetProcessById(info.ProcessId);
+        if (process.HasExited || process.MainWindowHandle != info.MainWindowHandle)
+            throw new InvalidOperationException("The target client changed before injection.");
+        string source = Path.Combine(AppContext.BaseDirectory, "Eve-O-Preview.Robin.dll");
+        if (!File.Exists(source)) throw new FileNotFoundException("Publish the native Robin DLL beside the host executable.", source);
+        // Loaded modules outlive the host. Load a versioned copy so installation files remain replaceable.
+        string hash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(source)));
+        string directory = Path.Combine(Path.GetTempPath(), "Eve-O Preview", "Robin", hash);
+        Directory.CreateDirectory(directory);
+        string path = Path.Combine(directory, "Eve-O-Preview.Robin.dll");
+        try { File.Copy(source, path, overwrite: false); }
+        catch (IOException) when (File.Exists(path))
+        {
+            if (Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))) != hash) throw;
+        }
+        // Use only the rights needed to load the DLL and start its exported initializer.
+        IntPtr target = KernelNativeMethods.OpenProcess(0x043A, false, info.ProcessId);
+        if (target == IntPtr.Zero) throw new Win32Exception();
+        IntPtr remotePath = IntPtr.Zero, loaderThread = IntPtr.Zero, initThread = IntPtr.Zero, localModule = IntPtr.Zero;
+        bool loaderFinished = false;
+        try
+        {
+            process.Refresh();
+            var loaded = process.Modules.Cast<ProcessModule>().FirstOrDefault(m => string.Equals(m.ModuleName, "Eve-O-Preview.Robin.dll", StringComparison.OrdinalIgnoreCase));
+            if (loaded == null)
+            {
+                byte[] bytes = Encoding.Unicode.GetBytes(path + "\0");
+                remotePath = KernelNativeMethods.VirtualAllocEx(target, IntPtr.Zero, (uint)bytes.Length, 0x3000, 0x04);
+                if (remotePath == IntPtr.Zero || !KernelNativeMethods.WriteProcessMemory(target, remotePath, bytes, (uint)bytes.Length, out IntPtr written) || written.ToInt64() != bytes.Length)
+                    throw new Win32Exception();
+                IntPtr loadLibrary = KernelNativeMethods.GetProcAddress(KernelNativeMethods.GetModuleHandle("kernel32.dll"), "LoadLibraryW");
+                loaderThread = KernelNativeMethods.CreateRemoteThread(target, IntPtr.Zero, 0, loadLibrary, remotePath, 0, IntPtr.Zero);
+                if (loaderThread == IntPtr.Zero) throw new Win32Exception();
+                if (KernelNativeMethods.WaitForSingleObject(loaderThread, 5000) != 0) throw new TimeoutException("Target DLL loader did not finish.");
+                loaderFinished = true;
+                process.Refresh();
+                loaded = process.Modules.Cast<ProcessModule>().FirstOrDefault(m => string.Equals(m.FileName, path, StringComparison.OrdinalIgnoreCase));
+                if (loaded == null) throw new IOException("The native DLL did not load in the target.");
+            }
+            // Map just the PE image for export offsets: don't initialize another NativeAOT runtime in the host.
+            localModule = KernelNativeMethods.LoadLibraryEx(loaded.FileName, IntPtr.Zero, 1);
+            if (localModule == IntPtr.Zero) throw new Win32Exception();
+            IntPtr initialize = KernelNativeMethods.GetProcAddress(localModule, "Initialize");
+            if (initialize == IntPtr.Zero) throw new IOException("The DLL has no native Initialize export.");
+            IntPtr remoteInitialize = loaded.BaseAddress + (int)(initialize.ToInt64() - localModule.ToInt64());
+            initThread = KernelNativeMethods.CreateRemoteThread(target, IntPtr.Zero, 0, remoteInitialize, IntPtr.Zero, 0, IntPtr.Zero);
+            if (initThread == IntPtr.Zero) throw new Win32Exception();
+            if (KernelNativeMethods.WaitForSingleObject(initThread, 5000) != 0) throw new TimeoutException("Robin initializer did not finish.");
+        }
+        finally
+        {
+            if (localModule != IntPtr.Zero) KernelNativeMethods.FreeLibrary(localModule);
+            if (initThread != IntPtr.Zero) KernelNativeMethods.CloseHandle(initThread);
+            if (remotePath != IntPtr.Zero)
+            {
+                if (loaderThread == IntPtr.Zero || loaderFinished) KernelNativeMethods.VirtualFreeEx(target, remotePath, 0, 0x8000);
+                else
+                {
+                    // The loader may still read its argument. Keep ownership until it exits; never free live remote memory.
+                    IntPtr retainedTarget = target, retainedThread = loaderThread, retainedPath = remotePath;
+                    _ = Task.Run(() =>
+                    {
+                        KernelNativeMethods.WaitForSingleObject(retainedThread, uint.MaxValue);
+                        KernelNativeMethods.VirtualFreeEx(retainedTarget, retainedPath, 0, 0x8000);
+                        KernelNativeMethods.CloseHandle(retainedThread);
+                        KernelNativeMethods.CloseHandle(retainedTarget);
+                    });
+                    target = loaderThread = IntPtr.Zero;
+                }
+            }
+            if (loaderThread != IntPtr.Zero) KernelNativeMethods.CloseHandle(loaderThread);
+            if (target != IntPtr.Zero) KernelNativeMethods.CloseHandle(target);
+        }
+    }
+
+    public async Task<bool> UpdateMutedAudioAsync(IntPtr handle)
+    {
+        if (_stopping) return false;
+        var settings = _configuration.AudioMuteSettings;
+        var ids = new List<uint>(settings.CustomMutedEventIds);
+        if (settings.MuteJumpGateTunnel) ids.AddRange(new uint[] { 3689163958, 1537508544, 1768044352 });
+        if (settings.MuteLocationBanner) ids.AddRange(new uint[] { 2377891014, 3090840445 });
+        ids = ids.Distinct().ToList();
+        if (ids.Count > MaxMutedIds) { _logger.Warning("Audio mute list exceeds {Limit} IDs", MaxMutedIds); return false; }
+        if (!_supportsReplaceAudio.TryGetValue(handle, out bool replace))
+        {
+            replace = await SendAsync(handle, w => { w.Write((byte)0xA1); w.Write((byte)0xB5); }).ConfigureAwait(false) == 2;
+            _supportsReplaceAudio[handle] = replace;
+        }
+        if (_stopping) return false;
+        if (replace) return await SendAudioIdsAsync(handle, 0xC6, ids).ConfigureAwait(false);
+        // Older already-injected Robin only supports clear then add. Hold the gate across both connections.
+        var gate = _pipeGates.GetOrAdd(handle, _ => new SemaphoreSlim(1, 1));
+        using var timeout = new CancellationTokenSource(PipeTimeoutMs * 2);
+        try
+        {
+            await gate.WaitAsync(timeout.Token).ConfigureAwait(false);
             try
             {
-                // Ping request is 0xA1 0xB2, Expect a 0x01 response.
-                using (var client = GetClientsNamedPipe(handle, PipeDirection.InOut))
-                {
-                    _logger.Verbose("HookService.Ping: Connecting to Robin pipe (100ms timeout)");
-                    client.Connect(100);
-
-                    using (var writer = new BinaryWriter(client))
-                    using (var reader = new BinaryReader(client))
-                    {
-                        writer.Write(PIPE_QUERY);
-                        writer.Write(PIPE_PING_REQUEST_CODE);
-                        writer.Flush();
-
-                        _logger.Verbose("HookService.Ping: Ping request sent (0xA1 0xB2)");
-
-                        var response = reader.ReadByte();
-
-                        bool success = response == PIPE_SUCCESS_RESPONSE_CODE;
-                        _logger.Verbose("HookService.Ping: Handle 0x{Handle:X} - Response: 0x{Response:X2}, Success: {Success}", handle, response, success);
-                        return success;
-                    }
-                }
+                if (await SendAsync(handle, w => { w.Write((byte)0xA2); w.Write((byte)0xC1); }, takeGate: false).ConfigureAwait(false) != 1) return false;
+                if (_stopping) return false;
+                return await SendAudioIdsAsync(handle, 0xC3, ids, takeGate: false).ConfigureAwait(false);
             }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "HookService.Ping: Exception while pinging Robin for handle 0x{Handle:X}", handle);
-                return false;
-            }
+            finally { gate.Release(); }
         }
-        
-        public async Task TellEveClientFocusIsComingAsync(IntPtr handle)
+        catch (OperationCanceledException) { return false; }
+    }
+
+    private async Task<bool> SendAudioIdsAsync(IntPtr handle, byte command, List<uint> ids, bool takeGate = true) =>
+        await SendAsync(handle, w => { w.Write((byte)0xA2); w.Write(command); w.Write(ids.Count); foreach (uint id in ids) w.Write(id); }, takeGate: takeGate).ConfigureAwait(false) == 1;
+
+    public void ForgetClient(IProcessInfo process)
+    {
+        _supportsReplaceAudio.TryRemove(process.MainWindowHandle, out _);
+        _pipeGates.TryRemove(process.MainWindowHandle, out _);
+    }
+
+    public async Task StopAsync(IEnumerable<IProcessInfo> processes)
+    {
+        _stopping = true;
+        await Task.WhenAll(_installations.Values.Where(t => t.IsValueCreated).Select(t => t.Value)).ConfigureAwait(false);
+        await Task.WhenAll(processes.Select(async p =>
         {
-            _logger.Verbose("HookService.TellEveClientFocusIsComingAsync: Notifying Robin of incoming focus for handle 0x{Handle:X}", handle);
+            await DisableFpsLimiterAsync(p.MainWindowHandle).ConfigureAwait(false);
+            await SendAsync(p.MainWindowHandle, w => { w.Write((byte)0xA2); w.Write((byte)0xC1); }).ConfigureAwait(false);
+        })).ConfigureAwait(false);
+    }
 
-            if (!_configuration.FpsLimiterSettings.IsEnabled)
-            {
-                _logger.Verbose("HookService.TellEveClientFocusIsComingAsync: FPS limiter is disabled. Skipping notification.");
-                return;
-            }
-
-            _logger.Verbose("HookService.TellEveClientFocusIsComingAsync: Sending FireAndForget SetFocusedCommand (0xA3 0xB1) for handle 0x{Handle:X}", handle);
-            
-            await Task.Run(() =>
-            {
-                // Fire and forget
-                try
-                {
-                    using (var client = GetClientsNamedPipe(handle, PipeDirection.Out))
-                    {
-                        client.Connect(100);
-                        using (var writer = new BinaryWriter(client))
-                        {
-                            writer.Write(PIPE_FIRE_AND_FORGET);
-                            writer.Write(PIPE_SET_FOCUSED_COMMAND);
-                            writer.Flush();
-                            
-                            _logger.Verbose("HookService.TellEveClientFocusIsComingAsync: FireAndForget SetFocusedCommand sent for handle 0x{Handle:X}", handle);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "HookService.TellEveClientFocusIsComingAsync: Error sending FireAndForget SetFocusedCommand for handle 0x{Handle:X}", handle);
-                    // Just be silent and don't block anything else.
-                }
-            });
-        }
-        
-        public async Task TellEveClientFocusIsMaybeComingSoonAsync(IntPtr handle, int timeoutMs = 5000)
+    private async Task<int> SendAsync(IntPtr handle, Action<BinaryWriter> write, bool reply = true, int timeoutMs = PipeTimeoutMs, bool takeGate = true)
+    {
+        if (handle == IntPtr.Zero) return -1;
+        var gate = _pipeGates.GetOrAdd(handle, _ => new SemaphoreSlim(1, 1));
+        bool entered = false;
+        using var timeout = new CancellationTokenSource(timeoutMs);
+        try
         {
-            _logger.Verbose("HookService.TellEveClientFocusIsMaybeComingSoonAsync: Predicting focus for handle 0x{Handle:X} with timeout {TimeoutMs}ms", handle, timeoutMs);
-            
-            if (!_configuration.FpsLimiterSettings.IsEnabled)
-            {
-                _logger.Verbose("HookService.TellEveClientFocusIsMaybeComingSoonAsync: FPS limiter is disabled. Skipping prediction.");
-                return;
-            }
-
-            await Task.Run(() =>
-            {
-                // Fire and forget
-                try
-                {
-                    using (var client = GetClientsNamedPipe(handle, PipeDirection.Out))
-                    {
-                        client.Connect(100);
-                        using (var writer = new BinaryWriter(client))
-                        {
-                            writer.Write(PIPE_FIRE_AND_FORGET);
-                            writer.Write(PIPE_PREDICT_FOCUS_COMMAND);
-                            writer.Write(timeoutMs); // How long to wait before for focus before return to normal.
-                            writer.Flush();
-                            
-                            _logger.Verbose("HookService.TellEveClientFocusIsMaybeComingSoonAsync: FireAndForget PredictFocusCommand sent for handle 0x{Handle:X}", handle);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "HookService.TellEveClientFocusIsMaybeComingSoonAsync: Error sending PredictFocusCommand for handle 0x{Handle:X}", handle);
-                    // Just be silent and don't block anything else.
-                }
-            });
+            if (takeGate) { await gate.WaitAsync(timeout.Token).ConfigureAwait(false); entered = true; }
+            using var client = new NamedPipeClientStream(".", $"EveoRobin_{handle}", reply ? PipeDirection.InOut : PipeDirection.Out, PipeOptions.Asynchronous);
+            await client.ConnectAsync(100, timeout.Token).ConfigureAwait(false);
+            using var payload = new MemoryStream();
+            using (var writer = new BinaryWriter(payload, Encoding.UTF8, leaveOpen: true)) write(writer);
+            await client.WriteAsync(payload.GetBuffer().AsMemory(0, (int)payload.Length), timeout.Token).ConfigureAwait(false);
+            if (!reply) return 1;
+            var response = new byte[1];
+            await client.ReadExactlyAsync(response, timeout.Token).ConfigureAwait(false);
+            return response[0];
         }
-
-        public async Task<bool> UpdateTargetFpsAsync(IntPtr handle)
+        catch (Exception ex) when (ex is IOException || ex is TimeoutException || ex is OperationCanceledException || ex is UnauthorizedAccessException)
         {
-            _logger.Verbose("HookService.UpdateTargetFpsAsync: Updating FPS settings for handle 0x{Handle:X}", handle);
-            
-            if (!_configuration.FpsLimiterSettings.IsEnabled)
-            {
-                _logger.Verbose("HookService.UpdateTargetFpsAsync: FPS limiter is disabled. Skipping update.");
-                return false;
-            }
-
-            var fpsSettings = _configuration.FpsLimiterSettings;
-            int foregroundFps = fpsSettings.IsEnabled ? fpsSettings.FpsFocused : 0;
-            int backgroundFps = fpsSettings.IsEnabled ? fpsSettings.FpsBackground : 0;
-            int predictiveFps = fpsSettings.IsEnabled ? fpsSettings.FpsPredictingFocus : 0;
-
-            _logger.Verbose("HookService.UpdateTargetFpsAsync: FPS values - Foreground={Foreground}, Background={Background}, Predictive={Predictive}", foregroundFps, backgroundFps, predictiveFps);
-            
-            var result = await SetExactTargetFpsAsync(handle, foregroundFps, backgroundFps, predictiveFps);
-
-            _logger.Verbose("HookService.UpdateTargetFpsAsync: FPS update result={Result} for handle 0x{Handle:X} with Foreground={Foreground} Background={Background} Predictive={Predictive}", result, handle, foregroundFps, backgroundFps, predictiveFps);
-
-            return result;
+            _logger.Debug("Robin pipe unavailable for HWND {Handle}: {Reason}", handle, ex.Message);
+            return -1;
         }
-
-        public async Task<bool> DisableFpsLimiterAsync(IntPtr handle)
-        {
-            _logger.Verbose("HookService.DisableFpsLimiterAsync: Disabling FPS limiter for handle 0x{Handle:X}", handle);
-            var result = await SetExactTargetFpsAsync(handle, 0, 0, 0).ConfigureAwait(false);
-            _logger.Verbose("HookService.DisableFpsLimiterAsync: Result={Result}", result);
-            return result;
-        }
-
-        public async Task TryInstallHooksAsync(IProcessInfo procInfo)
-        {
-            _logger.Verbose("HookService.TryInstallHooksAsync: Attempting to install hooks for process {Title} (PID: {PID}, Handle: 0x{Handle:X})", procInfo.Title, procInfo.ProcessId, procInfo.MainWindowHandle);
-            
-            bool isFirstTimeInitializing = _initializedClients.TryAdd(procInfo.MainWindowHandle, Guid.NewGuid());
-            _logger.Verbose("HookService.TryInstallHooksAsync: Is first time initializing: {IsFirstTime}", isFirstTimeInitializing);
-
-            await Task.Run(() =>
-            {
-                try
-                {
-                    if (!isFirstTimeInitializing || Ping(procInfo.MainWindowHandle))
-                    {
-                        _logger.Verbose("HookService.TryInstallHooksAsync: Hooks already installed for handle 0x{Handle:X}. Skipping installation.", procInfo.MainWindowHandle);
-                        // Already installed, as the pipe is active and responding. Don't try to install another hook.
-                        // e.g. If Eve-O was previously running and started up again, while Eve clients are already initialized.
-                    }
-                    else
-                    {
-                        _logger.Verbose("HookService.TryInstallHooksAsync: Installing Eve-O-Preview.Robin for handle 0x{Handle:X}", procInfo.MainWindowHandle);
-                        
-                        var basePath = System.IO.Path.GetDirectoryName(System.Environment.ProcessPath);
-                        var dllPath = Path.Combine(basePath, "Eve-O-Preview.Robin.dll");
-                        if (!File.Exists(dllPath)) throw new Exception($"Unable to find Eve-O-Preview.Robin.dll at: {dllPath}");
-                        
-                        var proc = Process.GetProcessById(procInfo.ProcessId);
-
-                        _logger.Verbose("HookService.TryInstallHooksAsync: Opening process handle");
-                        IntPtr hProc = KernelNativeMethods.OpenProcess(KernelNativeMethods.PROCESS_ALL_ACCESS, false, proc.Id);
-                        if (hProc == IntPtr.Zero) throw new Exception("Failed to open process.");
-
-                        string fullPath = Path.GetFullPath(dllPath);
-                        byte[] pathBytes = Encoding.ASCII.GetBytes(fullPath + "\0");
-
-                        _logger.Verbose("HookService.TryInstallHooksAsync: Allocating memory for DLL path ({ByteCount} bytes)", pathBytes.Length);
-                        IntPtr remoteAddr = KernelNativeMethods.VirtualAllocEx(hProc, IntPtr.Zero, (uint)pathBytes.Length, KernelNativeMethods.MEM_COMMIT_RESERVE, KernelNativeMethods.PAGE_EXECUTE_READWRITE);
-                        if (remoteAddr == IntPtr.Zero) throw new Exception("Memory allocation failed.");
-
-                        _logger.Verbose("HookService.TryInstallHooksAsync: Writing DLL path to target process");
-                        if (!KernelNativeMethods.WriteProcessMemory(hProc, remoteAddr, pathBytes, (uint)pathBytes.Length, out _))
-                            throw new Exception("Failed to write to memory.");
-
-                        _logger.Verbose("HookService.TryInstallHooksAsync: Creating remote thread to call LoadLibraryA");
-                        IntPtr loadLibAddr = KernelNativeMethods.GetProcAddress(KernelNativeMethods.GetModuleHandle("kernel32.dll"), "LoadLibraryA");
-                        IntPtr hThread = KernelNativeMethods.CreateRemoteThread(hProc, IntPtr.Zero, 0, loadLibAddr, remoteAddr, 0, IntPtr.Zero);
-
-                        if (hThread == IntPtr.Zero) throw new Exception("CreateRemoteThread for LoadLibrary failed.");
-
-                        _logger.Verbose("HookService.TryInstallHooksAsync: Waiting 2000ms for module to load");
-                        System.Threading.Thread.Sleep(2000); // Wait for module to load
-
-                        _logger.Verbose("HookService.TryInstallHooksAsync: Verifying DLL loaded and finding Initialize export");
-                        proc.Refresh();
-                        var loadedModule = proc.Modules.Cast<ProcessModule>().FirstOrDefault(m => m.FileName.Contains("Eve-O-Preview.Robin"));
-                        if (loadedModule == null) throw new Exception("DLL was not loaded into the target process.");
-
-                        _logger.Verbose("HookService.TryInstallHooksAsync: DLL loaded at 0x{BaseAddress:X}", loadedModule.BaseAddress);
-                        
-                        IntPtr localModule = KernelNativeMethods.LoadLibrary(fullPath);
-                        IntPtr localInitAddr = KernelNativeMethods.GetProcAddress(localModule, "Initialize");
-                        if (localInitAddr == IntPtr.Zero) throw new Exception("Could not find 'Initialize' export in DLL.");
-
-                        // Calculate remote address: (Target Base + (Local Init - Local Base))
-                        long offset = localInitAddr.ToInt64() - localModule.ToInt64();
-                        IntPtr remoteInitAddr = new IntPtr(loadedModule.BaseAddress.ToInt64() + offset);
-
-                        // Execute 'Initialize' in target process
-                        _logger.Verbose("HookService.TryInstallHooksAsync: Creating remote thread to call Initialize");
-                        KernelNativeMethods.CreateRemoteThread(hProc, IntPtr.Zero, 0, remoteInitAddr, IntPtr.Zero, 0, IntPtr.Zero);
-
-                        _logger.Information("HookService.TryInstallHooksAsync: Successfully initialized Eve-O-Preview.Robin for handle 0x{Handle:X}", procInfo.MainWindowHandle);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "HookService.TryInstallHooksAsync: Unhandled exception while installing hooks for handle 0x{Handle:X}", procInfo.MainWindowHandle);
-
-                    _initializedClients.TryRemove(procInfo.MainWindowHandle, out _);
-                }
-            });
-
-            // Make sure it has a moment to initialize, just to be safe.
-            _logger.Verbose("HookService.TryInstallHooksAsync: Waiting 1000ms for hook initialization");
-            await Task.Delay(1000);
-            
-            // Take ownership of the currently running hook.
-            _logger.Verbose("HookService.TryInstallHooksAsync: Sending take ownership command");
-            await SendTakeOwnershipCommand(procInfo.MainWindowHandle, Process.GetCurrentProcess().Id);
-
-            // Regardless if we just installed it, or it was already installed, set the FPS to our target
-            _logger.Verbose("HookService.TryInstallHooksAsync: Updating FPS settings");
-            await UpdateTargetFpsAsync(procInfo.MainWindowHandle);
-            
-            _logger.Verbose("HookService.TryInstallHooksAsync: Updating audio settings");
-            await UpdateMutedAudioAsync(procInfo.MainWindowHandle);
-            
-            _logger.Verbose("HookService.TryInstallHooksAsync: Hook installation completed for handle 0x{Handle:X}", procInfo.MainWindowHandle);
-        }
-
-        public async Task<bool> UpdateMutedAudioAsync(IntPtr handle)
-        {
-            _logger.Verbose("HookService.UpdateMutedAudioAsync: Updating muted audio for handle 0x{Handle:X}", handle);
-            
-            await ClearMutedAudioListAsync(handle);
-
-            var mutedEventIds = new List<uint>(_configuration.AudioMuteSettings.CustomMutedEventIds);
-
-            if (_configuration.AudioMuteSettings.MuteJumpGateTunnel)
-            {
-                mutedEventIds.Add(jump_gates_start_play);
-                mutedEventIds.Add(jump_gates_exit_play);
-                mutedEventIds.Add(jump_gates_lightning_play);
-                
-                _logger.Verbose("HookService.UpdateMutedAudioAsync: Adding jump gate tunnel sounds to mute list (3 event IDs)");
-            }
-
-            if (_configuration.AudioMuteSettings.MuteLocationBanner)
-            {
-                mutedEventIds.Add(location_banner_play);
-                mutedEventIds.Add(location_banner_data_clicks_play);
-                
-                _logger.Verbose("HookService.UpdateMutedAudioAsync: Adding location banner sounds to mute list (2 event IDs)");
-            }
-
-            mutedEventIds = mutedEventIds.Distinct().ToList();
-            _logger.Verbose("HookService.UpdateMutedAudioAsync: Setting {EventCount} muted audio event IDs for handle 0x{Handle:X}", mutedEventIds.Count, handle);
-            var result = await SetMutedAudioListAsync(handle, mutedEventIds);
-            _logger.Verbose("HookService.UpdateMutedAudioAsync: Result: {Result}", result);
-            return result;
-        }
-
-        private async Task<bool> ClearMutedAudioListAsync(IntPtr handle)
-        {
-            _logger.Verbose("HookService.ClearMutedAudioListAsync: Clearing all muted audio for handle 0x{Handle:X}", handle);
-            
-            return await Task.Run<bool>(() =>
-            {
-                try
-                {
-                    // 0xA2 0xC1 clear all muted sounds. expect 0x01 result.
-                    using (var client = GetClientsNamedPipe(handle, PipeDirection.InOut))
-                    {
-                        client.Connect(100);
-                        using (var writer = new BinaryWriter(client))
-                        using (var reader = new BinaryReader(client))
-                        {
-                            writer.Write(PIPE_UPDATE);
-                            writer.Write(PIPE_SOUND_UNMUTE_ALL);
-                            writer.Flush();
-
-                            var response = reader.ReadByte();
-
-                            bool success = response == PIPE_SUCCESS_RESPONSE_CODE;
-                            _logger.Verbose("HookService.ClearMutedAudioListAsync: Response: 0x{Response:X2}, Success: {Success}", response, success);
-                            return success;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "HookService.ClearMutedAudioListAsync: Error clearing muted audio for handle 0x{Handle:X}", handle);
-                    return false;
-                }
-            });
-        }
-
-        private async Task<bool> SetMutedAudioListAsync(IntPtr handle, List<uint> mutedEventIds)
-        {
-            _logger.Verbose("HookService.SetMutedAudioListAsync: Setting {EventCount} muted event IDs for handle 0x{Handle:X}", mutedEventIds.Count, handle);
-            
-            return await Task.Run<bool>(() =>
-            {
-                try
-                {
-                    // 0xA2 0xC3 send length followed by list of uint, expect 0x01 result.
-                    using (var client = GetClientsNamedPipe(handle, PipeDirection.InOut))
-                    {
-                        client.Connect(100);
-                        using (var writer = new BinaryWriter(client))
-                        using (var reader = new BinaryReader(client))
-                        {
-                            writer.Write(PIPE_UPDATE);
-                            writer.Write(PIPE_SOUND_MUTE_LIST);
-                            
-                            writer.Write(mutedEventIds.Count);
-                            foreach (var eventId in mutedEventIds)
-                            {
-                                writer.Write(eventId);
-                            }
-
-                            writer.Flush();
-
-                            var response = reader.ReadByte();
-                            bool success = response == PIPE_SUCCESS_RESPONSE_CODE;
-                            _logger.Verbose("HookService.SetMutedAudioListAsync: Response: 0x{Response:X2}, Success: {Success}", response, success);
-
-                            return success;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "HookService.SetMutedAudioListAsync: Error setting muted audio list for handle 0x{Handle:X}", handle);
-                    return false;
-                }
-            });
-        }
-
-        private async Task<bool> SendTakeOwnershipCommand(IntPtr handle, int newOwnerProcessId)
-        {
-            _logger.Verbose("HookService.SendTakeOwnershipCommand: Sending take ownership command for handle 0x{Handle:X} to PID {OwnerPID}", handle, newOwnerProcessId);
-            
-            return await Task.Run<bool>(() =>
-            {
-                try
-                {
-                    // Take ownership is 0xA2 0xB4 (int)ownerProcessId, Expect a 0x01 response.
-                    using (var client = GetClientsNamedPipe(handle, PipeDirection.InOut))
-                    {
-                        client.Connect(100);
-                        using (var writer = new BinaryWriter(client))
-                        using (var reader = new BinaryReader(client))
-                        {
-                            writer.Write(PIPE_UPDATE);
-                            writer.Write(PIPE_TAKE_OWNERSHIP_COMMAND);
-                            writer.Write(newOwnerProcessId);
-                            writer.Flush();
-
-                            var response = reader.ReadByte();
-                            bool success = response == PIPE_SUCCESS_RESPONSE_CODE;
-                            _logger.Verbose("HookService.SendTakeOwnershipCommand: Response: 0x{Response:X2}, Success: {Success}", response, success);
-
-                            return success;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "HookService.SendTakeOwnershipCommand: Error sending take ownership command for handle 0x{Handle:X}", handle);
-                    return false;
-                }
-            });
-        }
-
-        private async Task<bool> SetExactTargetFpsAsync(IntPtr handle, int foregroundFps, int backgroundFps, int predictiveFps)
-        {
-            _logger.Verbose("HookService.SetExactTargetFpsAsync: Setting exact FPS for handle 0x{Handle:X} (Foreground={FG}, Background={BG}, Predictive={Pred})", handle, foregroundFps, backgroundFps, predictiveFps);
-            
-            return await Task.Run<bool>(() =>
-            {
-                try
-                {
-                    var result = MakeThePipeCallToSetFps(handle, foregroundFps, backgroundFps, predictiveFps);
-                    _logger.Verbose("HookService.SetExactTargetFpsAsync: Result: {Result}", result);
-                    return result;
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "HookService.SetExactTargetFpsAsync: Exception while setting exact FPS for handle 0x{Handle:X}", handle);
-                    return false;
-                }
-            }).ConfigureAwait(false);
-        }
-
-        private bool MakeThePipeCallToSetFps(IntPtr handle, int foregroundFps, int backgroundFps, int predictiveFps)
-        {
-            _logger.Verbose("HookService.MakeThePipeCallToSetFps: Making pipe call to set FPS for handle 0x{Handle:X} (FG={FG}, BG={BG}, Pred={Pred})", handle, foregroundFps, backgroundFps, predictiveFps);
-            
-            try
-            {
-                // Update FPS is 0xA2 0xF1 (int)foreground 0xF2 (int)background 0xF3 (int)predictive, Expect a 0x01 response.
-                using (var client = GetClientsNamedPipe(handle, PipeDirection.InOut))
-                {
-                    client.Connect(100);
-                    using (var writer = new BinaryWriter(client))
-                    using (var reader = new BinaryReader(client))
-                    {
-                        writer.Write(PIPE_UPDATE);
-                        writer.Write(PIPE_FPS_PREFIX_BYTE_FOCUSED);
-                        writer.Write(foregroundFps);
-                        writer.Write(PIPE_FPS_PREFIX_BYTE_BACKGROUND);
-                        writer.Write(backgroundFps);
-                        writer.Write(PIPE_FPS_PREFIX_BYTE_PREDICT);
-                        writer.Write(predictiveFps);
-                        writer.Flush();
-
-                        var response = reader.ReadByte();
-                        bool success = response == PIPE_SUCCESS_RESPONSE_CODE;
-                        _logger.Verbose("HookService.MakeThePipeCallToSetFps: Response: 0x{Response:X2}, Success: {Success}", response, success);
-
-                        return success;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "HookService.MakeThePipeCallToSetFps: Pipe error while setting FPS for handle 0x{Handle:X}", handle);
-                return false;
-            }
-        }
-
-        private NamedPipeClientStream GetClientsNamedPipe(IntPtr handle, PipeDirection direction)
-        {
-            var pipeName = GetClientsPipeName(handle);
-            _logger.Verbose("HookService.GetClientsNamedPipe: Creating named pipe client: {PipeName}", pipeName);
-            return new NamedPipeClientStream(".", pipeName, direction, PipeOptions.None);
-        }
-
-        private string GetClientsPipeName(IntPtr handle)
-        {
-            return $"EveoRobin_{handle}";
-        }
-
+        finally { if (entered) gate.Release(); }
     }
 }

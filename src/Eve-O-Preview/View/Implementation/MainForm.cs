@@ -314,19 +314,21 @@ namespace EveOPreview.View
                 result.ForeColor = lblDisplaySampleFont.ForeColor;
                 result.OutlineColor = lblDisplaySampleFont.OutlineColor;
                 result.OutlineWidth = lblDisplaySampleFont.OutlineWidth;
-                result.PositionOffsetFromLeft = int.Parse(txtTitleOffsetLeft.Text);
-                result.PositionOffsetFromTop = int.Parse(txtTitleOffsetTop.Text);
+                result.PositionOffsetFromLeft = int.TryParse(txtTitleOffsetLeft.Text, out int left) ? left : 0;
+                result.PositionOffsetFromTop = int.TryParse(txtTitleOffsetTop.Text, out int top) ? top : 0;
 
                 return result;
             }
             set
             {
-                this._suppressEvents = true;
-                if (value?.Name == null || value?.Size < 0)
+                if (string.IsNullOrWhiteSpace(value?.Name) || !float.IsFinite(value.Size) || value.Size <= 0)
                 {
                     return;
                 }
-
+                bool wasSuppressed = this._suppressEvents;
+                this._suppressEvents = true;
+                try
+                {
                 lblDisplaySampleFont.OutlineColor = value.OutlineColor;
                 lblDisplaySampleFont.OutlineWidth = value.OutlineWidth;
                 lblDisplaySampleFont.Font = new Font(value.Name, value.Size, value.Style);
@@ -334,7 +336,8 @@ namespace EveOPreview.View
                 txtFontOutlineWidth.Text = value.OutlineWidth.ToString(CultureInfo.InvariantCulture);
                 txtTitleOffsetLeft.Text = value.PositionOffsetFromLeft.ToString();
                 txtTitleOffsetTop.Text = value.PositionOffsetFromTop.ToString();
-                this._suppressEvents = false;
+                }
+                finally { this._suppressEvents = wasSuppressed; }
             }
         }
 
@@ -669,13 +672,21 @@ namespace EveOPreview.View
             RefreshSelectedCycleGroup();
         }
 
+        private CycleGroup SelectedCycleGroup() =>
+            selectCycleGroupComboBox.SelectedIndex >= 0 && selectCycleGroupComboBox.SelectedIndex < selectCycleGroupComboBox.Items.Count
+                ? selectCycleGroupComboBox.SelectedItem as CycleGroup : null;
+
         private void RefreshSelectedCycleGroup()
         {
-            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+            var selectedGroup = SelectedCycleGroup();
 
             if (selectedGroup == null)
             {
                 _logger.Verbose("MainForm: RefreshSelectedCycleGroup - no group selected");
+                cycleGroupClientOrderList.DataSource = null;
+                cycleGroupDescriptionText.Text = "";
+                cycleGroupForwardHotkey1Text.Text = cycleGroupForwardHotkey2Text.Text = "";
+                cycleGroupBackwardHotkey1Text.Text = cycleGroupBackwardHotkey2Text.Text = "";
                 return;
             }
 
@@ -687,9 +698,19 @@ namespace EveOPreview.View
             cycleGroupBackwardHotkey1Text.Text = selectedGroup.BackwardHotkeys.FirstOrDefault();
             cycleGroupBackwardHotkey2Text.Text = selectedGroup.BackwardHotkeys.Skip(1).FirstOrDefault();
 
+            string selectedTitle = cycleGroupClientOrderList.SelectedItem is KeyValuePair<int, string> selected ? selected.Value : null;
+            int topIndex = cycleGroupClientOrderList.TopIndex;
+            var previousSource = cycleGroupClientOrderList.DataSource as BindingSource;
             cycleGroupClientOrderList.DataSource = null;
+            previousSource?.Dispose();
             cycleGroupClientOrderList.DataSource = new BindingSource(selectedGroup.ClientsOrder, null);
-            selectCycleGroupComboBox.DisplayMember = "Value";
+            cycleGroupClientOrderList.DisplayMember = "Value";
+            int selectedIndex = selectedGroup.ClientsOrder.Values.ToList().IndexOf(selectedTitle);
+            if (selectedIndex >= 0)
+            {
+                cycleGroupClientOrderList.TopIndex = Math.Min(topIndex, Math.Max(0, cycleGroupClientOrderList.Items.Count - 1));
+                cycleGroupClientOrderList.SelectedIndex = selectedIndex;
+            }
             cycleGroupClientOrderList.Update();
         }
 
@@ -738,8 +759,9 @@ namespace EveOPreview.View
         {
             _logger.Verbose("MainForm: addClientToCycleGroupButton_Click");
             var toonToAdd = this.GetClientNameFromInput();
+            if (string.IsNullOrWhiteSpace(toonToAdd)) return;
 
-            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+            var selectedGroup = SelectedCycleGroup();
 
             if (selectedGroup == null)
             {
@@ -764,7 +786,7 @@ namespace EveOPreview.View
         private void removeClientToCycleGroupButton_Click(object sender, EventArgs e)
         {
             _logger.Verbose("MainForm: removeClientToCycleGroupButton_Click");
-            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+            var selectedGroup = SelectedCycleGroup();
 
             if (selectedGroup == null)
             {
@@ -794,7 +816,7 @@ namespace EveOPreview.View
         private void cycleGroupMoveClientOrderUpButton_Click(object sender, EventArgs e)
         {
             _logger.Verbose("MainForm: cycleGroupMoveClientOrderUpButton_Click");
-            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+            var selectedGroup = SelectedCycleGroup();
 
             if (selectedGroup == null)
             {
@@ -808,7 +830,7 @@ namespace EveOPreview.View
 
             var KeyToMoveUpOne = ((KeyValuePair<int, string>)cycleGroupClientOrderList.SelectedItem).Key;
 
-            int previousKey = 0;
+            int? previousKey = null;
             foreach (var item in selectedGroup.ClientsOrder)
             {
                 if (item.Key == KeyToMoveUpOne)
@@ -819,15 +841,15 @@ namespace EveOPreview.View
                 previousKey = item.Key;
             }
 
-            if (previousKey == 0)
+            if (previousKey == null)
             {
                 return;
             }
 
-            var previousValue = selectedGroup.ClientsOrder[previousKey];
+            var previousValue = selectedGroup.ClientsOrder[previousKey.Value];
             var valueToMoveUp = selectedGroup.ClientsOrder[KeyToMoveUpOne];
 
-            selectedGroup.ClientsOrder[previousKey] = valueToMoveUp;
+            selectedGroup.ClientsOrder[previousKey.Value] = valueToMoveUp;
             selectedGroup.ClientsOrder[KeyToMoveUpOne] = previousValue;
 
             _logger.Verbose("MainForm: Moved {Client} up in cycle order", valueToMoveUp);
@@ -838,7 +860,7 @@ namespace EveOPreview.View
         private void cycleGroupDescriptionText_Leave(object sender, EventArgs e)
         {
             _logger.Verbose("MainForm: cycleGroupDescriptionText_Leave");
-            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+            var selectedGroup = SelectedCycleGroup();
 
             if (selectedGroup == null)
             {
@@ -863,7 +885,7 @@ namespace EveOPreview.View
         {
             _logger.Verbose("MainForm: addNewGroupButton_Click");
             var newName = "New Cycle Group";
-            var countGroupsWithSameName = CycleGroups.Count(x => x.Description.StartsWith(newName));
+            var countGroupsWithSameName = CycleGroups.Count(x => x.Description?.StartsWith(newName) == true);
 
             if (countGroupsWithSameName > 0)
             {
@@ -880,7 +902,7 @@ namespace EveOPreview.View
         private void removeGroupButton_Click(object sender, EventArgs e)
         {
             _logger.Verbose("MainForm: removeGroupButton_Click");
-            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+            var selectedGroup = SelectedCycleGroup();
 
             if (selectedGroup == null)
             {
@@ -891,14 +913,13 @@ namespace EveOPreview.View
             CycleGroups.Remove(selectedGroup);
 
             this.ApplicationSettingsChanged?.Invoke();
-            selectCycleGroupComboBox.SelectedItem = selectCycleGroupComboBox.Items[0];
             RefreshCycleGroups();
         }
 
         private void cycleGroupForwardHotkey1Text_DoubleClick(object sender, EventArgs e)
         {
             _logger.Verbose("MainForm: cycleGroupForwardHotkey1Text_DoubleClick");
-            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+            var selectedGroup = SelectedCycleGroup();
 
             if (selectedGroup == null)
             {
@@ -926,7 +947,7 @@ namespace EveOPreview.View
 
         private void cycleGroupForwardHotkey2Text_DoubleClick(object sender, EventArgs e)
         {
-            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+            var selectedGroup = SelectedCycleGroup();
 
             if (selectedGroup == null)
             {
@@ -975,7 +996,7 @@ namespace EveOPreview.View
         private void cycleGroupBackwardHotkey1Text_DoubleClick(object sender, EventArgs e)
         {
             _logger.Verbose("MainForm: cycleGroupBackwardHotkey1Text_DoubleClick");
-            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+            var selectedGroup = SelectedCycleGroup();
 
             if (selectedGroup == null)
             {
@@ -1004,7 +1025,7 @@ namespace EveOPreview.View
         private void cycleGroupBackwardHotkey2Text_DoubleClick(object sender, EventArgs e)
         {
             _logger.Verbose("MainForm: cycleGroupBackwardHotkey2Text_DoubleClick");
-            var selectedGroup = selectCycleGroupComboBox.SelectedItem as CycleGroup;
+            var selectedGroup = SelectedCycleGroup();
 
             if (selectedGroup == null)
             {
@@ -1076,11 +1097,10 @@ namespace EveOPreview.View
         private void UpdateFontOutlineWidth()
         {
             _logger.Verbose("MainForm: UpdateFontOutlineWidth");
-            var newValue = new string(txtFontOutlineWidth.Text.TakeWhile(char.IsNumber).ToArray());
-            txtFontOutlineWidth.Text = newValue;
-
-            var newFloatValue = float.Parse(newValue);
-
+            if (!float.TryParse(txtFontOutlineWidth.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out float newFloatValue) || !float.IsFinite(newFloatValue))
+                newFloatValue = lblDisplaySampleFont.OutlineWidth;
+            newFloatValue = Math.Clamp(newFloatValue, 0, 20);
+            txtFontOutlineWidth.Text = newFloatValue.ToString(CultureInfo.InvariantCulture);
             lblDisplaySampleFont.OutlineWidth = newFloatValue;
             this.ApplicationSettingsChanged?.Invoke();
         }
@@ -1088,18 +1108,12 @@ namespace EveOPreview.View
         private void UpdateTitleOffset()
         {
             _logger.Verbose("MainForm: UpdateTitleOffset");
-            var cleanOffsetLeft = new string(txtTitleOffsetLeft.Text.TakeWhile(char.IsNumber).ToArray());
-            var cleanOffsetTop = new string(txtTitleOffsetTop.Text.TakeWhile(char.IsNumber).ToArray());
-
-            txtTitleOffsetLeft.Text = cleanOffsetLeft;
-            txtTitleOffsetTop.Text = cleanOffsetTop;
-
-            var offsetLeft = int.Parse(cleanOffsetLeft);
-            var offsetTop = int.Parse(cleanOffsetTop);
+            int offsetLeft = int.TryParse(txtTitleOffsetLeft.Text, out int left) ? left : 0;
+            int offsetTop = int.TryParse(txtTitleOffsetTop.Text, out int top) ? top : 0;
+            txtTitleOffsetLeft.Text = offsetLeft.ToString();
+            txtTitleOffsetTop.Text = offsetTop.ToString();
 
             _logger.Verbose("MainForm: Title offset set to ({Left},{Top})", offsetLeft, offsetTop);
-            this.TitleFontSettings.PositionOffsetFromLeft = offsetLeft;
-            this.TitleFontSettings.PositionOffsetFromTop = offsetTop;
             this.ApplicationSettingsChanged?.Invoke();
         }
 
@@ -1379,6 +1393,11 @@ namespace EveOPreview.View
         {
             _logger.Verbose("MainForm: ValidateProfileName: {Name}", name);
             errorMessage = string.Empty;
+            if (!ProfileManager.IsValidProfileName(name))
+            {
+                errorMessage = "Enter a valid folder name. Empty and reserved Windows names are not allowed.";
+                return false;
+            }
 
             if (name.Length > 50)
             {
@@ -1420,6 +1439,7 @@ namespace EveOPreview.View
 
         private void chbAutoCpuAffinity_CheckedChanged(object sender, EventArgs e)
         {
+            if (_suppressEvents) return;
             _logger.Verbose("MainForm: chbAutoCpuAffinity_CheckedChanged: {IsChecked}", chbAutoCpuAffinity.Checked);
             this.EnableAutomaticCpuAffinity = chbAutoCpuAffinity.Checked;
             this.ApplicationSettingsChanged?.Invoke();

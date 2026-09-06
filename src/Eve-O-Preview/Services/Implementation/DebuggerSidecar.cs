@@ -110,7 +110,7 @@ namespace EveOPreview.Services.Implementation
                             try
                             {
                                 IntPtr exceptionAddr = (IntPtr)BitConverter.ToInt64(dbgEvent.u, 16);
-                                uint isFirstChance = BitConverter.ToUInt32(dbgEvent.u, 24); // 1 = First Chance, 0 = Second
+                                uint isFirstChance = BitConverter.ToUInt32(dbgEvent.u, 152); // after the x64 EXCEPTION_RECORD
 
                                 string chance = (isFirstChance == 1) ? "First-Chance" : "Unhandled/Second-Chance";
 

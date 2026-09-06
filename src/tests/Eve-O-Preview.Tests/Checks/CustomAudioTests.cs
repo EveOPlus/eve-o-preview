@@ -52,9 +52,11 @@ public sealed class CustomAudioTests(ITestOutputHelper output)
         PrivateDesktopRunner.RunAsync("custom-audio-ui", output);
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task SendsCustomIdsAlongsidePresetsAndRemovesClearedIds(bool presets)
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public async Task SendsCustomIdsAlongsidePresetsAndRemovesClearedIds(bool presets, bool atomicReplace)
     {
         var config = CreateConfiguration();
         config.AudioMuteSettings = new AudioMuteSettings
@@ -71,19 +73,36 @@ public sealed class CustomAudioTests(ITestOutputHelper output)
             1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
+        bool first = true;
         async Task<uint[]> ReceiveUpdate()
         {
-            await server.WaitForConnectionAsync(timeout.Token);
             byte[] header = new byte[2];
+            if (first)
+            {
+                await server.WaitForConnectionAsync(timeout.Token);
+                await server.ReadExactlyAsync(header, timeout.Token);
+                Assert.Equal(new byte[] { 0xA1, 0xB5 }, header);
+                if (atomicReplace)
+                {
+                    await server.WriteAsync(new byte[] { 2 }, timeout.Token);
+                    server.WaitForPipeDrain();
+                }
+                server.Disconnect(); // Legacy servers don't answer unknown queries.
+                first = false;
+            }
+            if (!atomicReplace)
+            {
+            await server.WaitForConnectionAsync(timeout.Token);
             await server.ReadExactlyAsync(header, timeout.Token);
             Assert.Equal(new byte[] { 0xA2, 0xC1 }, header);
             await server.WriteAsync(new byte[] { 1 }, timeout.Token);
             server.WaitForPipeDrain();
             server.Disconnect();
+            }
 
             await server.WaitForConnectionAsync(timeout.Token);
             await server.ReadExactlyAsync(header, timeout.Token);
-            Assert.Equal(new byte[] { 0xA2, 0xC3 }, header);
+            Assert.Equal(new byte[] { 0xA2, atomicReplace ? (byte)0xC6 : (byte)0xC3 }, header);
             byte[] length = new byte[4];
             await server.ReadExactlyAsync(length, timeout.Token);
             int count = BitConverter.ToInt32(length);

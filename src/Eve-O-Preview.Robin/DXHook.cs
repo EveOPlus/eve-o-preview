@@ -33,39 +33,54 @@ public unsafe class DxHook
     // See signature https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgiswapchain1-present1 "plus" this pointer.
     private static delegate* unmanaged[Stdcall]<IntPtr, uint, uint, IntPtr, int> _originalPresent1;
 
-    internal static int TargetFpsInFocus = 144;
-    internal static int TargetFpsInBackground = 30;
-    internal static int TargetFpsInPredictFocus = 600;
-    internal static double PerFrameTargetMsInFocus = 1000.0 / TargetFpsInFocus;
-    internal static double PerFrameTargetMsInBackground = 1000.0 / TargetFpsInBackground;
-    internal static double PerFrameTargetMsInPredictFocus = 1000.0 / TargetFpsInPredictFocus;
+    internal sealed record FpsTargets(int Foreground, int Background, int Predicted)
+    {
+        public bool Enabled => Foreground > 0 || Background > 0;
+        public double Interval(FocusType focus)
+        {
+            int fps = focus == FocusType.Foreground ? Foreground
+                : focus == FocusType.Predicted && Predicted > 0 ? Predicted : Background;
+            return Enabled && fps > 0 ? 1000.0 / fps : 0;
+        }
+    }
+
+    private static FpsTargets _targets = new(0, 0, 0);
+    internal static FpsTargets Targets => Volatile.Read(ref _targets);
+    internal static void SetFpsTargets(int foreground, int background, int predicted) =>
+        Volatile.Write(ref _targets, new FpsTargets(ValidateFps(foreground), ValidateFps(background), ValidateFps(predicted)));
+    private static int ValidateFps(int fps) => fps is >= 1 and <= 1000 ? fps : 0;
+
+    private static readonly object FocusLock = new();
+    private static volatile FocusType _ourFocus = FocusType.Background;
+    private static bool _ignoreNextLostFocus;
+    private static long _focusChangedAt = Stopwatch.GetTimestamp();
     internal static int PredictedFocusTimeoutMs = 5000;
-    internal static bool IsFpsThrottleActive = true;
-
-    private static FocusType _ourFocus = FocusType.Background;
-    private static bool _ignoreNextLostFocus = false;
-
-    private static readonly uint CurrentPid = (uint)Process.GetCurrentProcess().Id;
-    private static readonly Stopwatch LastFrameSw = Stopwatch.StartNew();
-    private static readonly Stopwatch LastCheckedFocusSw = Stopwatch.StartNew();
-    private static readonly PrecisionSleep PrecisionSleep = new();
+    private static readonly uint CurrentPid = (uint)Environment.ProcessId;
+    [ThreadStatic] private static long _lastFrameTimestamp;
+    [ThreadStatic] private static PrecisionSleep? _precisionSleep;
+    [ThreadStatic] private static int _presentDepth;
+    private static int _initialized;
+    internal static bool HooksInstalled;
+    private static long _focusBoostUntil;
 
     [UnmanagedCallersOnly(EntryPoint = "Initialize", CallConvs = [typeof(CallConvStdcall)])]
-    public static void Initialize()
+    public static uint Initialize(IntPtr parameter)
     {
+        if (Interlocked.Exchange(ref _initialized, 1) != 0) return 0;
         try
         {
             // Name the pipe based on the MainWindowHandle so clients don't conflict and so it's easy to find, we can also use this like a mutex which should work on linux too.
             NamedPipeServer.Initialize();
 
             // Setup a named pipe so we can manage the target fps from another process such as Eve-O Preview.
-            Task.Run(NamedPipeServer.StartPipeServer);
+            _ = Task.Run(NamedPipeServer.StartPipeServer);
+            Global.StartOwnerWatchdog();
         }
         catch (Exception ex)
         {
             // Double on using the named pipe like a cross-platform mutex. If the named pipe is already taken then don't hook again.
             Error(ex, "Failed to create named pipe server");
-            return;
+            return 1;
         }
 
         //Log($"Subscribing to EVENT_SYSTEM_FOREGROUND");
@@ -96,35 +111,34 @@ public unsafe class DxHook
             if (NativeMethods.VirtualProtect((IntPtr)presentEntryPtr, (UIntPtr)sizeof(nint), PAGE_EXECUTE_READWRITE, out var oldProtect))
             {
                 Info($"Hooking into Present");
+                HooksInstalled = true;
                 *presentEntryPtr = (delegate* unmanaged[Stdcall]<IntPtr, uint, uint, int>)&HookedPresent;
                 // Set the protection back to what it was before we got here.
                 NativeMethods.VirtualProtect((IntPtr)presentEntryPtr, (UIntPtr)sizeof(nint), oldProtect, out _);
             }
 
-            bool isDx12Game = false;
-            foreach (ProcessModule module in Process.GetCurrentProcess().Modules)
+            // Present1 belongs to IDXGISwapChain1, including on D3D11. Query the interface
+            // before reading its vtable; loading d3d12.dll says nothing about that layout.
+            // Use the COM ABI directly. SharpDX's generic QueryInterface constructs wrappers
+            // through reflection, which can be trimmed from a NativeAOT shared library.
+            Guid swapChain1Id = new("790a45f7-0d42-4876-983a-0a55cfe6f4aa");
+            IntPtr swapChain1 = IntPtr.Zero;
+            var queryInterface = (delegate* unmanaged[Stdcall]<IntPtr, Guid*, IntPtr*, int>)vTablePointer[0];
+            if (queryInterface(swapChain.NativePointer, &swapChain1Id, &swapChain1) >= 0 && swapChain1 != IntPtr.Zero)
             {
-                if (module.ModuleName?.ToLower() == "d3d12.dll")
+                void** extendedVtable = *(void***)swapChain1;
+                try
                 {
-                    //Log($"Located DirectX 12 module is loaded.");
-                    isDx12Game = true;
-                    break;
+                    void** entry = &extendedVtable[22];
+                    _originalPresent1 = (delegate* unmanaged[Stdcall]<IntPtr, uint, uint, IntPtr, int>)*entry;
+                    if (NativeMethods.VirtualProtect((IntPtr)entry, (UIntPtr)sizeof(nint), PAGE_EXECUTE_READWRITE, out var protection))
+                    {
+                        *entry = (delegate* unmanaged[Stdcall]<IntPtr, uint, uint, IntPtr, int>)&HookedPresent1;
+                        NativeMethods.VirtualProtect((IntPtr)entry, (UIntPtr)sizeof(nint), protection, out _);
+                    }
+                    else Error("Could not protect the Present1 vtable entry");
                 }
-            }
-
-            if (isDx12Game)
-            {
-                //Log($"Locating Present1 should at index 22 for DirectX 12");
-                void** presentEntry22 = &vTablePointer[22];
-                _originalPresent1 = (delegate* unmanaged[Stdcall]<IntPtr, uint, uint, IntPtr, int>)*presentEntry22;
-
-                if (NativeMethods.VirtualProtect((IntPtr)presentEntry22, (UIntPtr)sizeof(nint), PAGE_EXECUTE_READWRITE, out var oldProtectDx12))
-                {
-                    Info($"Hooking into Present1");
-                    *presentEntry22 = (delegate* unmanaged[Stdcall]<IntPtr, uint, uint, IntPtr, int>)&HookedPresent1;
-
-                    NativeMethods.VirtualProtect((IntPtr)presentEntry22, (UIntPtr)sizeof(nint), oldProtectDx12, out _);
-                }
+                finally { ((delegate* unmanaged[Stdcall]<IntPtr, uint>)extendedVtable[2])(swapChain1); }
             }
         }
         catch (Exception ex)
@@ -140,73 +154,38 @@ public unsafe class DxHook
         {
             Error(ex);
         }
+        return HooksInstalled ? 0u : 1u;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static FocusType GetOurCurrentFocus()
     {
-        var msBeforeNextCheck = _ourFocus != FocusType.Predicted ? 3000 : PredictedFocusTimeoutMs;
-        if (LastCheckedFocusSw.ElapsedMilliseconds < msBeforeNextCheck)
+        var focus = _ourFocus;
+        int timeout = focus == FocusType.Predicted ? Volatile.Read(ref PredictedFocusTimeoutMs) : 3000;
+        if (Stopwatch.GetElapsedTime(Volatile.Read(ref _focusChangedAt)).TotalMilliseconds >= timeout)
         {
-            return _ourFocus;
+            SetOurWindowInFocus(IsThisOurHandle(NativeMethods.GetForegroundWindow()) ? FocusType.Foreground : FocusType.Background, reconcile: true);
         }
-
-        // Just as a safe guard lets manually check if we're in focus if it's been a while since anything happened.
-        // We depend mostly on events updating our focus now so we most the time we can trust it but checking once every few seconds is a trivial backup.
-        // This is mostly to protect us accidentally thinking we have focus e.g. if the named pipe gives us focus, but then we lost it somehow in a race condition.
-        IntPtr foregroundHandle = NativeMethods.GetForegroundWindow();
-        var currentFocus = IsThisOurHandle(foregroundHandle) ? FocusType.Foreground : FocusType.Background;
-        SetOurWindowInFocus(currentFocus);
-
-        EnsureOwnerIsStillAlive();
-
         return _ourFocus;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void EnsureOwnerIsStillAlive()
+    private static void HandleForegroundChangedEvent(IntPtr handle) =>
+        SetOurWindowInFocus(IsThisOurHandle(handle) ? FocusType.Foreground : FocusType.Background);
+
+    internal static void SetOurWindowInFocus(FocusType focus, bool reconcile = false)
     {
-        if (OwnerProcessId == -1)
+        lock (FocusLock)
         {
-            return;
+            if (!reconcile && _ignoreNextLostFocus && focus == FocusType.Background)
+            {
+                _ignoreNextLostFocus = false;
+                return;
+            }
+            _ignoreNextLostFocus = focus == FocusType.Predicted;
+            Volatile.Write(ref _focusChangedAt, Stopwatch.GetTimestamp());
+            _ourFocus = focus;
         }
-
-        if (IsProcessRunning(OwnerProcessId))
-        {
-            return;
-        }
-
-        OwnerProcessId = 0;
-        IsFpsThrottleActive = false;
-    }
-
-    private static void HandleForegroundChangedEvent(IntPtr handleTakingFocus)
-    {
-        var currentFocus = IsThisOurHandle(handleTakingFocus) ? FocusType.Foreground : FocusType.Background;
-        SetOurWindowInFocus(currentFocus);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static void SetOurWindowInFocus(FocusType newFocus)
-    {
-        if (_ignoreNextLostFocus && newFocus == FocusType.Background)
-        {
-            _ignoreNextLostFocus = false;
-            return;
-        }
-
-        _ourFocus = newFocus;
-        LastCheckedFocusSw.Restart();
-
-        if (newFocus == FocusType.Predicted)
-        {
-            _ignoreNextLostFocus = true;
-        }
-
-        if (OwnerProcessId != -1 && newFocus == FocusType.Foreground)
-        {
-            NativeMethods.AllowSetForegroundWindow(OwnerProcessId);
-        }
+        if (OwnerProcessId > 0 && focus == FocusType.Foreground) NativeMethods.AllowSetForegroundWindow(OwnerProcessId);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -237,108 +216,57 @@ public unsafe class DxHook
         return false;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void ThrottleTheFrame()
+    private static double CurrentFrameInterval()
     {
-        if (IsFpsThrottleActive)
+        if (Stopwatch.GetTimestamp() < Volatile.Read(ref _focusBoostUntil)) return 0;
+        return Targets.Interval(GetOurCurrentFocus());
+    }
+
+    internal static void PrepareForFocus()
+    {
+        // Release Present briefly even when the configured foreground rate is 1 FPS.
+        // This is request-time state only; the render callback allocates nothing.
+        Volatile.Write(ref _focusBoostUntil, Stopwatch.GetTimestamp() + Stopwatch.Frequency / 4);
+        SetOurWindowInFocus(FocusType.Foreground);
+    }
+
+    private static bool ThrottleTheFrame()
+    {
+        double interval = CurrentFrameInterval();
+        if (interval <= 0) { _lastFrameTimestamp = 0; return false; }
+        if (_lastFrameTimestamp == 0) { _lastFrameTimestamp = Stopwatch.GetTimestamp(); return true; }
+        _precisionSleep ??= new PrecisionSleep();
+        while (true)
         {
-            var focusAtStartOfFrame = GetOurCurrentFocus();
-
-            double perFrameTargetMs;
-            switch (focusAtStartOfFrame)
-            {
-                case FocusType.Background:
-                    perFrameTargetMs = PerFrameTargetMsInBackground;
-                    break;
-                case FocusType.Foreground:
-                    perFrameTargetMs = PerFrameTargetMsInFocus;
-                    break;
-                case FocusType.Predicted:
-                    perFrameTargetMs = PerFrameTargetMsInPredictFocus > 0.9
-                        ? PerFrameTargetMsInPredictFocus
-                        : PerFrameTargetMsInBackground;
-                    break;
-                default:
-                    perFrameTargetMs = 0;
-                    break;
-            }
-
-            double elapsed = LastFrameSw.Elapsed.TotalMilliseconds;
-            if (elapsed < perFrameTargetMs)
-            {
-                double timeLeftToWait = perFrameTargetMs - elapsed;
-
-                // ToDo: Wait out the bulk in a PrecisionSleep, with a callback to interrupt if we need to take focus.
-                // Then we can remove the whole loop and check logic for a sleep that is much more predicable on the CPU.
-
-                // First lets wait out some big chunks, but still small enough to break out if we take focus.
-                // This should only really be needed if we're going super slow fps and need to snap back to high speed.
-                while (timeLeftToWait > 16.0)
-                {
-                    PrecisionSleep.Sleep(15); // We can do a Sleep(1) here which will pass about 15-16ms but our PrecisionSleep uses a waitable object so should be better on the CPU.
-
-                    // If we received focus, then break out of this frame to reduce lag when switching.
-                    if (focusAtStartOfFrame != FocusType.Foreground && GetOurCurrentFocus() == FocusType.Foreground)
-                    {
-                        LastFrameSw.Restart();
-                        return;
-                    }
-
-                    // Refresh remaining time left to wait.
-                    timeLeftToWait = perFrameTargetMs - LastFrameSw.Elapsed.TotalMilliseconds;
-                }
-
-                // Wait out the final big chunk to save the CPU a bit longer. We're so close to the end theres no point trying to escape.
-                if (timeLeftToWait > 1.0)
-                {
-                    PrecisionSleep.Sleep(timeLeftToWait - 0.5);
-                }
-
-                // Busy wait for the final high-precision micro-seconds
-                while (LastFrameSw.Elapsed.TotalMilliseconds < perFrameTargetMs)
-                {
-                    Thread.SpinWait(10);
-                }
-            }
-
-            // Start timing the next frame so we know how much extra delay we need to add.
-            LastFrameSw.Restart();
+            interval = CurrentFrameInterval();
+            if (interval <= 0) { _lastFrameTimestamp = 0; return false; }
+            double remaining = interval - Stopwatch.GetElapsedTime(_lastFrameTimestamp).TotalMilliseconds;
+            if (remaining <= 0) break;
+            // Recheck focus and disable during both the long wait and final remainder.
+            if (remaining > 1) _precisionSleep.Sleep(Math.Min(15, remaining - 0.5));
+            else Thread.SpinWait(10);
         }
+        _lastFrameTimestamp = Stopwatch.GetTimestamp();
+        return true;
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
     private static int HookedPresent(IntPtr swapChain, uint syncInterval, uint flags)
     {
-        ThrottleTheFrame();
-
-        // Let DirectX 11 do its thing to generate the next frame.
-        //return _originalPresent(swapChain, syncInterval, flags);
-        return _originalPresent(swapChain, IsFpsThrottleActive ? 0 : syncInterval, flags);
+        if (_presentDepth != 0 || (flags & 9) != 0) return _originalPresent(swapChain, syncInterval, flags);
+        _presentDepth++;
+        try { return _originalPresent(swapChain, ThrottleTheFrame() ? 0 : syncInterval, flags); }
+        finally { _presentDepth--; }
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
-    private static int HookedPresent1(IntPtr swapChain, uint syncInterval, uint flags, IntPtr present1Parameters)
+    private static int HookedPresent1(IntPtr swapChain, uint syncInterval, uint flags, IntPtr parameters)
     {
-        ThrottleTheFrame();
-
-        // Let DirectX 12 do its thing to generate the next frame.
-        return _originalPresent1(swapChain, IsFpsThrottleActive ? 0 : syncInterval, flags, present1Parameters);
+        if (_presentDepth != 0 || (flags & 9) != 0) return _originalPresent1(swapChain, syncInterval, flags, parameters);
+        _presentDepth++;
+        try { return _originalPresent1(swapChain, ThrottleTheFrame() ? 0 : syncInterval, flags, parameters); }
+        finally { _presentDepth--; }
     }
-
-    private const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
-    private static bool IsProcessRunning(int pid)
-    {
-        IntPtr processHandle = NativeMethods.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
-        if (processHandle != IntPtr.Zero)
-        {
-            NativeMethods.CloseHandle(processHandle);
-            return true;
-        }
-        return false;
-    }
-
-    const uint MB_OK = 0x00000000; // just a ding
-    const uint MB_ICONERROR = 0x00000010; // another noise for testing
 
     private const int PAGE_EXECUTE_READWRITE = 0x40;
 }

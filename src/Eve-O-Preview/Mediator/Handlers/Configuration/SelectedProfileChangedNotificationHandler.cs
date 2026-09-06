@@ -16,6 +16,7 @@
 
 using EveOPreview.Helper;
 using EveOPreview.Mediator.Messages;
+using EveOPreview.Mediator.Messages.Process;
 using EveOPreview.Services.Interface;
 using MediatR;
 using Serilog;
@@ -37,12 +38,14 @@ public class SelectedProfileChangedNotificationHandler : INotificationHandler<Se
         _logger = logger;
     }
 
-    public Task Handle(SelectedProfileChangedNotification notification, CancellationToken cancellationToken)
+    public async Task Handle(SelectedProfileChangedNotification notification, CancellationToken cancellationToken)
     {
         _logger.WithCallerInfo().Information("SelectedProfileChangedNotification: Profile changed to {ProfileLocation}", notification.NewProfileLocation);
         _globalEvents.PublishCurrentProfileChanged(notification);
-        _mediator.Publish(new ThumbnailFontTitleSettingsUpdated(), cancellationToken); // Make sure the font is updated on all the existing thumbnails. 
-
-        return Task.CompletedTask;
+        await _mediator.Publish(new ThumbnailFontTitleSettingsUpdated(), cancellationToken);
+        await _mediator.Send(new ResetAllCpuAffinity(), cancellationToken);
+        // Installation/reuse applies both the current FPS targets (including disabled)
+        // and audio settings to each existing client.
+        await _mediator.Send(new SetAudioSettings(), cancellationToken);
     }
 }

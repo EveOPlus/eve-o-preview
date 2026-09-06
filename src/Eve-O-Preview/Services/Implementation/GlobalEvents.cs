@@ -22,6 +22,8 @@ namespace EveOPreview.Services.Implementation;
 
 public class GlobalEvents : IGlobalEvents
 {
+    public event Action HotkeysChanged;
+    public void PublishHotkeysChanged() => HotkeysChanged?.Invoke();
     public event Action<SelectedProfileChangedNotification> CurrentProfileChanged;
     public void PublishCurrentProfileChanged(SelectedProfileChangedNotification n) => CurrentProfileChanged?.Invoke(n);
 

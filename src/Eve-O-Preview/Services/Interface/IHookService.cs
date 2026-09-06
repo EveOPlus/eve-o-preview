@@ -15,6 +15,7 @@
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace EveOPreview.Services.Interface
@@ -22,6 +23,7 @@ namespace EveOPreview.Services.Interface
     public interface IHookService
     {
         bool Ping(IntPtr handle);
+        Task<string> GetVersionAsync(IntPtr handle);
 
         Task TellEveClientFocusIsComingAsync(IntPtr hPtr);
         
@@ -34,5 +36,7 @@ namespace EveOPreview.Services.Interface
         Task<bool> DisableFpsLimiterAsync(IntPtr handle);
 
         Task<bool> UpdateMutedAudioAsync(IntPtr handle);
+        void ForgetClient(IProcessInfo process);
+        Task StopAsync(IEnumerable<IProcessInfo> processes);
     }
 }

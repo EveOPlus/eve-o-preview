@@ -46,6 +46,7 @@ namespace EveOPreview.View
         void ZoomOut();
         
         void Refresh(bool forceRefresh);
+        void RefreshAppearance();
 
         Action<IntPtr> ThumbnailResized { get; set; }
         Action<IntPtr> ThumbnailMoved { get; set; }

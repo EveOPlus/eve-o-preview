@@ -6,7 +6,7 @@ The application, Robin, tests, Mock, configuration, message/handler classes, nat
 
 Binary/resource treatment: icon and partner image metadata were inspected, not their pixels; MainForm's embedded icons were decoded for metadata; the release CSS font is a binary payload. The public certificate was inspected without importing it and contains no private key. Both GPL v3 files were identified and verified byte-identical; this was not a license/legal audit. `assets/stuff.zip` contains `stuff.7z`; the inner archive was not unpacked or audited and no build reference to it was found in the reviewed release code. None of these payloads was executed.
 
-Excluded from source review: ignored package/download caches, `bin`/`obj`/`publish`, `.vs`, generated local state, user settings, logs, profiles and temporary output. There are no tracked `tools` sources or CI workflow files at this baseline. The local `.vscode` directory was empty. The IDE log name in the task did not supply log contents. No application/test/native hook/release task was run for this documentation-only change; see [validation scope](build-and-test.md).
+Excluded from source review: ignored package/download caches, `bin`/`obj`/`publish`, `.vs`, generated local state, user settings, logs, profiles and temporary output. There are no tracked `tools` sources or CI workflow files at this baseline. The local `.vscode` directory was empty. The IDE log name in the task did not supply log contents. That baseline documentation review did not run applications/tests/native hooks. The subsequent defect investigation did; see [validation scope](build-and-test.md) and [results](reported-bugs.md).
 
 Use [the entry guide](../../README.md) to route by feature; use this page when a file is unfamiliar. Namespaces and filenames are not always identical, and some tracked files are intentionally excluded from compilation.
 
@@ -314,3 +314,19 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 - [Future feature backlog](feature-backlog.md): nineteen unimplemented/partial/exploratory ideas, current source distinctions and acceptance checks.
 
 Update the appropriate table when adding, deleting or moving a source file. Keep baseline coverage distinct from subsequent changes; do not count a generated path list as evidence of a fresh semantic review.
+
+## Integration additions from the defect investigation
+
+Paths remain relative to the Git root; these are outside the original baseline count.
+
+| File | Purpose |
+| --- | --- |
+| `src/tests/Eve-O-Preview.Tests/Checks/ProfileWorkflowTests.cs` | Isolated profile migration/default/rollback/rename/clone workflow |
+| `src/tests/Eve-O-Preview.Tests/Checks/SettingsIntegrationTests.cs` | Private-desktop production settings/input/resource/affinity workflow |
+| `src/tests/Eve-O-Preview.Tests/Checks/PipeLifecycleTests.cs` | Host deadlines and shutdown wire behavior |
+| `src/tests/Robin.NativeSmoke/Robin.NativeSmoke.csproj` | Optional native integration driver project |
+| `src/tests/Robin.NativeSmoke/Program.cs` | Production injection/protocol/lifecycle orchestration and separate allocation checks |
+| `src/tests/Robin.NativeSmoke/probe.cpp` | Real D3D11 Present/Present1 and native exception/audio consumer |
+| `src/tests/Robin.NativeSmoke/audio.cpp` / `audio.def` | Synthetic Wwise export fixture with SDK-pinned action values |
+| `src/tests/Robin.NativeSmoke/build-probe.ps1` | Build the two controlled native fixtures using VS x64 tools |
+| `src/tests/Robin.NativeSmoke/README.md` | Commands, prerequisites and validation boundaries |

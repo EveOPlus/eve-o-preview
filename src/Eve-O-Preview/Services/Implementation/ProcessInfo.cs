@@ -15,15 +15,16 @@
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using Microsoft.Win32.SafeHandles;
 
 namespace EveOPreview.Services.Implementation
 {
-    sealed class ProcessInfo : IProcessInfo
+    sealed class ProcessInfo : IProcessInfo, IDisposable
     {
         public ProcessInfo(IntPtr mainWindowHandle, IntPtr processHandle, int processId, string title)
         {
             this.MainWindowHandle = mainWindowHandle;
-            this.ProcessHandle = processHandle;
+            this.OwnedHandle = new SafeProcessHandle(processHandle, ownsHandle: true);
             this.ProcessId = processId;
             this.Title = title;
         }
@@ -32,7 +33,11 @@ namespace EveOPreview.Services.Implementation
         public IntPtr MainWindowHandle { get; }
 
         /// <inheritdoc/>
-        public IntPtr ProcessHandle { get; }
+        public IntPtr ProcessHandle => OwnedHandle.IsClosed ? IntPtr.Zero : OwnedHandle.DangerousGetHandle();
+        internal SafeProcessHandle OwnedHandle { get; private set; }
+
+        internal ProcessInfo WithTitle(string title) => new ProcessInfo(MainWindowHandle, IntPtr.Zero, ProcessId, title) { OwnedHandle = OwnedHandle };
+        public void Dispose() => OwnedHandle.Dispose();
 
         public string Title { get; }
 

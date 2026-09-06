@@ -88,7 +88,7 @@ internal static unsafe class WinEventHook
 
         // The Message Pump: Keeps the thread alive and processes the Hook callbacks
         NativeMethods.MSG msg;
-        while (NativeMethods.GetMessage(out msg, IntPtr.Zero, 0, 0))
+        while (NativeMethods.GetMessage(out msg, IntPtr.Zero, 0, 0) > 0)
         {
             NativeMethods.TranslateMessage(ref msg);
             NativeMethods.DispatchMessage(ref msg);

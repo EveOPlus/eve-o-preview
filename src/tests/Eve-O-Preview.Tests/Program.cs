@@ -22,6 +22,7 @@ internal static class Program
         {
             if (args[1] == "feature-controls") FeatureAvailabilityTests.CheckControls();
             else if (args[1] == "custom-audio-ui") CustomAudioTests.CheckUi();
+            else if (args[1].StartsWith("settings-", StringComparison.Ordinal)) SettingsIntegrationTests.RunScenario(args[1][9..]);
             else if (args[1].StartsWith("live-", StringComparison.Ordinal)) LiveThumbnailTests.RunScenario(args[1][5..]);
             else ThumbnailZOrderTests.RunScenario(args[1]);
             return 0;

@@ -45,11 +45,13 @@ public class CpuAffinityService : ICpuAffinityService
     private IntPtr _backgroundMask; // Where all background processes will run otherwise.
     private IntPtr _allCoresMask; // List of all cores so we can easily turn our automation back off.
 
-    private readonly HashSet<IntPtr?> _currentBackgroundHandles = [];
+    private readonly HashSet<(int Pid, IntPtr Handle)> _currentBackgroundHandles = [];
+    private readonly Dictionary<(int Pid, IntPtr Handle), IntPtr> _originalMasks = [];
 
     private bool _isOurCpuAbleToSupportAffinity = true;
     private Lock _lock = new ();
     private bool _isRunning = false;
+    private bool _stopped;
 
     public CpuAffinityService(ILogger logger, IThumbnailConfiguration config)
     {
@@ -63,106 +65,86 @@ public class CpuAffinityService : ICpuAffinityService
 
     public void UpdateAffinity(IProcessInfo active, IProcessInfo next, IProcessInfo prev, IEnumerable<IProcessInfo> allClients)
     {
-        if (!_isOurCpuAbleToSupportAffinity || !_config.EnableAutomaticCpuAffinity)
-        {
-            _logger.Verbose("UpdateAffinity skipped: CpuSupported={CpuSupported}, Enabled={Enabled}",
-                _isOurCpuAbleToSupportAffinity, _config.EnableAutomaticCpuAffinity);
-            return;
-        }
-
         lock (_lock)
         {
-            _isRunning = true; // If we've ever changed the affinity, flag it so we know.
-        }
+            if (_stopped || !_isOurCpuAbleToSupportAffinity || !_config.EnableAutomaticCpuAffinity) return;
+            var clients = allClients.Where(p => p != null).ToList();
+            var liveKeys = clients.Select(p => (p.ProcessId, p.ProcessHandle)).ToHashSet();
+            _currentBackgroundHandles.IntersectWith(liveKeys);
+            foreach (var key in _originalMasks.Keys.Where(k => !liveKeys.Contains(k)).ToArray()) _originalMasks.Remove(key);
+            active ??= next ?? prev;
+            if (next?.ProcessId == active?.ProcessId) next = null;
+            if (prev?.ProcessId == active?.ProcessId || prev?.ProcessId == next?.ProcessId) prev = null;
 
-        if (active == null)
-        {
-            active = next;
-            next = null;
-
-            if (active == null)
+            // A process can have several HWNDs/records. The highest priority role wins once.
+            foreach (var client in clients.GroupBy(p => p.ProcessId).Select(g => g.First()))
             {
-                active = prev;
-                prev = null;
-            }
-        }
-
-        ApplyFast(active?.ProcessHandle, _activeMask);
-        ApplyFast(next?.ProcessHandle, _nextMask);
-        ApplyFast(prev?.ProcessHandle, _prevMask);
-
-        lock (_lock)
-        {
-            _currentBackgroundHandles.Remove(active?.ProcessHandle);
-            _currentBackgroundHandles.Remove(next?.ProcessHandle);
-            _currentBackgroundHandles.Remove(prev?.ProcessHandle);
-        }
-
-        foreach (var processInfo in allClients)
-        {
-            if (processInfo == active || processInfo == next || processInfo == prev)
-            {
-                continue;
-            }
-
-            lock (_lock)
-            {
-                if (!_currentBackgroundHandles.Add(processInfo?.ProcessHandle))
+                var key = (client.ProcessId, client.ProcessHandle);
+                IntPtr mask = client.ProcessId == active?.ProcessId ? _activeMask
+                    : client.ProcessId == next?.ProcessId ? _nextMask
+                    : client.ProcessId == prev?.ProcessId ? _prevMask : _backgroundMask;
+                bool background = client.ProcessId != active?.ProcessId && client.ProcessId != next?.ProcessId && client.ProcessId != prev?.ProcessId;
+                if (background && _currentBackgroundHandles.Contains(key)) continue;
+                _currentBackgroundHandles.Remove(key);
+                if (WithHandle(client, handle =>
                 {
-                    continue;
+                    if (!_originalMasks.TryGetValue(key, out IntPtr original))
+                    {
+                        if (!GetProcessAffinityMask(handle, out original, out _)) return false;
+                        _originalMasks[key] = original;
+                    }
+                    // Respect restrictions the user or launcher applied before automation.
+                    IntPtr allowed = (IntPtr)(mask.ToInt64() & original.ToInt64());
+                    if (allowed == IntPtr.Zero) allowed = original;
+                    return SetProcessAffinityMask(handle, allowed);
+                }))
+                {
+                    _isRunning = true;
+                    if (background) _currentBackgroundHandles.Add(key);
                 }
             }
-
-            ApplyFast(processInfo?.ProcessHandle, _backgroundMask);
         }
-
-        _logger.Verbose("CPU Affinity updated: Active PID={ActivePid}, Next PID={NextPid}, Previous PID={PrevPid}",
-            active?.ProcessId ?? 0, next?.ProcessId ?? 0, prev?.ProcessId ?? 0);
     }
 
     public void ResetAll(IEnumerable<IProcessInfo> allClients)
     {
         lock (_lock)
         {
-            if (!_isRunning)
+            if (!_isRunning) return;
+            foreach (var client in allClients.Where(p => p != null))
             {
-                // If we never touched the affinity, we have nothing to reset.
-                _logger.Verbose("ResetAll skipped: Affinity was never applied");
-                return;
+                var key = (client.ProcessId, client.ProcessHandle);
+                if (_originalMasks.TryGetValue(key, out IntPtr original) &&
+                    WithHandle(client, handle => SetProcessAffinityMask(handle, original)))
+                    _originalMasks.Remove(key);
             }
-        }
-
-        _logger.Verbose("Resetting CPU Affinity to all cores for all clients");
-
-        foreach (var client in allClients)
-        {
-            if (client == null || client.ProcessHandle == IntPtr.Zero)
-            {
-                continue;
-            }
-
-            SetProcessAffinityMask(client.ProcessHandle, _allCoresMask);
-        }
-
-        lock (_lock)
-        {
-            // Clear our tracking state so we can turn it back on again later without getting confused.
             _currentBackgroundHandles.Clear();
-            _isRunning = false;
+            _isRunning = _originalMasks.Count > 0;
         }
-
-        _logger.Information("CPU Affinity reset completed");
     }
 
-    private void ApplyFast(IntPtr? hProcess, IntPtr mask, uint priority = NORMAL_PRIORITY_CLASS)
+    public void Stop(IEnumerable<IProcessInfo> allClients)
     {
-        if (hProcess == null || hProcess == IntPtr.Zero)
+        lock (_lock)
         {
-            return;
+            _stopped = true;
+            ResetAll(allClients);
         }
+    }
 
-        SetProcessAffinityMask(hProcess.Value, mask);
-        // SetPriorityClass(hProcess.Value, priority); I don't think theres much value manually setting priority. The windows scheduler can handle this for us... leaving this here to make it easy to switch back on if needed.
+    private bool WithHandle(IProcessInfo process, Func<IntPtr, bool> operation)
+    {
+        var owned = (process as ProcessInfo)?.OwnedHandle;
+        bool addedRef = false;
+        try
+        {
+            owned?.DangerousAddRef(ref addedRef);
+            IntPtr handle = process.ProcessHandle;
+            if (handle == IntPtr.Zero || GetProcessId(handle) != process.ProcessId) return false;
+            return operation(handle);
+        }
+        catch (ObjectDisposedException) { return false; }
+        finally { if (addedRef) owned.DangerousRelease(); }
     }
 
     private void DetectCores()
@@ -182,7 +164,14 @@ public class CpuAffinityService : ICpuAffinityService
                 {
                     var info = Marshal.PtrToStructure<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX>(current);
 
+                    if (info.Size < Marshal.SizeOf<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX>() || offset + info.Size > length) break;
                     var core = info.Processor;
+                    if (core.GroupCount != 1 || core.GroupMask.Group != 0)
+                    {
+                        _isOurCpuAbleToSupportAffinity = false;
+                        _logger.Information("CPU affinity automation is unavailable across multiple processor groups");
+                        return;
+                    }
 
                     if (_logger.IsEnabled(LogEventLevel.Verbose))
                     {
@@ -220,9 +209,16 @@ public class CpuAffinityService : ICpuAffinityService
             Marshal.FreeHGlobal(buffer);
         }
 
-        // Fallback: If no E-cores detected (AMD or older Intel), all are P-Cores
+        // Homogeneous CPUs report efficiency class zero for every core.
+        if (PCores.Count == 0 && ECores.Count > 0)
+        {
+            PCores.AddRange(ECores);
+            ECores.Clear();
+        }
+        // Fallback only within the one processor group this strategy supports.
         if (ECores.Count == 0 && PCores.Count == 0)
         {
+            if (Environment.ProcessorCount > 64) { _isOurCpuAbleToSupportAffinity = false; return; }
             for (int i = 0; i < Environment.ProcessorCount; i++)
             {
                 PCores.Add(i);

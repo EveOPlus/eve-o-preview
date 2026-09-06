@@ -71,6 +71,16 @@ namespace EveOPreview.View
             }
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && _thumbnail != null)
+            {
+                _thumbnail.Image?.Dispose();
+                _thumbnail.Image = null;
+            }
+            base.Dispose(disposing);
+        }
+
         protected override void ResizeThumbnail(int baseWidth, int baseHeight, int highlightWidthTop, int highlightWidthRight, int highlightWidthBottom, int highlightWidthLeft)
         {
             var left = 0 + highlightWidthLeft;

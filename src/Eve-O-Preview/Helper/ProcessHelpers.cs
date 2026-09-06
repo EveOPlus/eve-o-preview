@@ -31,9 +31,10 @@ namespace EveOPreview.Helper
                 return null;
             }
 
-            var kernelHandle = process.OpenKernelHandle();
-
-            return new ProcessInfo(process.MainWindowHandle, kernelHandle, process.Id, process.MainWindowTitle);
+            var hwnd = process.MainWindowHandle;
+            var id = process.Id;
+            var title = process.MainWindowTitle;
+            return new ProcessInfo(hwnd, process.OpenKernelHandle(), id, title);
         }
 
         public static IntPtr OpenKernelHandle(this Process process)
@@ -48,6 +49,11 @@ namespace EveOPreview.Helper
 
         public static void CloseKernelHandle(this IProcessInfo processInfo)
         {
+            if (processInfo is ProcessInfo owned)
+            {
+                owned.Dispose();
+                return;
+            }
             if (processInfo == null || processInfo.ProcessHandle == IntPtr.Zero)
             {
                 return;

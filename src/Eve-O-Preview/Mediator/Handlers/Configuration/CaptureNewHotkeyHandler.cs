@@ -111,6 +111,7 @@ namespace EveOPreview.Mediator.Handlers.Configuration
 
         private void AddOrMeaningfulError(Dictionary<Keys, string> theDictionary, Keys hotkeys, string location)
         {
+            if (hotkeys == Keys.None) return;
             if (theDictionary.TryGetValue(hotkeys, out var theExistingLocation))
             {
                 throw new HotkeyAlreadyExistsException(hotkeys, theExistingLocation, location);
@@ -170,6 +171,7 @@ namespace EveOPreview.Mediator.Handlers.Configuration
                 _keyboardMouseEvents.KeyDown -= downHandler;
             }
 
+            if (result.KeysCaptured == Keys.None || !string.IsNullOrEmpty(result.ErrorMessage)) return result;
             result.IsValid = true;
 
             if (result.KeysCaptured == Keys.Escape)

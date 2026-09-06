@@ -119,19 +119,13 @@ Messages live under [Mediator/Messages](../../Eve-O-Preview/Mediator/Messages); 
 
 ## Profile storage and migration
 
-[ProfileManager](../../Eve-O-Preview/Configuration/Implementation/ProfileManager.cs) selects one root, in order:
+[ProfileManager](../../Eve-O-Preview/Configuration/Implementation/ProfileManager.cs) prefers an existing Profiles directory beside the executable, then LocalAppData, creating a root when needed. It ensures Default exists, protects Default from rename/delete, refreshes the cached locations, and keeps the shared selected location current after a rename. Clone saves current state first, including a fresh Default with no JSON yet. Profile names reject blank/trimmed, traversal, trailing-dot, invalid and reserved Windows names.
 
-1. An existing `Profiles` directory beside `Environment.ProcessPath`.
-2. An existing `%LOCALAPPDATA%/Eve-O Preview/Profiles` directory.
-3. Create the local directory plus `Default`; on `UnauthorizedAccessException`, create the AppData equivalent.
+[ConfigurationStorage](../../Eve-O-Preview/Configuration/Implementation/ConfigurationStorage.cs) loads into a fresh default candidate, ignores explicit nulls, applies restrictions and migrations, then populates the existing singleton. Invalid input returns false; ChangeSelectedProfile restores the previous location and does not publish a selected-profile notification. Missing files load defaults. A committed load whose hotkey subscriber fails is logged as a subscriber failure, not rolled back inconsistently. Load/save are serialized; saves write a temporary file and replace the destination only after writing succeeds.
 
-Each profile is a subdirectory containing `EVE-O Preview.json`. An existing `Default` subdirectory is listed even if its JSON does not exist. The legacy single JSON beside the EXE is copied to `Default`, then the original is renamed to an available `.bak`/`.bak(n)` backup. If a root already exists but lacks `Default`, the existing-directory branch does not create it; investigate that case separately from the intended fallback order.
+Version 1 migrates both old cycle groups while preserving clients with duplicate order values. Version 2 groups legacy client hotkeys with distinct incremented keys and stores ConfigVersion=3. Repeat load/save is covered by isolated workflow tests. Full `EVE - ...` titles and historical JSON names remain persisted identities.
 
-[ConfigurationStorage.Load](../../Eve-O-Preview/Configuration/Implementation/ConfigurationStorage.cs) populates the **existing singleton** with Newtonsoft.Json and `ObjectCreationHandling.Replace`. Collections present in JSON replace their contents instead of merging. Fields absent from the JSON are not reset to a new default object: after switching profiles they can retain the previous profile's values. The load then tries version-1 and version-2 migrations, clamps supported values and always refreshes parsed hotkeys in `finally`, including missing-file/error paths. It logs load exceptions; this does not make the load transactional or roll back partial changes.
-
-`Save` serializes the model with indentation and ignored null values, then writes the current file directly. `IOException` during writing is swallowed. It is not an atomic replace/backup save. Clone copies files in the current profile directory (not nested directories); rename moves the directory; delete recursively removes a non-default profile and requests the default. Treat user profile files as data, and use isolated fixtures for migration/storage validation.
-
-Version 1 migrates two named legacy cycle groups only when no current groups exist. Version 2 groups legacy `ClientHotkey` mappings into cycle groups. Inspect both methods with representative JSON before changing serialization; there are concrete issues below.
+Profile notification updates the UI and existing views, timer/hide intervals, font/geometry/frames and native settings, and resets prior affinity. Compatibility changes recreate views; ordinary profile changes preserve live DWM. Native install/reuse applies both FPS (including disabled targets) and audio. The factory reads current font/renderer settings when creating a new preview.
 
 ## Hotkey capture and UI details
 
@@ -143,17 +137,13 @@ Escape clears a binding to `Keys.None`. Duplicate detection includes general bin
 
 [OutlinedLabel](../../Eve-O-Preview/View/CustomControl/OutlinedLabel.cs) chooses smoothing deliberately to avoid artifacts against transparent backgrounds: outline drawing starts above 0.1 width, and fill antialiasing is enabled only above 1.9. [DarkModeContextMenuStrip](../../Eve-O-Preview/View/CustomControl/DarkModeContextMenuStrip.cs) has private nested renderer/color-table classes alongside similarly named types in [DarkGoldRenderer.cs](../../Eve-O-Preview/View/CustomControl/DarkGoldRenderer.cs); follow constructor/type resolution before styling. The live About tab belongs to MainForm. The separate `PreviewToy.AboutBox` files are excluded by the current project and contain stale resource references.
 
-## Investigation points, not behavior to preserve
+## Remaining boundaries
 
-These are source-observed limitations or possible defects, not fixes made by this documentation task. Use a reproducer before asserting an end-user symptom.
+The settings workflow now protects font/size event suppression, fractional and incomplete numeric input, final-group deletion, cancelled/empty client selections, retained Move Up selection and hotkey capture timeout. RefreshHotkeys reparses and publishes HotkeysChanged so registrations follow group replacement as well as edits. FontSettings itself supplies defaults for partial nested profiles.
 
-- `AutoMigrateVersion2Config` initializes order key `i=1` but never increments it, so two clients sharing a legacy hotkey attempt the same dictionary key. It also sets `dynamicConfig.ConfigVersion=3` on a temporary object, not the populated model. Version-1 duplicate-order adjustment is also heuristic; exercise colliding order values and repeat loads.
-- `ProfileManager.ProfileLocations` is assigned in the constructor. Later `RefreshProfileLocations` returns/publishes a new list without updating that property. Default lookup can therefore use a stale snapshot. Rename does not update `ConfigurationStorage.CurrentProfile`, so a later save can still use the moved-from path. Name validation does not reject empty or all reserved Windows names; there is no full transactional profile switch.
-- Profile load changes shared state and UI, and explicitly refreshes hotkeys/fonts. It does not explicitly push every FPS/audio/frame/size change to existing clients or recreate views if compatibility mode changes. The dispatcher interval is set in the manager constructor. Validate each affected feature across profile switching instead of promising full live reapplication.
-- `CaptureNextKeyUp` sets `IsValid=true` after the timeout/error path, potentially overriding its failure result. The message-pumping loop is reentrant. General live settings refresh rebuilds parsed keys without necessarily replacing all registered delegates; see the window guide's registration notes.
-- `MainForm.TitleFontSettings` sets `_suppressEvents=true` before an invalid-font early return and may leave suppression set. `chbAutoCpuAffinity_CheckedChanged` does not check `_suppressEvents`. Numeric text parsing for outline/offsets can parse an empty string, and the default font setup assigns `PositionOffsetFromLeft` twice instead of setting Top. These are UI/configuration edges, not performance techniques.
-- `ClientNameInputBox` dereferences `SelectedItem` during a selection change; inspect empty-list/null-selection behavior. Cycle-group removal accesses `Items[0]` without a final-group-specific branch. Adding clients does not explicitly reject a canceled/null name. Exercise empty, single-item, duplicate and canceled workflows when modifying this UI.
-- Several saves/notifications are unawaited; concurrent field edits, file writes and client messages have no general transactional ordering. Native disable response reads can block. Review these boundaries when investigating hangs, stale settings, or shutdown.
+View callbacks still include async void and some fire-and-forget MediatR dispatch. UI methods must run on their owning thread; storage serialization is not a general transaction over controls and native clients. SaveApplicationSettings copies all controls before its first await. Shutdown cancels the first FormClosing request, yields back to the UI pump, awaits native cleanup, saves and closes once. Repeated close requests do not start duplicate cleanup. This avoids blocking MediatR continuations on the UI thread. Close-to-tray remains profile-scoped.
+
+See [current defect status and evidence](reported-bugs.md) rather than treating old suspected defects as behavior to preserve.
 
 ## Change checklist and validation
 

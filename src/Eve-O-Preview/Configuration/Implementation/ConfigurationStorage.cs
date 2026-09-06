@@ -32,13 +32,12 @@ namespace EveOPreview.Configuration.Implementation
 {
     class ConfigurationStorage : IConfigurationStorage
     {
-        //private const string CONFIGURATION_FILE_NAME = "EVE-O Preview.json";
-
         private readonly IAppConfig _appConfig;
         private readonly IThumbnailConfiguration _thumbnailConfiguration;
         private readonly IMediator _mediator;
         private readonly ILogger _logger;
         private readonly IGlobalEvents _globalEvents;
+        private readonly object _storageLock = new object();
 
         public ProfileLocation CurrentProfile { get; set; }
 
@@ -52,45 +51,49 @@ namespace EveOPreview.Configuration.Implementation
 
             CurrentProfile = profileManager.GetDefaultProfileLocation();
 
-            //_globalEvents.CurrentProfileChanged += HandleSelectedProfileChangedNotification;
         }
 
-        public void Load()
+        public bool Load()
         {
-            try
+            lock (_storageLock)
             {
-                if (!File.Exists(CurrentProfile.FullPath))
+                try
                 {
-                    _logger.WithCallerInfo().Error($"Failed Loading configuration profile because file does not exist at : {CurrentProfile.FullPath}");
-                    return;
+                    _logger.WithCallerInfo().Information($"Loading configuration profile: {CurrentProfile.FriendlyName} at {CurrentProfile.FullPath}");
+                    string rawData = File.Exists(CurrentProfile.FullPath) ? File.ReadAllText(CurrentProfile.FullPath) : "{}";
+
+                    JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings()
+                    {
+                        ObjectCreationHandling = ObjectCreationHandling.Replace,
+                        NullValueHandling = NullValueHandling.Ignore
+                    };
+                    // Build a complete candidate first: omitted fields belong to this profile's defaults,
+                    // and malformed input must never partially overwrite the active singleton.
+                    var candidate = new ThumbnailConfiguration();
+                    JsonConvert.PopulateObject(rawData, candidate, jsonSerializerSettings);
+                    candidate.ApplyRestrictions();
+
+                    AutoMigrateVersion1Config(rawData, candidate);
+                    AutoMigrateVersion2Config(rawData, candidate);
+
+                    // Validate data after loading it
+                    candidate.ApplyRestrictions();
+                    JsonConvert.PopulateObject(JsonConvert.SerializeObject(candidate), _thumbnailConfiguration, jsonSerializerSettings);
+                    // The candidate is committed. A subscriber failure must not report a
+                    // failed load and roll the selected path back while retaining these settings.
+                    try { _mediator.Send(new RefreshHotkeys()).GetAwaiter().GetResult(); }
+                    catch (Exception ex) { _logger.Error(ex, "Profile loaded, but refreshing hotkeys failed"); }
+                    return true;
                 }
-
-                _logger.WithCallerInfo().Information($"Loading configuration profile: {CurrentProfile.FriendlyName} at {CurrentProfile.FullPath}");
-                string rawData = File.ReadAllText(CurrentProfile.FullPath);
-
-                JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings()
+                catch (Exception ex)
                 {
-                    ObjectCreationHandling = ObjectCreationHandling.Replace
-                };
-                JsonConvert.PopulateObject(rawData, this._thumbnailConfiguration, jsonSerializerSettings);
-
-                AutoMigrateVersion1Config(rawData);
-                AutoMigrateVersion2Config(rawData);
-                
-                // Validate data after loading it
-                this._thumbnailConfiguration.ApplyRestrictions();
-            }
-            catch (Exception ex)
-            {
-                _logger.WithCallerInfo().Error(ex, "Unhandled exception while loading config.");
-            }
-            finally
-            {
-                this._mediator.Send(new RefreshHotkeys()).GetAwaiter().GetResult();
+                    _logger.WithCallerInfo().Error(ex, "Unhandled exception while loading config.");
+                    return false;
+                }
             }
         }
 
-        private void AutoMigrateVersion2Config(string rawData)
+        private void AutoMigrateVersion2Config(string rawData, IThumbnailConfiguration candidate)
         {
             
             var dynamicConfig = JsonConvert.DeserializeObject<dynamic>(rawData);
@@ -111,29 +114,29 @@ namespace EveOPreview.Configuration.Implementation
                         int i = 1;
                         foreach (var client in individualGroup)
                         {
-                            newCycleGroup.ClientsOrder.Add(i, client.Key);
+                            newCycleGroup.ClientsOrder.Add(i++, client.Key);
                         }
 
                         var toonNames = individualGroup.Select(x => x.Key.Replace("EVE - ", "")).ToList();
 
                         newCycleGroup.Description = $"ClientHk - {string.Join(", ", toonNames)}";
 
-                        if (_thumbnailConfiguration.CycleGroups.All(x => x.Description != newCycleGroup.Description))
+                        if (candidate.CycleGroups.All(x => x.Description != newCycleGroup.Description))
                         {
 
-                            _thumbnailConfiguration.CycleGroups.Add(newCycleGroup);
+                            candidate.CycleGroups.Add(newCycleGroup);
                         }
                     }
                 }
 
-                dynamicConfig.ConfigVersion = 3;
+                candidate.ConfigVersion = 3;
             }
         }
 
-        private void AutoMigrateVersion1Config(string rawData)
+        private void AutoMigrateVersion1Config(string rawData, IThumbnailConfiguration candidate)
         {
             var dynamicConfig = JsonConvert.DeserializeObject<dynamic>(rawData);
-            if (dynamicConfig.ConfigVersion == 1 && !this._thumbnailConfiguration.CycleGroups.Any())
+            if (dynamicConfig.ConfigVersion == 1 && !candidate.CycleGroups.Any())
             {
                 _logger.Information($"Auto migrating version 1 config for profile: {CurrentProfile.FriendlyName}");
                 var cycleGroup1 = new CycleGroup();
@@ -154,22 +157,13 @@ namespace EveOPreview.Configuration.Implementation
                     }
                 }
 
-                int numberOfDuplicateOrders = 0;
                 if (dynamicConfig.CycleGroup1ClientsOrder is JObject)
                 {
-                    foreach (JProperty property in dynamicConfig.CycleGroup1ClientsOrder.Properties())
+                    foreach (JProperty property in ((JObject)dynamicConfig.CycleGroup1ClientsOrder).Properties().OrderBy(p => (int)p.Value))
                     {
                         string clientName = property.Name;      // e.g., "EVE - Example Toon 1"
-                        int orderNumber = (int)property.Value;  // e.g., 1
 
-                        if (cycleGroup1.ClientsOrder.ContainsKey(orderNumber))
-                        {
-                            numberOfDuplicateOrders++;
-                        }
-
-                        orderNumber += numberOfDuplicateOrders;
-
-                        cycleGroup1.ClientsOrder.Add(orderNumber, clientName);
+                        cycleGroup1.ClientsOrder.Add(cycleGroup1.ClientsOrder.Count + 1, clientName);
                     }
                 }
 
@@ -191,50 +185,48 @@ namespace EveOPreview.Configuration.Implementation
                     }
                 }
 
-                numberOfDuplicateOrders = 0;
                 if (dynamicConfig.CycleGroup2ClientsOrder is JObject)
                 {
-                    foreach (JProperty property in dynamicConfig.CycleGroup2ClientsOrder.Properties())
+                    foreach (JProperty property in ((JObject)dynamicConfig.CycleGroup2ClientsOrder).Properties().OrderBy(p => (int)p.Value))
                     {
                         string clientName = property.Name;      // e.g., "EVE - Example Toon 1"
-                        int orderNumber = (int)property.Value;  // e.g., 1
 
-                        if (cycleGroup2.ClientsOrder.ContainsKey(orderNumber))
-                        {
-                            numberOfDuplicateOrders++;
-                        }
-
-                        orderNumber += numberOfDuplicateOrders;
-
-                        cycleGroup2.ClientsOrder.Add(orderNumber, clientName);
+                        cycleGroup2.ClientsOrder.Add(cycleGroup2.ClientsOrder.Count + 1, clientName);
                     }
                 }
 
-                this._thumbnailConfiguration.CycleGroups.Add(cycleGroup1);
-                this._thumbnailConfiguration.CycleGroups.Add(cycleGroup2);
-                this._thumbnailConfiguration.ConfigVersion = 2;
+                candidate.CycleGroups.Add(cycleGroup1);
+                candidate.CycleGroups.Add(cycleGroup2);
+                candidate.ConfigVersion = 2;
             }
         }
 
         public void Save()
         {
-            _logger.Information($"Saving configuration profile: {CurrentProfile.FriendlyName} at {CurrentProfile.FullPath}");
-            var options = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
-            string rawData = JsonConvert.SerializeObject(this._thumbnailConfiguration, Formatting.Indented, options);
+            lock (_storageLock)
+            {
+                _logger.Information($"Saving configuration profile: {CurrentProfile.FriendlyName} at {CurrentProfile.FullPath}");
+                var options = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+                string rawData = JsonConvert.SerializeObject(this._thumbnailConfiguration, Formatting.Indented, options);
 
-            try
-            {
-                File.WriteAllText(CurrentProfile.FullPath, rawData);
-            }
-            catch (IOException)
-            {
-                // Ignore error if for some reason the updated config cannot be written down
+                string tempPath = CurrentProfile.FullPath + ".tmp";
+                try
+                {
+                    File.WriteAllText(tempPath, rawData);
+                    File.Move(tempPath, CurrentProfile.FullPath, overwrite: true);
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    _logger.Error(ex, "Failed to save profile {Path}", CurrentProfile.FullPath);
+                }
+                finally
+                {
+                    try { if (File.Exists(tempPath)) File.Delete(tempPath); }
+                    catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                    { _logger.Warning(ex, "Could not remove temporary profile file {Path}", tempPath); }
+                }
             }
         }
         
-        //private void HandleSelectedProfileChangedNotification(SelectedProfileChangedNotification notification)
-        //{
-        //    CurrentProfile = notification.NewProfileLocation;
-        //}
     }
 }

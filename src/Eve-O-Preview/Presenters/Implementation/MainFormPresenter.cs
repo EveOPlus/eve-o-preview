@@ -49,6 +49,8 @@ namespace EveOPreview.Presenters
         private bool _suppressSizeNotifications;
 
         private bool _exitApplication;
+        private bool _shutdownInProgress;
+        private bool _shutdownCompleted;
         #endregion
 
         public MainFormPresenter(
@@ -192,19 +194,29 @@ namespace EveOPreview.Presenters
             this.View.Hide();
         }
 
-        private void Close(ViewCloseRequest request)
+        private async void Close(ViewCloseRequest request)
         {
             _logger.Verbose("MainFormPresenter.Close: Close requested. ExitApplication={ExitApplication}, MinimizeToTray={MinimizeToTray}", this._exitApplication, this.View.MinimizeToTray);
             
             if (this._exitApplication || !this.View.MinimizeToTray)
             {
-                _logger.Verbose("MainFormPresenter.Close: Performing full application shutdown");
-                // we are closing so be careful not to block on the UI main thread
-                Task.Run(() => this._mediator.Send(new StopService())).GetAwaiter().GetResult();
-
-                this._configurationStorage.Save();
-                request.Allow = true;
-                _logger.Verbose("MainFormPresenter.Close: Application shutdown complete");
+                request.Allow = _shutdownCompleted;
+                if (_shutdownCompleted || _shutdownInProgress) return;
+                _shutdownInProgress = true;
+                try
+                {
+                    // Cancel this close, let the FormClosing callback return, and keep
+                    // pumping UI continuations while MediatR/native cleanup completes.
+                    await Task.Yield();
+                    await _mediator.Send(new StopService());
+                    _configurationStorage.Save();
+                }
+                catch (Exception ex) { _logger.Error(ex, "Application shutdown cleanup failed"); }
+                finally
+                {
+                    _shutdownCompleted = true;
+                    View.Close();
+                }
                 return;
             }
 
@@ -233,6 +245,10 @@ namespace EveOPreview.Presenters
 
         private void ReloadApplicationSettings()
         {
+            bool wasSuppressed = _suppressSizeNotifications;
+            _suppressSizeNotifications = true;
+            try
+            {
             _logger.Verbose("MainFormPresenter.ReloadApplicationSettings: Reloading all settings to UI components");
             this.View.CycleGroups = this._configuration.CycleGroups;
 
@@ -266,6 +282,8 @@ namespace EveOPreview.Presenters
             this.View.AudioMuteSettings = this._configuration.AudioMuteSettings;
             this.View.LoadedProfileName = this._configurationStorage.CurrentProfile.FriendlyName;
             this.View.EnableAutomaticCpuAffinity = this._configuration.EnableAutomaticCpuAffinity;
+            }
+            finally { _suppressSizeNotifications = wasSuppressed; }
         }
 
         private async void SaveApplicationSettings()
@@ -291,12 +309,8 @@ namespace EveOPreview.Presenters
             this._configuration.ThumbnailZoomAnchor = ViewZoomAnchorConverter.Convert(this.View.ThumbnailZoomAnchor);
 
             this._configuration.ShowThumbnailOverlays = this.View.ShowThumbnailOverlays;
-            if (this._configuration.ShowThumbnailFrames != this.View.ShowThumbnailFrames)
-            {
-                _logger.Verbose("MainFormPresenter.SaveApplicationSettings: Thumbnail frame settings changed");
-                this._configuration.ShowThumbnailFrames = this.View.ShowThumbnailFrames;
-                await this._mediator.Publish(new ThumbnailFrameSettingsUpdated());
-            }
+            bool framesChanged = this._configuration.ShowThumbnailFrames != this.View.ShowThumbnailFrames;
+            this._configuration.ShowThumbnailFrames = this.View.ShowThumbnailFrames;
 
             this._configuration.EnableActiveClientHighlight = this.View.EnableActiveClientHighlight;
             this._configuration.ActiveClientHighlightColor = this.View.ActiveClientHighlightColor;
@@ -311,6 +325,7 @@ namespace EveOPreview.Presenters
 
             this.View.RefreshZoomSettings();
 
+            if (framesChanged) await this._mediator.Publish(new ThumbnailFrameSettingsUpdated());
             await this._mediator.Publish(new ThumbnailFontTitleSettingsUpdated());
             
             await this._mediator.Send(new RefreshHotkeys());
@@ -411,7 +426,7 @@ namespace EveOPreview.Presenters
         public string GetClientDescriptionFromInputBox()
         {
             _logger.Verbose("MainFormPresenter.GetClientDescriptionFromInputBox: Opening client selection dialog");
-            var input = new ClientNameInputBox();
+            using var input = new ClientNameInputBox();
             lock (_descriptionsCache)
             {
                 input.LoadKnownClients(_descriptionsCache.Keys.ToList());

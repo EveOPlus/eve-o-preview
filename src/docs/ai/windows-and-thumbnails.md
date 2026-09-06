@@ -91,36 +91,29 @@ Keep the immediate raise and periodic repair as separate responsibilities. Reord
 
 ### Compatibility mode has different cost and lifetime rules
 
-The factory captures `EnableCompatibilityMode` at construction. Static views use `GetDC`/`GetClientRect`/compatible bitmap/`BitBlt` in [WindowManager.GetStaticThumbnail](../../Eve-O-Preview/Services/Implementation/WindowManager.cs); capture occurs only on forced refresh and rejects either dimension below 300. `StaticThumbnailView` replaces a non-null image and disposes the previous image. Null capture keeps the last valid image.
+The factory reads the current `EnableCompatibilityMode` when creating each view. Static views use `GetDC`/`GetClientRect`/compatible bitmap/`BitBlt` in [WindowManager.GetStaticThumbnail](../../Eve-O-Preview/Services/Implementation/WindowManager.cs); capture occurs only on forced refresh and rejects either dimension below 300. `StaticThumbnailView` replaces a non-null image and disposes the previous image. Null capture keeps the last valid image.
 
 [StaticThumbnailImage.WndProc](../../Eve-O-Preview/View/Implementation/StaticThumbnailImage.cs) returns `HTTRANSPARENT` for `WM_NCHITTEST` so the picture control does not intercept the form's mouse behavior. Preserve this when changing rendering controls.
 
 ## Focus, switching, and prediction
 
-[WindowManager.ActivateWindow](../../Eve-O-Preview/Services/Implementation/WindowManager.cs) sends `TellEveClientFocusIsComingAsync` without awaiting it, then marks `IsCurrentlySwitching`, attempts `SetForegroundWindow` and `SetFocus`, falls back to `SwitchToThisWindow` when the foreground call fails, and asynchronously restores a source with `WS_MINIMIZE`. `finally` clears the switching flag. The flag describes this synchronous attempt; it does not await the OS restore or hook work and is not a queue/mutex.
+[WindowManager.ActivateWindow](../../Eve-O-Preview/Services/Implementation/WindowManager.cs) validates the HWND with IsWindow, issues the existing pipe wake, restores a minimized source asynchronously, then immediately calls SetForegroundWindow/SetFocus with the existing SwitchToThisWindow fallback. There is no WM_NULL responsiveness probe: a throttled client must receive the wake before any focus request, and must not be rejected because it is waiting in Present. IsCurrentlySwitching covers the synchronous attempt and is cleared in finally. Windows activation may still complete asynchronously in the target input queue.
 
 `SwitchActiveClient` handles the previous source: if `MinimizeInactiveClients` is enabled and the old title is not a priority client, minimize it without animation, then update active state/order. Merely switching to a non-EVE window does not run this path to minimize clients.
 
-`MinimizeWindow(handle, true)` sends `WM_SYSCOMMAND/SC_MINIMIZE`; `false` edits `WINDOWPLACEMENT.showCmd` and calls `SetWindowPlacement`. Preserve this distinction when changing switch latency. An explicit thumbnail minimize uses the animated path; inactive-client minimization uses the non-animated path.
+`MinimizeWindow(handle, true)` asynchronously posts `WM_SYSCOMMAND/SC_MINIMIZE`; `false` edits `WINDOWPLACEMENT.showCmd` and calls `SetWindowPlacement`. Preserve this distinction when changing switch latency. An explicit thumbnail minimize uses the animated path; inactive-client minimization uses the non-animated path.
 
-There are two activation paths in [ThumbnailManager](../../Eve-O-Preview/Services/Implementation/ThumbnailManager.cs):
-
-| Trigger | Current sequence |
-| --- | --- |
-| Cycle hotkey | Compute next and next-next titles; send `UpdateCpuAffinity(next, nextNext, oldActive)`; `SetActive(next)`; `PredictUpcomingClient(nextNext)` |
-| Thumbnail click | Immediately raise; `Task.Run` sends affinity update with the clicked source only and activates its source; continuation via `TaskScheduler.FromCurrentSynchronizationContext` switches active state, updates client layouts, and refreshes previews |
-
-The click continuation deliberately returns to the current UI synchronization context. Preserve that boundary around WinForms operations. The cycle path is synchronous from the hotkey delegate; neither path awaits all mediator sends. `PredictUpcomingClient` skips zero HWNDs and sends `TellEveClientFocusIsMaybeComingSoonAsync` to prepare the following client. The hook implementation owns what preparation means; thumbnail rendering and source-game FPS are separate paths.
+Cycle hotkeys, direct client hotkeys and thumbnail clicks share synchronous SetActive behavior: raise the preview, commit the selected client, apply both old/new borders, thumbnail locations and active-preview visibility, and request focus on the input thread. ThumbnailView.RefreshAppearance updates border geometry/overlay without image capture or DWM re-registration. No Task.Run, affinity await, timer tick or UI continuation gates these changes. The production affinity handler applies cached masks after the first focus request; pending async completion does not suppress a subsequent cycle. The activation guard covers reentrant calls only. This ordering corrects the delayed-border and 1 FPS focus regressions reported after the initial defect pass.
 
 ## Hotkeys and cycle semantics
 
-`RegisterAllHotkeys` removes every tracked down/up delegate before rebuilding group and general bindings. It runs in the constructor and on `GlobalEvents.CurrentProfileChanged`. [GlobalEvents.cs](../../Eve-O-Preview/Services/Implementation/GlobalEvents.cs) invokes subscribers directly; it does not marshal threads or queue notifications.
+`RegisterAllHotkeys` removes every tracked down/up delegate before rebuilding group and general bindings. It runs in the constructor, on profile changes and on `GlobalEvents.HotkeysChanged` after parsing group edits. [GlobalEvents.cs](../../Eve-O-Preview/Services/Implementation/GlobalEvents.cs) invokes subscribers directly; it does not marshal threads or queue notifications.
 
 `FindNextClientInCycleGroup` uses full exact titles, removes configured titles with no running preview entry, orders integer positions ascending/descending, and wraps to the first remaining entry. When the active title is absent from that group, cycling starts at that first entry. An empty filtered group produces no selected view, and `SetActive` ignores the null view.
 
 Cycle key-down checks `e.KeyData`, ignores `Keys.None`, ignores a press during `IsCurrentlySwitching`, then cycles and marks the event handled. General hide/minimize actions run on key-up intentionally, to reduce interference with cycling. [HotkeyHelpers.ToHotkeys](../../Eve-O-Preview/Helper/HotkeyHelpers.cs) uses `KeysConverter.ConvertFromInvariantString`; empty/invalid input becomes `Keys.None` and invalid input is logged.
 
-Do not silently normalize `KeyCode` and `KeyData` as equivalent. Current cycle key-up compares `KeyCode` with the stored hotkey; general toggle-hide compares `KeyData`, whereas general minimize compares `KeyCode`. Modified-chord behavior needs explicit down/up regression coverage when edited. Follow `CycleGroup` configuration parsing and the main form's other keyboard subscriptions when investigating conflicts or duplicate handling.
+Do not normalize KeyCode and KeyData as equivalent. Cycle key-down matches full KeyData; consumed main keys are tracked so key-up remains handled after modifiers release. General bindings match full chords and ignore None/previously handled events. The integration test exercises these production delegates with affinity completion held pending and requires selection/borders before the activation call.
 
 ## Geometry, hovering, and event feedback
 
@@ -152,27 +145,17 @@ Client-window layouts are separate from thumbnail locations. `ApplyClientLayout`
 
 If E threads exist, their mask replaces the background mask. The service does not set priority class (`SetPriorityClass` is commented out); comments about spare OS capacity describe intent, not an exclusive CPU reservation.
 
-`UpdateAffinity` returns unless CPU support and `EnableAutomaticCpuAffinity` permit it. A missing active record falls back to next, then previous. It applies active/next/previous masks directly and uses `_currentBackgroundHandles` to skip redundant native background assignments. Removing those foreground-role handles from the set allows later transitions back to background to be applied. `ResetAll` restores the computed all-core mask only after the service has run, then clears tracking. Preserve reset wiring when changing configuration/shutdown behavior.
+`UpdateAffinity` returns unless CPU support and `EnableAutomaticCpuAffinity` permit it. A missing active record falls back to next, then previous. It applies active/next/previous masks directly and uses `_currentBackgroundHandles` to skip redundant native background assignments. Removing those foreground-role handles from the set allows later transitions back to background to be applied. `ResetAll` restores each saved original affinity mask; native failures remain retryable. Stop sets a terminal flag under the same lock before resetting, so late activation work cannot reapply affinity during shutdown. Active/next/previous aliases are deduplicated by PID, with active winning. Desired masks are intersected with the original restriction. Preserve reset wiring when changing configuration/shutdown behavior.
 
 Use source HWNDs to look up `IProcessInfo` before calling this service; apply affinity using its kernel `ProcessHandle`. Do not enumerate processes or recompute topology inside the keypress path.
 
-## Observed limitations and investigation leads
+## Lifetime fixes and remaining validation boundaries
 
-These are findings from source inspection. They were not fixed or reproduced on a live game during this documentation review. Do not turn them into compatibility requirements or claim complete resource/thread safety.
+ProcessMonitor owns disposable ProcessInfo kernel handles, disposes enumeration wrappers, locks cache mutation and returns snapshots. Unchanged polls do not open handles; title changes share ownership; removed/reused HWNDs release the old record. Thumbnail disposal releases DWM/static images/overlays/components and global mouse subscriptions. Static capture validates dimensions before acquiring a DC and frees GDI resources in finally.
 
-| Area | Source-observed concern and a useful investigation |
-| --- | --- |
-| Process handles | `ProcessHelpers.ToProcessInfo` opens a raw kernel handle on each call. `GetUpdatedProcesses` calls it for every monitored process on every scan, discards the newly opened handle on unchanged titles, and replaces cached records on title change without closing the old handle. Only removed cached records are explicitly closed there. Investigate growing handle counts before speeding up polling. |
-| Static capture cleanup | `GetStaticThumbnail` obtains a source DC before the less-than-300 check, then returns null without releasing it. The success path releases/deletes GDI resources but has no `finally` for failures. |
-| Lifecycle cleanup | `ThumbnailManager.Stop` only stops its timer; it does not unsubscribe tracked keyboard/profile handlers or close views. `LiveThumbnailView` has no explicit close/dispose override to unregister its current DWM relationship. `ThumbnailView` has component-owned timers/menu objects but its designer has no `Dispose` override; custom global mouse handlers are removed on normal mode exit, not explicitly on `Close`. Audit actual lifetime/OS cleanup before introducing repeated manager/view recreation. |
-| Threading | Process-cache writes do not take the lock used by `GetAllProcesses`; `GetAllKnownClients` returns the live mutable preview dictionary. The switching flag is a plain boolean, and affinity operations are not serialized as one entire update. Existing partial locks do not make arbitrary concurrent access safe. |
-| CPU classification | `DetectCores` sends every logical bit with `EfficiencyClass == 0` to `ECores`. The fallback fills `PCores` only when **both** lists are empty, so a topology reported entirely as class 0 results in zero P threads and disabled automation. This differs from the nearby fallback comment's broader claim about older/AMD CPUs. |
-| CPU groups | The topology binding represents one group mask and placement builds one 64-bit mask; group IDs are not used by the strategy. Do not assume correct support for multiple processor groups or more than 64 logical processors. Verify current Windows layouts/API behavior before extending this. |
-| Affinity result/aliasing | Native `SetProcessAffinityMask` results are ignored, including before adding background handles to the cache. Active/next/previous can be the same client in small cycle groups, and successive mask applications then overwrite earlier roles. `ResetAll` restores all detected cores, not a saved pre-existing affinity restriction. |
-| Cached settings | Factory compatibility mode and initial title font are captured at construction; the timer interval is too. `UpdateThumbnailTitleFont` updates existing views, but the factory retains its original font reference. Trace factory/manager reconstruction and profile changes before promising live updates. |
-| Active title after rename | `SwitchActiveClient` returns early when the HWND matches, so title rename alone does not refresh `_activeClient.Title` there. Investigate login-to-character or character-change cycle/layout mismatches. |
-| Highlight updates | `SetHighlight(bool, int)` returns when the requested enabled state is unchanged, so a new thickness/color may wait for a state transition. `SetDefaultBorderColor` resets a lazy color lookup rather than immediately repainting the active border. |
-| Native success | Most native focus/minimize/geometry operations do not propagate success; a log saying activation completed is not proof that Windows granted foreground focus. `IsCompositionEnabled` is cached on `WindowManager` construction. |
+Profile changes apply live settings while suppressing geometry feedback, and only renderer changes recreate views. Highlight color/thickness refresh even when enabled state is unchanged. Active titles refresh on login/character rename without requiring an HWND change. Queued moves retain the latest title/location.
+
+CPU topology now includes GroupCount, maps homogeneous efficiency-class-zero processors to performance cores and refuses unsupported processor groups rather than using the wrong mask. This is not general support for more than 64 processors. Native focus success, mixed-DPI layouts, multiple-monitor occlusion, long-session stutter and hardware-specific affinity latency remain live validation tasks. See [defect status](reported-bugs.md).
 
 ## Symptom-to-source navigation
 
@@ -182,7 +165,7 @@ These are findings from source inspection. They were not fixed or reproduced on 
 | Preview stays behind another preview, or disappears after native minimize/desktop activity | `RaiseActivatedThumbnail`, `RestoreThumbnailZOrder`, `RestoreAndBringToFront`; compare manager `IsActive`, native iconic state, image/overlay z order, dirty triggers, and always-on-top setting |
 | Typing goes into a preview/overlay instead of EVE | Preview native restore flags/owned form behavior, then `WindowManager.MakeApiCallsToSetForegroundAndFocus`; avoid solving image visibility by activating preview forms |
 | Preview freezes but the game remains responsive | Determine live versus compatibility view; inspect DWM `Update`/recovery or forced static capture. For source FPS throttling, cross into `IHookService` and the injected runtime |
-| EVE source switch takes too long | Hotkey delegate → cycle affinity/prediction → `WindowManager.ActivateWindow` → hook service; keep UI work, native activation, and game-frame wake-up measurements distinct |
+| EVE source switch takes too long | Hotkey delegate â†’ cycle affinity/prediction â†’ `WindowManager.ActivateWindow` â†’ hook service; keep UI work, native activation, and game-frame wake-up measurements distinct |
 | Wrong client/no client cycles | Full exact window titles, process discovery/rename, selected profile's `CycleGroup.ClientsOrder`, filtering/wrap logic, parsed `Keys`, down/up handling |
 | Previews vanish when interacting with the app | `IsKnownHandle`, `IsMainWindowActive`, `HideThumbnailsOnLostFocus`, tick-count delay, disabled title list, and active-preview hiding |
 | Drag/zoom fights itself or persists a zoomed size | View geometry ordering, saved base state, `_isHoverEffectActive`, `_ignoreViewEvents`, 500 ms resize suppression, delayed save queue |

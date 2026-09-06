@@ -138,6 +138,7 @@ namespace EveOPreview.View
         }
 
         private FontSettings _titleFontSettings;
+        private bool _isZoomed;
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public FontSettings TitleFontSettings
         {
@@ -238,6 +239,18 @@ namespace EveOPreview.View
             this.IsActive = false;
             this._overlay.Close();
             base.Close();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                IsActive = false;
+                ExitCustomMouseMode();
+                components?.Dispose();
+                _overlay?.Dispose();
+            }
+            base.Dispose(disposing);
         }
 
         // This method is used to determine if the provided MainWindowHandle is related to client or its thumbnail
@@ -357,7 +370,9 @@ namespace EveOPreview.View
 
         public void SetHighlight(bool enabled, int width)
         {
-            if (this._isHighlightRequested == enabled)
+            Color color = _config.PerClientActiveClientHighlightColor.TryGetValue(Title, out Color perClient)
+                ? perClient : _config.ActiveClientHighlightColor;
+            if (this._isHighlightRequested == enabled && (!enabled || (_highlightWidth == width && BackColor == color)))
             {
                 return;
             }
@@ -366,7 +381,7 @@ namespace EveOPreview.View
             {
                 this._isHighlightRequested = true;
                 this._highlightWidth = width;
-                this.BackColor = _myBorderColor.Value;
+                this.BackColor = color;
             }
             else
             {
@@ -380,11 +395,12 @@ namespace EveOPreview.View
         public void ClearBorder()
         {
             this.SetHighlight(false, 0);
-            this.Refresh(false);
+            this.RefreshAppearance();
         }
 
         public void ZoomIn(ViewZoomAnchor anchor, int zoomFactor)
         {
+            _isZoomed = true;
             int oldWidth = this._baseZoomSize.Width;
             int oldHeight = this._baseZoomSize.Height;
 
@@ -437,12 +453,21 @@ namespace EveOPreview.View
 
         public void ZoomOut()
         {
+            if (!_isZoomed) return;
+            _isZoomed = false;
             this.RestoreWindowSizeAndLocation();
         }
         
         public void Refresh(bool forceRefresh)
         {
             this.RefreshThumbnail(forceRefresh);
+            this.RefreshAppearance(forceRefresh);
+        }
+
+        public void RefreshAppearance() => RefreshAppearance(false);
+
+        private void RefreshAppearance(bool forceRefresh)
+        {
             this.HighlightThumbnail(forceRefresh || this._isSizeChanged);
             this.RefreshOverlay(forceRefresh || this._isSizeChanged || this._isLocationChanged);
 

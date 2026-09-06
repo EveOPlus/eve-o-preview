@@ -24,26 +24,24 @@ namespace EveOPreview.View
     sealed class ThumbnailViewFactory : IThumbnailViewFactory
     {
         private readonly IApplicationController _controller;
-        private readonly bool _isCompatibilityModeEnabled;
-        private readonly FontSettings _titleFontSettings;
+        private readonly IThumbnailConfiguration _configuration;
 
         public ThumbnailViewFactory(IApplicationController controller, IThumbnailConfiguration configuration)
         {
             this._controller = controller;
-            this._isCompatibilityModeEnabled = configuration.EnableCompatibilityMode;
-            this._titleFontSettings = configuration.TitleFontSettings;
+            this._configuration = configuration;
         }
 
         public IThumbnailView Create(IntPtr id, string title, Size size)
         {
-            IThumbnailView view = this._isCompatibilityModeEnabled
+            IThumbnailView view = this._configuration.EnableCompatibilityMode
                 ? (IThumbnailView)this._controller.Create<StaticThumbnailView>()
                 : (IThumbnailView)this._controller.Create<LiveThumbnailView>();
 
             view.Id = id;
             view.Title = title;
             view.ThumbnailSize = size;
-            view.TitleFontSettings = this._titleFontSettings;
+            view.TitleFontSettings = this._configuration.TitleFontSettings;
 
             return view;
         }

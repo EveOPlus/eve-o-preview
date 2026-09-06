@@ -60,6 +60,16 @@ namespace EveOPreview.View
             obsoleteThumbnail?.Unregister();
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _thumbnail?.Unregister();
+                _thumbnail = null;
+            }
+            base.Dispose(disposing);
+        }
+
         protected override void ResizeThumbnail(int baseWidth, int baseHeight, int highlightWidthTop, int highlightWidthRight, int highlightWidthBottom, int highlightWidthLeft)
         {
             var left = 0 + highlightWidthLeft;
@@ -76,8 +86,8 @@ namespace EveOPreview.View
             this._startLocation = new Point(left, top);
             this._endLocation = new Point(right, bottom);
 
-            this._thumbnail.Move(left, top, right, bottom);
-            this._thumbnail.Update();
+            this._thumbnail?.Move(left, top, right, bottom);
+            this._thumbnail?.Update();
         }
 
         private void RegisterThumbnail()

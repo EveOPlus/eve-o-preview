@@ -21,6 +21,8 @@ namespace EveOPreview.Services.Interface;
 
 public interface IGlobalEvents
 {
+    event Action HotkeysChanged;
+    void PublishHotkeysChanged();
     event Action<SelectedProfileChangedNotification> CurrentProfileChanged;
     void PublishCurrentProfileChanged(SelectedProfileChangedNotification notification);
 

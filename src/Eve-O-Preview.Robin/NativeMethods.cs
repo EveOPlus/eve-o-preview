@@ -77,8 +77,7 @@ internal static unsafe partial class NativeMethods
     internal static partial bool UnhookWinEvent(IntPtr hWinEventHook);
 
     [LibraryImport("user32.dll", EntryPoint = "GetMessageW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    internal static partial bool GetMessage(
+    internal static partial int GetMessage(
         out MSG lpMsg,
         IntPtr hWnd,
         uint wMsgFilterMin,
@@ -158,5 +157,21 @@ internal static unsafe partial class NativeMethods
 
     [LibraryImport("kernel32.dll", SetLastError = true)]
     public static partial IntPtr AddVectoredExceptionHandler(uint first, delegate* unmanaged[Stdcall]<EXCEPTION_POINTERS*, int> handler);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    public static partial uint WaitForSingleObject(IntPtr handle, uint milliseconds);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    public static partial nuint VirtualQuery(IntPtr address, out MEMORY_BASIC_INFORMATION buffer, nuint length);
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MEMORY_BASIC_INFORMATION
+    {
+        public IntPtr BaseAddress, AllocationBase;
+        public uint AllocationProtect;
+        public ushort PartitionId;
+        public nuint RegionSize;
+        public uint State, Protect, Type;
+    }
 
 }

@@ -34,6 +34,10 @@ namespace EveOPreview.Services.Interop
         public static extern void SetFocus(IntPtr window);
 
         [DllImport("user32.dll")]
+        public static extern bool IsWindow(IntPtr window);
+
+
+        [DllImport("user32.dll")]
         public static extern void EnableWindow(IntPtr window, bool isEnabled);
 
         [DllImport("user32.dll")]
@@ -52,6 +56,12 @@ namespace EveOPreview.Services.Interop
 
         [DllImport("User32.dll")]
         public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint message, IntPtr wParam, IntPtr lParam, uint flags, uint timeout, out IntPtr result);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool PostMessage(IntPtr hWnd, int message, IntPtr wParam, IntPtr lParam);
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern int GetWindowLong(IntPtr hWnd, int nIndex);

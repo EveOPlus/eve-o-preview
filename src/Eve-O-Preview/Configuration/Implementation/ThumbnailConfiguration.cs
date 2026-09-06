@@ -15,6 +15,8 @@
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
+using System;
+using System.Linq;
 using System.Drawing;
 using System.Windows.Forms;
 using Newtonsoft.Json;
@@ -80,14 +82,6 @@ namespace EveOPreview.Configuration.Implementation
             this.ActiveClientHighlightThickness = 3;
 
             this.TitleFontSettings = new FontSettings();
-            this.TitleFontSettings.Name = "Arial";
-            this.TitleFontSettings.Size = 14.25f;
-            this.TitleFontSettings.ForeColor = Color.FromArgb(255,255,165,0);
-            this.TitleFontSettings.Style = FontStyle.Regular;
-            this.TitleFontSettings.OutlineColor = Color.Black;
-            this.TitleFontSettings.OutlineWidth = 3.0f;
-            this.TitleFontSettings.PositionOffsetFromLeft = 10;
-            this.TitleFontSettings.PositionOffsetFromLeft = 5;
 
             this.LoginThumbnailLocation = new Point(5, 5);
 
@@ -122,7 +116,7 @@ namespace EveOPreview.Configuration.Implementation
             {
                 if (!value)
                 {
-                    this.ClientLayout.Clear();
+                    this.ClientLayout?.Clear();
                 }
 
                 this._enableClientLayoutTracking = value;
@@ -140,7 +134,7 @@ namespace EveOPreview.Configuration.Implementation
             {
                 if (!value)
                 {
-                    this.PerClientLayout.Clear();
+                    this.PerClientLayout?.Clear();
                 }
 
                 this._enablePerClientThumbnailLayouts = value;
@@ -294,6 +288,40 @@ namespace EveOPreview.Configuration.Implementation
         /// </summary>
         public void ApplyRestrictions()
         {
+            CycleGroups ??= new List<CycleGroup>();
+            CycleGroups.RemoveAll(x => x == null);
+            foreach (var group in CycleGroups)
+            {
+                group.ForwardHotkeys ??= new List<string>();
+                group.BackwardHotkeys ??= new List<string>();
+                group.ClientsOrder ??= new SortedDictionary<int, string>();
+                foreach (var key in group.ClientsOrder.Where(x => string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Key).ToArray())
+                    group.ClientsOrder.Remove(key);
+            }
+            PerClientActiveClientHighlightColor ??= new Dictionary<string, Color>();
+            PerClientLayout ??= new Dictionary<string, Dictionary<string, Point>>();
+            foreach (var key in PerClientLayout.Where(x => x.Value == null).Select(x => x.Key).ToArray()) PerClientLayout.Remove(key);
+            FlatLayout ??= new Dictionary<string, Point>();
+            ClientLayout ??= new Dictionary<string, ClientLayout>();
+            DisableThumbnail ??= new Dictionary<string, bool>();
+            PriorityClients ??= new List<string>();
+            FpsLimiterSettings ??= new FpsLimiterSettings();
+            FpsLimiterSettings.FpsFocused = Math.Clamp(FpsLimiterSettings.FpsFocused, 0, 1000);
+            FpsLimiterSettings.FpsBackground = Math.Clamp(FpsLimiterSettings.FpsBackground, 0, 1000);
+            FpsLimiterSettings.FpsPredictingFocus = Math.Clamp(FpsLimiterSettings.FpsPredictingFocus, 0, 1000);
+            AudioMuteSettings ??= new AudioMuteSettings();
+            AudioMuteSettings.CustomMutedEventIds ??= new List<uint>();
+            TitleFontSettings ??= new FontSettings();
+            if (string.IsNullOrWhiteSpace(TitleFontSettings.Name)) TitleFontSettings.Name = "Arial";
+            if (!float.IsFinite(TitleFontSettings.Size) || TitleFontSettings.Size <= 0) TitleFontSettings.Size = 14.25f;
+            TitleFontSettings.Size = Math.Clamp(TitleFontSettings.Size, 1, 200);
+            if (!float.IsFinite(TitleFontSettings.OutlineWidth)) TitleFontSettings.OutlineWidth = 3;
+            TitleFontSettings.OutlineWidth = Math.Clamp(TitleFontSettings.OutlineWidth, 0, 20);
+            TitleFontSettings.Style &= FontStyle.Bold | FontStyle.Italic | FontStyle.Underline | FontStyle.Strikeout;
+            ThumbnailMinimumSize = new Size(Math.Clamp(ThumbnailMinimumSize.Width, 1, 960), Math.Clamp(ThumbnailMinimumSize.Height, 1, 540));
+            ThumbnailMaximumSize = new Size(Math.Clamp(ThumbnailMaximumSize.Width, ThumbnailMinimumSize.Width, 960), Math.Clamp(ThumbnailMaximumSize.Height, ThumbnailMinimumSize.Height, 540));
+            if (!Enum.IsDefined(ThumbnailZoomAnchor)) ThumbnailZoomAnchor = ZoomAnchor.NW;
+            HideThumbnailsDelay = Math.Max(0, HideThumbnailsDelay);
             this.ThumbnailRefreshPeriod = ThumbnailConfiguration.ApplyRestrictions(this.ThumbnailRefreshPeriod, 300, 1000);
             this.ThumbnailSize = new Size(ThumbnailConfiguration.ApplyRestrictions(this.ThumbnailSize.Width, this.ThumbnailMinimumSize.Width, this.ThumbnailMaximumSize.Width),
                 ThumbnailConfiguration.ApplyRestrictions(this.ThumbnailSize.Height, this.ThumbnailMinimumSize.Height, this.ThumbnailMaximumSize.Height));

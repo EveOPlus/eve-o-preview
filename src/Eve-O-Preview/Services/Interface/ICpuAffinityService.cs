@@ -22,4 +22,5 @@ public interface ICpuAffinityService
 {
     void UpdateAffinity(IProcessInfo active, IProcessInfo next, IProcessInfo prev, IEnumerable<IProcessInfo> allClients);
     void ResetAll(IEnumerable<IProcessInfo> allClients);
+    void Stop(IEnumerable<IProcessInfo> allClients);
 }

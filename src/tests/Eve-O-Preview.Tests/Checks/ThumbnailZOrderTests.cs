@@ -216,41 +216,19 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
 
                 case "ImmediateThumbnailActivation":
                     Native.SetActiveWindow(client.Handle);
-                    using (var entered = new ManualResetEventSlim())
-                    using (var release = new ManualResetEventSlim())
-                    using (var continuation = new ActivationContext())
+                    activating = _ =>
                     {
-                        var originalContext = SynchronizationContext.Current;
-                        SynchronizationContext.SetSynchronizationContext(continuation);
-                        activating = _ =>
-                        {
-                            entered.Set();
-                            if (!release.Wait(TimeSpan.FromSeconds(5))) throw new TimeoutException("Activation was not released");
-                        };
-                        try
-                        {
-                            a.Refreshing = _ => throw new Exception("Image capture must not delay immediate activation");
-                            a.ThumbnailActivated(a.Id); // Shared by thumbnail clicks and direct client hotkeys.
-                            a.Refreshing = null;
-                            AssertStack(a, b, c); // Must be raised before the asynchronous work completes.
-                            Check(Native.GetActiveWindow() == client.Handle, "immediate thumbnail activation preserves focus");
-                            Check(entered.Wait(TimeSpan.FromSeconds(5)), "background client activation started");
-                            Refresh(); // Even a timer tick during the blocked activation must retain the requested order.
-                            AssertStack(a, b, c);
-                        }
-                        finally
-                        {
-                            a.Refreshing = null;
-                            release.Set();
-                            try { continuation.Complete(); }
-                            finally
-                            {
-                                activating = null;
-                                SynchronizationContext.SetSynchronizationContext(originalContext);
-                            }
-                        }
                         AssertStack(a, b, c);
-                    }
+                        Check(manager.GetActiveClient()?.Id == a.Id, "selection committed before activation");
+                        Check((bool)typeof(ThumbnailView).GetField("_isHighlightEnabled", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(a),
+                            "border applied before activation");
+                    };
+                    a.Refreshing = _ => throw new Exception("Image capture must not delay immediate activation");
+                    a.ThumbnailActivated(a.Id);
+                    a.Refreshing = null;
+                    activating = null;
+                    AssertStack(a, b, c); // No UI continuation or refresh tick.
+                    Check(Native.GetActiveWindow() == client.Handle, "immediate thumbnail activation preserves focus");
                     break;
 
                 case "ImmediateActivationRespectsHiding":
@@ -310,25 +288,7 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
         Console.WriteLine("PASS: " + message);
     }
 
-    private sealed class ActivationContext : SynchronizationContext, IDisposable
-    {
-        private readonly ConcurrentQueue<(SendOrPostCallback Callback, object State)> callbacks = new();
-        private readonly ManualResetEventSlim posted = new();
 
-        public override void Post(SendOrPostCallback callback, object state)
-        {
-            callbacks.Enqueue((callback, state));
-            posted.Set();
-        }
-
-        public void Complete()
-        {
-            Check(posted.Wait(TimeSpan.FromSeconds(5)), "client activation queued its UI continuation");
-            while (callbacks.TryDequeue(out var item)) item.Callback(item.State);
-        }
-
-        public void Dispose() => posted.Dispose();
-    }
 }
 
 internal sealed class Preview : ThumbnailView

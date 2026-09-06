@@ -23,7 +23,7 @@ using Serilog;
 
 namespace EveOPreview.Services.Implementation
 {
-    sealed class ProcessMonitor : IProcessMonitor
+    sealed class ProcessMonitor : IProcessMonitor, IDisposable
     {
         #region Private constants
         private const string DEFAULT_PROCESS_NAME = "ExeFile";
@@ -35,11 +35,15 @@ namespace EveOPreview.Services.Implementation
         public IDictionary<IntPtr, IProcessInfo> ProcessCache { get; }
         private IProcessInfo _currentProcessInfo;
         private readonly ILogger _logger;
+        private readonly Func<Process[]> _enumerateProcesses;
         #endregion
 
-        public ProcessMonitor(ILogger logger)
+        public ProcessMonitor(ILogger logger) : this(logger, () => Process.GetProcessesByName(DEFAULT_PROCESS_NAME)) { }
+
+        internal ProcessMonitor(ILogger logger, Func<Process[]> enumerateProcesses)
         {
             _logger = logger;
+            _enumerateProcesses = enumerateProcesses;
             this.ProcessCache = new Dictionary<IntPtr, IProcessInfo>(512);
             
             // This field cannot be initialized properly in constructor
@@ -57,8 +61,9 @@ namespace EveOPreview.Services.Implementation
 
         private IProcessInfo GetCurrentProcessInfo()
         {
-            var currentProcess = Process.GetCurrentProcess();
-            return currentProcess.ToProcessInfo();
+            using var currentProcess = Process.GetCurrentProcess();
+            // The host's HWND is only used for visibility checks, not affinity.
+            return new ProcessInfo(currentProcess.MainWindowHandle, IntPtr.Zero, currentProcess.Id, currentProcess.MainWindowTitle);
         }
 
         public IProcessInfo GetMainProcess()
@@ -102,52 +107,51 @@ namespace EveOPreview.Services.Implementation
             updatedProcesses = new List<IProcessInfo>(16);
             removedProcesses = new List<IProcessInfo>(16);
 
-            IList<IntPtr> knownProcesses = new List<IntPtr>(this.ProcessCache.Keys);
-            foreach (Process process in Process.GetProcesses())
+            lock (_lockObj)
             {
-                string processName = process.ProcessName;
-
-                if (!this.IsMonitoredProcess(processName))
+            var knownProcesses = new HashSet<IntPtr>(ProcessCache.Keys);
+            foreach (Process process in _enumerateProcesses())
+            using (process)
+            {
+                try
                 {
-                    continue;
-                }
-
                 IntPtr mainWindowHandle = process.MainWindowHandle;
-                if (mainWindowHandle == IntPtr.Zero)
+                if (mainWindowHandle == IntPtr.Zero) continue;
+                string title = process.MainWindowTitle;
+                ProcessCache.TryGetValue(mainWindowHandle, out IProcessInfo cachedProcess);
+                knownProcesses.Remove(mainWindowHandle);
+
+                if (cachedProcess != null && cachedProcess.ProcessId != process.Id)
                 {
-                    continue; // No need to monitor non-visual processes
+                    removedProcesses.Add(cachedProcess);
+                    cachedProcess.CloseKernelHandle();
+                    ProcessCache.Remove(mainWindowHandle);
+                    cachedProcess = null;
                 }
-
-                var processInfo = process.ToProcessInfo();
-                this.ProcessCache.TryGetValue(mainWindowHandle, out IProcessInfo cachedProcess);
-
-                if (cachedProcess?.Title == null)
+                if (cachedProcess == null)
                 {
-                    // This is a new process in the list
-                    this.ProcessCache.Add(mainWindowHandle, processInfo);
+                    var processInfo = new ProcessInfo(mainWindowHandle, process.OpenKernelHandle(), process.Id, title);
+                    ProcessCache.Add(mainWindowHandle, processInfo);
                     addedProcesses.Add(processInfo);
-                    _logger.Verbose("New EVE client process detected: {Title} (Handle: 0x{Handle:X}, PID: {ProcessId})", 
-                        processInfo.Title, mainWindowHandle, processInfo.ProcessId);
                 }
-                else
+                else if (cachedProcess.Title != title)
                 {
-                    // This is an already known process
-                    if (cachedProcess.Title != processInfo.Title)
-                    {
-                        _logger.Verbose("EVE client window title changed: 0x{Handle:X} - Old: {OldTitle} -> New: {NewTitle}", 
-                            mainWindowHandle, cachedProcess.Title, processInfo.Title);
-                        this.ProcessCache[mainWindowHandle] = processInfo;
-                        updatedProcesses.Add(new ProcessInfo(mainWindowHandle, processInfo.ProcessHandle, processInfo.ProcessId, processInfo.Title));
-                    }
-
-                    knownProcesses.Remove(mainWindowHandle);
+                    // A character/login rename still owns the same process handle.
+                    var renamed = ((ProcessInfo)cachedProcess).WithTitle(title);
+                    ProcessCache[mainWindowHandle] = renamed;
+                    updatedProcesses.Add(renamed);
+                }
+                }
+                catch (Exception ex) when (ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
+                {
+                    _logger.Debug(ex, "Client exited or became inaccessible during discovery");
                 }
             }
 
             foreach (IntPtr index in knownProcesses)
             {
                 var cachedProcess = this.ProcessCache[index];
-                removedProcesses.Add(new ProcessInfo(index, cachedProcess.ProcessHandle, cachedProcess.ProcessId, cachedProcess.Title));
+                removedProcesses.Add(cachedProcess);
                 this.ProcessCache.Remove(index);
                 _logger.Verbose("EVE client process removed: {Title} (Handle: 0x{Handle:X}, PID: {ProcessId})", 
                     cachedProcess.Title, index, cachedProcess.ProcessId);
@@ -163,6 +167,7 @@ namespace EveOPreview.Services.Implementation
                 _logger.Verbose("Process update cycle complete: Added={AddedCount}, Updated={UpdatedCount}, Removed={RemovedCount}, Total={TotalCount}",
                     addedProcesses.Count, updatedProcesses.Count, removedProcesses.Count, this.ProcessCache.Count);
             }
+            }
         }
 
         public IProcessInfo LookupCachedProcessByWindowHandle(IntPtr windowHandle)
@@ -173,6 +178,8 @@ namespace EveOPreview.Services.Implementation
                 return null;
             }
 
+            lock (_lockObj)
+            {
             ProcessCache.TryGetValue(windowHandle, out var procInfo);
 
             if (procInfo == null)
@@ -181,6 +188,16 @@ namespace EveOPreview.Services.Implementation
             }
 
             return procInfo;
+            }
+        }
+
+        public void Dispose()
+        {
+            lock (_lockObj)
+            {
+                foreach (var process in ProcessCache.Values) process.CloseKernelHandle();
+                ProcessCache.Clear();
+            }
         }
     }
 }

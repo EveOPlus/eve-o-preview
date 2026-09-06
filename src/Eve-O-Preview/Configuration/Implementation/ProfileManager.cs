@@ -38,16 +38,19 @@ public class ProfileManager : IProfileManager
     private readonly IMediator _mediator;
 
     public string ProfileRootDirectory { get; }
-    public List<ProfileLocation> ProfileLocations { get; }
+    public List<ProfileLocation> ProfileLocations { get; private set; }
 
-    public ProfileManager(ILogger logger, IMediator _mediator)
+    public ProfileManager(ILogger logger, IMediator mediator) : this(logger, mediator, null) { }
+
+    internal ProfileManager(ILogger logger, IMediator mediator, string profileRootDirectory)
     {
         _logger = logger;
-        this._mediator = _mediator;
-        ProfileRootDirectory = FindOrCreateProfileRootDirectory();
+        this._mediator = mediator;
+        ProfileRootDirectory = profileRootDirectory ?? FindOrCreateProfileRootDirectory();
+        Directory.CreateDirectory(Path.Combine(ProfileRootDirectory, DEFAULT_PROFILE_DIR));
         _logger.WithCallerInfo().Information($"Profiles Root Directory located at {ProfileRootDirectory}");
 
-        MigrateLegacySingleProfile();
+        if (profileRootDirectory == null) MigrateLegacySingleProfile();
 
         ProfileLocations = RefreshProfileLocations();
     }
@@ -151,7 +154,7 @@ public class ProfileManager : IProfileManager
             string profileName = Path.GetFileName(dirPath);
 
             // If this folder has a profile, add it to the list.
-            if (File.Exists(baseJsonPath) || profileName == DEFAULT_PROFILE_DIR)
+            if (File.Exists(baseJsonPath) || profileName.Equals(DEFAULT_PROFILE_DIR, StringComparison.OrdinalIgnoreCase))
             {
                 // Use the folder name as the friendly name.
                 locations.Add(new ProfileLocation
@@ -163,6 +166,7 @@ public class ProfileManager : IProfileManager
             }
         }
 
+        ProfileLocations = locations;
         _mediator.Publish(new ProfileListChangedNotification(locations));
 
         return locations;
@@ -170,7 +174,7 @@ public class ProfileManager : IProfileManager
 
     public ProfileLocation GetDefaultProfileLocation()
     {
-        var defaultProfile = ProfileLocations.FirstOrDefault(x => x.FriendlyName == DEFAULT_PROFILE_DIR);
+        var defaultProfile = ProfileLocations.FirstOrDefault(x => x.FriendlyName.Equals(DEFAULT_PROFILE_DIR, StringComparison.OrdinalIgnoreCase));
 
         if (string.IsNullOrWhiteSpace(defaultProfile?.FullPath))
         {
@@ -190,6 +194,8 @@ public class ProfileManager : IProfileManager
 
         try
         {
+            // A fresh Default profile can exist only in memory until its first edit.
+            _mediator.Send(new SaveConfiguration()).GetAwaiter().GetResult();
             CopyDirectory(currentProfile.FolderPath, destDir);
 
             RefreshProfileLocations();
@@ -203,7 +209,7 @@ public class ProfileManager : IProfileManager
     public void DeleteCurrentProfile()
     {
         var currentProfile = _mediator.Send(new GetCurrentProfileLocation()).Result;
-        if (currentProfile.FriendlyName == DEFAULT_PROFILE_DIR)
+        if (currentProfile.FriendlyName.Equals(DEFAULT_PROFILE_DIR, StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
@@ -232,7 +238,9 @@ public class ProfileManager : IProfileManager
     {
         var currentProfile = _mediator.Send(new GetCurrentProfileLocation()).Result;
 
-        if (currentProfile.FriendlyName == request.NewProfileName)
+        if (currentProfile.FriendlyName.Equals(DEFAULT_PROFILE_DIR, StringComparison.OrdinalIgnoreCase) ||
+            !IsValidProfileName(request.NewProfileName) ||
+            currentProfile.FriendlyName.Equals(request.NewProfileName, StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
@@ -242,14 +250,29 @@ public class ProfileManager : IProfileManager
 
         try
         {
-            MoveDirectory(currentProfile.FolderPath, destDir);
-
+            Directory.Move(currentProfile.FolderPath, destDir);
+            // Storage and the selected UI entry share this location. Keep saves on the moved path.
+            currentProfile.FolderPath = destDir;
+            currentProfile.FullPath = Path.Combine(destDir, BASE_FILENAME);
+            currentProfile.FriendlyName = newProfileName;
             RefreshProfileLocations();
+            _mediator.Publish(new SelectedProfileChangedNotification(currentProfile));
         }
         catch (Exception ex)
         {
             _logger.WithCallerInfo().Error(ex, $"Failed to rename profile {currentProfile.FriendlyName}");
         }
+    }
+
+    public static bool IsValidProfileName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name) || name != name.Trim() || name.EndsWith('.') ||
+            name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) return false;
+        string stem = name.Split('.')[0].ToUpperInvariant();
+        return stem != "CON" && stem != "PRN" && stem != "AUX" && stem != "NUL" &&
+            stem != "CONIN$" && stem != "CONOUT$" &&
+            !(stem.Length == 4 && (stem.StartsWith("COM") || stem.StartsWith("LPT")) &&
+              "123456789¹²³".Contains(stem[3]));
     }
 
     private string GenerateNextProfileName(string baseName)
@@ -293,25 +316,4 @@ public class ProfileManager : IProfileManager
         }
     }
 
-    private void MoveDirectory(string sourceDir, string destDir)
-    {
-        bool sourceExists = Directory.Exists(sourceDir);
-        bool destExists = Directory.Exists(destDir);
-
-        if (!sourceExists || destExists)
-        {
-            _logger.WithCallerInfo().Warning($"Unable to move folder. Source [{sourceDir}] Exists = {sourceExists}. Destination [{destDir}] Exists = {destExists}.");
-            return;
-        }
-
-        try
-        {
-            Directory.Move(sourceDir, destDir);
-            _logger.WithCallerInfo().Information($"Successfully renamed directory from {sourceDir} to {destDir}");
-        }
-        catch (Exception ex)
-        {
-            _logger.WithCallerInfo().Error(ex, $"Failed to move directory {sourceDir}");
-        }
-    }
 }

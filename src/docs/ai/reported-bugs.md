@@ -1,85 +1,45 @@
-# Defect investigation guide
+# Defect investigation status
 
-Source baseline: `60944b521e3c5b442dd379b5208c53a91ae3a573`, version 10.0.0.9. These twelve entries are investigation candidates and UX limitations, not confirmed runtime defects. Verify each against the current implementation before changing behavior. See the [feature backlog](feature-backlog.md) for broader enhancements.
+Reviewed and changed on 2026-09-06. This records the twelve original BUG candidates plus defects found while testing. It does not claim all desktop, GPU or long-session failures are resolved. Current source is authoritative.
 
-## BUG-001: Missing Default profile can break startup
+| ID | Finding and change | Evidence / remaining work |
+| --- | --- | --- |
+| BUG-001 | [ProfileManager](../../Eve-O-Preview/Configuration/Implementation/ProfileManager.cs) creates missing Default, protects it from rename/delete, refreshes its cached list, updates the selected location on rename, validates Windows names, and saves a fresh in-memory Default before cloning. | [ProfileWorkflowTests](../../tests/Eve-O-Preview.Tests/Checks/ProfileWorkflowTests.cs): isolated missing-Default, rename/save/reload, clone and migration workflows. |
+| BUG-002 | Close-to-tray remains intentionally profile-scoped. Switching to an omitted value now resets to that profile's default rather than leaking the previous profile's setting. | Opposing values covered in profile tests. No global-preference migration was introduced. |
+| BUG-003 | Preserved stable DWM registrations, dirty MRU raising and nonactivating native restoration. Added explicit disposal and correct settings propagation. | Existing z-order/live-image regressions pass. Intermittent real multi-monitor occlusion/disappearance has not been reproduced or declared fixed. |
+| BUG-004 | Cycle callbacks honor handled events, match modified chords and consume key-up after modifiers release. After live regression feedback, selection/borders and native focus run synchronously; affinity completion cannot delay them. | [SettingsIntegrationTests](../../tests/Eve-O-Preview.Tests/Checks/SettingsIntegrationTests.cs) uses production subscriptions, pending affinity and immediate applied-border assertions. Application-specific privilege/focus restrictions still need live comparison. |
+| BUG-005 | Fixed repeated process-handle allocation, GDI failure-path leaks, affinity role aliasing/original-mask restoration, unnecessary native callback logging, and stale settings. | Actual worker-process handle/affinity checks and published native pacing pass. These are concrete contributors, not an established explanation for reported browser stutter. Long-session performance remains open. |
+| BUG-006 | Logs roll at 10 MiB with seven retained files; repeated hide messages moved to Verbose. | Source/build checked. Representative bytes-per-minute logging measurements remain open. |
+| BUG-007 | Injection loads a hash-addressed temporary DLL copy; host shutdown clears FPS/audio/capture and owner exit does the same independently of rendering. | Published native and Mock checks replace the installation DLL while injected, test owner exit with FPS disabled, and verify shutdown state. Native hooks remain loaded until client exit. |
+| BUG-008 | Removed deferred activation and the pre-focus WM_NULL probe after they regressed low-FPS switching. Ready-pipe commands are issued inline before focus; writes remain bounded/nonblocking for old servers. Minimize retains asynchronous native calls. | Immediate callback/foreground ordering and connected-but-silent/truncated pipe tests pass. No automatic hook reinstall was added without evidence of hook removal. |
+| BUG-009 | Profile reload applies size limits, geometry, highlight/font, timer interval and renderer choice under feedback suppression. Ordinary changes preserve DWM; renderer changes recreate views. | Production forms/manager/factory tested with current and newly created views. Mixed-DPI and long-session geometry still need live observation. |
+| BUG-010 | Move Up handles key zero/sparse ordering, keeps the moved character selected and preserves scroll position. | Repeated Move Up exercised in the private-desktop settings workflow. |
+| BUG-011 | RefreshHotkeys now publishes HotkeysChanged and rebuilds registrations after group create/delete/replacement/edit, without a profile switch. | Production refresh handler and global events tested with live delegate counts and key input. |
+| BUG-012 | Factory reads the current configuration when creating a view; new views explicitly receive the active font. | Existing/new previews after profile/font changes covered in settings integration. |
 
-[ProfileManager](../../Eve-O-Preview/Configuration/Implementation/ProfileManager.cs) accepts an existing profile root without ensuring Default exists; `GetDefaultProfileLocation` can return null. [MainFormPresenter.ReloadApplicationSettings](../../Eve-O-Preview/Presenters/Implementation/MainFormPresenter.cs) dereferences `CurrentProfile.FriendlyName`. Default deletion is guarded, but renaming lacks the same protection and can leave the stored location stale.
+## Additional defects found and fixed
 
-Check startup with an isolated profile root containing named profiles but no Default, then test rename and restart. Preserve existing profiles and establish a coherent fallback. Initial profile migration support does not eliminate this separate missing-location risk.
+- Profile loads build and validate a fresh candidate before populating the existing singleton. Omitted/null settings receive defaults; invalid profiles retain the previous selected path and settings. Saves replace via a temporary file, preserving the previous file if writing fails. Legacy v2 hotkeys increment order keys and persist the migrated version; v1 duplicate order values retain all clients.
+- Font defaults, fractional outline width, negative/empty offsets, event suppression, empty client selection, cancelled adds, final cycle-group deletion and capture timeout behavior were corrected.
+- Process wrappers and owned kernel handles have explicit lifetimes; cache mutation/snapshots are locked. Title changes retain the same owned handle. DWM, static images, overlays, components and temporary global mouse subscriptions are disposed.
+- CPU topology includes the missing GroupCount field, treats homogeneous class-zero CPUs as performance cores, and rejects unsupported multi-group layouts. Native results are checked. Original affinity restrictions are preserved; shutdown permanently rejects late affinity updates.
+- Robin reads complete bounded requests before mutation, recovers from malformed/stalled peers and broken pipe instances, atomically replaces audio sets when supported, and exposes version/hash plus hook status queries.
+- The published NativeAOT test exposed unpaced Present1 despite a successful Present hook. Native COM QueryInterface replaced the reflective SharpDX wrapper path. TEST/DO_NOT_WAIT calls bypass pacing; nested presentation is not throttled twice; disable interrupts low-FPS waits.
+- Audio uses immutable sorted snapshots, bounded nested return tracking, full 64-bit game object IDs, foreign guard/debug-register ownership checks, and explicit bounded diagnostic capture. A synthetic DLL exposed loader-entry-page reentry risk; such pages are refused. PAGE_GUARD's page-wide concurrency limits remain documented in [the native guide](robin.md).
+- Live fitting-simulator testing found an ABI mismatch: Robin used action 1 as Stop, but [Audiokinetic's SDK](https://github.com/audiokinetic/WwiseIncludes/blob/master/SDK/include/AK/SoundEngine/Common/AkSoundEngine.h) defines Stop=0 and Pause=1. Version 10.0.0.11 corrects the enum. The synthetic audio fixture now pins the SDK value independently and rejects the old DLL. The previously working gate-activation behavior must be preserved and retested.
+- Full-app startup with four real clients exposed a UI shutdown deadlock after native cleanup. Close now defers the initial FormClosing event and awaits cleanup while pumping UI continuations, then closes once; a delayed-cleanup/repeated-close integration case protects this. The isolated full app created four real preview/overlay pairs and then exited normally with code 0.
+- The debugger sidecar reads x64 EXCEPTION_DEBUG_INFO's first-chance field at offset 152.
 
-## BUG-002: Profile switch changes close-to-tray behavior
+## Validation record and boundaries
 
-`MinimizeToTray` is profile-scoped and defaults to false in [ThumbnailConfiguration](../../Eve-O-Preview/Configuration/Implementation/ThumbnailConfiguration.cs). [MainFormPresenter.Close](../../Eve-O-Preview/Presenters/Implementation/MainFormPresenter.cs) deliberately exits when it is false. This is a settings-scope/UX question, not an exception.
+The focused suite passed 50 cases (baseline 36). New checks are profile workflows, settings/input/resource integration, and pipe lifecycle; existing custom-audio tests cover both legacy clear/add and atomic replacement.
 
-Check opposing profile values, the visible setting, window close and explicit Exit. Any move to application-wide preferences needs a migration policy.
+The optional [NativeSmoke](../../tests/Robin.NativeSmoke/README.md) injects the actual published AOT DLL through production HookService. At 30 FPS, 15 Present calls and 15 Present1 calls each took approximately 500 ms. Disabling a 1 FPS wait returned in approximately 61 ms. It verified nested/repeated synthetic audio, 64-bit history, a foreign guard page, malformed/stalled pipes, owner exit, shutdown, and an unlocked installation copy. Eve-O-Mock also passed injection/protocol/lifecycle checks. Mock is not used as proof of actual DXGI Present pacing; the C++ probe supplies that boundary.
 
-## BUG-003: Previews fall behind client windows
+A separate warmed check of the same source compiled as managed code allocated zero bytes for 256 frame waits and 100,000 audio lookups. This does not measure the complete native VEH or native GC pauses.
 
-[ThumbnailManager](../../Eve-O-Preview/Services/Implementation/ThumbnailManager.cs) maintains dirty MRU order and raises the selected preview before activation. [ThumbnailView.RestoreAndBringToFront](../../Eve-O-Preview/View/Implementation/ThumbnailView.cs) repairs native visibility/topmost state without activating the preview or rebuilding DWM content. These protections do not establish correctness in every desktop environment.
+Real EVE: Niko Meko loaded the verified 10.0.0.10 hash and reported DXGI/audio ready. Capture found hover events 1821090062/2408055618 and fitting rig-toggle event 1384800364. The user confirmed the latter became silent but did not return after clearing, leading to the Stop/Pause correction. A fresh Niko Meko process then loaded 10.0.0.11 with SHA256 `7618873FE8C45E0136CB5C02029949A29C3A99AE92C771735C962306471072D6`; DXGI/audio reported ready. The user confirmed the same fitting click went silent and returned after the 20-second test. FPS, mute state and diagnostic capture were cleared afterward. A subsequent live gate comparison captured all three preset IDs while muted. The user reported substantially more sound after disabling the preset, supporting mute/restoration of the existing gate set. Some sounds remained during muting; additional event coverage is unverified and the preset was left unchanged.
 
-Distinguish occlusion, intentional hiding, native hidden/minimized windows, missing process discovery and visible-but-blank rendering. Capture source/preview/overlay HWNDs, foreground HWND, intended visibility, actual visibility, iconic state and relative z-order before changing settings. Compare cycling, clicking, application transitions, long sessions and multiple monitors. A topmost toggle or restart is a diagnostic experiment, not proof of a permanent fix.
+Follow-up focus regression: Robin 10.0.0.12, SHA256 `7EC43B95B53542D1D22AE3ED271B216D63786105CD1033BE4746C4C42A1534DC`, released actual Present/Present1 waits with every FPS target set to 1 in 15.10-15.64 ms from the production pipe wake. The final host sender passed 16/16 real-desktop switches across four fresh Eve-O-Mock processes at 60 foreground / 1 background / 1 predicted FPS. Foreground plus a processed WM_NULL test message took 2.15-35.64 ms. That message is a test measurement after activation, never a production activation prerequisite. All owned test clients were closed. Real EVE confirmation of this revision is pending. Existing named-pipe messages and native hook mechanisms are retained.
 
-Use [ThumbnailZOrderTests](../../tests/Eve-O-Preview.Tests/Checks/ThumbnailZOrderTests.cs) and [LiveThumbnailTests](../../tests/Eve-O-Preview.Tests/Checks/LiveThumbnailTests.cs), then validate relevant real desktop conditions. Preserve stable DWM relationships and nonactivating restoration; avoid unconditional hide/show or re-registration every poll.
-
-## BUG-004: Cycle hotkeys fail with certain foreground applications
-
-Trace [Program](../../Eve-O-Preview/Program.cs), [ThumbnailManager.RegisterCycleClientHotkey](../../Eve-O-Preview/Services/Implementation/ThumbnailManager.cs), [WindowManager.ActivateWindow](../../Eve-O-Preview/Services/Implementation/WindowManager.cs) and [app.manifest](../../Eve-O-Preview/app.manifest). Global input matching and foreground activation are separate stages.
-
-Compare a non-conflicting binding across foreground applications and privilege levels. Distinguish an undelivered key, a declined switch and unsuccessful activation. Absence of a Verbose event in an Information-level log proves nothing about delivery. Global cycling while another app is active is supported behavior; application-specific scope would be a feature decision.
-
-## BUG-005: Severe lag and background browser stutter
-
-This is a performance investigation scenario with no established cause. Examine [Program.SetupLogger](../../Eve-O-Preview/Program.cs), [ThumbnailManager](../../Eve-O-Preview/Services/Implementation/ThumbnailManager.cs), [CpuAffinityService](../../Eve-O-Preview/Services/Implementation/CpuAffinityService.cs), [HookService](../../Eve-O-Preview/Services/Implementation/HookService.cs) and [DxHook](../../Eve-O-Preview.Robin/DXHook.cs).
-
-Measure switch latency, frame times, per-core/per-process CPU, GPU/memory/disk activity, handle counts and log growth. Compare logging level, affinity and verified FPS targets one variable at a time. Aggregate CPU utilization is not a bottleneck diagnosis. Fresh target processes are necessary when comparing injected binaries: restarting only the host can reuse Robin.
-
-## BUG-006: Log volume obstructs reporting and diagnosis
-
-[Program.SetupLogger](../../Eve-O-Preview/Program.cs) configures daily file rolling with seven retained files; Verbose is enabled by `--verbose` or `-v`. Hot paths contain numerous verbose entries. File retention alone does not establish convenient diagnostic file sizes.
-
-Measure bytes per minute at representative client counts. Consider bounded captures or reduced event rates while retaining errors and necessary context. Do not add persistent per-key logging or more high-frequency output without measuring cost. See the [build/test guide](build-and-test.md) for log locations.
-
-## BUG-007: Installation files remain in use after host exit
-
-[HookService](../../Eve-O-Preview/Services/Implementation/HookService.cs) loads Robin into target processes. [StartStopServiceHandler](../../Eve-O-Preview/Mediator/Handlers/Services/StartStopServiceHandler.cs) stops polling, resets affinity and requests zero FPS targets; it does not unload native hooks or clear audio state. Host exit and native-module lifetime are distinct.
-
-Identify the exact locked file and holder before/after normal target shutdown. Separate access-denied errors from module-in-use failures. Any hot-unload design must safely restore callbacks and native state; forced unload is unsafe while patched entry points remain. See [Robin lifetime constraints](robin.md#injection-and-ownership-lifecycle).
-
-## BUG-008: Hotkeys stop after client stalls
-
-Treat persistent input loss and delayed repeat processing as separate hypotheses. [Program](../../Eve-O-Preview/Program.cs) installs global events; [ThumbnailManager](../../Eve-O-Preview/Services/Implementation/ThumbnailManager.cs) performs cycling work from the callback. There is no explicit hook-health recovery mechanism in these routes.
-
-Measure callback duration, synchronous native/IPC work and dispatch backlog with a controlled unresponsive target. An Async suffix alone does not establish nonblocking execution. Distinguish hook removal, host UI blocking, queued repeats and activation failure. Preserve modifier handling, event suppression and ordering; stale queued inputs must not unexpectedly activate later clients.
-
-## BUG-009: Preview sizes reset or diverge
-
-Trace [MainFormPresenter.ReloadApplicationSettings](../../Eve-O-Preview/Presenters/Implementation/MainFormPresenter.cs), [ThumbnailManager.UpdateThumbnailsList/UpdateThumbnailsSize/ThumbnailViewResized](../../Eve-O-Preview/Services/Implementation/ThumbnailManager.cs), [ThumbnailView](../../Eve-O-Preview/View/Implementation/ThumbnailView.cs) and [MainForm.ThumbnailSizeChanged_Handler](../../Eve-O-Preview/View/Implementation/MainForm.cs). Profile controls, existing-view propagation and resize feedback follow different paths.
-
-Compare persisted dimensions, control values and actual bounds across profile switches and new-client creation. Vary DPI, zoom, frames and event-suppression timing independently. Preserve delayed resize feedback and stable DWM registration; do not assume every geometry discrepancy shares a visibility defect's cause.
-
-## BUG-010: Cycle-list selection jumps after Move Up
-
-[MainForm.cycleGroupMoveClientOrderUpButton_Click/RefreshSelectedCycleGroup](../../Eve-O-Preview/View/Implementation/MainForm.cs) swaps dictionary values and rebuilds the BindingSource without restoring selected identity or scroll position. This is a source-supported selection-reset concern, not evidence of mouse-pointer movement.
-
-Test repeated Move Up from a middle/bottom entry in a scrollable list, including sparse order keys. Keep the moved character selected and maintain sensible scrolling without changing cycle semantics. Broader ordering controls are FEAT-005.
-
-## BUG-011: Cycling recovers only after profile switch
-
-[ThumbnailManager.HandleCurrentProfileChanged/RegisterAllHotkeys](../../Eve-O-Preview/Services/Implementation/ThumbnailManager.cs) rebuilds delegates. [RefreshHotkeysHandler](../../Eve-O-Preview/Mediator/Handlers/Configuration/RefreshHotkeysHandler.cs) clears/refills existing parsed lists without rebuilding registration. Existing key edits can update captured lists, while group creation/removal/replacement needs separate verification.
-
-Test fresh startup, existing profiles, adding/removing groups, editing bindings and switching profiles. Record registration counts and captured group identities. Inspect [MainForm](../../Eve-O-Preview/View/Implementation/MainForm.cs), [MainFormPresenter](../../Eve-O-Preview/Presenters/Implementation/MainFormPresenter.cs) and startup subscription order. Recovery after rebuilding registrations would not by itself prove configuration corruption.
-
-## BUG-012: New previews use stale font settings
-
-[SelectedProfileChangedNotificationHandler](../../Eve-O-Preview/Mediator/Handlers/Configuration/SelectedProfileChangedNotificationHandler.cs) updates existing previews. [ThumbnailViewFactory](../../Eve-O-Preview/View/Implementation/ThumbnailViewFactory.cs) caches its constructor's FontSettings reference, while profile population/saving can replace that object. [ThumbnailManager.UpdateThumbnailsList](../../Eve-O-Preview/Services/Implementation/ThumbnailManager.cs) does not override the factory font on creation.
-
-Switch between visibly different profiles, then create a preview. Separately edit a font and add a client. Compare existing/new views with active configuration before a later save refreshes them. Fix settings ownership if needed; avoid full visual updates every poll to mask stale construction state.
-
-## Additional regression checks
-
-- Hide All uses a temporary global flag in [ThumbnailToggleHideAllHandler](../../Eve-O-Preview/Mediator/Handlers/Thumbnails/ThumbnailToggleHideAllHandler.cs), separate from per-title disabled state. Test character A → login → B → A while toggling visibility; preserve intentional disabled entries.
-- Current source rejects Keys.None in general hotkey handling, provides instant capture tooltips and removes premium gating. Verify these implementations before proposing duplicate fixes.
-- Named-pipe timeouts and missing DWM previews have different owners. Investigate each independently; do not assume one log error explains every visible symptom.
-
-For future tasks, name a BUG ID, read the linked subsystem/source/tests, reproduce the scenario and establish acceptance criteria. Record implementation commits and validation when resolved. Keep source-supported concerns distinct from unverified runtime hypotheses.
+Release publishing still emits SharpDX trimming warnings. Managed builds retain existing WinForms DPI-manifest and Costura PrivateAssets warnings. No Cake release tasks were run. Broader feature requests remain in [the feature backlog](feature-backlog.md).

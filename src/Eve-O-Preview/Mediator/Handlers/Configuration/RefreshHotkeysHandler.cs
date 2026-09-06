@@ -23,6 +23,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using EveOPreview.Helper;
 using Serilog;
+using EveOPreview.Services.Interface;
 
 namespace EveOPreview.Mediator.Handlers.Configuration
 {
@@ -30,11 +31,13 @@ namespace EveOPreview.Mediator.Handlers.Configuration
     {
         private readonly IThumbnailConfiguration _config;
         private readonly ILogger _logger;
+        private readonly IGlobalEvents _events;
 
-        public RefreshHotkeysHandler(IThumbnailConfiguration Config, ILogger logger)
+        public RefreshHotkeysHandler(IThumbnailConfiguration Config, ILogger logger, IGlobalEvents events)
         {
             _config = Config;
             _logger = logger;
+            _events = events;
         }
 
         public Task Handle(RefreshHotkeys request, CancellationToken cancellationToken)
@@ -70,6 +73,7 @@ namespace EveOPreview.Mediator.Handlers.Configuration
 
                 _config.ToggleHideActiveClientsHotkeyParsed = _config.ToggleHideActiveClientsHotkey.ToHotkeys();
                 _config.MinimizeAllClientsHotkeyParsed = _config.MinimizeAllClientsHotkey.ToHotkeys();
+                _events.PublishHotkeysChanged();
                 
                 _logger.Information("Hotkeys refreshed successfully: {CycleGroupCount} groups configured", cycleGroupCount);
                 return Task.CompletedTask;

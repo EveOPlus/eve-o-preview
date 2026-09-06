@@ -39,6 +39,8 @@ internal unsafe class PrecisionSleep
     public PrecisionSleep()
     {
         _timerHandle = CreateWaitableTimerExW(IntPtr.Zero, null, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_MODIFY_STATE | 0x100000);
+        if (_timerHandle == IntPtr.Zero)
+            _timerHandle = CreateWaitableTimerExW(IntPtr.Zero, null, 0, TIMER_MODIFY_STATE | 0x100000);
     }
 
     public void Sleep(double milliseconds)
@@ -48,10 +50,10 @@ internal unsafe class PrecisionSleep
         // SetWaitableTimer expects time in 100-nanosecond intervals.
         long relativeTime = -(long)(milliseconds * 10000.0);
 
-        if (SetWaitableTimer(_timerHandle, in relativeTime, 0, IntPtr.Zero, IntPtr.Zero, false))
-        {
-            WaitForSingleObject(_timerHandle, 0xFFFFFFFF);
-        }
+        if (_timerHandle != IntPtr.Zero && SetWaitableTimer(_timerHandle, in relativeTime, 0, IntPtr.Zero, IntPtr.Zero, false) &&
+            WaitForSingleObject(_timerHandle, (uint)Math.Ceiling(milliseconds) + 100) == 0) return;
+        // Failure must not turn the outer pacing loop into a busy wait.
+        Thread.Sleep(Math.Max(1, (int)Math.Ceiling(milliseconds)));
     }
 
     ~PrecisionSleep()

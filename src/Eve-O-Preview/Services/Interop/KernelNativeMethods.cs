@@ -41,6 +41,18 @@ namespace EveOPreview.Services.Interop
         [DllImport("kernel32.dll")]
         public static extern bool CloseHandle(IntPtr hObject);
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern uint WaitForSingleObject(IntPtr handle, uint milliseconds);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool VirtualFreeEx(IntPtr process, IntPtr address, nuint size, uint freeType);
+
+        [DllImport("kernel32.dll", EntryPoint = "LoadLibraryExW", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern IntPtr LoadLibraryEx(string path, IntPtr file, uint flags);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool FreeLibrary(IntPtr module);
+
         [DllImport("kernel32.dll")]
         public static extern bool DebugSetProcessKillOnExit(bool killOnExit);
 
@@ -110,6 +122,7 @@ namespace EveOPreview.Services.Interop
             public byte EfficiencyClass;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 20)]
             public byte[] Reserved;
+            public ushort GroupCount;
             public GROUP_MASK GroupMask;
         }
 
@@ -129,6 +142,10 @@ namespace EveOPreview.Services.Interop
         [LibraryImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool SetProcessAffinityMask(IntPtr hProcess, IntPtr dwProcessAffinityMask);
+
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool GetProcessAffinityMask(IntPtr hProcess, out IntPtr processAffinityMask, out IntPtr systemAffinityMask);
 
         [LibraryImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]

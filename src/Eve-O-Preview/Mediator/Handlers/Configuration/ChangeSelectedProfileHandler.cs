@@ -40,9 +40,15 @@ namespace EveOPreview.Mediator.Handlers.Thumbnails
         public async Task Handle(ChangeSelectedProfile notification, CancellationToken ct)
         {
             _logger.WithCallerInfo().Information("ChangeSelectedProfileHandler: Switching to profile location: {ProfileLocation}", notification.NewProfileLocation);
+            if (notification.NewProfileLocation == null) return;
+            var previousProfile = _configStorage.CurrentProfile;
             _configStorage.CurrentProfile = notification.NewProfileLocation;
             _logger.Verbose("Loading configuration from new profile");
-            _configStorage.Load();
+            if (!_configStorage.Load())
+            {
+                _configStorage.CurrentProfile = previousProfile;
+                return;
+            }
 
             await _publisher.Publish(new SelectedProfileChangedNotification(notification.NewProfileLocation), ct);
             _logger.Verbose("Profile change completed successfully");

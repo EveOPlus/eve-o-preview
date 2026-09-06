@@ -22,7 +22,7 @@ namespace EveOPreview.Configuration
     {
         ProfileLocation CurrentProfile { get; set; }
 
-        void Load();
+        bool Load();
         void Save();
     }
 }

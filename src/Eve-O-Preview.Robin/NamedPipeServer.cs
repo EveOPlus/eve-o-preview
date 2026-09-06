@@ -12,353 +12,188 @@
 // GNU General Public License for more details.
 // 
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.using System.Diagnostics;
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using System.IO.Pipes;
-using System.Runtime.CompilerServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Diagnostics;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using static EveOPreview.Robin.DebugLogger;
 using static EveOPreview.Robin.Global;
 
 namespace EveOPreview.Robin;
 
-public static unsafe class NamedPipeServer
+public static class NamedPipeServer
 {
-    internal static bool IsNamedPipeRunning = true;
-    private static NamedPipeServerStream _namedPipeServerStream = null!;
-    private static readonly string EvoRobinPipeName = "EveoRobin_" + ThisClientsHandle;
-
-    // Just making up a custom mini messaging protocol just randomly really.
-    private const byte PIPE_FIRE_AND_FORGET_DIRECTION = 0xA3; // A3 is the first byte, if the caller wants something done quick and don't really care about the outcome.
-    private const byte PIPE_SET_FOCUSED_COMMAND = 0xB1; // B1 is the second byte following a A3, to tell our process it needs to be ready to take focus and unthrottle the FPS ASAP.
-    private const byte PIPE_PREDICT_FOCUS_COMMAND = 0xB3; // B3 is the second byte following a A3, to tell our process that focus might be on the way soon.
-
-    private const byte PIPE_QUERY_DIRECTION = 0xA1; // A1 is the first byte, if the caller is requesting read only.
-    private const byte PIPE_PING_REQUEST_CODE = 0xB2; // B2 is used for a simple ping, following an A1
-
-    private const byte PIPE_UPDATE_DIRECTION = 0xA2; // A2 is the first byte, if the caller is asking us to update something.
-    private const byte PIPE_FPS_PREFIX_BYTE_FOCUSED = 0xF1; // F1 is a prefix before an int (4 bytes) for the target focused FPS rate.
-    private const byte PIPE_FPS_PREFIX_BYTE_BACKGROUND = 0xF2; // F2 is a prefix before an int (4 bytes) for the target background FPS rate.
-    private const byte PIPE_FPS_PREFIX_BYTE_PREDICT = 0xF3; // F3 is a prefix before an int (4 bytes) for the target FPS rate when predicting focus is coming.
-    private const byte PIPE_TAKE_OWNERSHIP_COMMAND = 0xB4; // 0xB4 is a prefix for the calling process to claim ownership of this.
-
-    private const byte PIPE_SOUND_UNMUTE_ALL = 0xC1; // A2 C1 = Unmute all sounds. Reply with 0x01
-    private const byte PIPE_SOUND_UNMUTE_LIST = 0xC2; // A2 C2 = Unmute a list of sounds. Receive (int) lengthOfList each{(uint) soundsEventId}. Reply with 0x01
-    private const byte PIPE_SOUND_MUTE_LIST = 0xC3; // A2 C3 = Mute a list of sounds. Receive (int) lengthOfList each{(uint) soundsEventId}. Reply with 0x01
-    private const byte PIPE_SOUND_GET_MUTED = 0xC4; // A1 C4 = Get a list of muted sounds. Send (int) lengthOfList each{(uint) soundsEventId}
-    private const byte PIPE_SOUND_EVENT_HISTORY = 0xC5; // A1 C5 = Get a list of history. Send response (int) listLength each{(uint) eventId (ulong) gameObjectId (ulong) timestamp}
-
-    private const byte PIPE_SUCCESS_RESPONSE_CODE = 0x01; // 01 is the response we send at the end of a A2 request, like a success return code. 
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Initialize()
+    internal static volatile bool IsNamedPipeRunning = true;
+    private static NamedPipeServerStream? _server;
+    private static string _pipeName = "EveoRobin_" + ThisClientsHandle;
+    private static readonly Lazy<string> BuildIdentity = new(() =>
     {
-        _namedPipeServerStream = CreateNamedPipeServer();
-    }
+        string version = typeof(DxHook).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
+        using var process = Process.GetCurrentProcess();
+        string? path = process.Modules.Cast<ProcessModule>().FirstOrDefault(m => string.Equals(m.ModuleName, "Eve-O-Preview.Robin.dll", StringComparison.OrdinalIgnoreCase))?.FileName;
+        string hash = path == null ? "managed" : Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
+        return $"{version}; SHA256={hash}";
+    });
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Initialize() => _server = CreateNamedPipeServer();
+
     internal static NamedPipeServerStream CreateNamedPipeServer()
     {
-        Info($"Creating named pipe server: {EvoRobinPipeName}");
-
         if (OperatingSystem.IsWindows())
         {
-            // Secure the named pipe to our current user only.
-            var currentUser = WindowsIdentity.GetCurrent().User
-                              ?? throw new InvalidOperationException("Cannot determine current user identity to configure Named Pipe ACLs.");
-
-            var pipeSecurity = new PipeSecurity();
-            pipeSecurity.AddAccessRule(new PipeAccessRule(currentUser, PipeAccessRights.FullControl, AccessControlType.Allow));
-            return NamedPipeServerStreamAcl.Create(EvoRobinPipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.None, 0, 0, pipeSecurity);
+            using var identity = WindowsIdentity.GetCurrent();
+            var user = identity.User ?? throw new InvalidOperationException("No current user for the pipe ACL.");
+            var security = new PipeSecurity();
+            security.AddAccessRule(new PipeAccessRule(user, PipeAccessRights.FullControl, AccessControlType.Allow));
+            return NamedPipeServerStreamAcl.Create(_pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte,
+                PipeOptions.Asynchronous, 8192, 8192, security);
         }
-        else
-        {
-            // Not offering linux support at the moment but let's make sure it's secure if anyone does try running this on linux just in case.
-            var pipe = new NamedPipeServerStream(EvoRobinPipeName, PipeDirection.InOut, 1);
-            string socketPath = Path.Combine(Path.GetTempPath(), $"CoreFxPipe_{EvoRobinPipeName}");
-
-            if (File.Exists(socketPath))
-            {
-                // 600: Read/Write for User, No Access for Group/Others
-                File.SetUnixFileMode(socketPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
-            }
-
-            return pipe;
-        }
+        return new NamedPipeServerStream(_pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
     }
 
-    internal static void StartPipeServer()
+    internal static async Task StartPipeServer()
     {
-        var failureCount = 0;
+        int failures = 0;
         while (IsNamedPipeRunning)
         {
-            var cmdBytes = new byte[2];
             try
             {
-                //Log($"Named pipe {EvoRobinPipeName} WaitForConnection()");
-                _namedPipeServerStream.WaitForConnection();
-
-                using (var reader =
-                       new BinaryReader(_namedPipeServerStream, System.Text.Encoding.UTF8, leaveOpen: true))
-                using (var writer =
-                       new BinaryWriter(_namedPipeServerStream, System.Text.Encoding.UTF8, leaveOpen: true))
+                _server ??= CreateNamedPipeServer();
+                await _server.WaitForConnectionAsync().ConfigureAwait(false);
+                using var deadline = new CancellationTokenSource(1000);
+                try
                 {
-                    //lastPlace = "ReadByte directionByte";
-                    cmdBytes[0] = reader.ReadByte();
-                    cmdBytes[1] = reader.ReadByte();
-                    switch (cmdBytes[0])
-                    {
-                        case PIPE_FIRE_AND_FORGET_DIRECTION:
-                            switch (cmdBytes[1])
-                            {
-                                case PIPE_SET_FOCUSED_COMMAND:
-                                    A3B1_SetFocusNow();
-                                    break;
-                                case PIPE_PREDICT_FOCUS_COMMAND:
-                                    A3B3_PrepareToTakeFocusSoon(reader);
-                                    break;
-                            }
-
-                            break;
-                        case PIPE_UPDATE_DIRECTION:
-                            switch (cmdBytes[1])
-                            {
-                                case PIPE_TAKE_OWNERSHIP_COMMAND:
-                                    A2B4_ClaimProcessOwnership(reader);
-                                    break;
-
-                                case PIPE_FPS_PREFIX_BYTE_FOCUSED:
-                                    A2F1_SetFpsTargets(reader);
-                                    break;
-                                case PIPE_SOUND_UNMUTE_ALL:
-                                    A2C1_UnmuteAllSounds();
-                                    break;
-                                case PIPE_SOUND_UNMUTE_LIST:
-                                    A2C2_UnmuteSounds(reader);
-                                    break;
-                                case PIPE_SOUND_MUTE_LIST:
-                                    A2C3_MuteSounds(reader);
-                                    break;
-                            }
-
-                            ReplySuccess(writer);
-
-                            break;
-
-                        case PIPE_QUERY_DIRECTION:
-                            switch (cmdBytes[1])
-                            {
-                                case PIPE_QUERY_DIRECTION: // The default will be getting the FPS settings. 
-                                    A1A1_QueryFpsSettings(writer);
-                                    break;
-                                case PIPE_PING_REQUEST_CODE:
-                                    A1B2_Ping(writer);
-                                    break;
-                                case PIPE_SOUND_GET_MUTED:
-                                    A1C4_SendAllMutedSounds(writer);
-                                    break;
-                                case PIPE_SOUND_EVENT_HISTORY:
-                                    A1C5_SendSoundEventHistory(writer);
-                                    break;
-                            }
-
-                            break;
-                    }
-
-                    writer.Flush();
-                    writer.Close();
-                    reader.Close();
+                    await ProcessConnectionAsync(_server, deadline.Token).ConfigureAwait(false);
+                    failures = 0;
+                }
+                catch (Exception ex) when (ex is IOException || ex is InvalidDataException || ex is OperationCanceledException || ex is ArgumentException)
+                {
+                    // A disconnected, malformed or stalled client is not a server failure.
+                    // Keep the listener available for the next connection.
+                }
+                finally
+                {
+                    // EOF can leave the managed stream in Broken state even though IsConnected
+                    // is false. Recreate it instead of trying to reuse that disconnected instance.
+                    _server.Dispose();
+                    _server = null;
                 }
             }
             catch (Exception ex)
             {
-                Error(ex, $"Named pipe {_namedPipeServerStream} processing command {cmdBytes[0]:X} {cmdBytes[1]:X}");
-                Thread.Sleep(10); // hopefully we never crash in a loop but if we do, save the cpu
-
-                // Rather silent failure than crashing another process
-
-                _namedPipeServerStream.Dispose();
-                _namedPipeServerStream = CreateNamedPipeServer();
-
-                failureCount++;
-
-                if (failureCount > 100)
+                Error(ex, "Robin pipe listener failed");
+                _server?.Dispose();
+                _server = null;
+                if (++failures >= 100)
                 {
-                    // Something is very wrong. Let's just give up on everything.
+                    DxHook.SetFpsTargets(0, 0, 0);
+                    AudioMuteSystem.ClearMutedIds();
                     IsNamedPipeRunning = false;
-                    DxHook.IsFpsThrottleActive = false;
-                    NativeMethods.MessageBox(IntPtr.Zero, $"Aborting FPS Limiter. Named pipe error: {ex}",
-                        "FPS Limiter", 0);
                 }
-            }
-            finally
-            {
-                if (_namedPipeServerStream.IsConnected)
-                {
-                    _namedPipeServerStream.Disconnect();
-                }
+                else await Task.Delay(100).ConfigureAwait(false);
             }
         }
+        _server?.Dispose();
     }
 
-    private static void A2C3_MuteSounds(BinaryReader reader)
+    private static async Task ProcessConnectionAsync(Stream stream, CancellationToken cancellation)
     {
-        int length = reader.ReadInt32();
-        for (int i = 0; i < length; i++)
+        var header = new byte[2];
+        await stream.ReadExactlyAsync(header, cancellation).ConfigureAwait(false);
+        byte direction = header[0], command = header[1];
+        int payloadLength = (direction, command) switch
         {
-            var nextId = reader.ReadUInt32();
-            AudioMuteSystem.AddMutedId(nextId);
+            (0xA3, 0xB3) or (0xA2, 0xB4) => 4,
+            (0xA2, 0xF1) => 14,
+            (0xA2, 0xC2 or 0xC3 or 0xC6) => 4,
+            (0xA2, 0xC7) => 1,
+            _ => 0
+        };
+        byte[] payload = new byte[payloadLength];
+        await stream.ReadExactlyAsync(payload, cancellation).ConfigureAwait(false);
+        if (direction == 0xA2 && command is 0xC2 or 0xC3 or 0xC6)
+        {
+            int count = System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(payload);
+            if (count < 0 || count > AudioMuteSystem.MaxMutedIds) throw new InvalidDataException("Invalid audio list length.");
+            Array.Resize(ref payload, 4 + count * 4);
+            await stream.ReadExactlyAsync(payload.AsMemory(4), cancellation).ConfigureAwait(false);
+        }
+        // Only complete, bounded requests reach the state-changing code.
+        using var input = new MemoryStream(payload);
+        using var reader = new BinaryReader(input);
+        using var response = new MemoryStream();
+        using (var writer = new BinaryWriter(response, System.Text.Encoding.UTF8, leaveOpen: true))
+            ProcessCommand(direction, command, reader, writer);
+        if (response.Length > 0)
+        {
+            await stream.WriteAsync(response.GetBuffer().AsMemory(0, (int)response.Length), cancellation).ConfigureAwait(false);
+            // Wait for the peer to consume the reply and close before disconnecting (which
+            // can discard unread pipe bytes). A stalled peer still has the same deadline.
+            await stream.ReadAsync(new byte[1], cancellation).ConfigureAwait(false);
         }
     }
 
-    private static void A2C2_UnmuteSounds(BinaryReader reader)
+    private static void ProcessCommand(byte direction, byte command, BinaryReader reader, BinaryWriter writer)
     {
-        int length = reader.ReadInt32();
-        for (int i = 0; i < length; i++)
+        switch (direction, command)
         {
-            var nextId = reader.ReadUInt32();
-            AudioMuteSystem.RemoveMutedId(nextId);
+            case (0xA3, 0xB1):
+                DxHook.PrepareForFocus();
+                return;
+            case (0xA3, 0xB3):
+                Volatile.Write(ref DxHook.PredictedFocusTimeoutMs, Math.Clamp(reader.ReadInt32(), 1, 30000));
+                DxHook.SetOurWindowInFocus(FocusType.Predicted);
+                return;
+            case (0xA2, 0xB4): ClaimOwnership(reader.ReadInt32()); break;
+            case (0xA2, 0xF1):
+                int foreground = reader.ReadInt32();
+                if (reader.ReadByte() != 0xF2) throw new InvalidDataException("Invalid background FPS marker.");
+                int background = reader.ReadInt32();
+                if (reader.ReadByte() != 0xF3) throw new InvalidDataException("Invalid predicted FPS marker.");
+                int predicted = reader.ReadInt32();
+                DxHook.SetFpsTargets(foreground, background, predicted);
+                break;
+            case (0xA2, 0xC1): AudioMuteSystem.ClearMutedIds(); break;
+            case (0xA2, 0xC7): AudioMuteSystem.SetDiagnosticCapture(reader.ReadBoolean()); break;
+            case (0xA2, 0xC2 or 0xC3 or 0xC6):
+                int count = reader.ReadInt32();
+                var ids = new uint[count];
+                for (int i = 0; i < count; i++) ids[i] = reader.ReadUInt32();
+                AudioMuteSystem.UpdateMutedIds(ids, replace: command == 0xC6, remove: command == 0xC2);
+                break;
+            case (0xA1, 0xB2): writer.Write((byte)1); return;
+            case (0xA1, 0xB5): writer.Write((byte)2); return; // Protocol capabilities: atomic audio replacement.
+            case (0xA1, 0xB6): writer.Write((byte)(DxHook.HooksInstalled ? 1 : 0)); return;
+            case (0xA1, 0xB8): writer.Write((byte)(AudioMuteSystem.IsMonitorReady ? 1 : 0)); return;
+            case (0xA1, 0xB7):
+                byte[] identity = Encoding.UTF8.GetBytes(BuildIdentity.Value);
+                writer.Write(identity.Length);
+                writer.Write(identity);
+                return;
+            case (0xA1, 0xA1):
+                var targets = DxHook.Targets;
+                writer.Write((byte)0xF1); writer.Write(targets.Foreground);
+                writer.Write((byte)0xF2); writer.Write(targets.Background);
+                writer.Write((byte)0xF3); writer.Write(targets.Predicted);
+                writer.Write((byte)1);
+                return;
+            case (0xA1, 0xC4):
+                var muted = AudioMuteSystem.GetMutedIds();
+                writer.Write(muted.Count);
+                foreach (uint id in muted) writer.Write(id);
+                return;
+            case (0xA1, 0xC5):
+                var history = AudioLog.GetOrderedEventHistory();
+                writer.Write(history.Count);
+                foreach (var entry in history) { writer.Write(entry.EventID); writer.Write(entry.GameObjectID); writer.Write(entry.Timestamp); }
+                return;
+            default: writer.Write((byte)0); return;
         }
-    }
-
-    private static void A2C1_UnmuteAllSounds()
-    {
-        AudioMuteSystem.ClearMutedIds();
-    }
-
-    private static void A1C5_SendSoundEventHistory(BinaryWriter writer)
-    {
-        var eventHistory = AudioLog.GetOrderedEventHistory();
-        writer.Write(eventHistory.Count);
-        foreach (var e in eventHistory)
-        {
-            writer.Write(e.EventID);
-            writer.Write(e.GameObjectID);
-            writer.Write(e.Timestamp);
-        }
-    }
-
-    private static void A1C4_SendAllMutedSounds(BinaryWriter writer)
-    {
-        var allMutedSounds = AudioMuteSystem.GetMutedIds();
-        writer.Write(allMutedSounds.Count);
-
-        foreach (var id in allMutedSounds)
-        {
-            writer.Write(id);
-        }
-    }
-
-    private static void A1B2_Ping(BinaryWriter writer)
-    {
-        writer.Write(PIPE_SUCCESS_RESPONSE_CODE);
-    }
-
-    private static void A1A1_QueryFpsSettings(BinaryWriter writer)
-    {
-        //lastPlace = "Write PipeFpsPrefixByteFocused";
-        writer.Write(PIPE_FPS_PREFIX_BYTE_FOCUSED);
-        //lastPlace = "Write _targetFpsInFocus";
-        writer.Write(DxHook.TargetFpsInFocus);
-        //lastPlace = "Write PipeFpsPrefixByteBackground";
-        writer.Write(PIPE_FPS_PREFIX_BYTE_BACKGROUND);
-        //lastPlace = "Write _targetFpsInBackground";
-        writer.Write(DxHook.TargetFpsInBackground);
-        //lastPlace = "Write PipeFpsPrefixBytePredict";
-        writer.Write(PIPE_FPS_PREFIX_BYTE_PREDICT);
-        //lastPlace = "Write _targetFpsInPredictFocus";
-        writer.Write(DxHook.TargetFpsInPredictFocus);
-        writer.Write(PIPE_SUCCESS_RESPONSE_CODE);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void ReplySuccess(BinaryWriter writer)
-    {
-        writer.Write(PIPE_SUCCESS_RESPONSE_CODE);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void A2F1_SetFpsTargets(BinaryReader reader)
-    {
-        // since we read the 0xF1 already we know the next 4 bytes are going to be an 32 bit int.
-        //lastPlace = "ReadInt32 newTargetFpsFocus";
-        var newTargetFpsFocus = reader.ReadInt32();
-
-        if (newTargetFpsFocus < 1 || newTargetFpsFocus > 1000)
-        {
-            // anything that might look like it's just unthrottled, we will turn off the throttle.
-            DxHook.TargetFpsInFocus = 0;
-            DxHook.PerFrameTargetMsInFocus = 0;
-        }
-        else
-        {
-            DxHook.TargetFpsInFocus = newTargetFpsFocus;
-            DxHook.PerFrameTargetMsInFocus = 1000.0 / newTargetFpsFocus;
-        }
-
-        //lastPlace = "ReadByte PipeFpsPrefixByteBackground";
-        if (reader.ReadByte() == PIPE_FPS_PREFIX_BYTE_BACKGROUND)
-        {
-            // since we read the 0xF2 we know the next 4 bytes are going to be an 32 bit int.
-            //lastPlace = "ReadInt32 newTargetFpsBackground";
-            var newTargetFpsBackground = reader.ReadInt32();
-
-            if (newTargetFpsBackground < 1 || newTargetFpsBackground > 1000)
-            {
-                // anything that might look like it's just unthrottled, we will turn off the throttle.
-                DxHook.TargetFpsInBackground = 0;
-                DxHook.PerFrameTargetMsInBackground = 0;
-            }
-            else
-            {
-                DxHook.TargetFpsInBackground = newTargetFpsBackground;
-                DxHook.PerFrameTargetMsInBackground = 1000.0 / newTargetFpsBackground;
-            }
-        }
-
-        //lastPlace = "ReadByte PipeFpsPrefixBytePredict";
-        if (reader.ReadByte() == PIPE_FPS_PREFIX_BYTE_PREDICT)
-        {
-            // since we read the 0xF1 we know the next 4 bytes are going to be an 32 bit int.
-            //lastPlace = "ReadInt32 newTargetFpsPredict";
-            var newTargetFpsPredict = reader.ReadInt32();
-
-            if (newTargetFpsPredict < 1 || newTargetFpsPredict > 1000)
-            {
-                // anything that might look like it's just unthrottled, we will turn off the throttle.
-                DxHook.TargetFpsInPredictFocus = 0;
-                DxHook.PerFrameTargetMsInPredictFocus = 0;
-            }
-            else
-            {
-                DxHook.TargetFpsInPredictFocus = newTargetFpsPredict;
-                DxHook.PerFrameTargetMsInPredictFocus = 1000.0 / newTargetFpsPredict;
-            }
-        }
-
-        // If both focus and background are 0, then disable the whole throttling.
-        DxHook.IsFpsThrottleActive = DxHook.PerFrameTargetMsInBackground + DxHook.PerFrameTargetMsInFocus > 0;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void A2B4_ClaimProcessOwnership(BinaryReader reader)
-    {
-        OwnerProcessId = reader.ReadInt32();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void A3B3_PrepareToTakeFocusSoon(BinaryReader reader)
-    {
-        DxHook.SetOurWindowInFocus(FocusType.Predicted);
-        DxHook.PredictedFocusTimeoutMs = reader.ReadInt32();
-        // Log($"PipePredictFocusCommand processed");
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void A3B1_SetFocusNow()
-    {
-        DxHook.SetOurWindowInFocus(FocusType.Foreground);
-        // Log($"PipeSetFocusedCommand processed");
+        writer.Write((byte)1);
     }
 }

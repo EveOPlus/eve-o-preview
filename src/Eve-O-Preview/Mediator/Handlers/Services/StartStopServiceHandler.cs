@@ -69,9 +69,8 @@ namespace EveOPreview.Mediator.Handlers.Services
                 var processes = _procMonitor.GetAllProcesses();
                 _logger.Information("Resetting CPU affinity and FPS limiter for {ProcessCount} clients", processes.Count);
                 
-                _cpuAffinityService.ResetAll(processes);
-                var tasks = processes.Select(client => _hook.DisableFpsLimiterAsync(client.MainWindowHandle));
-                await Task.WhenAll(tasks).ConfigureAwait(false);
+                _cpuAffinityService.Stop(processes);
+                await _hook.StopAsync(processes).ConfigureAwait(false);
                 
                 _logger.Information("Thumbnail manager service stopped successfully");
             }

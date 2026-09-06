@@ -48,10 +48,6 @@ namespace EveOPreview.Mediator.Handlers.Configuration
             var initTasks = allKnownClients.Select(client => _hookService.TryInstallHooksAsync(client));
             await Task.WhenAll(initTasks);
 
-            _logger.Verbose("Applying audio mute settings to all clients");
-            var tasks = allKnownClients.Select(client => _hookService.UpdateMutedAudioAsync(client.MainWindowHandle));
-            await Task.WhenAll(tasks);
-            
             _logger.Verbose("Audio settings update completed for {ClientCount} clients", allKnownClients.Count);
         }
     }

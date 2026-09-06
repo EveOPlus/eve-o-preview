@@ -34,7 +34,7 @@ The project uses xUnit v3 and the Visual Studio test adapter. It covers the foll
   recovery after external hiding/demotion or minimizing, Hide All, individual
   and active-client hiding, focus-loss hiding, and the Always on top setting.
   Immediate-activation cases verify that reordering precedes client activation
-  and image capture, survives a blocked asynchronous activation, preserves focus,
+  and image capture, applies the border before activation without a UI continuation, preserves focus,
   and respects hiding settings without waiting for a refresh tick.
 
 Live-thumbnail cases also exercise the production live view with a simulated
@@ -61,3 +61,13 @@ ordinary configuration tests run directly in xUnit.
 `Eve-O-Mock` remains the animated mock client for manual rendering and integration
 checks. These automated checks verify window-state recovery but do not reproduce
 or establish the cause of intermittent disappearance in a live EVE session.
+
+The defect-investigation additions exercise full profile load/edit/save/rename/clone
+workflows, live settings propagation and current factory configuration, production
+hotkey subscriptions with pending affinity and immediate borders/focus, and process/GDI/affinity lifetime
+in isolated workers. Pipe tests cover both old/new audio protocols and response
+timeouts. The focused suite contains 50 cases after theory expansion.
+
+Actual NativeAOT injection and DXGI/synthetic-audio checks are an optional separate
+[Robin.NativeSmoke](../Robin.NativeSmoke/README.md) run. They do not run implicitly
+from Test Explorer and have their own native toolchain/GPU prerequisites.

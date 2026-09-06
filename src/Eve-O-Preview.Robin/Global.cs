@@ -24,6 +24,38 @@ internal static class Global
     // This may not be true for every game, but it should hold true most the time, and it should do what I need for now...
     internal static IntPtr ThisClientsHandle = Process.GetCurrentProcess().MainWindowHandle;
 
-    internal static int OwnerProcessId = -1; // -1 means anyone. just run with no owner.
+    internal static volatile int OwnerProcessId = -1;
+    private static readonly object OwnerLock = new();
+    private static IntPtr _ownerHandle;
+
+    internal static void ClaimOwnership(int pid)
+    {
+        if (pid <= 0) throw new InvalidDataException("An owner PID must be positive.");
+        IntPtr handle = NativeMethods.OpenProcess(0x100000, false, pid); // SYNCHRONIZE pins this process identity.
+        if (handle == IntPtr.Zero) throw new InvalidDataException("Owner process is unavailable.");
+        lock (OwnerLock)
+        {
+            if (_ownerHandle != IntPtr.Zero) NativeMethods.CloseHandle(_ownerHandle);
+            _ownerHandle = handle;
+            OwnerProcessId = pid;
+        }
+    }
+
+    internal static void StartOwnerWatchdog() => _ = Task.Run(async () =>
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        while (await timer.WaitForNextTickAsync().ConfigureAwait(false))
+        {
+            lock (OwnerLock)
+            {
+                if (_ownerHandle == IntPtr.Zero || NativeMethods.WaitForSingleObject(_ownerHandle, 0) == 258) continue;
+                NativeMethods.CloseHandle(_ownerHandle);
+                _ownerHandle = IntPtr.Zero;
+                OwnerProcessId = 0;
+                DxHook.SetFpsTargets(0, 0, 0);
+                AudioMuteSystem.ClearMutedIds();
+            }
+        }
+    });
 
 }

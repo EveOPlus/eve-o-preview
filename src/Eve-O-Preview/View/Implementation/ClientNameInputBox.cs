@@ -51,7 +51,7 @@ namespace EveOPreview.View
 
         private void listOfAllClients_SelectedValueChanged(object sender, EventArgs e)
         {
-            selectedClientNameTextBox.Text = listOfAllClients.SelectedItem.ToString();
+            selectedClientNameTextBox.Text = listOfAllClients.SelectedItem?.ToString() ?? "";
         }
 
         private void listOfAllClients_MouseDoubleClick(object sender, MouseEventArgs e)

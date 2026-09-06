@@ -78,6 +78,11 @@ namespace EveOPreview.Services.Implementation
 
         public void ActivateWindow(IntPtr handle)
         {
+            if (handle == IntPtr.Zero || !User32NativeMethods.IsWindow(handle))
+            {
+                _logger.Debug("Skipping unavailable client HWND {Handle}", handle);
+                return;
+            }
             _logger.Verbose("WindowManager.ActivateWindow: Activating window 0x{Handle:X}", handle);
 
             _ = _hookService.TellEveClientFocusIsComingAsync(handle);
@@ -85,8 +90,6 @@ namespace EveOPreview.Services.Implementation
             try
             {
                 IsCurrentlySwitching = true;
-                MakeApiCallsToSetForegroundAndFocus(handle);
-
                 int style = User32NativeMethods.GetWindowLong(handle, InteropConstants.GWL_STYLE);
 
                 if ((style & InteropConstants.WS_MINIMIZE) == InteropConstants.WS_MINIMIZE)
@@ -94,8 +97,9 @@ namespace EveOPreview.Services.Implementation
                     _logger.Verbose("WindowManager.ActivateWindow: Window 0x{Handle:X} was minimized, restoring", handle);
                     User32NativeMethods.ShowWindowAsync(handle, InteropConstants.SW_RESTORE);
                 }
+                MakeApiCallsToSetForegroundAndFocus(handle);
                 
-                _logger.Verbose("WindowManager.ActivateWindow: Window 0x{Handle:X} activated successfully", handle);
+                _logger.Verbose("WindowManager.ActivateWindow: Activation requested for 0x{Handle:X}; current foreground=0x{Foreground:X}", handle, User32NativeMethods.GetForegroundWindow());
             }
             catch (Exception ex)
             {
@@ -114,7 +118,7 @@ namespace EveOPreview.Services.Implementation
             if (enableAnimation)
             {
                 _logger.Verbose("WindowManager.MinimizeWindow: Using animated minimize");
-                User32NativeMethods.SendMessage(handle, InteropConstants.WM_SYSCOMMAND, InteropConstants.SC_MINIMIZE, 0);
+                User32NativeMethods.PostMessage(handle, InteropConstants.WM_SYSCOMMAND, new IntPtr(InteropConstants.SC_MINIMIZE), IntPtr.Zero);
             }
             else
             {
@@ -123,6 +127,7 @@ namespace EveOPreview.Services.Implementation
                 param.length = Marshal.SizeOf(typeof(WINDOWPLACEMENT));
                 User32NativeMethods.GetWindowPlacement(handle, ref param);
                 param.showCmd = WINDOWPLACEMENT.SW_MINIMIZE;
+                param.flags |= 4; // WPF_ASYNCWINDOWPLACEMENT: don't wait on another input queue.
                 User32NativeMethods.SetWindowPlacement(handle, ref param);
             }
         }
@@ -175,8 +180,6 @@ namespace EveOPreview.Services.Implementation
         {
             _logger.Verbose("WindowManager.GetStaticThumbnail: Capturing static thumbnail for 0x{Handle:X}", source);
             
-            var sourceContext = User32NativeMethods.GetDC(source);
-
             User32NativeMethods.GetClientRect(source, out RECT windowRect);
 
             var width = windowRect.Right - windowRect.Left;
@@ -191,20 +194,27 @@ namespace EveOPreview.Services.Implementation
                 return null;
             }
 
-            var destContext = Gdi32NativeMethods.CreateCompatibleDC(sourceContext);
-            var bitmap = Gdi32NativeMethods.CreateCompatibleBitmap(sourceContext, width, height);
-
-            var oldBitmap = Gdi32NativeMethods.SelectObject(destContext, bitmap);
-            Gdi32NativeMethods.BitBlt(destContext, 0, 0, width, height, sourceContext, 0, 0, Gdi32NativeMethods.SRCCOPY);
-            Gdi32NativeMethods.SelectObject(destContext, oldBitmap);
-            Gdi32NativeMethods.DeleteDC(destContext);
-            User32NativeMethods.ReleaseDC(source, sourceContext);
-
-            Image image = Image.FromHbitmap(bitmap);
-            Gdi32NativeMethods.DeleteObject(bitmap);
-
-            _logger.Verbose("WindowManager.GetStaticThumbnail: Static thumbnail captured successfully");
-            return image;
+            IntPtr sourceContext = User32NativeMethods.GetDC(source);
+            if (sourceContext == IntPtr.Zero) return null;
+            IntPtr destContext = IntPtr.Zero, bitmap = IntPtr.Zero, oldBitmap = IntPtr.Zero;
+            try
+            {
+                destContext = Gdi32NativeMethods.CreateCompatibleDC(sourceContext);
+                if (destContext == IntPtr.Zero) return null;
+                bitmap = Gdi32NativeMethods.CreateCompatibleBitmap(sourceContext, width, height);
+                if (bitmap == IntPtr.Zero) return null;
+                oldBitmap = Gdi32NativeMethods.SelectObject(destContext, bitmap);
+                if (oldBitmap == IntPtr.Zero || oldBitmap == new IntPtr(-1)) return null;
+                if (!Gdi32NativeMethods.BitBlt(destContext, 0, 0, width, height, sourceContext, 0, 0, Gdi32NativeMethods.SRCCOPY)) return null;
+                return Image.FromHbitmap(bitmap);
+            }
+            finally
+            {
+                if (oldBitmap != IntPtr.Zero && oldBitmap != new IntPtr(-1)) Gdi32NativeMethods.SelectObject(destContext, oldBitmap);
+                if (bitmap != IntPtr.Zero) Gdi32NativeMethods.DeleteObject(bitmap);
+                if (destContext != IntPtr.Zero) Gdi32NativeMethods.DeleteDC(destContext);
+                User32NativeMethods.ReleaseDC(source, sourceContext);
+            }
         }
 
         public void PredictUpcomingClient(IntPtr upcomingHandle)

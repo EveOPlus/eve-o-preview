@@ -21,13 +21,13 @@ namespace EveOPreview.Configuration.Implementation
 
     public class FontSettings
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = "Arial";
         public FontStyle Style { get; set; }
-        public float Size { get; set; }
-        public Color ForeColor { get; set; }
-        public Color OutlineColor { get; set; }
-        public float OutlineWidth { get; set; }
-        public int PositionOffsetFromLeft { get; set; }
-        public int PositionOffsetFromTop { get; set; }
+        public float Size { get; set; } = 14.25f;
+        public Color ForeColor { get; set; } = Color.FromArgb(255, 255, 165, 0);
+        public Color OutlineColor { get; set; } = Color.Black;
+        public float OutlineWidth { get; set; } = 3;
+        public int PositionOffsetFromLeft { get; set; } = 10;
+        public int PositionOffsetFromTop { get; set; } = 5;
     }
 }
