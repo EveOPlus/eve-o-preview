@@ -1,4 +1,4 @@
-﻿//Eve-O Preview Plus is a program designed to deliver quality of life tooling. Primarily but not limited to enabling rapid window foreground and focus changes for the online game Eve Online.
+//Eve-O Preview Plus is a program designed to deliver quality of life tooling. Primarily but not limited to enabling rapid window foreground and focus changes for the online game Eve Online.
 //Copyright (C) 2026  Aura Asuna
 //
 //This program is free software: you can redistribute it and/or modify
@@ -30,6 +30,13 @@ namespace EveOPreview.Configuration.Implementation
         private bool _enableClientLayoutTracking;
         #endregion
 
+        // Read saved identities without exposing or changing the profile's layout dictionaries.
+        public IEnumerable<string> GetKnownClientTitles() => FlatLayout.Keys
+            .Concat(ClientLayout.Keys).Concat(DisableThumbnail.Keys)
+            .Concat(PerClientLayout.Keys).Concat(PerClientLayout.Values.SelectMany(layout => layout.Keys))
+            .Concat(CycleGroups.SelectMany(group => group.ClientsOrder.Values))
+            .Distinct(StringComparer.Ordinal).OrderBy(title => title, StringComparer.OrdinalIgnoreCase);
+
         public ThumbnailConfiguration()
         {
             this.ConfigVersion = 3;
@@ -48,7 +55,7 @@ namespace EveOPreview.Configuration.Implementation
             this.DisableThumbnail = new Dictionary<string, bool>();
             this.PriorityClients = new List<string>();
 
-            this.MinimizeToTray = false;
+            this.MinimizeToTray = true;
             this.ThumbnailRefreshPeriod = 500;
 
             this.EnableCompatibilityMode = false;
@@ -93,6 +100,9 @@ namespace EveOPreview.Configuration.Implementation
 
         [JsonProperty("ConfigVersion")]
         public int ConfigVersion { get; set; }
+
+        [JsonProperty("UiAccentColor")]
+        public string UiAccentColor { get; set; } = "";
 
         [JsonProperty("CycleGroups")]
         public List<CycleGroup> CycleGroups { get; set; } = new List<CycleGroup>();
@@ -163,7 +173,7 @@ namespace EveOPreview.Configuration.Implementation
         public Color ActiveClientHighlightColor { get; set; }
 
         public int ActiveClientHighlightThickness { get; set; }
-        
+
         public string ToggleHideActiveClientsHotkey { get; set; }
         public string MinimizeAllClientsHotkey { get; set; }
 
@@ -172,12 +182,12 @@ namespace EveOPreview.Configuration.Implementation
 
         [JsonIgnore]
         public Keys MinimizeAllClientsHotkeyParsed { get; set; }
-        
+
         public FontSettings TitleFontSettings { get; set; }
 
         [JsonProperty("LoginThumbnailLocation")]
         public Point LoginThumbnailLocation { get; set; }
-        
+
         public FpsLimiterSettings FpsLimiterSettings { get; set; }
 
         public AudioMuteSettings AudioMuteSettings { get; set; }
@@ -187,16 +197,16 @@ namespace EveOPreview.Configuration.Implementation
 
         [JsonProperty]
         private Dictionary<string, Dictionary<string, Point>> PerClientLayout { get; set; }
-        
+
         [JsonProperty]
         private Dictionary<string, Point> FlatLayout { get; set; }
-        
+
         [JsonProperty]
         private Dictionary<string, ClientLayout> ClientLayout { get; set; }
-        
+
         [JsonProperty]
         private Dictionary<string, bool> DisableThumbnail { get; set; }
-        
+
         [JsonProperty]
         private List<string> PriorityClients { get; set; }
 
@@ -269,14 +279,56 @@ namespace EveOPreview.Configuration.Implementation
             return this.PriorityClients.Contains(currentClient);
         }
 
-        [JsonIgnore] 
+        public IEnumerable<string> GetPriorityClientTitles() => PriorityClients.ToArray();
+        public void SetPriorityClient(string title, bool priority)
+        {
+            PriorityClients.RemoveAll(value => value == title);
+            if (priority) PriorityClients.Add(title);
+        }
+
+        // Session-only per profile, shared across all its cycle groups. Never written to a profile.
+        private readonly Dictionary<string, HashSet<string>> _cycleSkipProfiles = new(StringComparer.OrdinalIgnoreCase);
+        private HashSet<string> _cycleSkippedClients = new(StringComparer.Ordinal);
+        private string _cycleSkipProfile = "";
+        public void SelectCycleSkipProfile(string profileId)
+        {
+            _cycleSkipProfiles[_cycleSkipProfile] = _cycleSkippedClients;
+            _cycleSkipProfile = profileId;
+            if (!_cycleSkipProfiles.TryGetValue(profileId, out _cycleSkippedClients)) _cycleSkippedClients = new(StringComparer.Ordinal);
+            CycleSkipChanged?.Invoke();
+        }
+        private string _cycleSkipIndicatorStyle = "Circle with slash";
+        private Color _cycleSkipIndicatorColor = Color.Red;
+        [JsonProperty("CycleSkipIndicatorStyle")]
+        public string CycleSkipIndicatorStyle
+        {
+            get => _cycleSkipIndicatorStyle;
+            set { _cycleSkipIndicatorStyle = value is "Pause" or "Cross" ? value : "Circle with slash"; CycleSkipChanged?.Invoke(); }
+        }
+        [JsonProperty("CycleSkipIndicatorColor")]
+        public Color CycleSkipIndicatorColor
+        {
+            get => _cycleSkipIndicatorColor;
+            set { _cycleSkipIndicatorColor = value; CycleSkipChanged?.Invoke(); }
+        }
+        public event Action CycleSkipChanged;
+        public bool IsClientCycleSkipped(string title) => title != null && _cycleSkippedClients.Contains(title);
+        public void SetClientCycleSkipped(string title, bool skipped)
+        {
+            if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("Choose a character to skip.", nameof(title));
+            if (skipped ? _cycleSkippedClients.Add(title) : _cycleSkippedClients.Remove(title)) CycleSkipChanged?.Invoke();
+        }
+
+        [JsonIgnore]
         public bool IsTemporarilyHidingAllThumbnails { get; set; } = false;
 
         public bool IsThumbnailDisabled(string currentClient)
         {
-            return IsTemporarilyHidingAllThumbnails || 
-                   this.DisableThumbnail.TryGetValue(currentClient, out bool isDisabled) && isDisabled;
+            return IsTemporarilyHidingAllThumbnails || IsThumbnailIndividuallyDisabled(currentClient);
         }
+
+        public bool IsThumbnailIndividuallyDisabled(string currentClient) =>
+            this.DisableThumbnail.TryGetValue(currentClient, out bool isDisabled) && isDisabled;
 
         public void ToggleThumbnail(string currentClient, bool isDisabled)
         {
@@ -288,6 +340,9 @@ namespace EveOPreview.Configuration.Implementation
         /// </summary>
         public void ApplyRestrictions()
         {
+            if (string.IsNullOrEmpty(UiAccentColor) || UiAccentColor.Length != 7 || UiAccentColor[0] != '#' ||
+                !uint.TryParse(UiAccentColor.AsSpan(1), System.Globalization.NumberStyles.HexNumber,
+                    System.Globalization.CultureInfo.InvariantCulture, out _)) UiAccentColor = "";
             CycleGroups ??= new List<CycleGroup>();
             CycleGroups.RemoveAll(x => x == null);
             foreach (var group in CycleGroups)

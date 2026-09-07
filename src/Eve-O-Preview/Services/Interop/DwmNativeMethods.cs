@@ -22,6 +22,15 @@ namespace EveOPreview.Services.Interop
 {
     static class DwmNativeMethods
     {
+        public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+        public const int DWMWA_CAPTION_COLOR = 35;
+        public const int DWMWA_TEXT_COLOR = 36;
+        public const int DWMWA_COLOR_DEFAULT = -1;
+
+        // Preserve the HRESULT: unsupported title-bar attributes on older Windows are optional.
+        [DllImport("dwmapi.dll")]
+        public static extern int DwmSetWindowAttribute(IntPtr hWnd, int attribute, ref int value, int size);
+
         [DllImport("dwmapi.dll", PreserveSig = false)]
         public static extern void DwmEnableBlurBehindWindow(IntPtr hWnd, DWM_BLURBEHIND pBlurBehind);
 

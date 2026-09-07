@@ -1,4 +1,4 @@
-﻿//Eve-O Preview Plus is a program designed to deliver quality of life tooling. Primarily but not limited to enabling rapid window foreground and focus changes for the online game Eve Online.
+//Eve-O Preview Plus is a program designed to deliver quality of life tooling. Primarily but not limited to enabling rapid window foreground and focus changes for the online game Eve Online.
 //Copyright (C) 2026  Aura Asuna
 //
 //This program is free software: you can redistribute it and/or modify
@@ -35,7 +35,7 @@ namespace EveOPreview.Presenters
     public class MainFormPresenter : Presenter<IMainFormView>, IMainFormPresenter
     {
         #region Private constants
-        private const string DISCORD_URL = @"https://discord.gg/HzQHBtTEcB";
+        private const string DOCUMENTATION_URL = @"https://github.com/EveOPlus/eve-o-preview";
         #endregion
 
         #region Private fields
@@ -105,6 +105,16 @@ namespace EveOPreview.Presenters
             this.View.DeleteCurrentProfile = this.ActionDeleteCurrentProfile;
             this.View.RenameCurrentProfile = this.RenameCurrentProfile;
 
+            if (view is IAsyncSettingsView asyncView)
+            {
+                asyncView.CommitSettingsAsync = SaveApplicationSettingsAsync;
+                asyncView.CommitSizeAsync = async () =>
+                {
+                    await SaveApplicationSettingsAsync();
+                    await _mediator.Publish(new ThumbnailConfiguredSizeUpdated());
+                };
+            }
+
             var currentProfile = _mediator.Send(new GetCurrentProfileLocation()).Result;
             _logger.Verbose("MainFormPresenter: Current profile retrieved: {ProfilePath}", currentProfile?.FullPath ?? "(null)");
             _mediator.Send(new ChangeSelectedProfile(currentProfile)).GetAwaiter().GetResult();
@@ -168,7 +178,7 @@ namespace EveOPreview.Presenters
             _logger.Verbose("MainFormPresenter.Activate: Activating main form");
             this._suppressSizeNotifications = true;
             this.LoadApplicationSettings();
-            this.View.SetDocumentationUrl(MainFormPresenter.DISCORD_URL);
+            this.View.SetDocumentationUrl(MainFormPresenter.DOCUMENTATION_URL);
             this.View.SetVersionInfo(this.GetApplicationVersion());
             if (this._configuration.MinimizeToTray)
             {
@@ -287,6 +297,11 @@ namespace EveOPreview.Presenters
         }
 
         private async void SaveApplicationSettings()
+        {
+            await SaveApplicationSettingsAsync();
+        }
+
+        private async Task SaveApplicationSettingsAsync()
         {
             _logger.Verbose("MainFormPresenter.SaveApplicationSettings: Saving all application settings");
             this._configuration.CycleGroups = this.View.CycleGroups;
@@ -440,9 +455,9 @@ namespace EveOPreview.Presenters
 
         private void OpenDocumentationLink()
         {
-            _logger.Verbose("MainFormPresenter.OpenDocumentationLink: Opening Discord documentation link");
+            _logger.Verbose("MainFormPresenter.OpenDocumentationLink: Opening project documentation");
             // TODO Move out to a separate service / presenter / message handler
-            ProcessStartInfo processStartInfo = new ProcessStartInfo(new Uri(MainFormPresenter.DISCORD_URL).AbsoluteUri);
+            ProcessStartInfo processStartInfo = new ProcessStartInfo(new Uri(MainFormPresenter.DOCUMENTATION_URL).AbsoluteUri);
             Process.Start(processStartInfo);
         }
 

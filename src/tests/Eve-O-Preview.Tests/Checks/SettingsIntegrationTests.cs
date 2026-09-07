@@ -261,6 +261,20 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         Assert.Equal(TimeSpan.FromMilliseconds(750), ((System.Windows.Threading.DispatcherTimer)manager.GetType()
             .GetField("_thumbnailUpdateTimer", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(manager)).Interval);
 
+        config.ThumbnailRefreshPeriod = 600;
+        config.ThumbnailMinimumSize = new Size(240, 135);
+        config.ThumbnailMaximumSize = new Size(700, 400);
+        var runtimeSettings = new EveOPreview.Mediator.Handlers.Thumbnails.ThumbnailRuntimeSettingsUpdatedHandler(manager);
+        runtimeSettings.Handle(new ThumbnailRuntimeSettingsUpdated(), CancellationToken.None).GetAwaiter().GetResult();
+        foreach (var view in originalViews.Values)
+        {
+            Assert.Same(view, manager.GetClientByPointer(view.Id));
+            Assert.Equal(config.ThumbnailMinimumSize, ((Form)view).MinimumSize);
+            Assert.Equal(config.ThumbnailMaximumSize, ((Form)view).MaximumSize);
+        }
+        Assert.Equal(TimeSpan.FromMilliseconds(600), ((System.Windows.Threading.DispatcherTimer)manager.GetType()
+            .GetField("_thumbnailUpdateTimer", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(manager)).Interval);
+
         var refresh = (IRequestHandler<RefreshHotkeys>)Activator.CreateInstance(App.GetType("EveOPreview.Mediator.Handlers.Configuration.RefreshHotkeysHandler"), config, logger, events);
         var group = new CycleGroup { ForwardHotkeys = new() { "Control+F8" }, ClientsOrder = new() { [1] = "EVE - 102", [2] = "EVE - 103" } };
         config.CycleGroups.Add(group);
@@ -295,9 +309,12 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         foreach (var handler in down.ToArray()) handler(null, press);
         Assert.False(press.Handled);
         config.EnableCompatibilityMode = true;
-        events.PublishCurrentProfileChanged(new SelectedProfileChangedNotification(null));
+        runtimeSettings.Handle(new ThumbnailRuntimeSettingsUpdated(), CancellationToken.None).GetAwaiter().GetResult();
         Assert.All(manager.GetAllKnownClients().Values, view => Assert.Equal("StaticThumbnailView", view.GetType().Name));
         Assert.All(originalViews.Values, view => Assert.True(((Form)view).IsDisposed));
+        config.EnableCompatibilityMode = false;
+        events.PublishCurrentProfileChanged(new SelectedProfileChangedNotification(null));
+        Assert.All(manager.GetAllKnownClients().Values, view => Assert.Equal("LiveThumbnailView", view.GetType().Name));
     }
 
     private static void CheckResources()

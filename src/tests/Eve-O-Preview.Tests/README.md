@@ -66,7 +66,59 @@ The defect-investigation additions exercise full profile load/edit/save/rename/c
 workflows, live settings propagation and current factory configuration, production
 hotkey subscriptions with pending affinity and immediate borders/focus, and process/GDI/affinity lifetime
 in isolated workers. Pipe tests cover both old/new audio protocols and response
-timeouts. The focused suite contains 50 cases after theory expansion.
+timeouts. These additions established a baseline of 50 cases after theory expansion.
+
+The modern workspace additions bring the suite to 86 expanded cases. They cover
+global preference persistence and portable/fallback locations, preservation of
+future global settings, theme validation, actual profile-file accent round trips,
+backend input validation, awaited saves before FPS/audio application, retry after
+a failed save, individual visibility while Hide All is active, and cycling edits
+that retain full titles and extra shortcuts. A private desktop case initializes
+the production WinForms/Avalonia host, changes themes and pages, and exercises
+hide/show and disposal without starting the presenter or native services. It
+also establishes a nonzero active simulated client before refreshing an
+inactive workspace, verifies native active/foreground handles remain unchanged,
+and checks that close can cancel or discard unapplied edits.
+
+Three visual cases capture the original MainForm tabs and control metrics,
+compare preview pixels against actual native title/highlight rendering, and
+capture the production Windows workspace. The title editor case types decimal
+font/outline sizes, blurs the fields, verifies staged font/color/offset/highlight
+edits in the displayed image and grouped Apply, and requires at least 200 pixels
+of editor viewport at the minimum modern window size while the preview remains
+pinned. The host case checks Legacy's 460 by 417 client size and restores the
+modern window size after switching themes.
+
+The PNG captures and original control metrics are written beside the test
+executable in `original-ui`, `title-preview`, and `native-ui`. Title pixel
+comparisons invoke the actual `OutlinedLabel` instance in `ThumbnailOverlay`;
+`DrawToBitmap` omits that layered window's label, so it is unsuitable as a title
+reference capture. The highlight reference uses production `ThumbnailView`
+insets with a solid image fixture. These checks do not capture a live EVE client.
+
+The separate [portable visual smoke executable](../Eve-O-Preview.UI.Smoke/README.md)
+renders the actual Avalonia controls in all three themes and checks navigation,
+search, draft retention, validation, profile accent cues and compact layouts.
+
+`WorkspaceCompositionTests` resolves the workspace from the production Autofac
+registrations with real configuration services and an isolated profile root on a
+private desktop. It does not start native services. In-process composition cannot
+establish which DLL a standalone build or single-file bundle will load: Cake also
+runs the host's `--validate-workspace` mode from a directory containing only the
+published executable, exercising UI resources and native rendering dependencies.
+
+`CharacterPortraitCacheTests` checks deduplicated downloads, character-ID filenames,
+reuse after restarting, weekly background refresh, and retention/backoff on failed
+or invalid image responses. Requests use a controlled HTTP handler and the shared
+test-only JPEG fixture. `WorkspaceHostTests` also opens and closes the donation
+details inside the real Windows/Avalonia host across all three themes.
+
+The `workspace-dpi` private-desktop case sends synthetic 100/125/150/200% DPI
+transitions through the production host and checks render scale, child bounds,
+focus/draft retention, actual-pixel sample sizing and Legacy/modern size restoration.
+It also moves its own window between available monitors and reports their DPI.
+Synthetic messages cannot change native caption/border metrics and do not replace
+manual testing on monitors with genuinely different scaling.
 
 Actual NativeAOT injection and DXGI/synthetic-audio checks are an optional separate
 [Robin.NativeSmoke](../Robin.NativeSmoke/README.md) run. They do not run implicitly

@@ -28,6 +28,33 @@ namespace EveOPreview.View.CustomControl
     {
         private Color outlineColor = Color.Black;
         private float outlineWidth = 1f;
+        private bool cycleSkipped;
+        private bool showTitle = true;
+        private string skipStyle = "Circle with slash";
+        private Color skipColor = Color.Red;
+        private int SkipSize => Math.Clamp((int)Math.Ceiling(Font.Size), 12, 22);
+
+        public void SetCycleSkipIndicator(bool skipped, string style, Color color)
+        {
+            if (cycleSkipped == skipped && skipStyle == style && skipColor == color) return;
+            cycleSkipped = skipped; skipStyle = style; skipColor = color;
+            Size = GetPreferredSize(Size.Empty);
+            Invalidate();
+        }
+
+        public void SetTitleVisible(bool visible)
+        {
+            if (showTitle == visible) return;
+            showTitle = visible;
+            Size = GetPreferredSize(Size.Empty);
+            Invalidate();
+        }
+
+        public override Size GetPreferredSize(Size proposedSize)
+        {
+            var size = showTitle ? base.GetPreferredSize(proposedSize) : Size.Empty;
+            return cycleSkipped ? new Size(size.Width + SkipSize + 5, Math.Max(size.Height, SkipSize + 4)) : size;
+        }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Color OutlineColor
@@ -65,12 +92,42 @@ namespace EveOPreview.View.CustomControl
 
         protected override void OnPaint(PaintEventArgs e)
         {
+            var titleBounds = ClientRectangle;
+            if (cycleSkipped)
+            {
+                // Vector strokes stay legible on transparent overlays without relying on emoji fonts.
+                using var marker = new GraphicsPath();
+                var box = new RectangleF(2, 3, SkipSize - 3, SkipSize - 3);
+                if (skipStyle == "Pause")
+                {
+                    marker.AddLine(box.Left + 2, box.Top, box.Left + 2, box.Bottom);
+                    marker.StartFigure(); marker.AddLine(box.Right - 2, box.Top, box.Right - 2, box.Bottom);
+                }
+                else if (skipStyle == "Cross")
+                {
+                    marker.AddLine(box.Left, box.Top, box.Right, box.Bottom);
+                    marker.StartFigure(); marker.AddLine(box.Right, box.Top, box.Left, box.Bottom);
+                }
+                else
+                {
+                    marker.AddEllipse(box);
+                    marker.StartFigure(); marker.AddLine(box.Left + 2, box.Top + 2, box.Right - 2, box.Bottom - 2);
+                }
+                e.Graphics.SmoothingMode = SmoothingMode.None;
+                using var contrast = new Pen(Color.Black, 4) { LineJoin = LineJoin.Round };
+                using var color = new Pen(skipColor, 2) { LineJoin = LineJoin.Round };
+                e.Graphics.DrawPath(contrast, marker);
+                e.Graphics.DrawPath(color, marker);
+                titleBounds.X += SkipSize + 5;
+                titleBounds.Width = Math.Max(0, titleBounds.Width - SkipSize - 5);
+            }
+            if (!showTitle) return;
             using (GraphicsPath gp = new GraphicsPath())
             using (Pen outline = new Pen(OutlineColor, OutlineWidth) { LineJoin = LineJoin.Round, Alignment = PenAlignment.Outset })
             using (StringFormat sf = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Near })
             using (Brush foreBrush = new SolidBrush(ForeColor))
             {
-                gp.AddString(Text, Font.FontFamily, (int)Font.Style, Font.Size, ClientRectangle, sf);
+                gp.AddString(Text, Font.FontFamily, (int)Font.Style, Font.Size, titleBounds, sf);
 
                 // Turn off any anti-alias because our background is going to be transparent and aliasing creates artifacts.
                 e.Graphics.SmoothingMode = SmoothingMode.None;

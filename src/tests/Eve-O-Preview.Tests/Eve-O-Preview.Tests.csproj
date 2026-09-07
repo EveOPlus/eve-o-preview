@@ -11,6 +11,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="../Eve-O-Preview.UI.Smoke/Fixtures/aura-asuna.jpg" LogicalName="EveOPreview.Tests.Portrait.jpg" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageReference Include="xunit.v3" Version="3.2.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">

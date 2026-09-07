@@ -34,6 +34,9 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
     [InlineData("ImmediateCycleActivation")]
     [InlineData("ImmediateThumbnailActivation")]
     [InlineData("ImmediateActivationRespectsHiding")]
+    [InlineData("CycleSkipping")]
+    [InlineData("ThumbnailMenuOrdering")]
+    [InlineData("ThumbnailMenuHover")]
     public Task OverlayWindowBehavior(string scenario) => PrivateDesktopRunner.RunAsync(scenario, output);
 
     internal static void RunScenario(string scenario)
@@ -45,10 +48,12 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
         config.EnableThumbnailSnap = false;
         config.HideThumbnailsDelay = 0;
         IntPtr foreground = new IntPtr(101);
+        IntPtr predicted = IntPtr.Zero;
         Action<IntPtr> activating = null;
         var windowManager = Stub.Create<IWindowManager>((method, args) =>
         {
             if (method.Name == "GetForegroundWindowHandle") return foreground;
+            if (method.Name == "PredictUpcomingClient") predicted = (IntPtr)args[0];
             if (method.Name == "ActivateWindow")
             {
                 activating?.Invoke((IntPtr)args[0]);
@@ -57,7 +62,13 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
             return Stub.Default(method.ReturnType);
         });
         var keyboard = Stub.Create<IKeyboardMouseEvents>();
-        var mediator = Stub.Create<IMediator>();
+        var sentMessages = new List<object>();
+        var mediator = Stub.Create<IMediator>((method, args) =>
+        {
+            if (method.Name == "Send") sentMessages.Add(args[0]);
+            return args.FirstOrDefault() is EveOPreview.Mediator.Messages.SetClientCycleSkipped skip
+                ? new EveOPreview.Mediator.Handlers.Thumbnails.SetClientCycleSkippedHandler(config).Handle(skip, default) : Stub.Default(method.ReturnType);
+        });
         var mainProcess = Stub.Create<IProcessInfo>();
         var pending = new List<IProcessInfo>();
         foreach (int id in new[] { 101, 102, 103 })
@@ -82,7 +93,7 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
             }
             return Stub.Default(method.ReturnType);
         });
-        var factory = Stub.Create<IThumbnailViewFactory>((method, args) => new Preview(config, windowManager, keyboard)
+        var factory = Stub.Create<IThumbnailViewFactory>((method, args) => new Preview(config, windowManager, keyboard, mediator)
         {
             Id = (IntPtr)args[0], Title = (string)args[1], ThumbnailSize = (Size)args[2]
         });
@@ -127,6 +138,137 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
 
             switch (scenario)
             {
+                case "ThumbnailMenuHover":
+                    config.ThumbnailZoomEnabled = true;
+                    config.ThumbnailZoomFactor = 2;
+                    config.ThumbnailOpacity = .6;
+                    a.Location = new Point(200, 200);
+                    var hoverMenu = (ContextMenuStrip)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(a);
+                    var baseBounds = a.Bounds;
+                    typeof(ThumbnailView).GetMethod("MouseEnter_Handler", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(a, [a, EventArgs.Empty]);
+                    var hoverBounds = a.Bounds;
+                    Check(hoverBounds.Size != baseBounds.Size && a.Opacity == 1, "fixture must enter a zoomed, opaque preview");
+                    typeof(ThumbnailView).GetMethod("MouseDownEventHandler", BindingFlags.NonPublic | BindingFlags.Instance)
+                        .Invoke(a, [new MouseEventArgs(MouseButtons.Right, 1, 100, 60, 0), Keys.None]);
+                    typeof(ThumbnailView).GetMethod("MouseLeave_Handler", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(a, [a, EventArgs.Empty]);
+                    for (int tick = 0; tick < 5; tick++) { Application.DoEvents(); Refresh(); Thread.Sleep(100); }
+                    Check(hoverMenu.Visible, "first-open menu must survive hover leave and refresh ticks");
+                    Check(a.Bounds == hoverBounds && a.Opacity == 1, "entering the menu must retain hover geometry and opacity");
+                    config.HideThumbnailsOnLostFocus = true;
+                    foreground = hoverMenu.Handle;
+                    Refresh();
+                    Check(a.IsActive && hoverMenu.Visible, "the open menu must count as part of its thumbnail for focus-based hiding");
+                    Check(views.All(v => IsAbove(hoverMenu.Handle, v.Overlay.Handle)), "refresh must not raise thumbnail overlays above the open menu");
+                    hoverMenu.Close(); Application.DoEvents();
+                    Check(a.Bounds == baseBounds && Math.Abs(a.Opacity - .6) < .01, "dismissing the menu must release the deferred hover effect");
+                    hoverMenu.Show(a, new Point(70, 50)); a.Hide(); Application.DoEvents();
+                    Check(!hoverMenu.Visible && !a.IsContextMenuOpen, "hiding a thumbnail must close its menu and release menu state");
+                    break;
+                case "ThumbnailMenuOrdering":
+                    var quickMenu = (ContextMenuStrip)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(a);
+                    a.Location = new Point(Screen.PrimaryScreen.WorkingArea.Left + 200, Screen.PrimaryScreen.WorkingArea.Top + 200);
+                    foreach (var theme in new[] { "Light", "Dark", "Legacy" })
+                    {
+                        EveOPreview.View.CustomControl.NativeMenuTheme.CurrentTheme = theme;
+                        foreach (bool skipFirst in new[] { false, true, false })
+                        {
+                            EveOPreview.View.CustomControl.NativeMenuTheme.ThumbnailMenuOrder = skipFirst
+                                ? EveOPreview.UI.ThumbnailMenuActions.Normalize(["skip-cycling", "resize", "move"])
+                                : EveOPreview.UI.ThumbnailMenuActions.DefaultOrder;
+                            string firstItem = skipFirst ? "menuCycleSkip" : "menuMinimize";
+                            foreach (bool resuming in skipFirst ? new[] { false, true } : new[] { false })
+                            {
+                                var clickPosition = new Point(100, 60);
+                                var screenPosition = a.PointToScreen(clickPosition);
+                                typeof(ThumbnailView).GetMethod("MouseDownEventHandler", BindingFlags.NonPublic | BindingFlags.Instance)
+                                    .Invoke(a, [new MouseEventArgs(MouseButtons.Right, 1, clickPosition.X, clickPosition.Y, 0), Keys.None]);
+                                Application.DoEvents();
+                                var menuPosition = quickMenu.PointToClient(screenPosition);
+                                Check(quickMenu.Visible, "first right-click opens the thumbnail menu");
+                                Check(quickMenu.Items[0].Name == firstItem, "the configured action must be first in every theme");
+                                Check(quickMenu.GetItemAt(menuPosition)?.Name == firstItem, "the configured action must be under the original pointer position");
+                                Check(quickMenu.Items.OfType<ToolStripMenuItem>().Count() == 5, "reordering must retain all five actions");
+                                Check(quickMenu.Items.OfType<ToolStripSeparator>().Count() == (skipFirst ? 0 : 2), "only explicitly configured dividers may appear");
+                                if (!skipFirst)
+                                    Check(quickMenu.Items[2].Name == "divider:minimize" && quickMenu.Items[4].Name == "divider:skip", "default dividers must follow Minimize All and Skip");
+                                if (skipFirst) Check(quickMenu.Items[0].Text.StartsWith(resuming ? "Resume" : "Skip"), "the first action must describe its current skip state");
+                                int sentBefore = sentMessages.Count;
+                                var secondClick = new MouseEventArgs(MouseButtons.Right, 1, menuPosition.X, menuPosition.Y, 0);
+                                typeof(ToolStrip).GetMethod("OnMouseDown", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(quickMenu, [secondClick]);
+                                typeof(ToolStrip).GetMethod("OnMouseUp", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(quickMenu, [secondClick]);
+                                Check(sentMessages.Count == sentBefore + 1 && sentMessages.Last().GetType().Name == (skipFirst ? "SetClientCycleSkipped" : "MinimizeClient"),
+                                    "the second right-click must issue only the configured action");
+                                Check(config.IsClientCycleSkipped(a.Title) == (skipFirst && !resuming), "skip-first must toggle while minimize leaves cycling unchanged");
+                                quickMenu.Close();
+                            }
+                        }
+                    }
+                    var placedDivider = "divider:" + Guid.NewGuid().ToString("N");
+                    var customLayout = new[] { "skip-cycling", placedDivider, "minimize", "minimize-all", "move", "resize" };
+                    EveOPreview.View.CustomControl.NativeMenuTheme.ThumbnailMenuOrder = customLayout;
+                    foreach (var palette in EveOPreview.UI.ThumbnailMenuThemes.All)
+                    {
+                        EveOPreview.View.CustomControl.NativeMenuTheme.ThumbnailTheme = palette.Id;
+                        quickMenu.Show(a, new Point(70, 50)); Application.DoEvents();
+                        Check(quickMenu.Items[1].Name == placedDivider && quickMenu.Items.OfType<ToolStripSeparator>().Count() == 1,
+                            "theme changes must preserve explicit divider placement");
+                        if (!SystemInformation.HighContrast)
+                        {
+                            Check(quickMenu.BackColor == ColorTranslator.FromHtml(palette.Background) && quickMenu.ForeColor == ColorTranslator.FromHtml(palette.Foreground),
+                                "native menu uses the selected " + palette.Name + " palette");
+                            using var bitmap = new Bitmap(quickMenu.Width, quickMenu.Height);
+                            quickMenu.DrawToBitmap(bitmap, new Rectangle(Point.Empty, bitmap.Size));
+                            string directory = System.IO.Path.Combine(AppContext.BaseDirectory, "native-menu-themes");
+                            System.IO.Directory.CreateDirectory(directory);
+                            bitmap.Save(System.IO.Path.Combine(directory, palette.Id + ".png"));
+                        }
+                        quickMenu.Close();
+                    }
+                    a.Refresh(false);
+                    foreach (Control source in a.Overlay.Controls)
+                    {
+                        if (source.Name == "OverlayLabel") source.Location = new Point(31, 23);
+                        var local = new Point(4, 4);
+                        var clicked = source.PointToScreen(local);
+                        typeof(Control).GetMethod("OnMouseUp", BindingFlags.NonPublic | BindingFlags.Instance)
+                            .Invoke(source, [new MouseEventArgs(MouseButtons.Right, 1, local.X, local.Y, 0)]);
+                        Application.DoEvents();
+                        Check(quickMenu.GetItemAt(quickMenu.PointToClient(clicked))?.Name == "menuCycleSkip",
+                            "right-clicking " + source.Name + " must place the first action under the original pointer");
+                        quickMenu.Close();
+                    }
+                    break;
+                case "CycleSkipping":
+                    var order = new SortedDictionary<int, string> { [3] = a.Title, [8] = b.Title, [20] = "EVE - Offline", [50] = c.Title };
+                    var otherOrder = new SortedDictionary<int, string> { [1] = c.Title, [2] = b.Title, [3] = a.Title };
+                    var menu = (ContextMenuStrip)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(b);
+                    var skipItem = (ToolStripMenuItem)menu.Items["menuCycleSkip"];
+                    skipItem.PerformClick();
+                    Check(config.IsClientCycleSkipped(b.Title), "thumbnail context menu skips the character");
+                    typeof(ContextMenuStrip).GetMethod("OnOpening", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(menu, [new System.ComponentModel.CancelEventArgs()]);
+                    Check(skipItem.Text == "Resume cycling this character", "context menu reflects global skip state");
+                    string Next(bool forward, string title, SortedDictionary<int, string> sequence) => (string)manager.GetType()
+                        .GetMethod("FindNextClientInCycleGroup", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(manager, [forward, title, sequence]);
+                    Check(Next(true, a.Title, order) == c.Title, "forward skips disabled and offline members");
+                    Check(Next(false, c.Title, order) == a.Title, "backward skips disabled members");
+                    Check(Next(true, b.Title, order) == c.Title && Next(false, b.Title, order) == a.Title, "a skipped active character retains its sequence position");
+                    Check(Next(true, c.Title, otherOrder) == a.Title, "skip is shared by another group");
+                    Check(Next(true, "Not in group", order) == a.Title, "outside-group activation begins at first eligible member");
+                    a.ThumbnailActivated(a.Id);
+                    manager.GetType().GetMethod("CycleNextClient").Invoke(manager, [true, order]);
+                    Check(manager.GetActiveClient().Id == c.Id, "actual cycling respects skip state");
+                    Check(predicted == a.Id, "next-client prediction also bypasses the skipped character");
+                    b.ThumbnailActivated(b.Id);
+                    Check(manager.GetActiveClient().Id == b.Id, "manual thumbnail activation still works");
+                    config.SetClientCycleSkipped(a.Title, true); config.SetClientCycleSkipped(c.Title, true);
+                    Check(Next(true, b.Title, order) == null, "all-skipped order has no destination");
+                    manager.GetType().GetMethod("CycleNextClient").Invoke(manager, [true, order]);
+                    Check(manager.GetActiveClient().Id == b.Id, "all skipped leaves the active client unchanged");
+                    skipItem.PerformClick();
+                    Check(!config.IsClientCycleSkipped(b.Title), "thumbnail menu resumes the character");
+                    Check(Next(true, a.Title, order) == b.Title && Next(true, b.Title, order) == b.Title, "one eligible character wraps safely");
+                    Check(order.Count == 4, "temporary skips never remove saved order entries");
+                    break;
                 case "ActivationOrder":
                     AssertStack(b, c, a);
                     Check(views.All(v => Topmost(v.Handle) && Topmost(v.Overlay.Handle)), "persistent topmost on previews and overlays");
@@ -293,8 +435,8 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
 
 internal sealed class Preview : ThumbnailView
 {
-    public Preview(IThumbnailConfiguration config, IWindowManager wm, IKeyboardMouseEvents keyboard)
-        : base(wm, config, null, null, keyboard) { }
+    public Preview(IThumbnailConfiguration config, IWindowManager wm, IKeyboardMouseEvents keyboard, IMediator mediator = null)
+        : base(wm, config, null, mediator, keyboard) { }
     public Form Overlay => (Form)typeof(ThumbnailView).GetField("_overlay", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(this);
     public Action<bool> Refreshing;
     protected override void RefreshThumbnail(bool forceRefresh) => Refreshing?.Invoke(forceRefresh);

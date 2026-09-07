@@ -24,6 +24,7 @@ namespace EveOPreview.View
 {
     public interface IThumbnailView : IView
     {
+        bool IsContextMenuOpen { get; }
         IntPtr Id { get; set; }
         string Title { get; set; }
         FontSettings TitleFontSettings { get; set; }

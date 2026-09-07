@@ -58,8 +58,9 @@ namespace Build
 			context.Information("Setting things up...");
 
 			context.Information("Delete bin and publish folders");
-			this.DeleteDirectory(context, Configuration.BinFolder);
-			this.DeleteDirectory(context, Configuration.PublishFolder);
+			this.DeleteDirectory(context, context.BinFolder);
+			this.DeleteDirectory(context, context.PublishFolder);
+			context.CreateDirectory(context.BinFolder);
 
 			context.Information("Download NuGet");
 			this.DownloadNuGet(context);

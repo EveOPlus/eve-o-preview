@@ -1,8 +1,12 @@
 # EVE-O Preview: source and AI navigation guide
 
-EVE-O Preview manages multiple EVE client windows: live or captured previews, rapid focus changes and cycling, layouts, FPS limits, CPU affinity, and selective audio muting. This guide is a reusable context entry point for understanding and changing the implementation.
+EVE-O Preview manages multiple EVE client windows: live or captured previews, rapid focus changes and cycling, layouts, FPS limits, CPU affinity, and selective audio muting. The settings workspace is an Avalonia UI with Light, Dark and Legacy themes, hosted by the existing Windows application. This guide is a reusable context entry point for understanding and changing the implementation.
 
-Reviewed against commit `60944b521e3c5b442dd379b5208c53a91ae3a573` on 2026-09-06. The review covers the tracked application, injected library, tests, mock, project metadata, and release tooling. [The source index](docs/ai/source-index.md) records the complete baseline inventory and the treatment of resources and binary assets. This is a source-based navigation guide, not a claim that all native behavior has been exercised or benchmarked.
+**Theme maintenance policy:** Legacy is locked to its existing feature set for legacy use only. Do not add new features, pages or controls to Legacy. Continue fixing bugs, maintaining compatibility and updating its existing features without removing them or disrupting the familiar layout. All new feature work targets modern themes, currently Light and Dark, and users are expected to migrate to a modern theme. Theme selection must briefly tell users that Legacy may lack newer features; this notice should not interrupt switching themes.
+
+**Theme migration:** New and older/unversioned global settings open in Dark, even if an older file selected Legacy. Users may manually select Legacy again; preserve that choice on later launches and profile switches. `ApplicationPreferences` versions the existing global settings file independently of gameplay profiles, retaining unrelated preferences and the established portable/installed storage policy.
+
+The baseline review was against commit `60944b521e3c5b442dd379b5208c53a91ae3a573` on 2026-09-06; UI architecture updates are recorded from 2026-09-07. The review covers the application, injected library, tests, mock, project metadata, and release tooling. [The source index](docs/ai/source-index.md) records the complete baseline inventory, later additions and the treatment of resources and binary assets. This is a source-based navigation guide, not a claim that all native behavior has been exercised or benchmarked.
 
 ## Use this with an AI assistant
 
@@ -15,6 +19,7 @@ The short `AGENTS.md` files provide discovery and local constraints, while the p
 | [Reported bugs and investigation leads](docs/ai/reported-bugs.md) | Twelve tracked findings with evidence, current-version limits, workarounds, source routes and reproduction checks |
 | [Future feature backlog](docs/ai/feature-backlog.md) | Nineteen unimplemented, partial or exploratory ideas with current-code checks and acceptance criteria |
 | [Application and configuration](docs/ai/application-and-configuration.md) | Startup/shutdown, Autofac, presenter/UI contracts, every mediator route, shared settings, profiles and migrations |
+| [UI review and preservation map](docs/ai/ui-review.md) | Source UI/UX audit, legacy control parity, theme and profile identity requirements, future DPS/ESI boundaries |
 | [Windows and thumbnails](docs/ai/windows-and-thumbnails.md) | Discovery, DWM/static rendering, overlays, MRU z-order, focus, hotkeys, prediction, CPU affinity, ownership |
 | [Robin and native integration](docs/ai/robin.md) | Injection lifecycle, pipe bytes, DXGI vtable hooks, frame pacing, audio interception, sidecar diagnostics |
 | [Build and test](docs/ai/build-and-test.md) | Project differences, precise Windows commands, native publishing, test coverage and limitations, release side effects |
@@ -26,7 +31,11 @@ There are also local instructions for the [main app](Eve-O-Preview/AGENTS.md), [
 
 ```mermaid
 flowchart TD
-    P[Program: STA startup and Autofac] --> M[MainFormPresenter / MainForm]
+    P[Program: STA startup and Autofac] --> M[MainFormPresenter / WorkspaceForm]
+    M --> UI[Avalonia WorkspaceView]
+    UI --> B[IWorkspaceBackend / Windows adapter]
+    B --> M
+    B --> Q
     M --> Q[MediatR requests and notifications]
     Q --> C[ConfigurationStorage / ProfileManager]
     Q --> T[ThumbnailManager]
@@ -43,7 +52,7 @@ flowchart TD
     P --> S[DebuggerSidecar: host crash diagnostics]
 ```
 
-The main process owns desktop UI, persisted settings, discovery, and switching decisions. Robin runs inside each target process and affects its rendering/audio. A pipe reply proves communication, not that every native hook is healthy. The sidecar debugs the preview host, not the injected game processes.
+The main process owns desktop UI, persisted settings, discovery, and switching decisions. [Eve-O-Preview.UI](Eve-O-Preview.UI/Eve-O-Preview.UI.csproj) targets plain `net10.0` and communicates through snapshots and commands without WinForms or native handle types. The Windows host still owns tray/window lifetime, DWM previews, global hotkeys and native integration. Linux support requires a future host/backend; the portable UI alone does not supply those OS services. Robin runs inside each target process and affects its rendering/audio. A pipe reply proves communication, not that every native hook is healthy. The sidecar debugs the preview host, not the injected game processes.
 
 ## Find a feature quickly
 
@@ -52,7 +61,8 @@ Paths below are relative to `src/`. Search the symbol as well as the filename: n
 | Symptom or task | Start here | Follow through |
 | --- | --- | --- |
 | Startup, second instance, tray exit | `Program.Main`, `GetInstanceToken` | `MainFormPresenter.Activate/Close`, `StartStopServiceHandler` |
-| Setting does not save or reload | `MainForm` callback, `MainFormPresenter.SaveApplicationSettings` | `ThumbnailConfiguration`, `ConfigurationStorage`, corresponding handler |
+| Workspace layout, themes, field labels | `Eve-O-Preview.UI`, `WorkspaceView`, `SettingCatalog` | `WorkspaceContract`, `ApplicationPreferences`, UI review |
+| Setting does not save or reload | `WindowsWorkspaceBackend`, `MainFormPresenter.SaveApplicationSettingsAsync` | `ThumbnailConfiguration`, `ConfigurationStorage`, corresponding handler |
 | Profile switching/migration | `ProfileManager`, `ConfigurationStorage.Load` | `ChangeSelectedProfileHandler`, `SelectedProfileChangedNotificationHandler`, `GlobalEvents` |
 | Missing/duplicate client preview | `ProcessMonitor.GetUpdatedProcesses` | `ThumbnailManager.UpdateThumbnailsList`, `ThumbnailViewFactory` |
 | Stale, black, or flashing preview | `LiveThumbnailView.RefreshThumbnail`, `DwmThumbnail.Update` | `ThumbnailView.Refresh/ResizeThumbnail`, static compatibility path |

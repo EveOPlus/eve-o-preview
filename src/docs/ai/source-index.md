@@ -8,6 +8,8 @@ Binary/resource treatment: icon and partner image metadata were inspected, not t
 
 Excluded from source review: ignored package/download caches, `bin`/`obj`/`publish`, `.vs`, generated local state, user settings, logs, profiles and temporary output. There are no tracked `tools` sources or CI workflow files at this baseline. The local `.vscode` directory was empty. The IDE log name in the task did not supply log contents. That baseline documentation review did not run applications/tests/native hooks. The subsequent defect investigation did; see [validation scope](build-and-test.md) and [results](reported-bugs.md).
 
+Local AI artifacts belong in ignored `bin/`, `.ai-work/`, `.ai-output/`, `docs/user/images/` or `docs/images/`. The root `.gitignore` also excludes local AI session/cache files, raw downloaded image references and superseded artwork experiments. Shared `AGENTS.md` files, subsystem guides, test/probe sources and embedded UI resources remain versioned. The public README is text-only; screenshots stay local.
+
 Use [the entry guide](../../README.md) to route by feature; use this page when a file is unfamiliar. Namespaces and filenames are not always identical, and some tracked files are intentionally excluded from compilation.
 
 ## Repository root (3)
@@ -330,3 +332,58 @@ Paths remain relative to the Git root; these are outside the original baseline c
 | `src/tests/Robin.NativeSmoke/audio.cpp` / `audio.def` | Synthetic Wwise export fixture with SDK-pinned action values |
 | `src/tests/Robin.NativeSmoke/build-probe.ps1` | Build the two controlled native fixtures using VS x64 tools |
 | `src/tests/Robin.NativeSmoke/README.md` | Commands, prerequisites and validation boundaries |
+
+## UI modernization additions
+
+These files are outside the original baseline count. The [UI review](ui-review.md) records the prior UI inventory and preservation requirements; the [application guide](application-and-configuration.md) describes the current portable UI / Windows host boundary.
+
+| File | Purpose |
+| --- | --- |
+| [src/Eve-O-Preview.UI/Eve-O-Preview.UI.csproj](../../Eve-O-Preview.UI/Eve-O-Preview.UI.csproj) | Portable net10.0 Avalonia UI library and pinned theme/font dependencies |
+| [src/Eve-O-Preview.UI/WorkspaceContract.cs](../../Eve-O-Preview.UI/WorkspaceContract.cs) | Platform-independent snapshots, settings commands, result and backend interface |
+| [src/Eve-O-Preview.UI/SettingCatalog.cs](../../Eve-O-Preview.UI/SettingCatalog.cs) | Setting metadata, discoverable labels, sections and input definitions |
+| [src/Eve-O-Preview.UI/WorkspaceApp.cs](../../Eve-O-Preview.UI/WorkspaceApp.cs) | Avalonia application initialization and Fluent theme resources |
+| [src/Eve-O-Preview.UI/WorkspaceView.cs](../../Eve-O-Preview.UI/WorkspaceView.cs) | Workspace navigation/header, draft state, profile selector, command feedback and confirmation overlay |
+| [src/Eve-O-Preview.UI/WorkspaceView.Settings.cs](../../Eve-O-Preview.UI/WorkspaceView.Settings.cs) | Settings editors, validation, explicit Apply, search and preview/font controls |
+| [src/Eve-O-Preview.UI/WorkspaceView.Pages.cs](../../Eve-O-Preview.UI/WorkspaceView.Pages.cs) | Overview, preview/client/performance pages, appearance choices, About and clear planned-feature states |
+| [src/Eve-O-Preview.UI/WorkspaceView.Management.cs](../../Eve-O-Preview.UI/WorkspaceView.Management.cs) | Profile management/accent palette and custom color, cycle membership/order, explicit shortcut recording and clearing |
+| [src/Eve-O-Preview.UI/WorkspaceView.PreviewEditor.cs](../../Eve-O-Preview.UI/WorkspaceView.PreviewEditor.cs) | Compact preview editing sections, persistent sample, installed fonts, styles, colors and grouped draft application |
+| [src/Eve-O-Preview.UI/WorkspaceView.AdvancedSettings.cs](../../Eve-O-Preview.UI/WorkspaceView.AdvancedSettings.cs) | Advanced preview controls and online/offline per-character color/minimization editors for all themes |
+| [src/Eve-O-Preview.UI/WorkspaceView.Preview.cs](../../Eve-O-Preview.UI/WorkspaceView.Preview.cs) | Platform-rendered title images, explicit fitted scale and portable illustrative fallback |
+| [src/Eve-O-Preview.UI/WorkspaceView.Legacy.cs](../../Eve-O-Preview.UI/WorkspaceView.Legacy.cs) | Original compact WinForms geometry and control arrangement recreated in Avalonia |
+| [src/Eve-O-Preview.UI/WorkspaceTheme.cs](../../Eve-O-Preview.UI/WorkspaceTheme.cs) | Shared Light/Dark/Legacy palette for workspace surfaces, native title bars, text and state tokens |
+| [src/Eve-O-Preview.UI/WorkspaceView.Support.cs](../../Eve-O-Preview.UI/WorkspaceView.Support.cs) | Voluntary donation cards, explicit details, recipient copy and asynchronous portrait display |
+| [src/Eve-O-Preview/Services/Implementation/CharacterPortraitCache.cs](../../Eve-O-Preview/Services/Implementation/CharacterPortraitCache.cs) | Shared character-ID JPEG cache, portable/installed directory reuse, weekly refresh and failure backoff |
+| [src/tests/Eve-O-Preview.Tests/Checks/CharacterPortraitCacheTests.cs](../../tests/Eve-O-Preview.Tests/Checks/CharacterPortraitCacheTests.cs) | Cache download/restart, stale refresh and invalid-response integration checks |
+| [src/Eve-O-Preview.UI/WorkspaceModules.cs](../../Eve-O-Preview.UI/WorkspaceModules.cs) | Optional modern feature registration and reserved character/DPS IDs, hidden until real modules are registered |
+| [src/Eve-O-Preview.UI/AGENTS.md](../../Eve-O-Preview.UI/AGENTS.md) | Portable UI extension, theme and validation instructions |
+| [src/Eve-O-Preview/View/Implementation/WorkspaceForm.cs](../../Eve-O-Preview/View/Implementation/WorkspaceForm.cs) | Windows settings lifetime/tray form and embedded Avalonia control host; implements the existing presenter view contract |
+| [src/Eve-O-Preview/View/CustomControl/WorkspaceAvaloniaHost.cs](../../Eve-O-Preview/View/CustomControl/WorkspaceAvaloniaHost.cs) | Synchronizes child render scale and logical bounds after monitor DPI changes without replacing HWNDs/content |
+| [src/Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.cs) | Explicit validated setting bindings, full-title client state, profiles/cycling/hotkeys and existing mediator/native command routing |
+| [src/Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.AdvancedSettings.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.AdvancedSettings.cs) | Atomic resize bounds, per-character overrides, persistence rollback and runtime notification |
+| [src/Eve-O-Preview/Mediator/Messages/Thumbnails/ThumbnailRuntimeSettingsUpdated.cs](../../Eve-O-Preview/Mediator/Messages/Thumbnails/ThumbnailRuntimeSettingsUpdated.cs) | Advanced profile settings runtime refresh notification |
+| [src/Eve-O-Preview/Mediator/Handlers/Thumbnails/ThumbnailRuntimeSettingsUpdatedHandler.cs](../../Eve-O-Preview/Mediator/Handlers/Thumbnails/ThumbnailRuntimeSettingsUpdatedHandler.cs) | Applies persisted preview settings to the current thumbnail manager |
+| [src/Eve-O-Preview/View/Implementation/WindowsWorkspacePreviewRenderer.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspacePreviewRenderer.cs) | Actual production OutlinedLabel rasterization for draft previews and native highlight geometry |
+| [src/Eve-O-Preview/View/Implementation/WindowsWorkspacePreviewCapture.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspacePreviewCapture.cs) | One-shot client background through the existing process cache and compatibility capture path, without activation or live-preview changes |
+| [src/Eve-O-Preview/View/Interface/IAsyncSettingsView.cs](../../Eve-O-Preview/View/Interface/IAsyncSettingsView.cs) | Optional awaited settings/size commit route for reliable command feedback |
+| [src/Eve-O-Preview/Configuration/Implementation/ApplicationPreferences.cs](../../Eve-O-Preview/Configuration/Implementation/ApplicationPreferences.cs) | Generic global settings JSON beside the resolved Profiles directory or in AppData; retains future fields while persisting the application theme |
+| [src/Eve-O-Preview/View/CustomControl/NativeMenuTheme.cs](../../Eve-O-Preview/View/CustomControl/NativeMenuTheme.cs) | Menu-owned opening handler applies Light/Dark/Legacy chrome with system high-contrast fallback; no preview lifetime changes |
+| [src/tests/Eve-O-Preview.UI.Smoke/Eve-O-Preview.UI.Smoke.csproj](../../tests/Eve-O-Preview.UI.Smoke/Eve-O-Preview.UI.Smoke.csproj) | Portable Avalonia Headless/Skia rendering and interaction smoke executable |
+| [src/tests/Eve-O-Preview.UI.Smoke/SmokeBackend.cs](../../tests/Eve-O-Preview.UI.Smoke/SmokeBackend.cs) | Controlled in-memory sample settings/clients/profiles for smoke checks |
+| [src/tests/Eve-O-Preview.UI.Smoke/Program.cs](../../tests/Eve-O-Preview.UI.Smoke/Program.cs) | Headless production workspace rendering, navigation/editor command checks and PNG capture |
+| [src/tests/Eve-O-Preview.UI.Smoke/README.md](../../tests/Eve-O-Preview.UI.Smoke/README.md) | UI smoke commands, image output and validation boundaries |
+| [src/tests/Eve-O-Preview.Tests/Checks/WorkspacePreferencesTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspacePreferencesTests.cs) | Global preference validation/path/unknown-field persistence and profile accent checks |
+| [src/tests/Eve-O-Preview.Tests/Checks/WorkspaceBackendTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspaceBackendTests.cs) | Production adapter settings and await-before-native routing, profile/hotkey identity and failed-save retry |
+| [src/tests/Eve-O-Preview.Tests/Checks/WorkspaceHostTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspaceHostTests.cs) | Private-desktop Windows/Avalonia embedding, native foreground preservation during refresh and cancel/discard close lifecycle |
+| [src/tests/Eve-O-Preview.Tests/Checks/WorkspaceCompositionTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspaceCompositionTests.cs) | Production Autofac workspace graph with real configuration and an isolated profile root |
+| [build/Tasks/ValidateWorkspace.cs](../../../build/Tasks/ValidateWorkspace.cs) | Published single-file startup/rendering check before Cake signing and packaging |
+| [src/tests/Eve-O-Preview.Tests/Checks/LegacyBaselineTests.cs](../../tests/Eve-O-Preview.Tests/Checks/LegacyBaselineTests.cs) | Original MainForm tab screenshots and measured control geometry on a private desktop |
+| [src/tests/Eve-O-Preview.Tests/Checks/WorkspacePreviewRenderingTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspacePreviewRenderingTests.cs) | Pixel comparison of workspace sample against actual ThumbnailOverlay and ThumbnailView controls |
+| [src/tests/Eve-O-Preview.Tests/Checks/WorkspaceVisualReviewTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspaceVisualReviewTests.cs) | Real Windows host captures and pinned preview editing checks with fractional font/outline values and draft/application separation |
+| [src/docs/ai/ui-review.md](ui-review.md) | UX findings, complete capability preservation matrix and future DPS/ESI design seams |
+| [src/Eve-O-Preview.UI/WorkspaceView.CycleOrder.cs](../../Eve-O-Preview.UI/WorkspaceView.CycleOrder.cs) | Shared order list, pointer drag/edge scrolling, Skip/Resume controls and expansion within the existing window |
+| [src/Eve-O-Preview.UI/WorkspaceView.ThumbnailMenu.cs](../../Eve-O-Preview.UI/WorkspaceView.ThumbnailMenu.cs) | Compact menu order editor, first-action shortcut explanation and reset in all themes |
+| [src/Eve-O-Preview.UI/ThumbnailMenuActions.cs](../../Eve-O-Preview.UI/ThumbnailMenuActions.cs) | Stable global menu action IDs, labels, defaults and saved-order normalization |
+| [src/Eve-O-Preview.UI/ThumbnailMenuThemes.cs](../../Eve-O-Preview.UI/ThumbnailMenuThemes.cs) | Shared palette IDs/colors for native thumbnail menus and the portable live preview |
+| [src/Eve-O-Preview/Mediator/Messages/Thumbnails/SetClientCycleSkipped.cs](../../Eve-O-Preview/Mediator/Messages/Thumbnails/SetClientCycleSkipped.cs) | Exact-title request for a temporary profile-wide cycle skip |
+| [src/Eve-O-Preview/Mediator/Handlers/Thumbnails/SetClientCycleSkippedHandler.cs](../../Eve-O-Preview/Mediator/Handlers/Thumbnails/SetClientCycleSkippedHandler.cs) | Shared workspace/context-menu route to session-only skip state and UI notification |

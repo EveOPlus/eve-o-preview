@@ -26,6 +26,7 @@ namespace EveOPreview.Services
         void Stop();
 
         void UpdateThumbnailsSize();
+        void ApplyRuntimeSettings();
         void UpdateThumbnailFrames();
         void UpdateThumbnailTitleFont();
         void RegisterAllHotkeys();

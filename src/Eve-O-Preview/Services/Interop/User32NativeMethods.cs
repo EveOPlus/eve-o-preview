@@ -21,6 +21,13 @@ namespace EveOPreview.Services.Interop
 {
     static class User32NativeMethods
     {
+        public const uint PW_CLIENTONLY = 0x00000001;
+        public const uint PW_RENDERFULLCONTENT = 0x00000002;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool PrintWindow(IntPtr window, IntPtr destinationDc, uint flags);
+
         [DllImport("user32.dll")]
         public static extern IntPtr GetForegroundWindow(); 
         
@@ -56,6 +63,9 @@ namespace EveOPreview.Services.Interop
 
         [DllImport("User32.dll")]
         public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+        [DllImport("user32.dll", EntryPoint = "SendMessageW")]
+        public static extern IntPtr SendMessage(IntPtr window, int message, IntPtr parameter, ref RECT rectangle);
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint message, IntPtr wParam, IntPtr lParam, uint flags, uint timeout, out IntPtr result);

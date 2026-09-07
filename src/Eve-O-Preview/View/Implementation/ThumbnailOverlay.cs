@@ -26,6 +26,8 @@ namespace EveOPreview.View
     {
         #region Private fields
         private readonly Action<object, MouseEventArgs> _areaClickAction;
+        private bool _titleEnabled = true;
+        private bool _cycleSkipped;
         #endregion
 
         public ThumbnailOverlay(Form owner, Action<object, MouseEventArgs> areaClickAction)
@@ -34,11 +36,16 @@ namespace EveOPreview.View
             this._areaClickAction = areaClickAction;
 
             InitializeComponent();
+            OverlayLabel.MouseUp += OverlayArea_Click;
         }
 
         private void OverlayArea_Click(object sender, MouseEventArgs e)
         {
-            this._areaClickAction(this, e);
+            // Label events use label-local coordinates; the preview opens its menu
+            // in owner-client coordinates so the first action stays under the click.
+            var source = sender as Control ?? this;
+            Point point = Owner.PointToClient(source.PointToScreen(e.Location));
+            this._areaClickAction(this, new MouseEventArgs(e.Button, e.Clicks, point.X, point.Y, e.Delta));
         }
 
         public void SetOverlayLabel(string label)
@@ -58,7 +65,16 @@ namespace EveOPreview.View
 
         public void EnableOverlayLabel(bool enable)
         {
-            this.OverlayLabel.Visible = enable;
+            _titleEnabled = enable;
+            this.OverlayLabel.SetTitleVisible(enable);
+            this.OverlayLabel.Visible = enable || _cycleSkipped;
+        }
+
+        public void SetCycleSkipIndicator(bool skipped, string style, Color color)
+        {
+            _cycleSkipped = skipped;
+            OverlayLabel.SetCycleSkipIndicator(skipped, style, color);
+            OverlayLabel.Visible = _titleEnabled || skipped;
         }
 
         protected override bool ShowWithoutActivation => true;

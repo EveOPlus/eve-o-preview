@@ -180,7 +180,9 @@ namespace EveOPreview.Services.Implementation
         {
             _logger.Verbose("WindowManager.GetStaticThumbnail: Capturing static thumbnail for 0x{Handle:X}", source);
             
-            User32NativeMethods.GetClientRect(source, out RECT windowRect);
+            if (source == IntPtr.Zero || !User32NativeMethods.IsWindow(source)
+                || User32NativeMethods.IsIconic(source)
+                || !User32NativeMethods.GetClientRect(source, out RECT windowRect)) return null;
 
             var width = windowRect.Right - windowRect.Left;
             var height = windowRect.Bottom - windowRect.Top;
@@ -194,27 +196,53 @@ namespace EveOPreview.Services.Implementation
                 return null;
             }
 
-            IntPtr sourceContext = User32NativeMethods.GetDC(source);
-            if (sourceContext == IntPtr.Zero) return null;
-            IntPtr destContext = IntPtr.Zero, bitmap = IntPtr.Zero, oldBitmap = IntPtr.Zero;
+            // GetDC/BitBlt reads a display surface. With some GPU presentation modes it
+            // can contain the monitor or occluding windows, even with the correct HWND.
+            // Ask the window to render into a fresh memory bitmap instead. Never fall
+            // back to screen pixels when a client cannot supply an image.
+            var rendered = CaptureWindowBitmap(source, width, height,
+                User32NativeMethods.PW_CLIENTONLY | User32NativeMethods.PW_RENDERFULLCONTENT);
+            if (rendered != null)
+            {
+                // DWM cannot supply a surface on some desktops. A traditional WM_PRINTCLIENT
+                // request is still window-only and supports ordinary GDI clients there.
+                if (HasCapturedPixels(rendered)) return rendered;
+                rendered.Dispose();
+            }
+            rendered = CaptureWindowBitmap(source, width, height, User32NativeMethods.PW_CLIENTONLY);
+            if (rendered == null || HasCapturedPixels(rendered)) return rendered;
+            rendered.Dispose();
+            return null;
+        }
+
+        private static bool HasCapturedPixels(Bitmap bitmap)
+        {
+            for (int y = 0; y < bitmap.Height; y += Math.Max(1, bitmap.Height / 24))
+                for (int x = 0; x < bitmap.Width; x += Math.Max(1, bitmap.Width / 32))
+                    if ((bitmap.GetPixel(x, y).ToArgb() & 0xffffff) != 0) return true;
+            return false;
+        }
+
+        private static Bitmap CaptureWindowBitmap(IntPtr source, int width, int height, uint flags)
+        {
+            var bitmap = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            bool keep = false;
             try
             {
-                destContext = Gdi32NativeMethods.CreateCompatibleDC(sourceContext);
-                if (destContext == IntPtr.Zero) return null;
-                bitmap = Gdi32NativeMethods.CreateCompatibleBitmap(sourceContext, width, height);
-                if (bitmap == IntPtr.Zero) return null;
-                oldBitmap = Gdi32NativeMethods.SelectObject(destContext, bitmap);
-                if (oldBitmap == IntPtr.Zero || oldBitmap == new IntPtr(-1)) return null;
-                if (!Gdi32NativeMethods.BitBlt(destContext, 0, 0, width, height, sourceContext, 0, 0, Gdi32NativeMethods.SRCCOPY)) return null;
-                return Image.FromHbitmap(bitmap);
+                using (var graphics = Graphics.FromImage(bitmap))
+                {
+                    graphics.Clear(Color.Black);
+                    var destinationDc = graphics.GetHdc();
+                    try
+                    {
+                        if (!User32NativeMethods.PrintWindow(source, destinationDc, flags)) return null;
+                    }
+                    finally { graphics.ReleaseHdc(destinationDc); }
+                }
+                keep = true;
+                return bitmap;
             }
-            finally
-            {
-                if (oldBitmap != IntPtr.Zero && oldBitmap != new IntPtr(-1)) Gdi32NativeMethods.SelectObject(destContext, oldBitmap);
-                if (bitmap != IntPtr.Zero) Gdi32NativeMethods.DeleteObject(bitmap);
-                if (destContext != IntPtr.Zero) Gdi32NativeMethods.DeleteDC(destContext);
-                User32NativeMethods.ReleaseDC(source, sourceContext);
-            }
+            finally { if (!keep) bitmap.Dispose(); }
         }
 
         public void PredictUpcomingClient(IntPtr upcomingHandle)

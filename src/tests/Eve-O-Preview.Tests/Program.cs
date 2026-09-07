@@ -21,6 +21,13 @@ internal static class Program
         try
         {
             if (args[1] == "feature-controls") FeatureAvailabilityTests.CheckControls();
+            else if (args[1] == "workspace-host") WorkspaceHostTests.CheckHost();
+            else if (args[1] == "workspace-dpi") WorkspaceHostTests.CheckHost(checkDpi: true);
+            else if (args[1] == "workspace-composition") WorkspaceCompositionTests.CheckComposition();
+            else if (args[1] == "legacy-original-capture") LegacyBaselineTests.CaptureOriginal();
+            else if (args[1] == "workspace-preview-pixels") WorkspacePreviewRenderingTests.CheckPixels();
+            else if (args[1] == "workspace-client-capture") WorkspacePreviewRenderingTests.CheckClientCapture();
+            else if (args[1] == "workspace-native-visuals") WorkspaceVisualReviewTests.CaptureNative();
             else if (args[1] == "custom-audio-ui") CustomAudioTests.CheckUi();
             else if (args[1].StartsWith("settings-", StringComparison.Ordinal)) SettingsIntegrationTests.RunScenario(args[1][9..]);
             else if (args[1].StartsWith("live-", StringComparison.Ordinal)) LiveThumbnailTests.RunScenario(args[1][5..]);

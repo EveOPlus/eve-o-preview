@@ -24,22 +24,22 @@ namespace Build.Tasks
 	{
 		public override void Run(Context context)
 		{
-			if (!context.DirectoryExists(Configuration.PublishFolder))
+			if (!context.DirectoryExists(context.PublishFolder))
 			{
-				context.CreateDirectory(Configuration.PublishFolder);
+				context.CreateDirectory(context.PublishFolder);
 			}
 
-			context.Zip(Configuration.BinFolder, Configuration.PublishFolder + "/EVE-O Preview.zip",
+			context.Zip(context.BinFolder, context.PublishFolder + "/EVE-O Preview.zip",
 			new[]
             {
-                Configuration.BinFolder + "/EVE-O Preview.exe", 
-                Configuration.BinFolder + "/LICENSE.txt", 
-                Configuration.BinFolder + "/readme.pdf", 
-                Configuration.BinFolder + "/Eve-O-Preview.Robin.dll",
-                Configuration.BinFolder + "/Launch Eve-O Preview with Verbose Logging.cmd"
+                context.BinFolder + "/EVE-O Preview.exe",
+                context.BinFolder + "/LICENSE.txt",
+                context.BinFolder + "/readme.pdf",
+                context.BinFolder + "/Eve-O-Preview.Robin.dll",
+                context.BinFolder + "/Launch Eve-O Preview with Verbose Logging.cmd"
             });
 
-			context.CopyFile(Configuration.BinFolder + "/net10.0-windows/win-x64/EveoPreviewRootCA.crt", Configuration.PublishFolder + "/EveoPreviewRootCA.crt");
+			context.CopyFile(context.BinFolder + "/EveoPreviewRootCA.crt", context.PublishFolder + "/EveoPreviewRootCA.crt");
 		}
 	}
 }

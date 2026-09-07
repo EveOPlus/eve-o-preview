@@ -128,6 +128,12 @@ namespace EveOPreview.Services
             if (_stopped) return;
             _logger.Verbose("ThumbnailManager: Profile changed, re-registering hotkeys");
             RegisterAllHotkeys();
+            ApplyRuntimeSettings();
+        }
+
+        public void ApplyRuntimeSettings()
+        {
+            if (_stopped) return;
             _thumbnailUpdateTimer.Interval = TimeSpan.FromMilliseconds(_configuration.ThumbnailRefreshPeriod);
             _hideThumbnailsDelay = _configuration.HideThumbnailsDelay;
             _enqueuedLocationChangeNotification = (IntPtr.Zero, null, null, Point.Empty, -1);
@@ -149,6 +155,7 @@ namespace EveOPreview.Services
                 {
                     view.ZoomOut();
                     view.SetSizeLimitations(_configuration.ThumbnailMinimumSize, _configuration.ThumbnailMaximumSize);
+                    if (!IsManageableThumbnail(view)) view.ThumbnailLocation = _configuration.LoginThumbnailLocation;
                 }
             }
             finally { _ignoreViewEvents = wasIgnoring; }
@@ -265,12 +272,16 @@ namespace EveOPreview.Services
 
         private string FindNextClientInCycleGroup(bool isForwards, string findThisTitleFirst, SortedDictionary<int, string> cycleOrder)
         {
-            // Remove all clients in the cycle group that are not running right now.
-            var filteredTitles = cycleOrder.Where(co => _thumbnailViews.Any(tv => tv.Value.Title == co.Value));
-            var orderedTitles = isForwards ? filteredTitles.OrderBy(x => x.Key).ToList() : filteredTitles.OrderByDescending(x => x.Key).ToList();
-            var remainingClients = orderedTitles.SkipWhile(x => x.Value != findThisTitleFirst).Skip(1).ToList();
-        
-            return remainingClients.Any() ? remainingClients.First().Value : orderedTitles.FirstOrDefault().Value;
+            // Keep the active character's position even when it has just been skipped.
+            // Both selection and next-client prediction walk the same eligible sequence.
+            var orderedTitles = (isForwards ? cycleOrder.Values : cycleOrder.Values.Reverse()).ToArray();
+            int start = Array.IndexOf(orderedTitles, findThisTitleFirst);
+            for (int step = 1; step <= orderedTitles.Length; step++)
+            {
+                string title = orderedTitles[(start + step) % orderedTitles.Length];
+                if (!_configuration.IsClientCycleSkipped(title) && _thumbnailViews.Any(tv => tv.Value.Title == title)) return title;
+            }
+            return null;
         }
 
         private List<KeyEventHandler> _trackedHotkeyDownDelegates = new List<KeyEventHandler>();
@@ -776,6 +787,10 @@ namespace EveOPreview.Services
             {
                 return;
             }
+
+            // Keep interactive thumbnail menus above their previews. Retain the
+            // dirty flag so normal MRU order is restored after the menu closes.
+            if (_thumbnailViews.Values.Any(view => view.IsContextMenuOpen)) return;
 
             this._refreshThumbnailZOrder = false;
             foreach (IntPtr handle in this._thumbnailActivationOrder)

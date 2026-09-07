@@ -26,14 +26,14 @@ using System;
 
 namespace Build.Tasks
 {
-	[IsDependentOn(typeof(Build))]
+	[IsDependentOn(typeof(ValidateWorkspace))]
 	public sealed class Sign : FrostingTask<Context>
 	{
 		public override void Run(Context context)
 		{
-            if (string.IsNullOrWhiteSpace(Configuration.CodeSigningPath))
+            if (context.SkipSigning || string.IsNullOrWhiteSpace(Configuration.CodeSigningPath))
             {
-                context.Information("No code signing certificate, skipping...");
+                context.Information("Code signing skipped; this package is unsigned.");
                 return;
             }
 
@@ -42,7 +42,7 @@ namespace Build.Tasks
             context.Information("Please enter the code signing password:");
             var password = Console.ReadLine(); // We can move this to pull it from CICD pipeline later if we move to github actions or similar. For now just prompt the user to type it each time.
 
-            var files = context.GetFiles($"{Configuration.BinFolder}/**/*.{{exe,dll}}");
+            var files = context.GetFiles($"{context.BinFolder}/*.{{exe,dll}}");
 
             var settings = new SignToolSignSettings
             {

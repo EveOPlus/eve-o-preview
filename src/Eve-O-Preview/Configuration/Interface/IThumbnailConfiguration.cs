@@ -23,6 +23,12 @@ namespace EveOPreview.Configuration
 {
     public interface IThumbnailConfiguration
     {
+        string UiAccentColor { get; set; }
+
+        bool IsThumbnailIndividuallyDisabled(string currentClient);
+
+        IEnumerable<string> GetKnownClientTitles();
+
         int ConfigVersion { get; set; }
         List<CycleGroup> CycleGroups { get; set; }
 
@@ -79,11 +85,19 @@ namespace EveOPreview.Configuration
         void SetClientLayout(string currentClient, ClientLayout layout);
         
         bool IsPriorityClient(string currentClient);
+        IEnumerable<string> GetPriorityClientTitles();
+        void SetPriorityClient(string title, bool priority);
 
         bool IsTemporarilyHidingAllThumbnails { get; set; }
         bool EnableAutomaticCpuAffinity { get; set; }
         bool IsThumbnailDisabled(string currentClient);
         void ToggleThumbnail(string currentClient, bool isDisabled);
+        event System.Action CycleSkipChanged;
+        bool IsClientCycleSkipped(string title);
+        void SetClientCycleSkipped(string title, bool skipped);
+        void SelectCycleSkipProfile(string profileId);
+        string CycleSkipIndicatorStyle { get; set; }
+        Color CycleSkipIndicatorColor { get; set; }
 
         void ApplyRestrictions();
     }

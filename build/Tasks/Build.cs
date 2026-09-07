@@ -20,6 +20,7 @@ using Cake.Common.Tools.DotNet.Build;
 using Cake.Common.Tools.DotNet.MSBuild;
 using Cake.Common.Tools.DotNet.Publish;
 using Cake.Frosting;
+using Cake.Core;
 
 namespace Build.Tasks
 {
@@ -34,10 +35,15 @@ namespace Build.Tasks
             {
 				Configuration = Configuration.BuildConfiguration,
                 Runtime = "win-x64",
-                OutputDirectory = Configuration.BinFolder,
+                OutputDirectory = context.BinFolder,
+                SelfContained = false,
+                // Release builds must not depend on optional per-user telemetry writes.
+                ArgumentCustomization = arguments => arguments.Append("-p:UsedAvaloniaProducts="),
                 MSBuildSettings = new DotNetMSBuildSettings()
                     .WithProperty("PublishSingleFile", "true")
                     .WithProperty("SelfContained", "false")
+                    .WithProperty("PublishSelfContained", "false")
+                    .WithProperty("OutputPath", context.BuildOutputFolder + "/app/")
                     .WithProperty("IncludeNativeLibrariesForSelfExtract", "true")
                     .WithProperty("IncludeAllContentForSelfExtract", "true")
             });
@@ -47,9 +53,10 @@ namespace Build.Tasks
 				Configuration = Configuration.BuildConfiguration,
 				Runtime = "win-x64",
 				SelfContained = true,
-				OutputDirectory = Configuration.BinFolder,
+				OutputDirectory = context.BinFolder,
 				MSBuildSettings = new DotNetMSBuildSettings()
 					.WithProperty("PublishAot", "true")
+					.WithProperty("OutputPath", context.BuildOutputFolder + "/robin/")
 			});
 		}
 	}

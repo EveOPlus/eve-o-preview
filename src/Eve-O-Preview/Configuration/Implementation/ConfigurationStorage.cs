@@ -79,6 +79,7 @@ namespace EveOPreview.Configuration.Implementation
                     // Validate data after loading it
                     candidate.ApplyRestrictions();
                     JsonConvert.PopulateObject(JsonConvert.SerializeObject(candidate), _thumbnailConfiguration, jsonSerializerSettings);
+                    _thumbnailConfiguration.SelectCycleSkipProfile(CurrentProfile.FullPath);
                     // The candidate is committed. A subscriber failure must not report a
                     // failed load and roll the selected path back while retaining these settings.
                     try { _mediator.Send(new RefreshHotkeys()).GetAwaiter().GetResult(); }

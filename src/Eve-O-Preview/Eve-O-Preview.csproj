@@ -19,9 +19,9 @@
     <TargetZone>LocalIntranet</TargetZone>
     <AssemblyOriginatorKeyFile />
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <FileVersion>10.0.0.12</FileVersion>
-    <AssemblyVersion>10.0.0.12</AssemblyVersion>
-    <Version>10.0.0.12</Version>
+    <FileVersion>10.1.0.13</FileVersion>
+    <AssemblyVersion>10.1.0.13</AssemblyVersion>
+    <Version>10.1.0.13</Version>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -43,6 +43,9 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Eve-O-Preview.UI\Eve-O-Preview.UI.csproj" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.20" />
+    <PackageReference Include="Avalonia.Win32.Interoperability" Version="11.3.20" />
     <PackageReference Include="Autofac" Version="9.1.0" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="Costura.Fody" Version="6.0.0" />
@@ -76,6 +79,7 @@
     </Content>
     <None Update="EveoPreviewRootCA.crt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>
     <None Update="Launch Eve-O Preview with Verbose Logging.cmd">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

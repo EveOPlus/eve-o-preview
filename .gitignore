@@ -9,3 +9,17 @@ src/.vs/
 /src/Eve-O-Preview/.vs
 temp/**
 src/packages/**
+
+# Local AI working files and generated captures (keep shared AGENTS.md/guides tracked).
+.ai-work/
+.ai-output/
+.codex/logs/
+.codex/sessions/
+.codex/tmp/
+.claude/settings.local.json
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache*/
+__pycache__/
+/src/docs/user/images/
+/src/docs/images/

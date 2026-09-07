@@ -57,6 +57,8 @@ namespace EveOPreview.View
         private MouseMode _customMouseModeActive = MouseMode.Disabled;
         private double _thumbnailRatioAtStartOfResize = 1;
         private Point _rightClickStartPosition;
+        private bool _menuOpening;
+        private bool _menuHoverExitPending;
 
         private double _opacity;
          
@@ -107,18 +109,47 @@ namespace EveOPreview.View
             _keyboardMouseEvents = keyboardMouseEvents;
 
             InitializeContextMenu();
+            _config.CycleSkipChanged += RefreshCycleSkipIndicator;
+            Disposed += (_, _) => _config.CycleSkipChanged -= RefreshCycleSkipIndicator;
+        }
+
+        private void RefreshCycleSkipIndicator()
+        {
+            if (IsDisposed || _overlay.IsDisposed) return;
+            _overlay.SetCycleSkipIndicator(_config.IsClientCycleSkipped(Title), _config.CycleSkipIndicatorStyle, _config.CycleSkipIndicatorColor);
         }
 
         private void InitializeContextMenu()
         {
-            thumbnailContextMenu.Renderer = new DarkGoldRenderer();
-            thumbnailContextMenu.BackColor = Color.FromArgb(20, 20, 22);
-            thumbnailContextMenu.ForeColor = Color.FromArgb(212, 175, 55);
-            thumbnailContextMenu.Font = new Font("Segoe UI Semibold", 9.5F);
+            NativeMenuTheme.Track(thumbnailContextMenu, thumbnail: true);
 
             thumbnailContextMenu.ShowImageMargin = false;
             thumbnailContextMenu.ShowCheckMargin = false;
+            var skip = new ToolStripMenuItem("Skip while cycling") { Name = "menuCycleSkip" };
+            skip.ToolTipText = "Skip this character in all cycle groups for this session. Its thumbnail stays clickable.";
+            // Default to Minimize first; saved global order is applied on opening.
+            thumbnailContextMenu.Items.Insert(2, skip);
+            thumbnailContextMenu.Opening += (_, _) =>
+            {
+                skip.Text = _config.IsClientCycleSkipped(Title) ? "Resume cycling this character" : "Skip while cycling";
+                skip.Enabled = !string.IsNullOrWhiteSpace(Title);
+                NativeMenuTheme.ApplyThumbnailOrder(thumbnailContextMenu);
+            };
+            skip.Click += (_, _) => _mediator.Send(new SetClientCycleSkipped(Title, !_config.IsClientCycleSkipped(Title)));
+            thumbnailContextMenu.MouseUp += (_, _) => holdRightClickToMoveTimer.Stop();
+            thumbnailContextMenu.Closed += (_, _) =>
+            {
+                holdRightClickToMoveTimer.Stop();
+                if (_menuHoverExitPending)
+                {
+                    _menuHoverExitPending = false;
+                    ThumbnailLostFocus?.Invoke(Id);
+                }
+            };
         }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public bool IsContextMenuOpen => _menuOpening || thumbnailContextMenu.Visible;
 
         public IWindowManager WindowManager { get; }
 
@@ -133,6 +164,7 @@ namespace EveOPreview.View
             {
                 this.Text = value;
                 this._overlay.SetOverlayLabel(value.Replace("EVE - ", ""));
+                RefreshCycleSkipIndicator();
                 SetDefaultBorderColor();
             }
         }
@@ -224,6 +256,7 @@ namespace EveOPreview.View
 
         public new void Hide()
         {
+            thumbnailContextMenu.Close();
             this.SuppressResizeEvent();
 
             this.IsActive = false;
@@ -234,6 +267,7 @@ namespace EveOPreview.View
 
         public new virtual void Close()
         {
+            thumbnailContextMenu.Close();
             this.SuppressResizeEvent();
 
             this.IsActive = false;
@@ -256,7 +290,8 @@ namespace EveOPreview.View
         // This method is used to determine if the provided MainWindowHandle is related to client or its thumbnail
         public bool IsKnownHandle(IntPtr handle)
         {
-            return (this.Id == handle) || (this.Handle == handle) || (this._overlay.Handle == handle);
+            return (this.Id == handle) || (this.Handle == handle) || (this._overlay.Handle == handle)
+                || (thumbnailContextMenu.Visible && thumbnailContextMenu.IsHandleCreated && thumbnailContextMenu.Handle == handle);
         }
 
         public void SetSizeLimitations(Size minimumSize, Size maximumSize)
@@ -580,12 +615,16 @@ namespace EveOPreview.View
 
         private void MouseEnter_Handler(object sender, EventArgs e)
         {
+            if (IsContextMenuOpen) return;
             this.SaveWindowSizeAndLocation();
             this.ThumbnailFocused?.Invoke(this.Id);
         }
 
         private void MouseLeave_Handler(object sender, EventArgs e)
         {
+            // Entering the popup is still interaction with this preview. Restoring
+            // zoom/opacity here dirties z-order and can cover the newly opened menu.
+            if (IsContextMenuOpen) { _menuHoverExitPending = true; return; }
             this.ThumbnailLostFocus?.Invoke(this.Id);
         }
 
@@ -600,6 +639,7 @@ namespace EveOPreview.View
 
         private void MouseUp_Handler(object sender, MouseEventArgs e)
         {
+            holdRightClickToMoveTimer.Stop();
         }
 
         private void HotkeyPressed_Handler(object sender, HandledEventArgs e)
@@ -769,8 +809,11 @@ namespace EveOPreview.View
                     case MouseButtons.Right:
                         _rightClickStartPosition = Cursor.Position;
                         holdRightClickToMoveTimer.Start(); // If somebody tries to click and hold right click to move, lets override the menu and let them.
+                        // Keep the initial pointer over the user's first action for double right-click.
                         var location = new Point(e.Location.X - 30, e.Location.Y - 10);
-                        thumbnailContextMenu.Show(this, location);
+                        _menuOpening = true;
+                        try { thumbnailContextMenu.Show(this, location); }
+                        finally { _menuOpening = false; }
                         break;
                 }
             }
