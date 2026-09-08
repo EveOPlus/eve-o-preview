@@ -387,6 +387,12 @@ These files are outside the original baseline count. The [UI review](ui-review.m
 | [src/tests/Eve-O-Preview.Tests/Checks/WorkspaceVisualReviewTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspaceVisualReviewTests.cs) | Real Windows host captures and pinned preview editing checks with fractional font/outline values and draft/application separation |
 | [src/docs/ai/ui-review.md](ui-review.md) | UX findings, complete capability preservation matrix and future DPS/ESI design seams |
 | [src/Eve-O-Preview.UI/WorkspaceView.CycleOrder.cs](../../Eve-O-Preview.UI/WorkspaceView.CycleOrder.cs) | Shared order list, pointer drag/edge scrolling, Skip/Resume controls and expansion within the existing window |
+| [src/Eve-O-Preview.UI/WorkspaceView.Characters.cs](../../Eve-O-Preview.UI/WorkspaceView.Characters.cs) | Asynchronous row portraits, initials fallback and decoded image lifetime |
+| [src/Eve-O-Preview/Services/Implementation/CharacterIdentityCache.cs](../../Eve-O-Preview/Services/Implementation/CharacterIdentityCache.cs) | Global derived identity map, public ESI lookup, persistence and weekly refresh |
+| [src/Eve-O-Preview/Services/Implementation/EveClientUserIdReader.cs](../../Eve-O-Preview/Services/Implementation/EveClientUserIdReader.cs) | Scoped launch-subject extraction with temporary buffer cleanup |
+| [src/tests/Eve-O-Preview.Tests/Checks/CharacterIdentityTests.cs](../../tests/Eve-O-Preview.Tests/Checks/CharacterIdentityTests.cs) | Synthetic token and identity-cache integration checks |
+| [src/tests/Eve-O-Preview.UI.Smoke/Program.Characters.cs](../../tests/Eve-O-Preview.UI.Smoke/Program.Characters.cs) | Client and cycle portrait renders, pending lookup and geometry checks |
+| [src/docs/ai/character-identities.md](character-identities.md) | Identity/portrait routes, security boundaries, refresh policy and validation |
 | [src/Eve-O-Preview.UI/WorkspaceView.ThumbnailMenu.cs](../../Eve-O-Preview.UI/WorkspaceView.ThumbnailMenu.cs) | Compact menu order editor, first-action shortcut explanation and reset in all themes |
 | [src/Eve-O-Preview.UI/ThumbnailMenuActions.cs](../../Eve-O-Preview.UI/ThumbnailMenuActions.cs) | Stable global menu action IDs, labels, defaults and saved-order normalization |
 | [src/Eve-O-Preview.UI/ThumbnailMenuThemes.cs](../../Eve-O-Preview.UI/ThumbnailMenuThemes.cs) | Shared palette IDs/colors for native thumbnail menus and the portable live preview |

@@ -195,6 +195,7 @@ internal static partial class Program
             renders += CheckLocalization(window, view, backend, output);
             window.Close();
             Require(backend.PortraitRequests.SequenceEqual(new long[] { 95465272 }), "Request Aura's portrait once across navigation and theme changes.");
+            renders += CheckCharacterPortraits(output);
             Console.WriteLine($"PASS: {renders} production UI renders; three distinct themes; keyboard-accessible navigation; input validation; draft retention; advanced setting command; settings search; compact scrollable layouts.");
             Console.WriteLine("Screenshots: " + output);
             return 0;

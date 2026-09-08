@@ -108,6 +108,7 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
         ReleaseTitlePreviews();
         _supportPortrait?.Dispose();
         _supportPortrait = null;
+        DisposeCharacterPortraits();
         _drafts.Clear();
         _formDrafts.Clear();
         _lastPreviewImage = null;

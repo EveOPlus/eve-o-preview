@@ -36,9 +36,13 @@ namespace EveOPreview.Services.Implementation
         private IProcessInfo _currentProcessInfo;
         private readonly ILogger _logger;
         private readonly Func<Process[]> _enumerateProcesses;
+        private readonly CharacterIdentityCache _identities;
         #endregion
 
         public ProcessMonitor(ILogger logger) : this(logger, () => Process.GetProcessesByName(DEFAULT_PROCESS_NAME)) { }
+
+        public ProcessMonitor(ILogger logger, CharacterIdentityCache identities)
+            : this(logger, () => Process.GetProcessesByName(DEFAULT_PROCESS_NAME)) { _identities = identities; }
 
         internal ProcessMonitor(ILogger logger, Func<Process[]> enumerateProcesses)
         {
@@ -168,6 +172,7 @@ namespace EveOPreview.Services.Implementation
                     addedProcesses.Count, updatedProcesses.Count, removedProcesses.Count, this.ProcessCache.Count);
             }
             }
+            _identities?.ObserveProcesses(GetAllProcesses());
         }
 
         public IProcessInfo LookupCachedProcessByWindowHandle(IntPtr windowHandle)

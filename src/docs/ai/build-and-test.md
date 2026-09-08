@@ -65,6 +65,12 @@ A failure in the legacy Mock's WPF or package-import targets during a full-solut
 
 ## Portable UI checks
 
+Character identity checks use synthetic launch claims and stub HTTP responses:
+`--filter "FullyQualifiedName~CharacterIdentityTests|FullyQualifiedName~CharacterPortraitCacheTests"`.
+The UI smoke runner also writes `portraits-*.png` for modern client and cycle-order
+rows, checking delayed identity lookup, stable geometry and RTL behavior. See
+[the identity guide](character-identities.md) for the live-check security boundary.
+
 Build the UI independently when changing portable controls, theme tokens or the workspace contract. The host build remains necessary for Windows adapter and integration changes:
 
 ```powershell
@@ -74,7 +80,7 @@ dotnet run --project .\tests\Eve-O-Preview.UI.Smoke\Eve-O-Preview.UI.Smoke.cspro
 
 The UI and host currently pin Avalonia packages to 11.3.20. Restore the project references together when changing those versions. The standalone UI project is a library, so building it does not create a launchable desktop app. Launch the ordinary Windows host for an integrated run; the smoke executable is an isolated rendering and interaction check.
 
-Release 10.1.0.13 aligns the main application's `Version`, `AssemblyVersion` and `FileVersion` with the UI and Robin project `Version` values (their assembly/file versions are SDK-generated). Keep all three projects aligned on future release bumps. Cake publishes these project files directly; there is no separate hard-coded release version in its tasks. Verify built managed assembly/file metadata and Robin's `GetAssemblyVersion` MSBuild target when checking a version-only change; this does not validate native injection.
+Release 10.1.0.14 aligns the main application's `Version`, `AssemblyVersion` and `FileVersion` with the UI and Robin project `Version` values (their assembly/file versions are SDK-generated). Keep all three projects aligned on future release bumps. Cake publishes these project files directly; there is no separate hard-coded release version in its tasks. Verify built managed assembly/file metadata and Robin's `GetAssemblyVersion` MSBuild target when checking a version-only change; this does not validate native injection.
 
 The smoke runner uses the production workspace controls with sample state and an in-memory backend, writes page/theme images under the requested output directory, and checks control bounds and command routing. Its snapshots can reveal clipping, missing fields and theme regressions, but they do not verify actual profile persistence, WinForms embedding, native hotkeys, tray behavior, game previews, injection or Linux integration. Keep its generated images out of unrelated source changes. Check the runner source for the current scenarios and consult the recorded validation result before claiming they passed.
 

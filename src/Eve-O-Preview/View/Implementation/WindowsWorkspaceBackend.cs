@@ -18,8 +18,12 @@ using Serilog;
 namespace EveOPreview.View;
 
 /// <summary>Maps portable workspace commands to the existing presenter, profile and native services.</summary>
-public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorkspacePreviewRenderer, IWorkspacePreviewCapture, IWorkspacePortraitProvider, IDisposable
+public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorkspacePreviewRenderer, IWorkspacePreviewCapture, IWorkspacePortraitProvider, IWorkspaceCharacterProvider, IDisposable
 {
+    private readonly EveOPreview.Services.Implementation.CharacterIdentityCache _characters;
+    public Task<WorkspaceCharacter> GetCharacterAsync(string fullTitle) =>
+        _characters?.GetCharacterAsync(fullTitle) ?? Task.FromResult<WorkspaceCharacter>(null);
+    private void PortraitUpdated(long characterId) => NotifyChanged();
     private readonly IWorkspacePreviewCapture _previewCapture;
     public Task<WorkspaceClientStill> CapturePreviewStillAsync(string preferredTitle) =>
         _previewCapture?.CapturePreviewStillAsync(preferredTitle) ?? Task.FromResult<WorkspaceClientStill>(null);
@@ -49,12 +53,16 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
 
     public WindowsWorkspaceBackend(IMainFormView view, IAsyncSettingsView commits, IMediator mediator,
         IConfigurationStorage storage, IThumbnailConfiguration configuration, IProfileManager profiles,
-        ApplicationPreferences preferences, ILogger logger, IWorkspacePortraitProvider portraits, IWorkspacePreviewCapture previewCapture = null)
+        ApplicationPreferences preferences, ILogger logger, IWorkspacePortraitProvider portraits, IWorkspacePreviewCapture previewCapture = null,
+        EveOPreview.Services.Implementation.CharacterIdentityCache characters = null)
     {
         _view = view; _commits = commits; _mediator = mediator; _storage = storage;
         _configuration = configuration; _profiles = profiles; _preferences = preferences; _logger = logger;
         _portraits = portraits;
         _previewCapture = previewCapture;
+        _characters = characters;
+        if (_characters is not null) _characters.Changed += NotifyChanged;
+        if (_portraits is IWorkspacePortraitUpdates updates) updates.PortraitChanged += PortraitUpdated;
         preferences.Changed += NotifyChanged;
         configuration.CycleSkipChanged += NotifyChanged;
         BuildSettings();
@@ -64,6 +72,8 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
     {
         _preferences.Changed -= NotifyChanged;
         _configuration.CycleSkipChanged -= NotifyChanged;
+        if (_characters is not null) _characters.Changed -= NotifyChanged;
+        if (_portraits is IWorkspacePortraitUpdates updates) updates.PortraitChanged -= PortraitUpdated;
     }
     public void NotifyChanged() => Changed?.Invoke();
     public void AddClients(IList<IThumbnailDescription> clients) { foreach (var client in clients) _clients[client.Title] = client; }

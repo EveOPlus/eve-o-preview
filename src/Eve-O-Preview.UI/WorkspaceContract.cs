@@ -15,6 +15,18 @@ public interface IWorkspacePortraitProvider
     Task<byte[]?> GetCharacterPortraitAsync(long characterId);
 }
 
+/// <summary>Derived public character identity and optional local account association; never launch credentials.</summary>
+public sealed record WorkspaceCharacter(string Name, long? CharacterId, long? EveUserId);
+public interface IWorkspaceCharacterProvider
+{
+    Task<WorkspaceCharacter?> GetCharacterAsync(string fullTitle);
+}
+
+public interface IWorkspacePortraitUpdates
+{
+    event Action<long>? PortraitChanged;
+}
+
 /// <summary>Optional platform capability for an exact preview of the platform's live title rendering.</summary>
 public interface IWorkspacePreviewRenderer
 {

@@ -239,6 +239,8 @@ namespace EveOPreview
             builder.RegisterType<GlobalEvents>().As<IGlobalEvents>().SingleInstance();
             builder.RegisterType<ApplicationPreferences>().AsSelf().SingleInstance();
             builder.RegisterType<CharacterPortraitCache>().AsSelf().As<IWorkspacePortraitProvider>().SingleInstance();
+            builder.RegisterType<EveClientUserIdReader>().AsSelf().SingleInstance();
+            builder.RegisterType<CharacterIdentityCache>().AsSelf().As<IWorkspaceCharacterProvider>().SingleInstance();
             builder.RegisterType<WindowsWorkspacePreviewCapture>().As<IWorkspacePreviewCapture>().SingleInstance();
 
 

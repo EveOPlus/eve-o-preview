@@ -45,7 +45,7 @@ public sealed partial class WorkspaceView
             string title = group.Clients[i];
             bool skipped = group.SkippedClients?.Contains(title) == true;
             bool online = _snapshot.Clients.Any(c => c.Title == title);
-            var row = new Grid { Name = "group-row-" + i, ColumnDefinitions = new ColumnDefinitions("22,25,*,Auto"),
+            var row = new Grid { Name = "group-row-" + i, ColumnDefinitions = new ColumnDefinitions(_theme.Legacy ? "22,25,*,Auto" : "22,25,38,*,Auto"),
                 Margin = new Thickness(0, 3), MinHeight = 42 };
             var handle = new Border { Name = "group-drag-" + i, Tag = title, Focusable = true,
                 Cursor = new Cursor(StandardCursorType.SizeAll), Background = Brushes.Transparent,
@@ -62,7 +62,12 @@ public sealed partial class WorkspaceView
             var identity = new StackPanel { Spacing = 3, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center,
                 Children = { label, Text(skipped ? "Skipped in all groups" : online ? "Running" : "Offline", 10,
                     skipped ? _theme.Danger : online ? _theme.Positive : _theme.Muted) } };
-            Grid.SetColumn(identity, 2); row.Children.Add(identity);
+            if (!_theme.Legacy)
+            {
+                var portrait = CharacterPortrait(title, 30);
+                Grid.SetColumn(portrait, 2); row.Children.Add(portrait);
+            }
+            Grid.SetColumn(identity, _theme.Legacy ? 2 : 3); row.Children.Add(identity);
             var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 3, VerticalAlignment = VerticalAlignment.Center };
             var skip = CommandButton(skipped ? "Resume" : "Skip", new("client-cycle-skip", title, (!skipped).ToString()), "group-skip-" + i);
             skip.MinWidth = 53;
@@ -77,7 +82,7 @@ public sealed partial class WorkspaceView
             ToolTip.SetTip(remove, F($"Remove {title} from this group"));
             AutomationProperties.SetName(remove, F($"Remove {title} from this group"));
             foreach (var action in new[] { skip, up, down, remove }) { action.Padding = new Thickness(6, 5); actions.Children.Add(action); }
-            Grid.SetColumn(actions, 3); row.Children.Add(actions);
+            Grid.SetColumn(actions, _theme.Legacy ? 3 : 4); row.Children.Add(actions);
             var container = new Grid { Children = { row } };
             var indicator = new Border { Height = 2, Background = Brushes.Transparent, IsHitTestVisible = false, VerticalAlignment = VerticalAlignment.Top };
             container.Children.Add(indicator);

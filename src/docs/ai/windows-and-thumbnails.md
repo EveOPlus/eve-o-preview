@@ -28,6 +28,12 @@ The `Services/Implementation` folder does not imply a uniform namespace. `Thumbn
 
 `ProcessMonitor.GetUpdatedProcesses` enumerates processes, accepts `ExeFile` case-insensitively, and skips processes without a main window. It keys `ProcessCache` by the source HWND and returns added/renamed/removed records. Titles are full window titles. The literal `EVE` denotes the login screen; do not apply named-client layout behavior to it. `GetMainProcess` delays caching the preview application's own window until the main window has initialized.
 
+After releasing its cache lock, discovery supplies a snapshot to the shared
+[character identity cache](character-identities.md). This schedules missing or
+weekly identity refreshes in the background. It never performs ESI requests or
+command-line reads within discovery's lock, and does not alter preview handles,
+focus, injection or cycle identity keys.
+
 For each added source, `UpdateThumbnailsList`:
 
 1. Creates a live/static view through the factory and assigns source HWND, title, size, and font.

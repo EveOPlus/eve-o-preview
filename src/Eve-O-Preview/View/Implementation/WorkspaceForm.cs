@@ -35,7 +35,8 @@ public sealed class WorkspaceForm : Form, IMainFormView, IAsyncSettingsView
 
     public WorkspaceForm(ApplicationContext context, ILogger logger, IMediator mediator,
         IConfigurationStorage storage, IThumbnailConfiguration configuration, IProfileManager profiles,
-        ApplicationPreferences preferences, IWorkspacePortraitProvider portraits, IWorkspacePreviewCapture previewCapture = null)
+        ApplicationPreferences preferences, IWorkspacePortraitProvider portraits, IWorkspacePreviewCapture previewCapture = null,
+        EveOPreview.Services.Implementation.CharacterIdentityCache characters = null)
     {
         _context = context;
         _preferences = preferences;
@@ -48,7 +49,7 @@ public sealed class WorkspaceForm : Form, IMainFormView, IAsyncSettingsView
         AutoScaleMode = AutoScaleMode.Dpi;
         ApplyNativeTheme();
         Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath) ?? SystemIcons.Application;
-        Backend = new WindowsWorkspaceBackend(this, this, mediator, storage, configuration, profiles, preferences, logger, portraits, previewCapture);
+        Backend = new WindowsWorkspaceBackend(this, this, mediator, storage, configuration, profiles, preferences, logger, portraits, previewCapture, characters);
         _workspace = new WorkspaceView(Backend);
         _workspaceHost = new WorkspaceAvaloniaHost { Dock = DockStyle.Fill, Content = _workspace };
         Controls.Add(_workspaceHost);

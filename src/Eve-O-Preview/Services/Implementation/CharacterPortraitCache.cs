@@ -11,8 +11,9 @@ using Serilog;
 namespace EveOPreview.Services.Implementation;
 
 /// <summary>Public portraits shared by donation and future character views.</summary>
-public sealed class CharacterPortraitCache : IWorkspacePortraitProvider
+public sealed class CharacterPortraitCache : IWorkspacePortraitProvider, IWorkspacePortraitUpdates
 {
+    public event Action<long> PortraitChanged;
     private static readonly HttpClient SharedClient = new() { Timeout = TimeSpan.FromSeconds(10) };
     private static readonly TimeSpan RefreshInterval = TimeSpan.FromDays(7);
     private readonly HttpClient _client;
@@ -92,6 +93,7 @@ public sealed class CharacterPortraitCache : IWorkspacePortraitProvider
                 catch (IOException) { }
                 catch (UnauthorizedAccessException) { }
             }
+            PortraitChanged?.Invoke(id);
             return bytes;
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidDataException)

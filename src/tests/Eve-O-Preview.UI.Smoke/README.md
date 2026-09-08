@@ -66,6 +66,11 @@ are still necessary before release.
 
 The rendering setup follows the [Avalonia headless platform guidance](https://v11.docs.avaloniaui.net/docs/concepts/headless/).
 
+`portraits-*.png` uses the existing public fixture image as a controlled response
+for synthetic identity records. Checks cover pending lookup, client controls,
+stable portrait bounds, normal/expanded cycle order, both modern themes, compact
+sizes and Arabic layout. They do not read a running client's launch token.
+
 Language checks exercise all bundled catalogs using the production selector,
 localized settings search, retained font drafts and unchanged character names.
 They also check global selection across profile switches, right-to-left layout

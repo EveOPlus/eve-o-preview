@@ -46,6 +46,8 @@ public sealed class WorkspaceCompositionTests(ITestOutputHelper output)
             using var container = builder.Build();
             Assert.IsType<WindowsWorkspacePreviewCapture>(container.Resolve<IWorkspacePreviewCapture>());
             Assert.IsType<EveOPreview.Services.Implementation.CharacterPortraitCache>(container.Resolve<EveOPreview.Services.Implementation.CharacterPortraitCache>());
+            Assert.Same(container.Resolve<EveOPreview.Services.Implementation.CharacterIdentityCache>(), container.Resolve<IWorkspaceCharacterProvider>());
+            Assert.NotNull(container.Resolve<EveOPreview.Services.IProcessMonitor>());
             using var view = Assert.IsType<WorkspaceForm>(container.Resolve<IMainFormView>());
             Assert.Equal("Default", view.Backend.Read().ProfileName);
             Assert.NotNull(view.Backend.Read().Settings);

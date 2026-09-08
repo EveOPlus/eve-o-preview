@@ -4,8 +4,10 @@ namespace EveOPreview.UI.Smoke;
 
 // Representative data only; this executable cannot discover clients, inject Robin,
 // write profiles, access credentials, or change native windows.
-internal sealed class SmokeBackend : IWorkspaceBackend, IWorkspacePortraitProvider
+internal sealed class SmokeBackend : IWorkspaceBackend, IWorkspacePortraitProvider, IWorkspaceCharacterProvider
 {
+    public Task<WorkspaceCharacter?> CharacterResult { get; set; } = Task.FromResult<WorkspaceCharacter?>(null);
+    public Task<WorkspaceCharacter?> GetCharacterAsync(string fullTitle) => CharacterResult;
     private readonly Dictionary<string, HashSet<string>> _skips = new();
     private readonly TaskCompletionSource<byte[]?> _portrait = new();
     public List<long> PortraitRequests { get; } = new();

@@ -70,7 +70,7 @@ public sealed partial class WorkspaceView
         foreach (var client in _snapshot.Clients)
         {
             var line = new Grid { ColumnDefinitions = new ColumnDefinitions("42,*,Auto") };
-            line.Children.Add(new Border { Width = 30, Height = 30, Background = B(_theme.AccentSurface), CornerRadius = new CornerRadius(8), Child = RawText(ClientInitial(client.Title), 12, _theme.Accent, true, HorizontalAlignment.Center) });
+            line.Children.Add(CharacterPortrait(client.Title, 30));
             var details = new StackPanel { Spacing = 5, Margin = new Thickness(0, 0, 12, 0), Children = { RawText(client.Title, 14, _theme.Text, true), Text(_snapshot.AllPreviewsHidden ? "Detected · globally hidden" : client.PreviewVisible ? "Detected · preview enabled" : "Detected · preview hidden", 11, _theme.Muted) } };
             Grid.SetColumn(details, 1); line.Children.Add(details);
             var toggle = new ToggleSwitch { IsChecked = client.PreviewVisible, OnContent = L("Visible"), OffContent = L("Hidden"), Name = "client-" + client.Title };
