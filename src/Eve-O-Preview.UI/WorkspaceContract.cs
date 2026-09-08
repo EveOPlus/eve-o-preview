@@ -49,7 +49,8 @@ public sealed record WorkspaceSnapshot(
     IReadOnlyList<string>? ThumbnailMenuOrder = null,
     string ThumbnailMenuTheme = ThumbnailMenuThemes.FollowApp,
     IReadOnlyList<string>? SavedClientTitles = null,
-    IReadOnlyList<ClientPreferenceItem>? ClientPreferences = null);
+    IReadOnlyList<ClientPreferenceItem>? ClientPreferences = null,
+    string UiLanguage = "auto");
 
 public sealed record ClientPreferenceItem(string Title, bool Priority, string BorderColor = "");
 
@@ -60,6 +61,7 @@ public sealed record CycleGroupItem(int Id, string Name, IReadOnlyList<string> C
     IReadOnlyList<string>? SkippedClients = null);
 
 // Actions: setting (Target=key, Value=value), theme (Value=Light/Dark/Legacy),
+// language (Value=auto or supported culture code): global modern workspace preference,
 // thumbnail-menu-move (Target=action id, Position=zero-based destination), thumbnail-menu-reset,
 // thumbnail-menu-divider-add (Target=action before divider), thumbnail-menu-divider-remove (Target=divider id),
 // thumbnail-menu-theme (Value=palette id or app),
@@ -78,6 +80,14 @@ public sealed record WorkspaceCommand(string Action, string Target = "", string 
     IReadOnlyDictionary<string, string>? Settings = null);
 public sealed record CommandResult(bool Success, string Message, bool WasCancelled = false)
 {
+    public string? MessageTemplate { get; init; }
+    public object?[]? MessageArguments { get; init; }
+    public string Localize(Func<string, string> translate) => MessageTemplate is null ? translate(Message)
+        : string.Format(System.Globalization.CultureInfo.InvariantCulture, translate(MessageTemplate), MessageArguments ?? []);
+    public static CommandResult OkFormat(FormattableString message) => new(true, message.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        { MessageTemplate = message.Format, MessageArguments = message.GetArguments() };
+    public static CommandResult ErrorFormat(FormattableString message) => new(false, message.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        { MessageTemplate = message.Format, MessageArguments = message.GetArguments() };
     public static CommandResult Ok(string message = "Changes applied") => new(true, message);
     public static CommandResult Error(string message) => new(false, message);
     public static CommandResult Cancelled(string message = "Selection cancelled") => new(true, message, true);

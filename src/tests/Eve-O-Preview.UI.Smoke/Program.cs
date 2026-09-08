@@ -12,7 +12,7 @@ using Avalonia.VisualTree;
 
 namespace EveOPreview.UI.Smoke;
 
-internal static class Program
+internal static partial class Program
 {
     private static readonly string[] ModernPages =
         ["Overview", "Clients", "Previews", "Switching", "FpsAudio", "Profiles", "Appearance", "About"];
@@ -192,6 +192,7 @@ internal static class Program
                     }
                 }
             }
+            renders += CheckLocalization(window, view, backend, output);
             window.Close();
             Require(backend.PortraitRequests.SequenceEqual(new long[] { 95465272 }), "Request Aura's portrait once across navigation and theme changes.");
             Console.WriteLine($"PASS: {renders} production UI renders; three distinct themes; keyboard-accessible navigation; input validation; draft retention; advanced setting command; settings search; compact scrollable layouts.");

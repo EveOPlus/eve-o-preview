@@ -20,6 +20,7 @@ public sealed class ApplicationPreferences
     private readonly string _path;
     private JObject _settings = new();
     public string Theme { get; private set; } = "Dark";
+    public string UiLanguage { get; private set; } = "auto";
     public IReadOnlyList<string> ThumbnailMenuOrder { get; private set; } = ThumbnailMenuActions.DefaultOrder;
     public string ThumbnailMenuTheme { get; private set; } = ThumbnailMenuThemes.FollowApp;
     public string FilePath => _path;
@@ -36,6 +37,7 @@ public sealed class ApplicationPreferences
             if (File.Exists(path))
             {
                 _settings = JObject.Parse(File.ReadAllText(path));
+                UiLanguage = WorkspaceLocalization.NormalizePreference(_settings.Value<string>("UiLanguage"));
                 var savedTheme = _settings.Value<string>("Theme");
                 if (SettingsVersion >= ExplicitThemeSelectionVersion && IsKnownTheme(savedTheme)) Theme = savedTheme;
                 var menuTheme = _settings.Value<string>("ThumbnailMenuTheme");
@@ -74,6 +76,14 @@ public sealed class ApplicationPreferences
         }
         catch (IOException) { return false; }
         catch (UnauthorizedAccessException) { return false; }
+    }
+
+    public void SetLanguage(string language)
+    {
+        string normalized = WorkspaceLocalization.NormalizePreference(language);
+        Save("UiLanguage", normalized);
+        UiLanguage = normalized;
+        Changed?.Invoke();
     }
 
     public void SetTheme(string theme)

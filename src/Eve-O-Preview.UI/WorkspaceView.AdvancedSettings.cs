@@ -17,7 +17,7 @@ public sealed partial class WorkspaceView
     {
         if (!PreviewSizeLimitKeys.Any(_drafts.ContainsKey)) return null;
         var values = PreviewSizeLimitKeys.Select(key => double.TryParse(DraftValue(key), CultureInfo.InvariantCulture, out var value) ? value : double.NaN).ToArray();
-        return values[0] > values[2] || values[1] > values[3] ? "Minimum dimensions cannot exceed maximum dimensions." : null;
+        return values[0] > values[2] || values[1] > values[3] ? L("Minimum dimensions cannot exceed maximum dimensions.") : null;
     }
 
     private void BuildAdvancedPreviewEditor(Panel parent)
@@ -87,9 +87,9 @@ public sealed partial class WorkspaceView
             .Concat(_snapshot.SavedClientTitles ?? []).Concat(_snapshot.CycleGroups.SelectMany(group => group.Clients))
             .Distinct(StringComparer.Ordinal).OrderBy(title => title, StringComparer.OrdinalIgnoreCase).ToArray();
         _clientSettingsTitle ??= titles.FirstOrDefault();
-        var picker = new AutoCompleteBox { Name = "client-settings-character", ItemsSource = titles, Text = _clientSettingsTitle ?? "",
-            MinimumPrefixLength = 0, FilterMode = AutoCompleteFilterMode.Contains, MinHeight = 32, Watermark = "Choose or type a character name" };
-        AutomationProperties.SetName(picker, "Online or offline character name");
+        var picker = new AutoCompleteBox { FlowDirection = Avalonia.Media.FlowDirection.LeftToRight, Name = "client-settings-character", ItemsSource = titles, Text = _clientSettingsTitle ?? "",
+            MinimumPrefixLength = 0, FilterMode = AutoCompleteFilterMode.Contains, MinHeight = 32, Watermark = L("Choose or type a character name") };
+        AutomationProperties.SetName(picker, L("Online or offline character name"));
         var pickerRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 7 };
         pickerRow.Children.Add(picker);
         var edit = ActionButton("Edit", () =>
@@ -112,18 +112,18 @@ public sealed partial class WorkspaceView
         var priorityValue = _formDrafts.GetValueOrDefault(priorityKey, saved.Priority.ToString());
         var content = new StackPanel { Spacing = 12, MaxWidth = 560, HorizontalAlignment = HorizontalAlignment.Stretch };
         content.Children.Add(Text(selected, 15, _theme.Text, true));
-        var priority = new CheckBox { Name = "client-settings-priority", Content = "Keep open when switching characters", IsChecked = bool.TryParse(priorityValue, out var enabled) && enabled };
-        AutomationProperties.SetName(priority, "Exempt this character from automatic minimization");
+        var priority = new CheckBox { Name = "client-settings-priority", Content = L("Keep open when switching characters"), IsChecked = bool.TryParse(priorityValue, out var enabled) && enabled };
+        AutomationProperties.SetName(priority, L("Exempt this character from automatic minimization"));
         content.Children.Add(priority);
         content.Children.Add(Text("This character is exempt from Minimize inactive clients. It can still be minimized manually.", 11, _theme.Muted));
-        var inherit = new CheckBox { Name = "client-settings-inherit-color", Content = "Use the profile's border color", IsChecked = colorValue.Length == 0 };
+        var inherit = new CheckBox { Name = "client-settings-inherit-color", Content = L("Use the profile's border color"), IsChecked = colorValue.Length == 0 };
         content.Children.Add(inherit);
-        var color = new TextBox { Name = "client-settings-color", Text = colorValue.Length > 0 ? colorValue : _snapshot.Settings.GetValueOrDefault("ActiveClientHighlightColor", "#ADFF2F"), MinHeight = 32 };
-        AutomationProperties.SetName(color, "Character active border color");
+        var color = new TextBox { FlowDirection = Avalonia.Media.FlowDirection.LeftToRight, Name = "client-settings-color", Text = colorValue.Length > 0 ? colorValue : _snapshot.Settings.GetValueOrDefault("ActiveClientHighlightColor", "#ADFF2F"), MinHeight = 32 };
+        AutomationProperties.SetName(color, L("Character active border color"));
         var swatch = ActionButton("", () => { }, "client-settings-color-picker");
         swatch.Width = 30; swatch.Height = 30; swatch.Padding = default;
-        AutomationProperties.SetName(swatch, "Choose a custom character border color");
-        ToolTip.SetTip(swatch, "Choose a custom color");
+        AutomationProperties.SetName(swatch, L("Choose a custom character border color"));
+        ToolTip.SetTip(swatch, L("Choose a custom color"));
         swatch.Click += (_, _) => { inherit.IsChecked = false; ShowColorPicker(swatch, color, "Use Save character settings to apply this color."); };
         var colorRow = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), ColumnSpacing = 8 };
         colorRow.Children.Add(swatch); Grid.SetColumn(color, 1); colorRow.Children.Add(color); content.Children.Add(colorRow);
@@ -132,7 +132,7 @@ public sealed partial class WorkspaceView
         {
             var button = ActionButton(new Border { Width = 22, Height = 22, Background = B(value), CornerRadius = new CornerRadius(4) }, () => { color.Text = value; inherit.IsChecked = false; }, "client-color-" + value[1..]);
             button.Padding = new Thickness(3); button.Margin = new Thickness(0, 0, 5, 0);
-            AutomationProperties.SetName(button, "Use border color " + value); colors.Children.Add(button);
+            AutomationProperties.SetName(button, F($"Use border color {value}")); colors.Children.Add(button);
         }
         content.Children.Add(colors);
         content.Children.Add(Text("Used while this character is active and highlighting is enabled. Turn on Use the profile's border color to remove an override.", 11, _theme.Muted));
@@ -155,7 +155,7 @@ public sealed partial class WorkspaceView
             var border = inherit.IsChecked == true ? "" : color.Text ?? "";
             var keep = (priority.IsChecked == true).ToString();
             color.IsEnabled = inherit.IsChecked != true;
-            error.Text = border.Length == 0 ? "" : SettingCatalog.Validate(SettingCatalog.Find("ActiveClientHighlightColor")!, border) ?? "";
+            error.Text = L(border.Length == 0 ? "" : SettingCatalog.Validate(SettingCatalog.Find("ActiveClientHighlightColor")!, border) ?? "");
             save.IsEnabled = error.Text.Length == 0;
             if (Color.TryParse(color.Text, out var paint)) swatch.Background = new SolidColorBrush(paint);
             if (border == saved.BorderColor) _formDrafts.Remove(colorKey); else _formDrafts[colorKey] = border;

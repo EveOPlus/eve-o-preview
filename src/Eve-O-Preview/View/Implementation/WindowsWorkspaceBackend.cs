@@ -92,7 +92,7 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
                 .Concat(_configuration.GetPriorityClientTitles() ?? []).Concat(_configuration.PerClientActiveClientHighlightColor.Keys)
                 .Distinct(StringComparer.Ordinal).OrderBy(title => title, StringComparer.OrdinalIgnoreCase)
                 .Select(title => new ClientPreferenceItem(title, _configuration.IsPriorityClient(title),
-                    _configuration.PerClientActiveClientHighlightColor.TryGetValue(title, out var color) ? Format(color) : "")).ToArray());
+                    _configuration.PerClientActiveClientHighlightColor.TryGetValue(title, out var color) ? Format(color) : "")).ToArray(), _preferences.UiLanguage);
     }
 
     public async Task<CommandResult> ExecuteAsync(WorkspaceCommand command)
@@ -107,6 +107,7 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
                 case "setting": return await ApplySetting(command.Target, command.Value);
                 case "preview-size-limits": return await ApplyPreviewSizeLimits(command.Settings);
                 case "client-preferences": return await ApplyClientPreferences(command);
+                case "language": _preferences.SetLanguage(command.Value); return CommandResult.Ok("Language saved");
                 case "theme": _preferences.SetTheme(command.Value); return CommandResult.Ok("Theme saved");
                 case "thumbnail-menu-move":
                     var menuOrder = _preferences.ThumbnailMenuOrder.ToList();
@@ -209,7 +210,7 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         catch (Exception ex)
         {
             _logger.Error(ex, "Workspace command {Action} failed", command.Action);
-            return CommandResult.Error("The change could not be completed: " + ex.GetBaseException().Message);
+            return CommandResult.ErrorFormat($"The change could not be completed: {ex.GetBaseException().Message}");
         }
         finally { IsBusy = false; NotifyChanged(); }
     }

@@ -344,6 +344,9 @@ These files are outside the original baseline count. The [UI review](ui-review.m
 | [src/Eve-O-Preview.UI/SettingCatalog.cs](../../Eve-O-Preview.UI/SettingCatalog.cs) | Setting metadata, discoverable labels, sections and input definitions |
 | [src/Eve-O-Preview.UI/WorkspaceApp.cs](../../Eve-O-Preview.UI/WorkspaceApp.cs) | Avalonia application initialization and Fluent theme resources |
 | [src/Eve-O-Preview.UI/WorkspaceView.cs](../../Eve-O-Preview.UI/WorkspaceView.cs) | Workspace navigation/header, draft state, profile selector, command feedback and confirmation overlay |
+| [src/Eve-O-Preview.UI/WorkspaceView.Localization.cs](../../Eve-O-Preview.UI/WorkspaceView.Localization.cs) | Modern language selector and display/data localization helpers |
+| [src/Eve-O-Preview.UI/Localization/WorkspaceLocalization.cs](../../Eve-O-Preview.UI/Localization/WorkspaceLocalization.cs) | Culture resolution and embedded offline language catalogs |
+| [src/Eve-O-Preview.UI/Localization/README.md](../../Eve-O-Preview.UI/Localization/README.md) | Supported languages, JSON catalog maintenance and validation boundaries |
 | [src/Eve-O-Preview.UI/WorkspaceView.Settings.cs](../../Eve-O-Preview.UI/WorkspaceView.Settings.cs) | Settings editors, validation, explicit Apply, search and preview/font controls |
 | [src/Eve-O-Preview.UI/WorkspaceView.Pages.cs](../../Eve-O-Preview.UI/WorkspaceView.Pages.cs) | Overview, preview/client/performance pages, appearance choices, About and clear planned-feature states |
 | [src/Eve-O-Preview.UI/WorkspaceView.Management.cs](../../Eve-O-Preview.UI/WorkspaceView.Management.cs) | Profile management/accent palette and custom color, cycle membership/order, explicit shortcut recording and clearing |
@@ -371,6 +374,8 @@ These files are outside the original baseline count. The [UI review](ui-review.m
 | [src/tests/Eve-O-Preview.UI.Smoke/Eve-O-Preview.UI.Smoke.csproj](../../tests/Eve-O-Preview.UI.Smoke/Eve-O-Preview.UI.Smoke.csproj) | Portable Avalonia Headless/Skia rendering and interaction smoke executable |
 | [src/tests/Eve-O-Preview.UI.Smoke/SmokeBackend.cs](../../tests/Eve-O-Preview.UI.Smoke/SmokeBackend.cs) | Controlled in-memory sample settings/clients/profiles for smoke checks |
 | [src/tests/Eve-O-Preview.UI.Smoke/Program.cs](../../tests/Eve-O-Preview.UI.Smoke/Program.cs) | Headless production workspace rendering, navigation/editor command checks and PNG capture |
+| [src/tests/Eve-O-Preview.UI.Smoke/Program.Localization.cs](../../tests/Eve-O-Preview.UI.Smoke/Program.Localization.cs) | All-language interaction/render checks, translated search, draft and identity preservation, RTL geometry |
+| [src/tests/Eve-O-Preview.Tests/Checks/WorkspaceLocalizationTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspaceLocalizationTests.cs) | Catalog integrity, culture fallback and global language persistence |
 | [src/tests/Eve-O-Preview.UI.Smoke/README.md](../../tests/Eve-O-Preview.UI.Smoke/README.md) | UI smoke commands, image output and validation boundaries |
 | [src/tests/Eve-O-Preview.Tests/Checks/WorkspacePreferencesTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspacePreferencesTests.cs) | Global preference validation/path/unknown-field persistence and profile accent checks |
 | [src/tests/Eve-O-Preview.Tests/Checks/WorkspaceBackendTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspaceBackendTests.cs) | Production adapter settings and await-before-native routing, profile/hotkey identity and failed-save retry |

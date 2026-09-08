@@ -70,11 +70,11 @@ public sealed partial class WorkspaceView
         foreach (var client in _snapshot.Clients)
         {
             var line = new Grid { ColumnDefinitions = new ColumnDefinitions("42,*,Auto") };
-            line.Children.Add(new Border { Width = 30, Height = 30, Background = B(_theme.AccentSurface), CornerRadius = new CornerRadius(8), Child = Text(ClientInitial(client.Title), 12, _theme.Accent, true, HorizontalAlignment.Center) });
-            var details = new StackPanel { Spacing = 5, Margin = new Thickness(0, 0, 12, 0), Children = { Text(client.Title, 14, _theme.Text, true), Text(_snapshot.AllPreviewsHidden ? "Detected · globally hidden" : client.PreviewVisible ? "Detected · preview enabled" : "Detected · preview hidden", 11, _theme.Muted) } };
+            line.Children.Add(new Border { Width = 30, Height = 30, Background = B(_theme.AccentSurface), CornerRadius = new CornerRadius(8), Child = RawText(ClientInitial(client.Title), 12, _theme.Accent, true, HorizontalAlignment.Center) });
+            var details = new StackPanel { Spacing = 5, Margin = new Thickness(0, 0, 12, 0), Children = { RawText(client.Title, 14, _theme.Text, true), Text(_snapshot.AllPreviewsHidden ? "Detected · globally hidden" : client.PreviewVisible ? "Detected · preview enabled" : "Detected · preview hidden", 11, _theme.Muted) } };
             Grid.SetColumn(details, 1); line.Children.Add(details);
-            var toggle = new ToggleSwitch { IsChecked = client.PreviewVisible, OnContent = "Visible", OffContent = "Hidden", Name = "client-" + client.Title };
-            Avalonia.Automation.AutomationProperties.SetName(toggle, "Preview visible for " + client.Title);
+            var toggle = new ToggleSwitch { IsChecked = client.PreviewVisible, OnContent = L("Visible"), OffContent = L("Hidden"), Name = "client-" + client.Title };
+            Avalonia.Automation.AutomationProperties.SetName(toggle, F($"Preview visible for {client.Title}"));
             toggle.IsCheckedChanged += async (_, _) => await Run(new("client-visible", client.Title, (toggle.IsChecked == true).ToString()));
             Grid.SetColumn(toggle, 2); line.Children.Add(toggle);
             rows.Children.Add(Card(line));
@@ -91,6 +91,7 @@ public sealed partial class WorkspaceView
     private void RenderAppearance()
     {
         Heading("Make yourself at home.", "Choose the look that works for you. Your theme applies to every profile.", "APPEARANCE");
+        AddLanguageSettings();
         _page.Children.Add(ActionButton("Thumbnail right-click menu…", () => Navigate("ThumbnailMenu"), "thumbnail-menu-settings"));
         foreach (var name in new[] { "Light", "Dark", "Legacy" })
         {
@@ -102,10 +103,10 @@ public sealed partial class WorkspaceView
             var miniContent = new StackPanel { Margin = new Thickness(7, 9), Spacing = 7, Children = { new Border { Height = 5, Width = 37, Background = B(palette.Text), HorizontalAlignment = HorizontalAlignment.Left }, new Border { Height = 21, Background = B(palette.Surface), BorderBrush = B(palette.Border), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(palette.Radius / 2) }, new Border { Height = 12, Background = B(palette.Surface), BorderBrush = B(palette.Border), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(palette.Radius / 2) } } };
             Grid.SetColumn(miniContent, 1); miniature.Children.Add(miniContent);
             grid.Children.Add(new Border { CornerRadius = new CornerRadius(6), ClipToBounds = true, Child = miniature, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center });
-            var explanation = name switch { "Light" => "Bright surfaces and crisp contrast for daylight sessions.", "Dark" => "Quiet, deep surfaces that are comfortable alongside EVE.", _ => "Classic layout. " + LegacyThemeDescription };
+            var explanation = name switch { "Light" => "Bright surfaces and crisp contrast for daylight sessions.", "Dark" => "Quiet, deep surfaces that are comfortable alongside EVE.", _ => L("Classic layout.") + " " + L(LegacyThemeDescription) };
             var text = new StackPanel { Spacing = 7, Margin = new Thickness(0, 0, 15, 0), Children = { Text(name, 18, _theme.Text, true), Text(explanation, 12, _theme.Muted) } };
             Grid.SetColumn(text, 1); grid.Children.Add(text);
-            var select = CommandButton(selected ? "Selected" : "Use " + name, new("theme", Value: name), "theme-" + name, true);
+            var select = CommandButton(selected ? L("Selected") : F($"Use {L(name)}"), new("theme", Value: name), "theme-" + name, true);
             select.IsEnabled = !selected;
             Grid.SetColumn(select, 2); grid.Children.Add(select);
             var card = Card(grid);
@@ -139,7 +140,7 @@ public sealed partial class WorkspaceView
         documentation.Margin = new Thickness(0, 0, 8, 4);
         links.Children.Add(documentation);
         links.Children.Add(CommandButton("Discord \u2197", new("discord"), "open-discord"));
-        _page.Children.Add(Card(new StackPanel { Spacing = 13, Children = { Text("Version " + _snapshot.Version, 21, _theme.Text, true), Text("Live previews, flexible layouts, cycle groups, frame-rate controls and selective audio muting, brought together in one workspace.", 13, _theme.Muted), Text("Get help, share an idea, or just pop in and say hi to fellow pilots.", 12, _theme.Muted), links, Text("Available on Windows.", 12, _theme.Muted), Text("EVE-O Preview is distributed under the GNU General Public License, version 3 or later. EVE Online belongs to Fenris Creations (FC). EVE-O Preview is an independent project.", 11, _theme.Muted) } }));
+        _page.Children.Add(Card(new StackPanel { Spacing = 13, Children = { Text(F($"Version {_snapshot.Version}"), 21, _theme.Text, true), Text("Live previews, flexible layouts, cycle groups, frame-rate controls and selective audio muting, brought together in one workspace.", 13, _theme.Muted), Text("Get help, share an idea, or just pop in and say hi to fellow pilots.", 12, _theme.Muted), links, Text("Available on Windows.", 12, _theme.Muted), Text("EVE-O Preview is distributed under the GNU General Public License, version 3 or later. EVE Online belongs to Fenris Creations (FC). EVE-O Preview is an independent project.", 11, _theme.Muted) } }));
         _page.Children.Add(Card(new StackPanel { Spacing = 10, Children = { Text("Project credits & license", 16, _theme.Text, true), Text("With thanks to original maintainer Phrynohyas Tig-Rah and the EVE-O Preview contributors. This software is provided without warranty; see the distributed GNU GPL license for the full terms.", 12, _theme.Muted), Text("Close this window to follow your profile's system-tray preference. Exit stops EVE-O Preview completely.", 12, _theme.Muted) } }));
     }
 }

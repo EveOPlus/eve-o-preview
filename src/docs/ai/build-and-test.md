@@ -80,6 +80,17 @@ The smoke runner uses the production workspace controls with sample state and an
 
 The Windows suite also includes `WorkspacePreferencesTests` for the generic global settings file and profile accent behavior, `WorkspaceBackendTests` for the production adapter and asynchronous commit/native routes, and `WorkspaceHostTests` for a private-desktop embedded WinForms/Avalonia host lifecycle. These are separate from the sample backend used by the portable renderer. Use the ordinary focused `dotnet test` command above, or a `FullyQualifiedName~Workspace` filter when investigating only this layer.
 
+`WorkspaceLocalizationTests` checks every embedded language catalog for matching
+keys, nonempty translations and preserved format arguments, along with regional
+fallback, culture isolation and atomic language persistence. The smoke harness
+exercises the language selector for all bundled languages, localized search,
+retained font drafts and raw character names, profile-independent selection and
+Legacy isolation. It captures all language selectors plus representative German,
+Arabic, Japanese and Hindi pages at compact sizes. These checks do not establish
+native-speaker translation quality. In restricted build environments, pass
+`-p:UsedAvaloniaProducts=` to disable Avalonia's build statistics task if its
+per-user log directory is unavailable.
+
 `WorkspaceHostTests.WorkspaceTracksDpiChangesWithoutReplacingContentOrLosingDrafts` sends synthetic 100/125/150/200% DPI transitions through the production form. It checks the Avalonia render scale and logical bounds, unchanged HWNDs/content, focused draft retention, native-pixel title sample sizing, Legacy scaling, and modern size restoration after leaving Legacy at a different DPI. The pre-fix check reproduced a 125% WinForms host with Avalonia still at 100%. The worker also moves its own form through available monitors and reports their DPI; the validation environment exposed three 96-DPI monitors. Synthetic messages do not change Windows' nonclient metrics or establish physical mixed-DPI behavior. Manually drag the workspace both ways between differently scaled monitors, including while editing, after minimizing/restoring, and while using Legacy. Do not change the user's display settings or capture the desktop for automated validation.
 
 For a release, verify the published output includes the UI assembly, Avalonia dependencies and required native renderer assets. A successful library build is not a packaged-host launch check. Use a separate staging output and the focused publish guidance above; do not invoke Cake packaging as a UI smoke check.

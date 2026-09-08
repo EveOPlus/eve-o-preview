@@ -23,6 +23,21 @@ public interface IWorkspaceTestView : IMainFormView, IAsyncSettingsView { }
 
 public sealed class WorkspaceBackendTests
 {
+    [Fact]
+    public async Task LanguageIsGlobalAndDoesNotCommitGameplaySettings()
+    {
+        using var fixture = new Fixture();
+        var before = fixture.Backend.Read();
+        var result = await fixture.Execute("language", value: "fr-CA");
+        Assert.True(result.Success);
+        Assert.Equal("fr", fixture.Backend.Read().UiLanguage);
+        Assert.Equal("fr", fixture.Preferences.UiLanguage);
+        Assert.Equal(before.Theme, fixture.Backend.Read().Theme);
+        Assert.Equal(before.Settings, fixture.Backend.Read().Settings);
+        Assert.Equal(0, fixture.Commits);
+        Assert.Empty(fixture.Messages);
+    }
+
     [Theory]
     [InlineData("FpsFocused", "-1")]
     [InlineData("FpsFocused", "NaN")]

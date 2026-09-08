@@ -18,7 +18,7 @@ public sealed partial class WorkspaceView
         return new Bitmap(stream);
     });
 
-    private static Image BrandLogo()
+    private Image BrandLogo()
     {
         var image = new Image
         {
@@ -30,7 +30,7 @@ public sealed partial class WorkspaceView
             VerticalAlignment = VerticalAlignment.Center
         };
         RenderOptions.SetBitmapInterpolationMode(image, BitmapInterpolationMode.HighQuality);
-        AutomationProperties.SetName(image, "EVE-O Preview logo");
+        AutomationProperties.SetName(image, L("EVE-O Preview logo"));
         return image;
     }
 }

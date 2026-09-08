@@ -17,7 +17,7 @@ public sealed partial class WorkspaceView
         return new Bitmap(stream);
     });
 
-    private static Border PartnerBadge(double width)
+    private Border PartnerBadge(double width)
     {
         var image = new Image
         {
@@ -29,8 +29,8 @@ public sealed partial class WorkspaceView
             HorizontalAlignment = HorizontalAlignment.Left
         };
         RenderOptions.SetBitmapInterpolationMode(image, BitmapInterpolationMode.HighQuality);
-        AutomationProperties.SetName(image, "EVE Online Partner");
-        ToolTip.SetTip(image, "EVE Online Partner");
+        AutomationProperties.SetName(image, L("EVE Online Partner"));
+        ToolTip.SetTip(image, L("EVE Online Partner"));
         // Trim the transparent vertical clear space while preserving artwork proportions.
         image.Margin = new Thickness(0, -width * 0.10, 0, -width * 0.10);
         return new Border

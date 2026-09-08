@@ -79,6 +79,6 @@ public sealed partial class WindowsWorkspaceBackend
             throw;
         }
         await _mediator.Publish(new ThumbnailRuntimeSettingsUpdated());
-        return CommandResult.Ok("Character settings saved for " + title);
+        return CommandResult.OkFormat($"Character settings saved for {title}");
     }
 }

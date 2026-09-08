@@ -65,3 +65,11 @@ platform adapter. Real desktop keyboard/focus, screen-reader and high-DPI checks
 are still necessary before release.
 
 The rendering setup follows the [Avalonia headless platform guidance](https://v11.docs.avaloniaui.net/docs/concepts/headless/).
+
+Language checks exercise all bundled catalogs using the production selector,
+localized settings search, retained font drafts and unchanged character names.
+They also check global selection across profile switches, right-to-left layout
+with unchanged preview geometry, and the absence of a language selector in Legacy.
+`language-*.png` includes every language's Appearance page and compact German,
+Arabic, Hindi and Japanese workspace pages. Catalog and native host tests remain
+separate; these renders do not establish native-speaker translation quality.

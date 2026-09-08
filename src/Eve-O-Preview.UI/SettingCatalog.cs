@@ -68,24 +68,25 @@ public static class SettingCatalog
 
     public static SettingDefinition? Find(string key) => All.FirstOrDefault(s => s.Key == key);
 
-    public static string? Validate(SettingDefinition setting, string value)
+    public static string? Validate(SettingDefinition setting, string value, Func<string, string>? translate = null)
     {
+        translate ??= static text => text;
         if (setting.Key == "ProfileAccentColor" && string.IsNullOrEmpty(value)) return null;
         if (setting.Kind == SettingKind.Number)
         {
             if (!double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) || !double.IsFinite(number))
-                return "Enter a valid number.";
+                return translate("Enter a valid number.");
             if ((setting.Minimum is { } minimum && number < minimum) || (setting.Maximum is { } maximum && number > maximum))
-                return $"Enter a value from {setting.Minimum} to {setting.Maximum}.";
+                return string.Format(CultureInfo.InvariantCulture, translate("Enter a value from {0} to {1}."), setting.Minimum, setting.Maximum);
             if (setting.Key is not ("TitleFontSize" or "TitleFontOutlineWidth" or "HideDelaySeconds") && number != Math.Truncate(number))
-                return "Enter a whole number.";
+                return translate("Enter a whole number.");
         }
         if (setting.Kind == SettingKind.Color && (value.Length != 7 || value[0] != '#' || !uint.TryParse(value.AsSpan(1), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out _)))
-            return "Use # followed by six hex digits, for example #6D9FFF.";
+            return translate("Use # followed by six hex digits, for example #6D9FFF.");
         if (setting.Kind == SettingKind.Text && string.IsNullOrWhiteSpace(value))
-            return "Enter a value before applying.";
+            return translate("Enter a value before applying.");
         if (setting.Kind == SettingKind.AudioIds && value.Split(',').Any(t => t.Trim().Length > 0 && !uint.TryParse(t.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out _)))
-            return "Each event ID must be a whole number from 0 to 4294967295.";
+            return translate("Each event ID must be a whole number from 0 to 4294967295.");
         return null;
     }
 }

@@ -44,6 +44,7 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
     private string _pageId = "Overview";
     private string _query = "";
     private string _message = "Ready";
+    private CommandResult? _lastResult;
     private bool _messageError;
     private bool _disposed;
     private bool _busy;
@@ -59,6 +60,7 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
         _backend = backend;
         _modules = modules?.ToArray() ?? Array.Empty<WorkspaceModule>();
         _snapshot = backend.Read();
+        _localization = new WorkspaceLocalization(_snapshot.UiLanguage);
         UpdatePreviewCharacter();
         _theme = WorkspaceTheme.Get(_snapshot.Theme);
         _pageId = _theme.Legacy ? "General" : "Overview";
@@ -131,7 +133,7 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
         if (!_theme.Legacy && pageId is "Thumbnail" or "Zoom") { _previewTab = "Layout"; pageId = "Previews"; }
         _pageId = pageId;
         _query = "";
-        if (_search is not null) _search.Text = "";
+        if (_search is not null) _search.Text = L("");
         RenderPage(false);
     }
 
@@ -139,13 +141,15 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
     {
         if (_disposed) return;
         var next = _backend.Read();
+        bool languageChanged = next.UiLanguage != _snapshot.UiLanguage;
         if (_cancelMenuDrag is not null)
         {
-            if (next.Theme == _snapshot.Theme && next.ThumbnailMenuTheme == _snapshot.ThumbnailMenuTheme
+            if (!languageChanged && next.Theme == _snapshot.Theme && next.ThumbnailMenuTheme == _snapshot.ThumbnailMenuTheme
                 && ThumbnailMenuActions.Normalize(next.ThumbnailMenuOrder).SequenceEqual(ThumbnailMenuActions.Normalize(_snapshot.ThumbnailMenuOrder))) return;
             _cancelMenuDrag();
         }
-        if (_cancelOrderDrag is not null && next.ProfileName == _snapshot.ProfileName && next.Theme == _snapshot.Theme) return;
+        if (_cancelOrderDrag is not null && next.ProfileName == _snapshot.ProfileName && next.Theme == _snapshot.Theme && !languageChanged) return;
+        if (languageChanged) { _cancelOrderDrag?.Invoke(); _cancelMenuDrag?.Invoke(); }
         if (next.ProfileName != _snapshot.ProfileName && !_preserveDraftsOnRefresh)
         {
             _cancelOrderDrag?.Invoke();
@@ -159,16 +163,17 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
             _previewRenderError = null;
         }
         _snapshot = next;
+        _localization = new WorkspaceLocalization(next.UiLanguage);
         UpdatePreviewCharacter();
-        if (_expandedOrderGroup is not null && _theme.Name == WorkspaceTheme.Get(next.Theme).Name)
+        if (_expandedOrderGroup is not null && _theme.Name == WorkspaceTheme.Get(next.Theme).Name && !languageChanged)
         {
             RenderExpandedOrder();
             return;
         }
-        if (_theme.Name != WorkspaceTheme.Get(next.Theme).Name)
+        if (_theme.Name != WorkspaceTheme.Get(next.Theme).Name || languageChanged)
         {
             DismissConfirmation();
-            if (_pageId == "Overlay") _previewTab = "Titles";
+            if (!languageChanged && _pageId == "Overlay") _previewTab = "Titles";
             if (_pageId == "AdvancedPreview") _previewTab = "Advanced";
             _theme = WorkspaceTheme.Get(next.Theme);
             _pageId = _theme.Legacy
@@ -196,6 +201,7 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
 
     private void BuildShell()
     {
+        FlowDirection = !_theme.Legacy && _localization.RightToLeft ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
         if (_theme.Legacy) { BuildLegacyShell(); return; }
         FontFamily = new FontFamily("Inter, Segoe UI, sans-serif");
         FontSize = 13;
@@ -251,7 +257,7 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
         utilities.Children.Add(about);
         var exit = CommandButton("Exit", new("exit"), "exit-application");
         exit.Padding = new Thickness(8); exit.Margin = new Thickness(6, 0, 0, 0);
-        ToolTip.SetTip(exit, "Quit EVE-O Preview and stop all previews");
+        ToolTip.SetTip(exit, L("Quit EVE-O Preview and stop all previews"));
         Grid.SetColumn(exit, 1); utilities.Children.Add(exit);
         bottom.Children.Add(utilities);
         _versionLabel = Text("", 9, _theme.Muted);
@@ -306,15 +312,15 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
         button.HorizontalContentAlignment = HorizontalAlignment.Stretch;
         button.Padding = new Thickness(10, 9);
         button.BorderThickness = new Thickness(0);
-        AutomationProperties.SetName(button, title + (planned ? ", planned feature" : ""));
+        AutomationProperties.SetName(button, L(title) + (planned ? L(", planned feature") : ""));
         _navigation[id] = button;
         parent.Children.Add(button);
     }
 
     private Control BuildHeader()
     {
-        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), RowDefinitions = new RowDefinitions("Auto,Auto"), Margin = new Thickness(22, 12, 22, 10) };
-        var profile = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), VerticalAlignment = VerticalAlignment.Center };
+        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), RowDefinitions = new RowDefinitions("Auto,Auto"), Margin = new Thickness(22, 8, 22, 6) };
+        var profile = new Grid { FlowDirection = FlowDirection.LeftToRight, ColumnDefinitions = new ColumnDefinitions("Auto,*"), VerticalAlignment = VerticalAlignment.Center };
         profile.Children.Add(Text("Profile", 12, _theme.Muted));
         _profilePicker = new ComboBox { Name = "profile-picker", MinWidth = 160, MinHeight = 33, MaxDropDownHeight = 360, FontSize = 12,
             Foreground = B(_theme.Text), HorizontalAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(9, 0, 0, 0),
@@ -323,7 +329,7 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
                 Text = name, Foreground = B(_theme.Text), FontSize = 12, TextTrimming = TextTrimming.CharacterEllipsis,
                 HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Center
             }) };
-        AutomationProperties.SetName(_profilePicker, "Active profile");
+        AutomationProperties.SetName(_profilePicker, L("Active profile"));
         _profilePicker.SelectionChanged += async (_, _) =>
         {
             if (_settingProfile || _profilePicker.SelectedItem is not ComboBoxItem item) return;
@@ -338,7 +344,7 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
             if (HasUnappliedEdits)
             {
                 UpdateHeader();
-                Confirm("Switch profile?", "Your unapplied edits will be discarded. Applied settings are already saved in " + _snapshot.ProfileName + ".", "Discard edits & switch", async () => { _drafts.Clear(); _formDrafts.Clear(); await Run(new("profile-switch", selected.Id)); });
+                Confirm("Switch profile?", F($"Your unapplied edits will be discarded. Applied settings are already saved in {_snapshot.ProfileName}."), "Discard edits & switch", async () => { _drafts.Clear(); _formDrafts.Clear(); await Run(new("profile-switch", selected.Id)); });
             }
             else await Run(new("profile-switch", selected.Id));
         };
@@ -348,8 +354,8 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
             Padding = new Thickness(9, 5, 7, 5), Margin = new Thickness(0, 0, 14, 0), MaxWidth = 440,
             HorizontalAlignment = HorizontalAlignment.Left, Child = profile };
         header.Children.Add(_profileCard);
-        _search = new TextBox { Name = "search-settings", Watermark = "Search settings…  Ctrl+K", Width = 240, HorizontalAlignment = HorizontalAlignment.Right, MinHeight = 34, Text = _query, FontSize = 12 };
-        AutomationProperties.SetName(_search, "Search all settings and features");
+        _search = new TextBox { FlowDirection = Avalonia.Media.FlowDirection.LeftToRight, Name = "search-settings", Watermark = L("Search settings…  Ctrl+K"), Width = 240, HorizontalAlignment = HorizontalAlignment.Right, MinHeight = 34, Text = _query, FontSize = 12 };
+        AutomationProperties.SetName(_search, L("Search all settings and features"));
         _search.TextChanged += (_, _) => { _query = _search.Text?.Trim() ?? ""; RenderPage(false); };
         Grid.SetColumn(_search, 1); header.Children.Add(_search);
         _clientStatus = Text("", 11, _theme.Muted, margin: new Thickness(0, 8, 0, 0));
@@ -382,9 +388,9 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
     private void UpdateHeader()
     {
         if (_theme.Legacy) { UpdateLegacyHeader(); return; }
-        _versionLabel.Text = string.IsNullOrWhiteSpace(_snapshot.Version) ? "EVE-O Preview" : "EVE-O Preview  \u00b7  " + _snapshot.Version;
+        _versionLabel.Text = L(string.IsNullOrWhiteSpace(_snapshot.Version) ? "EVE-O Preview" : "EVE-O Preview  \u00b7  " + _snapshot.Version);
         _profileCard.BorderBrush = ProfileAccent();
-        ToolTip.SetTip(_profilePicker, "Active profile: " + _snapshot.ProfileName);
+        ToolTip.SetTip(_profilePicker, F($"Active profile: {_snapshot.ProfileName}"));
         _settingProfile = true;
         var profileItems = _snapshot.Profiles.Select(p =>
         {
@@ -394,15 +400,15 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
         }).ToList();
         profileItems.Add(new ComboBoxItem { Name = "profile-menu-divider", Content = new Separator(),
             IsEnabled = false, Focusable = false, MinHeight = 9, Padding = new Thickness(0) });
-        var manageProfiles = new ComboBoxItem { Name = "manage-profiles", Content = "Manage profiles…", Foreground = B(_theme.Text) };
-        AutomationProperties.SetName(manageProfiles, "Manage profiles");
+        var manageProfiles = new ComboBoxItem { Name = "manage-profiles", Content = L("Manage profiles…"), Foreground = B(_theme.Text) };
+        AutomationProperties.SetName(manageProfiles, L("Manage profiles"));
         profileItems.Add(manageProfiles);
         _profilePicker.ItemsSource = profileItems;
         _profilePicker.SelectedIndex = _snapshot.Profiles.ToList().FindIndex(p => p.Name == _snapshot.ProfileName);
         _settingProfile = false;
         var count = _snapshot.Clients.Count;
-        _clientStatus.Text = count == 0 ? "No EVE clients detected  ·  Launch EVE to begin" : $"{count} {(count == 1 ? "client" : "clients")} detected  ·  {_snapshot.Clients.Count(c => c.PreviewVisible)} previews enabled";
-        _hideAll.Content = _snapshot.AllPreviewsHidden ? "Show all previews" : "Hide all previews";
+        _clientStatus.Text = count == 0 ? L("No EVE clients detected  ·  Launch EVE to begin") : F($"Clients: {count} · Previews: {_snapshot.Clients.Count(c => c.PreviewVisible)}");
+        _hideAll.Content = L(_snapshot.AllPreviewsHidden ? "Show all previews" : "Hide all previews");
         _hideAll.Background = B(_snapshot.AllPreviewsHidden ? _theme.AccentSurface : _theme.Surface);
         UpdateFooter();
     }
@@ -410,12 +416,12 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
     private void UpdateFooter()
     {
         if (_theme.Legacy) { UpdateLegacyFooter(); return; }
-        _status.Text = _message;
+        _status.Text = _lastResult?.Message == _message ? _lastResult.Localize(L) : L(_message);
         _status.Foreground = B(_messageError ? _theme.Danger : _theme.Muted);
         var edits = _drafts.Count + _formDrafts.Count;
-        _draftStatus.Text = edits == 0 ? (_retryCommand is null ? "Applied settings save automatically" : "Update incomplete") : $"{edits} unapplied {(edits == 1 ? "edit" : "edits")}";
+        _draftStatus.Text = edits == 0 ? L(_retryCommand is null ? "Applied settings save automatically" : "Update incomplete") : F($"Unapplied edits: {edits}");
         _retryButton.IsVisible = _retryCommand is not null;
-        _retryButton.Content = _retryCommands.Count > 1 ? $"Retry update ({_retryCommands.Count})" : "Retry update";
+        _retryButton.Content = _retryCommands.Count > 1 ? F($"Retry update ({_retryCommands.Count})") : L("Retry update");
     }
 
     private async Task<CommandResult> Run(WorkspaceCommand command)
@@ -431,6 +437,7 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
         finally { _busy = false; }
         if (_disposed) return result;
         _message = result.Message;
+        _lastResult = result;
         _messageError = !result.Success;
         if (command.Action == "setting")
         {
@@ -537,18 +544,20 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
     private Border Card(Control child, Thickness? padding = null) => new() { Child = child, Background = B(_theme.Surface), BorderBrush = B(_theme.Border), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(_theme.Radius), Padding = padding ?? new Thickness(15) };
     private static IBrush B(string color) => WorkspaceTheme.Brush(color);
     private IBrush ProfileAccent() => Color.TryParse(_snapshot.Settings.GetValueOrDefault("ProfileAccentColor", ""), out var color) ? new SolidColorBrush(color) : B(_theme.Accent);
-    private TextBlock Text(string value, double size = 13, string? color = null, bool bold = false, HorizontalAlignment align = HorizontalAlignment.Stretch, Thickness? margin = null) => new() { Text = value, FontSize = size, Foreground = B(color ?? _theme.Text), FontWeight = bold ? FontWeight.SemiBold : FontWeight.Normal, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = align, Margin = margin ?? default };
+    private TextBlock Text(string value, double size = 13, string? color = null, bool bold = false, HorizontalAlignment align = HorizontalAlignment.Stretch, Thickness? margin = null) => new() { Text = L(value), FontSize = size, Foreground = B(color ?? _theme.Text), FontWeight = bold ? FontWeight.SemiBold : FontWeight.Normal, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = align, Margin = margin ?? default };
     private Button ActionButton(object content, Action action, string? name = null, bool primary = false)
     {
-        var button = new Button { Name = name, Content = content, Padding = new Thickness(12, 8), FontSize = 12, CornerRadius = new CornerRadius(_theme.Legacy ? 2 : 7), Background = B(primary ? _theme.AccentSurface : _theme.Surface), Foreground = B(primary ? _theme.Accent : _theme.Text), BorderBrush = B(_theme.Border), BorderThickness = new Thickness(1), VerticalContentAlignment = VerticalAlignment.Center };
+        var button = new Button { Name = name, Content = content is string caption ? L(caption) : content, Padding = new Thickness(12, 8), FontSize = 12, CornerRadius = new CornerRadius(_theme.Legacy ? 2 : 7), Background = B(primary ? _theme.AccentSurface : _theme.Surface), Foreground = B(primary ? _theme.Accent : _theme.Text), BorderBrush = B(_theme.Border), BorderThickness = new Thickness(1), VerticalContentAlignment = VerticalAlignment.Center };
+        if (!_theme.Legacy && content is string)
+            button.ContentTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((caption, _) => new TextBlock { Text = caption, TextWrapping = TextWrapping.Wrap });
         button.Click += (_, _) => action();
         return button;
     }
     private Button CommandButton(string label, WorkspaceCommand command, string? name = null, bool primary = false) => ActionButton(label, async () => await Run(command), name, primary);
     private TextBox FormInput(string id, string watermark, string initial = "")
     {
-        var box = new TextBox { Name = id, Text = _formDrafts.GetValueOrDefault(id, initial), Watermark = watermark, MinHeight = 36, FontSize = 12 };
-        AutomationProperties.SetName(box, watermark);
+        var box = new TextBox { FlowDirection = Avalonia.Media.FlowDirection.LeftToRight, Name = id, Text = _formDrafts.GetValueOrDefault(id, initial), Watermark = L(watermark), MinHeight = 36, FontSize = 12 };
+        AutomationProperties.SetName(box, L(watermark));
         box.TextChanged += (_, _) => { if (box.Text == initial) _formDrafts.Remove(id); else _formDrafts[id] = box.Text ?? ""; UpdateFooter(); };
         return box;
     }

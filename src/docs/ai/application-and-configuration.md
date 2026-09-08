@@ -36,6 +36,18 @@ The shared native helper now renders the specified window into memory with `Prin
 
 ### Appearance scope and profile identity
 
+Light and Dark also expose **Appearance → Language** through
+[WorkspaceView.Localization](../../Eve-O-Preview.UI/WorkspaceView.Localization.cs).
+`ApplicationPreferences.UiLanguage` is global and defaults to `auto`. The backend
+`language` command saves it independently of gameplay profiles, publishes the
+updated snapshot and rebuilds the workspace while retaining drafts. Legacy remains
+English. [WorkspaceLocalization](../../Eve-O-Preview.UI/Localization/WorkspaceLocalization.cs)
+resolves regional cultures, loads embedded catalogs and formats display messages
+without changing data parsing culture. Arabic uses right-to-left layout; native
+preview geometry, zoom anchor grids and raw input values remain left-to-right.
+See [catalog maintenance](../../Eve-O-Preview.UI/Localization/README.md) for language
+coverage, extension instructions and translation review boundaries.
+
 [ApplicationPreferences](../../Eve-O-Preview/Configuration/Implementation/ApplicationPreferences.cs) owns the single generic `EVE-O Preview.settings.json` file for application-wide preferences. It follows the gameplay-profile resolver's portable/installed decision: use the parent of `IProfileManager.ProfileRootDirectory` when writable, otherwise `%LOCALAPPDATA%\Eve-O Preview`. A temporary write probe checks the preferred directory without retaining a file. This keeps application settings beside the `Profiles` directory, rather than inside one selected profile or in an appearance-only file.
 
 Supported theme values are `Light`, `Dark` and `Legacy`; missing, unrecognized or unreadable preferences fall back to Dark. Global settings now have their own `ConfigVersion`, currently 1, separate from gameplay profile migrations. Files missing this version or older than `ExplicitThemeSelectionVersion` start in Dark regardless of their old Theme value. Reading does not rewrite the file. Any later preference save records the effective theme and current version atomically, preserving other fields; an unrelated menu edit cannot resurrect an older Legacy selection. Manually selecting Legacy after migration records that choice so it survives restart. Keep the explicit-selection threshold at version 1 through unrelated future schema upgrades, retain newer version numbers, and never reset the theme when loading an older gameplay profile.

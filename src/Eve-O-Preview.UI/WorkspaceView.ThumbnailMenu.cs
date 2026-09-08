@@ -71,8 +71,8 @@ public sealed partial class WorkspaceView
             if (i == 0) row.Background = B(_theme.AccentSurface);
             var handle = new Border { Name = "menu-order-drag-" + id, Tag = id, Focusable = true,
                 Background = Brushes.Transparent, Cursor = new Cursor(StandardCursorType.SizeAll), Child = Text("≡", 16, _theme.Muted) };
-            AutomationProperties.SetName(handle, "Drag " + label);
-            ToolTip.SetTip(handle, "Drag to move " + label + ". Ctrl+Up/Down also moves it.");
+            AutomationProperties.SetName(handle, F($"Drag {L(label)}"));
+            ToolTip.SetTip(handle, F($"Drag to move {L(label)}. Ctrl+Up/Down also moves it."));
             row.Children.Add(handle);
             var index = Text(divider ? "" : (++number).ToString(), 11, _theme.Muted);
             Grid.SetColumn(index, 1); row.Children.Add(index);
@@ -121,7 +121,7 @@ public sealed partial class WorkspaceView
         var button = CommandButton(label, command, name);
         button.Padding = new Thickness(0); button.Width = _theme.Legacy ? 25 : 30; button.Height = _theme.Legacy ? 26 : 30;
         button.Margin = new Thickness(2, 0, 0, 0);
-        AutomationProperties.SetName(button, description); ToolTip.SetTip(button, description);
+        AutomationProperties.SetName(button, L(description)); ToolTip.SetTip(button, L(description));
         return button;
     }
 
@@ -131,9 +131,10 @@ public sealed partial class WorkspaceView
         if (!_theme.Legacy) body.Children.Add(Text("Menu theme", 14, _theme.Text, true));
         var ids = new[] { ThumbnailMenuThemes.FollowApp }.Concat(ThumbnailMenuThemes.All.Select(p => p.Id)).ToArray();
         var picker = new ComboBox { Name = "menu-theme", ItemsSource = new[] { "Follow application theme" }.Concat(ThumbnailMenuThemes.All.Select(p => p.Name)).ToArray(),
+            ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((option, _) => Text(option ?? "")),
             SelectedIndex = Math.Max(0, Array.IndexOf(ids, _snapshot.ThumbnailMenuTheme)), MaxDropDownHeight = 300,
             HorizontalAlignment = HorizontalAlignment.Stretch, FontSize = 12 };
-        AutomationProperties.SetName(picker, "Thumbnail menu theme");
+        AutomationProperties.SetName(picker, L("Thumbnail menu theme"));
         picker.SelectionChanged += async (_, _) => { if (picker.SelectedIndex >= 0) await Run(new("thumbnail-menu-theme", Value: ids[picker.SelectedIndex])); };
         body.Children.Add(picker);
         var palette = ThumbnailMenuThemes.Resolve(_snapshot.ThumbnailMenuTheme, _snapshot.Theme);

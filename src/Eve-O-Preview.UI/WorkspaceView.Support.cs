@@ -23,7 +23,7 @@ public sealed partial class WorkspaceView
     private Control SupportPortrait(double size)
     {
         var image = new Image { Source = _supportPortrait, Stretch = Stretch.UniformToFill };
-        AutomationProperties.SetName(image, "Portrait of " + SupportCharacterName);
+        AutomationProperties.SetName(image, F($"Portrait of {SupportCharacterName}"));
         var content = new Grid { Background = B(_theme.Inset) };
         var placeholder = Icon("character");
         placeholder.HorizontalAlignment = HorizontalAlignment.Center;
@@ -69,8 +69,8 @@ public sealed partial class WorkspaceView
         button.BorderBrush = B(SupportInk);
         button.HorizontalContentAlignment = HorizontalAlignment.Stretch;
         button.HorizontalAlignment = HorizontalAlignment.Stretch;
-        AutomationProperties.SetName(button, "Donate ISK to support EVE-O Preview");
-        ToolTip.SetTip(button, "Enjoying EVE-O? Send an optional ISK thank-you to Aura Asuna.");
+        AutomationProperties.SetName(button, L("Donate ISK to support EVE-O Preview"));
+        ToolTip.SetTip(button, L("Enjoying EVE-O? Send an optional ISK thank-you to Aura Asuna."));
         return button;
     }
 
@@ -97,7 +97,7 @@ public sealed partial class WorkspaceView
         var identity = new StackPanel { Margin = new Thickness(12, 0, 0, 0), Spacing = 3, VerticalAlignment = VerticalAlignment.Center };
         identity.Children.Add(Text("SEND ISK IN GAME TO", 10, _theme.Muted, true));
         identity.Children.Add(new SelectableTextBlock { Name = "support-recipient", Text = SupportCharacterName, FontSize = 20, FontWeight = FontWeight.SemiBold, Foreground = B(_theme.Text) });
-        identity.Children.Add(new SelectableTextBlock { Text = "Character ID: " + SupportCharacterId, FontSize = 11, Foreground = B(_theme.Muted) });
+        identity.Children.Add(new SelectableTextBlock { Text = F($"Character ID: {SupportCharacterId}"), FontSize = 11, Foreground = B(_theme.Muted) });
         Grid.SetColumn(identity, 1); recipient.Children.Add(identity);
         body.Children.Add(Card(recipient, new Thickness(12)));
         body.Children.Add(Text("In EVE, search for Aura Asuna, open the character's menu and choose Give Money. Any amount is appreciated.", 12, _theme.Text));
@@ -115,12 +115,12 @@ public sealed partial class WorkspaceView
                 if (clipboard is null) throw new InvalidOperationException("Clipboard unavailable");
                 await clipboard.SetTextAsync(SupportCharacterName);
                 feedback.Foreground = B(_theme.Positive);
-                feedback.Text = "Aura Asuna copied. Paste into EVE's character search.";
+                feedback.Text = L("Aura Asuna copied. Paste into EVE's character search.");
             }
             catch
             {
                 feedback.Foreground = B(_theme.Danger);
-                feedback.Text = "Couldn't copy. Select the character name above and copy it manually.";
+                feedback.Text = L("Couldn't copy. Select the character name above and copy it manually.");
             }
         }, "support-copy-name", true);
         var close = ActionButton("Close", DismissConfirmation, "support-close");
@@ -134,7 +134,7 @@ public sealed partial class WorkspaceView
         discord.BorderThickness = new Thickness(0);
         discord.Foreground = B(_theme.Accent);
         discord.HorizontalAlignment = HorizontalAlignment.Left;
-        ToolTip.SetTip(discord, "Join the EVE-O community on Discord. Everyone is welcome.");
+        ToolTip.SetTip(discord, L("Join the EVE-O community on Discord. Everyone is welcome."));
         var footer = new StackPanel { Spacing = 6, Children = { actions, feedback, discord } };
         var panel = new Grid { RowDefinitions = new RowDefinitions("Auto,*,Auto") };
         panel.Children.Add(Text(SupportHeading, _theme.Legacy ? 19 : 22, _theme.Text, true));
@@ -146,7 +146,7 @@ public sealed partial class WorkspaceView
             BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(_theme.Radius), Padding = new Thickness(_theme.Legacy ? 16 : 24),
             MaxWidth = 520, MaxHeight = 560, Margin = new Thickness(16), HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center, Child = panel };
-        AutomationProperties.SetName(dialog, "Support EVE-O Preview with an optional ISK donation");
+        AutomationProperties.SetName(dialog, L("Support EVE-O Preview with an optional ISK donation"));
         _confirmation = new Border { Name = "support-backdrop", Background = new SolidColorBrush(Color.FromArgb(150, 0, 0, 0)), Child = dialog };
         _confirmation.PointerPressed += (_, e) =>
         {

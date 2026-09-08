@@ -156,6 +156,9 @@ internal sealed class SmokeBackend : IWorkspaceBackend, IWorkspacePortraitProvid
             case "theme":
                 _snapshot = _snapshot with { Theme = command.Value };
                 break;
+            case "language":
+                _snapshot = _snapshot with { UiLanguage = WorkspaceLocalization.NormalizePreference(command.Value) };
+                break;
             case "setting":
                 var settings = new Dictionary<string, string>(_snapshot.Settings)
                 {

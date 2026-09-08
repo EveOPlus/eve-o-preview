@@ -79,12 +79,12 @@ public sealed partial class WorkspaceView
     {
         var surface = new PreviewSurface(UpdatePreviewScale)
         {
-            Name = "title-preview", Width = width > 0 ? width : double.NaN, Height = height,
+            FlowDirection = FlowDirection.LeftToRight, Name = "title-preview", Width = width > 0 ? width : double.NaN, Height = height,
             Background = B(_theme.Legacy ? "#F0F0F0" : "#101925"), ClipToBounds = true,
             BorderBrush = B(_theme.Border), BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Stretch,
         };
-        AutomationProperties.SetName(surface, "Preview of character title, position and active border");
+        AutomationProperties.SetName(surface, L("Preview of character title, position and active border"));
         surface.SizeChanged += (_, _) => UpdatePreviewScale();
         surface.ActualSize = _theme.Legacy || _previewActualSize;
         surface.FitWidthOnly = !_theme.Legacy;
@@ -127,8 +127,8 @@ public sealed partial class WorkspaceView
         try
         {
             foreach (var definition in SettingCatalog.All.Where(s => s.Page is "Thumbnail" or "Overlay"))
-                if (settings.TryGetValue(definition.Key, out var value) && SettingCatalog.Validate(EffectiveDefinition(definition), value) is { } error)
-                    throw new ArgumentException(definition.Label + ": " + error);
+                if (settings.TryGetValue(definition.Key, out var value) && SettingCatalog.Validate(EffectiveDefinition(definition), value, L) is { } error)
+                    throw new ArgumentException(L(definition.Label) + ": " + error);
             if (_backend is IWorkspacePreviewRenderer renderer)
             {
                 var rendered = renderer.RenderPreview(new WorkspacePreviewRequest(settings, _theme.Legacy ? "Sample" : _previewCharacter, !_theme.Legacy && _previewActive, _theme.Legacy ? "#F0F0F0" : "#101925", _previewSkipped, _theme.Legacy ? null : _previewStill?.Png));
@@ -161,9 +161,9 @@ public sealed partial class WorkspaceView
         if (_previewSurfaces.Count == 0) return;
         var surface = _previewSurfaces[0];
         var scale = surface.DisplayScale(_previewPixelWidth, _previewPixelHeight);
-        var description = $"{_previewPixelWidth} × {_previewPixelHeight} px · " + (scale >= .999 ? "actual pixel size" : $"displayed at {Math.Round(scale * 100)}%");
+        var description = F($"{_previewPixelWidth} × {_previewPixelHeight} px · { (scale >= .999 ? L("actual pixel size") : F($"displayed at {Math.Round(scale * 100)}%"))}");
         if (_previewScaleText is not null) _previewScaleText.Text = description;
-        foreach (var item in _previewSurfaces) ToolTip.SetTip(item, description + ". " + (_theme.Legacy ? "Title sample." : PreviewBackgroundDescription) + " Scroll to inspect content beyond this viewport.");
+        foreach (var item in _previewSurfaces) ToolTip.SetTip(item, description + ". " + L(_theme.Legacy ? "Title sample." : PreviewBackgroundDescription) + L(" Scroll to inspect content beyond this viewport."));
     }
 
     private void ReleaseTitlePreviews()

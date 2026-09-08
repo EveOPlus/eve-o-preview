@@ -23,8 +23,8 @@ public sealed partial class WorkspaceView
         header.Children.Add(Text("CHARACTER ORDER", 10, _theme.Muted, true));
         var expand = ActionButton("⛶", () => ExpandOrder(group.Id), "expand-cycle-order");
         expand.Padding = new Thickness(8, 3);
-        ToolTip.SetTip(expand, "Expand character order");
-        AutomationProperties.SetName(expand, "Expand character order");
+        ToolTip.SetTip(expand, L("Expand character order"));
+        AutomationProperties.SetName(expand, L("Expand character order"));
         Grid.SetColumn(expand, 1); header.Children.Add(expand);
         return header;
     }
@@ -50,12 +50,12 @@ public sealed partial class WorkspaceView
             var handle = new Border { Name = "group-drag-" + i, Tag = title, Focusable = true,
                 Cursor = new Cursor(StandardCursorType.SizeAll), Background = Brushes.Transparent,
                 Child = Text("≡", 20, _theme.Muted), VerticalAlignment = VerticalAlignment.Stretch };
-            AutomationProperties.SetName(handle, "Drag " + title + " to reorder; Control Up or Down also moves it");
-            ToolTip.SetTip(handle, "Drag to reorder · Ctrl+↑ / Ctrl+↓");
+            AutomationProperties.SetName(handle, F($"Drag {title} to reorder; Control Up or Down also moves it"));
+            ToolTip.SetTip(handle, L("Drag to reorder · Ctrl+↑ / Ctrl+↓"));
             row.Children.Add(handle);
             var number = Text((i + 1).ToString("00"), 11, _theme.Muted);
             Grid.SetColumn(number, 1); row.Children.Add(number);
-            var label = Text(title, 12, skipped ? _theme.Muted : _theme.Text, true);
+            var label = RawText(title, 12, skipped ? _theme.Muted : _theme.Text, true);
             label.TextWrapping = TextWrapping.NoWrap;
             label.TextTrimming = TextTrimming.CharacterEllipsis;
             ToolTip.SetTip(label, title);
@@ -66,16 +66,16 @@ public sealed partial class WorkspaceView
             var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 3, VerticalAlignment = VerticalAlignment.Center };
             var skip = CommandButton(skipped ? "Resume" : "Skip", new("client-cycle-skip", title, (!skipped).ToString()), "group-skip-" + i);
             skip.MinWidth = 53;
-            ToolTip.SetTip(skip, "Skip or resume this character in every cycle group in this profile. Resets when EVE-O restarts.");
-            AutomationProperties.SetName(skip, (skipped ? "Resume " : "Skip ") + title + " in all cycle groups");
+            ToolTip.SetTip(skip, L("Skip or resume this character in every cycle group in this profile. Resets when EVE-O restarts."));
+            AutomationProperties.SetName(skip, skipped ? F($"Resume {title} in all cycle groups") : F($"Skip {title} in all cycle groups"));
             var up = CommandButton("↑", new("group-client-up", group.Id.ToString(), title), "group-up-" + i);
             var down = CommandButton("↓", new("group-client-down", group.Id.ToString(), title), "group-down-" + i);
             up.IsEnabled = i > 0; down.IsEnabled = i < group.Clients.Count - 1;
-            AutomationProperties.SetName(up, "Move " + title + " up");
-            AutomationProperties.SetName(down, "Move " + title + " down");
+            AutomationProperties.SetName(up, F($"Move {title} up"));
+            AutomationProperties.SetName(down, F($"Move {title} down"));
             var remove = CommandButton("×", new("group-client-remove", group.Id.ToString(), title), "group-remove-" + i);
-            ToolTip.SetTip(remove, "Remove " + title + " from this group");
-            AutomationProperties.SetName(remove, "Remove " + title + " from this group");
+            ToolTip.SetTip(remove, F($"Remove {title} from this group"));
+            AutomationProperties.SetName(remove, F($"Remove {title} from this group"));
             foreach (var action in new[] { skip, up, down, remove }) { action.Padding = new Thickness(6, 5); actions.Children.Add(action); }
             Grid.SetColumn(actions, 3); row.Children.Add(actions);
             var container = new Grid { Children = { row } };
@@ -196,9 +196,9 @@ public sealed partial class WorkspaceView
         var focusName = (TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Control)?.Name;
         var body = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto") };
         var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 10) };
-        header.Children.Add(Text("Character order · " + group.Name, 20, _theme.Text, true));
+        header.Children.Add(Text(F($"Character order · {group.Name}"), 20, _theme.Text, true));
         var close = ActionButton("↙ Done", DismissConfirmation, "close-cycle-order");
-        AutomationProperties.SetName(close, "Restore character order section");
+        AutomationProperties.SetName(close, L("Restore character order section"));
         Grid.SetColumn(close, 1); header.Children.Add(close); body.Children.Add(header);
         var hint = Text("Drag the handles to reorder. Skip keeps a character in place and pauses cycling to it in every group in this profile.", 12, _theme.Muted);
         hint.Margin = new Thickness(0, 0, 0, 12); Grid.SetRow(hint, 1); body.Children.Add(hint);

@@ -50,8 +50,8 @@ public sealed partial class WorkspaceView
         Control editor;
         if (definition.Kind == SettingKind.Toggle)
         {
-            var toggle = new ToggleSwitch { Name = "setting-" + definition.Key, IsChecked = bool.TryParse(value, out var active) && active, OnContent = "On", OffContent = "Off", HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center };
-            AutomationProperties.SetName(toggle, definition.Label);
+            var toggle = new ToggleSwitch { Name = "setting-" + definition.Key, IsChecked = bool.TryParse(value, out var active) && active, OnContent = L("On"), OffContent = L("Off"), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center };
+            AutomationProperties.SetName(toggle, L(definition.Label));
             toggle.IsCheckedChanged += async (_, _) => await Run(new("setting", definition.Key, (toggle.IsChecked == true).ToString()));
             editor = toggle;
         }
@@ -67,14 +67,14 @@ public sealed partial class WorkspaceView
             apply.Margin = new Thickness(6, 0, 0, 0);
             var reset = ActionButton("↶", () => { _drafts.Remove(definition.Key); RenderPage(true); }, "reset-" + definition.Key);
             reset.Margin = new Thickness(4, 0, 0, 0);
-            AutomationProperties.SetName(reset, "Discard unapplied edit to " + definition.Label);
-            ToolTip.SetTip(reset, "Discard edit");
+            AutomationProperties.SetName(reset, F($"Discard unapplied edit to {L(definition.Label)}"));
+            ToolTip.SetTip(reset, L("Discard edit"));
             void Changed(string updated)
             {
                 if (updated == value && !_failedSettings.Contains(definition.Key)) _drafts.Remove(definition.Key); else _drafts[definition.Key] = updated;
-                error.Text = SettingCatalog.Validate(definition, updated) ?? (_drafts.ContainsKey(definition.Key) ? "Unapplied edit" : "");
-                error.Foreground = B(SettingCatalog.Validate(definition, updated) is null ? _theme.Muted : _theme.Danger);
-                apply.IsEnabled = _drafts.ContainsKey(definition.Key) && SettingCatalog.Validate(definition, updated) is null;
+                error.Text = SettingCatalog.Validate(definition, updated, L) ?? (_drafts.ContainsKey(definition.Key) ? L("Unapplied edit") : "");
+                error.Foreground = B(SettingCatalog.Validate(definition, updated, L) is null ? _theme.Muted : _theme.Danger);
+                apply.IsEnabled = _drafts.ContainsKey(definition.Key) && SettingCatalog.Validate(definition, updated, L) is null;
                 reset.IsVisible = _drafts.ContainsKey(definition.Key);
                 UpdateFooter();
                 if (definition.Page == "Overlay") UpdateFontPreview();
@@ -82,7 +82,7 @@ public sealed partial class WorkspaceView
             Control input;
             if (definition.Kind == SettingKind.Choice)
             {
-                var choices = new ComboBox { Name = "setting-" + definition.Key, ItemsSource = definition.Options, MinHeight = 34, HorizontalAlignment = HorizontalAlignment.Stretch, FontSize = 11 };
+                var choices = new ComboBox { Name = "setting-" + definition.Key, ItemsSource = definition.Options, ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((option, _) => Text(option ?? "")), MinHeight = 34, HorizontalAlignment = HorizontalAlignment.Stretch, FontSize = 11 };
                 if (definition.Key == "TitleFontStyle" && int.TryParse(fieldValue, out var style) && style is >= 0 and < 16) fieldValue = definition.Options![style];
                 choices.SelectedItem = fieldValue;
                 choices.SelectionChanged += (_, _) => Changed(choices.SelectedItem?.ToString() ?? "");
@@ -90,7 +90,7 @@ public sealed partial class WorkspaceView
             }
             else
             {
-                var box = new TextBox { Name = "setting-" + definition.Key, Text = fieldValue, MinHeight = 34, FontSize = 12, Watermark = definition.Kind == SettingKind.Color ? "#RRGGBB" : "", HorizontalContentAlignment = HorizontalAlignment.Left };
+                var box = new TextBox { FlowDirection = Avalonia.Media.FlowDirection.LeftToRight, Name = "setting-" + definition.Key, Text = fieldValue, MinHeight = 34, FontSize = 12, Watermark = L(definition.Kind == SettingKind.Color ? "#RRGGBB" : ""), HorizontalContentAlignment = HorizontalAlignment.Left };
                 box.TextChanged += (_, _) => Changed(box.Text ?? "");
                 box.KeyDown += async (_, e) =>
                 {
@@ -105,8 +105,8 @@ public sealed partial class WorkspaceView
                 }
                 input = box;
             }
-            AutomationProperties.SetName(input, definition.Label);
-            AutomationProperties.SetHelpText(input, definition.Description);
+            AutomationProperties.SetName(input, L(definition.Label));
+            AutomationProperties.SetHelpText(input, L(definition.Description));
             if (definition.Kind is SettingKind.AudioIds or SettingKind.Choice or SettingKind.Text)
             {
                 stack.Children.Add(input);
@@ -133,14 +133,14 @@ public sealed partial class WorkspaceView
     private async Task ApplySetting(SettingDefinition definition)
     {
         if (!_drafts.TryGetValue(definition.Key, out var value)) return;
-        if (SettingCatalog.Validate(definition, value) is { } error) { _message = error; _messageError = true; UpdateFooter(); return; }
+        if (SettingCatalog.Validate(definition, value, L) is { } error) { _message = error; _messageError = true; UpdateFooter(); return; }
         var result = await Run(new("setting", definition.Key, value));
         if (result.Success) { if (_drafts.GetValueOrDefault(definition.Key) == value) _drafts.Remove(definition.Key); RefreshFromBackend(); }
     }
 
     private Control AnchorEditor(string value)
     {
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("42,42,42"), RowDefinitions = new RowDefinitions("38,38,38"), HorizontalAlignment = HorizontalAlignment.Right };
+        var grid = new Grid { FlowDirection = FlowDirection.LeftToRight, ColumnDefinitions = new ColumnDefinitions("42,42,42"), RowDefinitions = new RowDefinitions("38,38,38"), HorizontalAlignment = HorizontalAlignment.Right };
         var keys = new[] { "NW", "N", "NE", "W", "C", "E", "SW", "S", "SE" };
         var symbols = new[] { "↖", "↑", "↗", "←", "·", "→", "↙", "↓", "↘" };
         var labels = new[] { "Top left", "Top center", "Top right", "Middle left", "Center", "Middle right", "Bottom left", "Bottom center", "Bottom right" };
@@ -150,8 +150,8 @@ public sealed partial class WorkspaceView
             var button = CommandButton(symbols[index], new("setting", "ThumbnailZoomAnchor", key), "anchor-" + key);
             button.Margin = new Thickness(2); button.HorizontalAlignment = HorizontalAlignment.Stretch; button.HorizontalContentAlignment = HorizontalAlignment.Center;
             if (value == key) { button.Background = B(_theme.AccentSurface); button.BorderBrush = B(_theme.Accent); }
-            ToolTip.SetTip(button, labels[index]);
-            AutomationProperties.SetName(button, "Zoom anchor " + labels[index] + (value == key ? ", selected" : ""));
+            ToolTip.SetTip(button, L(labels[index]));
+            AutomationProperties.SetName(button, F($"Zoom anchor {L(labels[index])}") + (value == key ? L(", selected") : ""));
             Grid.SetColumn(button, index % 3); Grid.SetRow(button, index / 3); grid.Children.Add(button);
         }
         return grid;
@@ -159,8 +159,8 @@ public sealed partial class WorkspaceView
 
     private void RenderSearch()
     {
-        var matches = SettingCatalog.All.Where(s => s.Matches(_query)).ToArray();
-        Heading("Search results", $"{matches.Length} settings matching “{_query}”. Edit them here; your navigation stays available.");
+        var matches = SettingCatalog.All.Where(s => s.Matches(_query) || _localization.Contains($"{L(s.Label)} {L(s.Description)} {L(PageLabel(s.Page))}", _query)).ToArray();
+        Heading("Search results", F($"{matches.Length} settings matching “{_query}”. Edit them here; your navigation stays available."));
         foreach (var group in matches.GroupBy(s => s.Page))
         {
             _page.Children.Add(Text(PageLabel(group.Key), 12, _theme.Accent, true));
@@ -174,13 +174,14 @@ public sealed partial class WorkspaceView
         var routes = new[] { ("Switching", "Cycle groups, hotkeys and keyboard shortcuts"), ("Clients", "Active clients and preview visibility"), ("ClientSettings", "Character colors & minimization"), ("Profiles", "Profiles, clone, rename, delete and profile accent color"), ("Appearance", "Appearance, themes, Light, Dark and Legacy") };
         var showGlobalShortcuts = "hide all show all minimize all minimise all global hotkey keyboard shortcuts ToggleHideAllActiveHotkey MinimizeAllClientsHotkey".Contains(_query, StringComparison.OrdinalIgnoreCase);
         if (showGlobalShortcuts) AddGlobalHotkeys();
-        var featureMatches = routes.Where(r => r.Item2.Contains(_query, StringComparison.OrdinalIgnoreCase)
+        var featureMatches = routes.Where(r => r.Item2.Contains(_query, StringComparison.OrdinalIgnoreCase) || _localization.Contains(L(r.Item2), _query)
+            || r.Item1 == "Appearance" && _localization.Contains(L("Language") + " language", _query)
             || r.Item1 == "ClientSettings" && "PriorityClients PerClientActiveClientHighlightColor priority border minimization exceptions offline".Contains(_query, StringComparison.OrdinalIgnoreCase)).ToArray();
-        foreach (var route in featureMatches) _page.Children.Add(ActionButton("Open " + route.Item2 + "  →", () => Navigate(route.Item1)));
+        foreach (var route in featureMatches) _page.Children.Add(ActionButton(F($"Open {L(route.Item2)}  →"), () => Navigate(route.Item1)));
         var moduleMatches = _modules.Where(m => !_theme.Legacy && $"{m.Title} {m.Description}".Contains(_query, StringComparison.OrdinalIgnoreCase)).ToArray();
-        foreach (var module in moduleMatches) _page.Children.Add(ActionButton("Open " + module.Title + "  →", () => Navigate(module.Id)));
+        foreach (var module in moduleMatches) _page.Children.Add(ActionButton(F($"Open {module.Title}  →"), () => Navigate(module.Id)));
         if (matches.Length == 0 && featureMatches.Length == 0 && moduleMatches.Length == 0 && !showGlobalShortcuts)
-            _page.Children.Add(Card(new StackPanel { Spacing = 9, Children = { Text("No matching settings", 18, _theme.Text, true), Text("Try a shorter term such as “opacity”, “FPS”, “hotkey” or “font”.", 13, _theme.Muted), ActionButton("Clear search", () => { _search.Text = ""; }) } }));
+            _page.Children.Add(Card(new StackPanel { Spacing = 9, Children = { Text("No matching settings", 18, _theme.Text, true), Text("Try a shorter term such as “opacity”, “FPS”, “hotkey” or “font”.", 13, _theme.Muted), ActionButton("Clear search", () => { _search.Text = L(""); }) } }));
     }
 
     private static string PageLabel(string key) => key switch { "General" => "Window behavior & layouts", "Thumbnail" => "Preview windows", "Zoom" => "Hover zoom", "Overlay" => "Titles & highlighting", "AdvancedPreview" => "Advanced preview settings", "FpsAudio" => "Performance & audio", _ => key };

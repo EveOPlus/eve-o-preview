@@ -46,7 +46,7 @@ public sealed partial class WorkspaceView
         foreach (var entry in _previewValidation)
         {
             var definition = EffectiveDefinition(SettingCatalog.Find(entry.Key)!);
-            var error = SettingCatalog.Validate(definition, DraftValue(entry.Key));
+            var error = SettingCatalog.Validate(definition, DraftValue(entry.Key), L);
             entry.Value.Text = error ?? "";
             entry.Value.IsVisible = error is not null;
         }
@@ -61,20 +61,20 @@ public sealed partial class WorkspaceView
         }
         if (_previewApplyButton is not null)
         {
-            _previewApplyButton.Content = pending.Length == 0 ? "Apply changes" : $"Apply changes ({pending.Length})";
+            _previewApplyButton.Content = pending.Length == 0 ? L("Apply changes") : F($"Apply changes ({pending.Length})");
             _previewApplyButton.IsEnabled = pending.Length > 0 && !invalid && !_busy && !_applyingPreviewDrafts;
         }
         if (_previewResetButton is not null) _previewResetButton.IsEnabled = pending.Length > 0 && !_busy && !_applyingPreviewDrafts;
         if (_previewApplyStatus is not null)
-            _previewApplyStatus.Text = _previewNarrow ? invalid ? "Fix invalid values before applying." : pending.Length == 0 ? "All changes applied." : "Preview only until Apply."
-                : invalid ? "Fix the highlighted value before applying." : pending.Length == 0 ? "All preview settings are applied." : "Previewing edits. Apply to update your real previews.";
+            _previewApplyStatus.Text = L(_previewNarrow ? invalid ? "Fix invalid values before applying." : pending.Length == 0 ? "All changes applied." : "Preview only until Apply."
+                : invalid ? "Fix the highlighted value before applying." : pending.Length == 0 ? "All preview settings are applied." : "Previewing edits. Apply to update your real previews.");
         if (_previewStatusText is not null)
         {
             _previewStatusText.Foreground = B(_previewRenderError is null ? _theme.Muted : _theme.Danger);
-            _previewStatusText.Text = _previewRenderError is not null ? "Last valid preview shown. " + _previewRenderError
-                : _backend is not IWorkspacePreviewRenderer ? "Illustrative preview. This host has no native title renderer."
-                : _previewNarrow ? pending.Length > 0 ? "Previewing unapplied edits" : "Applied appearance"
-                : (pending.Length > 0 ? "Sample includes unapplied edits. " : "") + PreviewBackgroundDescription;
+            _previewStatusText.Text = _previewRenderError is not null ? F($"Last valid preview shown. {_previewRenderError}")
+                : _backend is not IWorkspacePreviewRenderer ? L("Illustrative preview. This host has no native title renderer.")
+                : _previewNarrow ? L(pending.Length > 0 ? "Previewing unapplied edits" : "Applied appearance")
+                : (pending.Length > 0 ? L("Sample includes unapplied edits. ") : "") + L(PreviewBackgroundDescription);
             ToolTip.SetTip(_previewStatusText, _previewStatusText.Text);
         }
     }
@@ -172,7 +172,7 @@ public sealed partial class WorkspaceView
         var sample = BuildTitlePreview(0, _previewNarrow ? 40 : 96);
         content.Children.Add(sample);
         var states = new WrapPanel { Name = "preview-sample-states", Orientation = Orientation.Horizontal };
-        var mode = new CheckBox { Name = "preview-active-client", Content = "Show as active character", IsChecked = _previewActive, FontSize = 11, MinHeight = 24, Margin = new Thickness(0, 0, 12, 0) };
+        var mode = new CheckBox { Name = "preview-active-client", Content = L("Show as active character"), IsChecked = _previewActive, FontSize = 11, MinHeight = 24, Margin = new Thickness(0, 0, 12, 0) };
         mode.IsCheckedChanged += (_, _) => { _previewActive = mode.IsChecked == true; UpdateFontPreview(); };
         states.Children.Add(mode);
         var skipped = SkipPreviewToggle(); skipped.MinHeight = 24;
@@ -189,12 +189,12 @@ public sealed partial class WorkspaceView
             {
                 var refresh = ActionButton("Refresh image", () => CapturePreviewStill(true), "preview-refresh-image");
                 refresh.FontSize = 10; refresh.Padding = new Thickness(6, 2); refresh.MinHeight = 22;
-                ToolTip.SetTip(refresh, "Take another still from an open EVE client. The sample is not live.");
+                ToolTip.SetTip(refresh, L("Take another still from an open EVE client. The sample is not live."));
                 Grid.SetColumn(refresh, 1); sampleHeading.Children.Add(refresh);
             }
             content.Children.Add(sampleHeading);
-            var sampleTitle = new TextBox { Name = "preview-character-title", Text = _previewCharacter, Watermark = "Preview character name", MinHeight = 30, FontSize = 11 };
-            AutomationProperties.SetName(sampleTitle, "Sample character name for preview only");
+            var sampleTitle = new TextBox { FlowDirection = Avalonia.Media.FlowDirection.LeftToRight, Name = "preview-character-title", Text = _previewCharacter, Watermark = L("Preview character name"), MinHeight = 30, FontSize = 11 };
+            AutomationProperties.SetName(sampleTitle, L("Sample character name for preview only"));
             sampleTitle.TextChanged += (_, _) =>
             {
                 if (sampleTitle.Text == _previewCharacter) return;
@@ -257,8 +257,9 @@ public sealed partial class WorkspaceView
         var skipped = new StackPanel { Spacing = 9 };
         skipped.Children.Add(Text("Skipped characters", 13, _theme.Text, true));
         var skipStyle = new ComboBox { Name = "setting-CycleSkipIndicatorStyle", ItemsSource = SettingCatalog.Find("CycleSkipIndicatorStyle")!.Options,
+            ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((option, _) => Text(option ?? "")),
             SelectedItem = DraftValue("CycleSkipIndicatorStyle", "Circle with slash"), HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 32 };
-        AutomationProperties.SetName(skipStyle, "Skipped character marker symbol");
+        AutomationProperties.SetName(skipStyle, L("Skipped character marker symbol"));
         skipStyle.SelectionChanged += (_, _) => { if (skipStyle.SelectedItem is string style) StagePreviewSetting("CycleSkipIndicatorStyle", style); };
         skipped.Children.Add(LabeledPreviewField("CycleSkipIndicatorStyle", "Marker symbol", skipStyle));
         skipped.Children.Add(ColorField("CycleSkipIndicatorColor", "Marker color"));
@@ -283,7 +284,7 @@ public sealed partial class WorkspaceView
 
     private CheckBox SkipPreviewToggle()
     {
-        var check = new CheckBox { Name = "preview-skipped-client", Content = "Show skipped marker in sample", IsChecked = _previewSkipped, FontSize = 11 };
+        var check = new CheckBox { Name = "preview-skipped-client", Content = L("Show skipped marker in sample"), IsChecked = _previewSkipped, FontSize = 11 };
         check.IsCheckedChanged += (_, _) => { _previewSkipped = check.IsChecked == true; UpdateFontPreview(); };
         return check;
     }
@@ -299,11 +300,11 @@ public sealed partial class WorkspaceView
     {
         var definition = EffectiveDefinition(SettingCatalog.Find(key)!);
         var value = DraftValue(key);
-        var number = new NumericUpDown { Name = "setting-" + key, Minimum = (decimal)(definition.Minimum ?? -10000), Maximum = (decimal)(definition.Maximum ?? 10000), Increment = increment, MinHeight = 32, FontSize = 12, ClipValueToMinMax = false, ParsingNumberStyle = NumberStyles.Float, NumberFormat = CultureInfo.InvariantCulture.NumberFormat, FormatString = increment < 1 ? "0.######" : "0" };
+        var number = new NumericUpDown { FlowDirection = Avalonia.Media.FlowDirection.LeftToRight, Name = "setting-" + key, Minimum = (decimal)(definition.Minimum ?? -10000), Maximum = (decimal)(definition.Maximum ?? 10000), Increment = increment, MinHeight = 32, FontSize = 12, ClipValueToMinMax = false, ParsingNumberStyle = NumberStyles.Float, NumberFormat = CultureInfo.InvariantCulture.NumberFormat, FormatString = increment < 1 ? "0.######" : "0" };
         if (decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var initial)) number.Value = initial;
         number.Text = value;
-        AutomationProperties.SetName(number, definition.Label);
-        AutomationProperties.SetHelpText(number, definition.Description);
+        AutomationProperties.SetName(number, L(definition.Label));
+        AutomationProperties.SetHelpText(number, L(definition.Description));
         number.PropertyChanged += (_, e) => { if (e.Property == NumericUpDown.TextProperty) StagePreviewSetting(key, number.Text ?? ""); };
         return LabeledPreviewField(key, label, number);
     }
@@ -317,7 +318,7 @@ public sealed partial class WorkspaceView
 
     private Control PreviewToggle(string key, string label)
     {
-        var toggle = new CheckBox { Name = "setting-" + key, Content = label, IsChecked = bool.TryParse(DraftValue(key), out var enabled) && enabled, FontSize = 12 };
+        var toggle = new CheckBox { Name = "setting-" + key, Content = L(label), IsChecked = bool.TryParse(DraftValue(key), out var enabled) && enabled, FontSize = 12 };
         AutomationProperties.SetName(toggle, SettingCatalog.Find(key)?.Label ?? label);
         toggle.IsCheckedChanged += (_, _) => StagePreviewSetting(key, (toggle.IsChecked == true).ToString());
         return toggle;
@@ -326,18 +327,18 @@ public sealed partial class WorkspaceView
     private Control FontFamilyField()
     {
         _fontNames ??= _backend is IWorkspacePreviewRenderer renderer ? renderer.FontFamilies : FontManager.Current.SystemFonts.Select(f => f.Name).OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase).ToArray();
-        var font = new AutoCompleteBox { Name = "setting-TitleFontName", Text = DraftValue("TitleFontName", "Arial"), ItemsSource = _fontNames, MinimumPrefixLength = 0, FilterMode = AutoCompleteFilterMode.Contains, MinHeight = 32, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Stretch };
-        AutomationProperties.SetName(font, "Title font family. Type or choose an installed font");
+        var font = new AutoCompleteBox { FlowDirection = Avalonia.Media.FlowDirection.LeftToRight, Name = "setting-TitleFontName", Text = DraftValue("TitleFontName", "Arial"), ItemsSource = _fontNames, MinimumPrefixLength = 0, FilterMode = AutoCompleteFilterMode.Contains, MinHeight = 32, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Stretch };
+        AutomationProperties.SetName(font, L("Title font family. Type or choose an installed font"));
         font.TextChanged += (_, _) => StagePreviewSetting("TitleFontName", font.Text ?? "");
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,30") };
         row.Children.Add(font);
         var show = ActionButton("⌄", () => { }, "show-font-list");
         show.Padding = new Thickness(6, 2);
-        AutomationProperties.SetName(show, "Show installed font families");
+        AutomationProperties.SetName(show, L("Show installed font families"));
         show.Click += (_, _) =>
         {
             var list = new ListBox { ItemsSource = _fontNames, SelectedItem = font.Text, Width = 280, MaxHeight = 280, FontSize = 12 };
-            AutomationProperties.SetName(list, "Installed font families");
+            AutomationProperties.SetName(list, L("Installed font families"));
             var flyout = new Flyout { Content = list };
             list.SelectionChanged += (_, _) => { if (list.SelectedItem is string selected) { font.Text = selected; flyout.Hide(); } };
             flyout.ShowAt(show);
@@ -355,8 +356,8 @@ public sealed partial class WorkspaceView
         foreach (var option in new[] { (1, "Bold"), (2, "Italic"), (4, "Underline"), (8, "Strikeout") })
         {
             var flag = option.Item1;
-            var button = new ToggleButton { Name = "font-style-" + option.Item2, Content = option.Item2, IsChecked = (bits & flag) != 0, Padding = new Thickness(10, 6), Margin = new Thickness(0, 0, 5, 0), FontSize = 11 };
-            AutomationProperties.SetName(button, "Title font " + option.Item2);
+            var button = new ToggleButton { Name = "font-style-" + option.Item2, Content = L(option.Item2), IsChecked = (bits & flag) != 0, Padding = new Thickness(10, 6), Margin = new Thickness(0, 0, 5, 0), FontSize = 11 };
+            AutomationProperties.SetName(button, F($"Title font {L(option.Item2)}"));
             button.IsCheckedChanged += (_, _) => { bits = button.IsChecked == true ? bits | flag : bits & ~flag; StagePreviewSetting("TitleFontStyle", SettingCatalog.Find("TitleFontStyle")!.Options![bits]); };
             row.Children.Add(button);
         }
@@ -367,12 +368,12 @@ public sealed partial class WorkspaceView
     {
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,88"), ColumnSpacing = 7 };
         var value = DraftValue(key, "#FFFFFF");
-        var hex = new TextBox { Name = "setting-" + key, Text = value, Watermark = "#RRGGBB", MinHeight = 32, FontSize = 11 };
+        var hex = new TextBox { FlowDirection = Avalonia.Media.FlowDirection.LeftToRight, Name = "setting-" + key, Text = value, Watermark = L("#RRGGBB"), MinHeight = 32, FontSize = 11 };
         AutomationProperties.SetName(hex, SettingCatalog.Find(key)?.Label ?? label);
         var picker = ActionButton("", () => { }, "pick-" + key);
         picker.Width = 30; picker.Height = 30; picker.Padding = default;
         picker.Background = Color.TryParse(value, out var initial) ? new SolidColorBrush(initial) : Brushes.Transparent;
-        AutomationProperties.SetName(picker, "Open color picker for " + label);
+        AutomationProperties.SetName(picker, F($"Open color picker for {L(label)}"));
         picker.Click += (_, _) => ShowColorPicker(picker, hex);
         hex.TextChanged += (_, _) => { if (Color.TryParse(hex.Text, out var color)) picker.Background = new SolidColorBrush(color); StagePreviewSetting(key, hex.Text ?? ""); };
         row.Children.Add(picker);
@@ -382,7 +383,7 @@ public sealed partial class WorkspaceView
             var swatch = ActionButton("", () => hex.Text = color, "swatch-" + key + "-" + color[1..]);
             swatch.Width = 18; swatch.Height = 18; swatch.Margin = new Thickness(0, 0, 3, 3); swatch.Padding = default;
             swatch.Background = B(color); swatch.BorderBrush = B(_theme.Muted);
-            AutomationProperties.SetName(swatch, label + " " + color);
+            AutomationProperties.SetName(swatch, L(label) + " " + color);
             palette.Children.Add(swatch);
         }
         Grid.SetColumn(palette, 1); row.Children.Add(palette);
@@ -401,7 +402,7 @@ public sealed partial class WorkspaceView
         foreach (var channel in new[] { ("Red", color.R), ("Green", color.G), ("Blue", color.B) })
         {
             var slider = new Slider { Minimum = 0, Maximum = 255, Value = channel.Item2, TickFrequency = 1, IsSnapToTickEnabled = true };
-            AutomationProperties.SetName(slider, channel.Item1 + " color channel");
+            AutomationProperties.SetName(slider, F($"{L(channel.Item1)} color channel"));
             sliders.Add(slider);
             body.Children.Add(new StackPanel { Spacing = 2, Children = { Text(channel.Item1, 11, _theme.Muted), slider } });
         }
@@ -418,7 +419,7 @@ public sealed partial class WorkspaceView
 
     private Control DraftAnchorEditor()
     {
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("38,38,38"), RowDefinitions = new RowDefinitions("32,32,32"), HorizontalAlignment = HorizontalAlignment.Left };
+        var grid = new Grid { FlowDirection = FlowDirection.LeftToRight, ColumnDefinitions = new ColumnDefinitions("38,38,38"), RowDefinitions = new RowDefinitions("32,32,32"), HorizontalAlignment = HorizontalAlignment.Left };
         var options = SettingCatalog.Find("ThumbnailZoomAnchor")!.Options!;
         var buttons = new Dictionary<string, Button>();
         foreach (var key in options)
@@ -431,7 +432,7 @@ public sealed partial class WorkspaceView
             }, "anchor-" + key);
             button.Background = B(DraftValue("ThumbnailZoomAnchor") == key ? _theme.AccentSurface : _theme.Surface);
             button.FontSize = 10; button.Margin = new Thickness(2); button.Padding = default; button.HorizontalAlignment = HorizontalAlignment.Stretch; button.HorizontalContentAlignment = HorizontalAlignment.Center;
-            AutomationProperties.SetName(button, "Zoom anchor " + key);
+            AutomationProperties.SetName(button, F($"Zoom anchor {key}"));
             buttons[key] = button;
             Grid.SetColumn(button, index % 3); Grid.SetRow(button, index / 3); grid.Children.Add(button);
         }
