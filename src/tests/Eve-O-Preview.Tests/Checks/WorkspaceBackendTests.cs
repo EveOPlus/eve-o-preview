@@ -24,6 +24,25 @@ public interface IWorkspaceTestView : IMainFormView, IAsyncSettingsView { }
 public sealed class WorkspaceBackendTests
 {
     [Fact]
+    public async Task PreviewGraphicsIsGlobalAndDoesNotCommitGameplaySettings()
+    {
+        using var fixture = new Fixture();
+        var before = fixture.Backend.Read();
+        Assert.True((await fixture.Execute("setting", "PreviewOverlayRenderer", "Legacy")).Success);
+        Assert.Equal("Legacy", fixture.Backend.Read().Settings["PreviewOverlayRenderer"]);
+        Assert.Equal("Legacy", fixture.Preferences.PreviewOverlayRenderer);
+        Assert.Equal(before.Theme, fixture.Backend.Read().Theme);
+        Assert.False((await fixture.Execute("setting", "PreviewOverlayRenderer", "Unknown")).Success);
+        Assert.Equal("Legacy", fixture.Backend.Read().Settings["PreviewOverlayRenderer"]);
+        Assert.False((await fixture.Execute("preview-test-alert")).Success);
+        Assert.True((await fixture.Execute("setting", "PreviewOverlayRenderer", "NativeComposition")).Success);
+        Assert.False((await fixture.Execute("preview-test-alert", "EVE - Unavailable")).Success);
+        Assert.False((await fixture.Execute("preview-test-alert")).Success);
+        Assert.Equal(0, fixture.Commits);
+        Assert.Empty(fixture.Messages);
+    }
+
+    [Fact]
     public async Task LanguageIsGlobalAndDoesNotCommitGameplaySettings()
     {
         using var fixture = new Fixture();

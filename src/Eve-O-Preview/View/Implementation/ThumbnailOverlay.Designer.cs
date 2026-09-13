@@ -20,6 +20,13 @@ namespace EveOPreview.View
             {
                 components.Dispose();
             }
+            if (disposing)
+            {
+                _renderer?.Dispose();
+                _renderer = null;
+                _ownedFont?.Dispose();
+                _ownedFont = null;
+            }
             base.Dispose(disposing);
         }
 

@@ -212,6 +212,28 @@ internal static partial class Program
         window.Width = theme == "Legacy" ? 460 : 784;
         window.Height = theme == "Legacy" ? 417 : 560;
         view.NavigatePreviewTab("Advanced"); Flush();
+        if (theme == "Legacy")
+        {
+            Require(!view.GetVisualDescendants().Any(control => control.Name is "setting-PreviewOverlayRenderer" or "preview-test-alert"),
+                "Legacy must not expose new renderer selection or alert controls.");
+        }
+        else
+        {
+            int commands = backend.Commands.Count;
+            FindControl<ComboBox>(view, "setting-PreviewOverlayRenderer").SelectedItem = "Legacy"; Flush();
+            Require(backend.Commands.Count == commands, "Renderer selection must wait for Apply.");
+            Click(view, "apply-preview-settings");
+            Require(backend.Read().Settings["PreviewOverlayRenderer"] == "Legacy", "Compatibility graphics must reach the backend.");
+            Require(!FindControl<Button>(view, "preview-test-alert").IsEnabled, "Compatibility graphics must not advertise unsupported alerts.");
+            FindControl<ComboBox>(view, "setting-PreviewOverlayRenderer").SelectedItem = "NativeComposition"; Flush();
+            Click(view, "apply-preview-settings");
+            Require(backend.Read().Settings["PreviewOverlayRenderer"] == "NativeComposition", "Enhanced graphics must reach the backend.");
+            string targetTitle = backend.Read().Clients.Last().Title;
+            FindControl<ComboBox>(view, "preview-alert-target").SelectedItem = targetTitle; Flush();
+            Click(view, "preview-test-alert");
+            Require(backend.Commands.Last().Action == "preview-test-alert" && backend.Commands.Last().Target == targetTitle,
+                "The synthetic visual test must identify exactly the selected client.");
+        }
         Capture(window, Path.Combine(output, theme.ToLowerInvariant() + "-advanced-preview.png"));
         var minimum = FindControl<NumericUpDown>(view, "setting-ThumbnailMinimumWidth");
         minimum.Text = "961"; Flush();

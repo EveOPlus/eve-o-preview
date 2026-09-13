@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eve-O-Preview.Tests", "test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eve-O-Preview.UI", "Eve-O-Preview.UI\Eve-O-Preview.UI.csproj", "{F3D92387-5887-4194-878C-560E36EB3F0F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eve-O-Preview.Preview", "Eve-O-Preview.Preview\Eve-O-Preview.Preview.csproj", "{A294A5F6-BFDB-4D15-AE2D-D562B7D4E4BE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Build|Any CPU = Build|Any CPU
@@ -56,6 +58,12 @@ Global
 		{F3D92387-5887-4194-878C-560E36EB3F0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F3D92387-5887-4194-878C-560E36EB3F0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F3D92387-5887-4194-878C-560E36EB3F0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A294A5F6-BFDB-4D15-AE2D-D562B7D4E4BE}.Build|Any CPU.ActiveCfg = Debug|Any CPU
+		{A294A5F6-BFDB-4D15-AE2D-D562B7D4E4BE}.Build|Any CPU.Build.0 = Debug|Any CPU
+		{A294A5F6-BFDB-4D15-AE2D-D562B7D4E4BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A294A5F6-BFDB-4D15-AE2D-D562B7D4E4BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A294A5F6-BFDB-4D15-AE2D-D562B7D4E4BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A294A5F6-BFDB-4D15-AE2D-D562B7D4E4BE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

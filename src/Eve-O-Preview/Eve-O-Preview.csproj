@@ -43,6 +43,7 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Eve-O-Preview.Preview\Eve-O-Preview.Preview.csproj" />
     <ProjectReference Include="..\Eve-O-Preview.UI\Eve-O-Preview.UI.csproj" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.20" />
     <PackageReference Include="Avalonia.Win32.Interoperability" Version="11.3.20" />

@@ -37,7 +37,7 @@ public sealed partial class WorkspaceView
         SchedulePreview();
     }
 
-    private static bool IsPreviewSetting(SettingDefinition definition) => definition.Page is "Thumbnail" or "Zoom" or "Overlay" or "AdvancedPreview";
+    private static bool IsPreviewSetting(SettingDefinition definition) => definition.Page is "Thumbnail" or "Zoom" or "Overlay" or "AdvancedPreview" or "PreviewGraphics";
 
     private void UpdatePreviewEditorStatus()
     {

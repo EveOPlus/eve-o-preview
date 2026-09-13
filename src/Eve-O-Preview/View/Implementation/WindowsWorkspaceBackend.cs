@@ -25,6 +25,7 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         _characters?.GetCharacterAsync(fullTitle) ?? Task.FromResult<WorkspaceCharacter>(null);
     private void PortraitUpdated(long characterId) => NotifyChanged();
     private readonly IWorkspacePreviewCapture _previewCapture;
+    private readonly EveOPreview.Services.IThumbnailManager _thumbnails;
     public Task<WorkspaceClientStill> CapturePreviewStillAsync(string preferredTitle) =>
         _previewCapture?.CapturePreviewStillAsync(preferredTitle) ?? Task.FromResult<WorkspaceClientStill>(null);
     private readonly IWorkspacePortraitProvider _portraits;
@@ -32,7 +33,12 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
 
     private readonly WindowsWorkspacePreviewRenderer _previewRenderer = new();
     public IReadOnlyList<string> FontFamilies => _previewRenderer.FontFamilies;
-    public WorkspacePreviewImage RenderPreview(WorkspacePreviewRequest request) => _previewRenderer.RenderPreview(request);
+    public WorkspacePreviewImage RenderPreview(WorkspacePreviewRequest request)
+    {
+        if (!request.Settings.ContainsKey("PreviewOverlayRenderer"))
+            request = request with { Settings = new Dictionary<string, string>(request.Settings) { ["PreviewOverlayRenderer"] = _preferences.PreviewOverlayRenderer } };
+        return _previewRenderer.RenderPreview(request);
+    }
     private readonly IMainFormView _view;
     private readonly IAsyncSettingsView _commits;
     private readonly IMediator _mediator;
@@ -54,12 +60,14 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
     public WindowsWorkspaceBackend(IMainFormView view, IAsyncSettingsView commits, IMediator mediator,
         IConfigurationStorage storage, IThumbnailConfiguration configuration, IProfileManager profiles,
         ApplicationPreferences preferences, ILogger logger, IWorkspacePortraitProvider portraits, IWorkspacePreviewCapture previewCapture = null,
-        EveOPreview.Services.Implementation.CharacterIdentityCache characters = null)
+        EveOPreview.Services.Implementation.CharacterIdentityCache characters = null,
+        EveOPreview.Services.IThumbnailManager thumbnails = null)
     {
         _view = view; _commits = commits; _mediator = mediator; _storage = storage;
         _configuration = configuration; _profiles = profiles; _preferences = preferences; _logger = logger;
         _portraits = portraits;
         _previewCapture = previewCapture;
+        _thumbnails = thumbnails;
         _characters = characters;
         if (_characters is not null) _characters.Changed += NotifyChanged;
         if (_portraits is IWorkspacePortraitUpdates updates) updates.PortraitChanged += PortraitUpdated;
@@ -147,6 +155,17 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
                 case "thumbnail-menu-theme":
                     _preferences.SetThumbnailMenuTheme(command.Value);
                     return CommandResult.Ok("Thumbnail menu theme saved for all profiles");
+                case "preview-test-alert":
+                    if (string.IsNullOrWhiteSpace(command.Target)) return CommandResult.Error("Choose a visible preview to test.");
+                    if (_preferences.PreviewOverlayRenderer != "NativeComposition")
+                        return CommandResult.Error("Choose Enhanced graphics to test visual alerts.");
+                    var preview = _thumbnails?.GetAllKnownClients().Values.OfType<ThumbnailView>()
+                        .FirstOrDefault(preview => string.Equals(preview.Title, command.Target, StringComparison.Ordinal)
+                            && preview.IsActive && preview.Visible
+                            && preview.GraphicsCapabilities.HasFlag(EveOPreview.Preview.OverlayCapabilities.Pulse));
+                    if (preview is null) return CommandResult.Error("No visible preview supports visual alerts. Show an enhanced preview and try again.");
+                    preview.ShowAlert(new EveOPreview.Preview.PreviewAlert());
+                    return CommandResult.Ok("Synthetic visual alert shown. No combat detection is running.");
                 case "font-picker": return await PickFont();
                 case "color-picker": return await PickColor(command.Target);
                 case "toggle-all": await _mediator.Send(new ThumbnailToggleHideAll()); break;
@@ -273,6 +292,11 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         if (error != null) return CommandResult.Error(error);
         if (definition.Kind == SettingKind.Toggle && !bool.TryParse(value, out _)) return CommandResult.Error("Choose on or off.");
         if (definition.Kind == SettingKind.Choice && definition.Options?.Contains(value) != true) return CommandResult.Error("Choose an available option.");
+        if (key == "PreviewOverlayRenderer")
+        {
+            _preferences.SetPreviewOverlayRenderer(value);
+            return CommandResult.Ok("Preview graphics saved for all profiles");
+        }
         if (PreviewSizeLimitKeys.Contains(key))
         {
             var limits = PreviewSizeLimitKeys.ToDictionary(name => name, name => Format(_settings[name].Read()));
@@ -421,6 +445,7 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         Bind("ThumbnailZoomAnchor", () => _view.ThumbnailZoomAnchor, x => _view.ThumbnailZoomAnchor = Enum.Parse<ViewZoomAnchor>(x));
         Bind("ActiveClientHighlightColor", () => _view.ActiveClientHighlightColor, x => _view.ActiveClientHighlightColor = ParseColor(x));
         Bind("ActiveClientHighlightThickness", () => _configuration.ActiveClientHighlightThickness, x => _configuration.ActiveClientHighlightThickness = Integer(x));
+        Bind("PreviewOverlayRenderer", () => _preferences.PreviewOverlayRenderer, _preferences.SetPreviewOverlayRenderer);
         Bind("TitleFontName", () => _view.TitleFontSettings.Name, x =>
         {
             using var font = new Font(x, _view.TitleFontSettings.Size);

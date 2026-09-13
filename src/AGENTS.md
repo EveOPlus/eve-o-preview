@@ -10,6 +10,7 @@ This directory is `src/` of the Git repository. Start with [README.md](README.md
 | Future features and implementation gaps | [Feature backlog](docs/ai/feature-backlog.md); establish scope and acceptance criteria before implementation |
 | Startup, dependency injection, UI settings, profiles, MediatR | [Application and configuration](docs/ai/application-and-configuration.md) |
 | Discovery, previews, z-order, hotkeys, cycling, focus, CPU affinity | [Windows and thumbnails](docs/ai/windows-and-thumbnails.md) |
+| Preview graphics, native composition, platform backends | [Preview rendering](docs/ai/preview-rendering.md) and [portable contracts](Eve-O-Preview.Preview/AGENTS.md) |
 | Injection, FPS, prediction, native pipe protocol, audio, crash sidecar | [Robin and native integration](docs/ai/robin.md) and [Robin instructions](Eve-O-Preview.Robin/AGENTS.md) |
 | Build, publish, tests, Test Explorer, mock app | [Build and test](docs/ai/build-and-test.md) and [test instructions](tests/AGENTS.md) |
 | An unfamiliar file, generated resource, or release script | [Source index](docs/ai/source-index.md) |

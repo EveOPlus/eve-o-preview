@@ -23,6 +23,7 @@ public sealed class ApplicationPreferences
     public string UiLanguage { get; private set; } = "auto";
     public IReadOnlyList<string> ThumbnailMenuOrder { get; private set; } = ThumbnailMenuActions.DefaultOrder;
     public string ThumbnailMenuTheme { get; private set; } = ThumbnailMenuThemes.FollowApp;
+    public string PreviewOverlayRenderer { get; private set; } = "NativeComposition";
     public string FilePath => _path;
     public event Action Changed;
 
@@ -42,6 +43,8 @@ public sealed class ApplicationPreferences
                 if (SettingsVersion >= ExplicitThemeSelectionVersion && IsKnownTheme(savedTheme)) Theme = savedTheme;
                 var menuTheme = _settings.Value<string>("ThumbnailMenuTheme");
                 if (ThumbnailMenuThemes.IsKnown(menuTheme)) ThumbnailMenuTheme = menuTheme;
+                var previewRenderer = _settings.Value<string>("PreviewOverlayRenderer");
+                if (IsKnownPreviewOverlayRenderer(previewRenderer)) PreviewOverlayRenderer = previewRenderer;
                 if (_settings["ThumbnailMenuOrder"] is JArray order)
                     ThumbnailMenuOrder = ThumbnailMenuActions.Normalize(order.Where(x => x.Type == JTokenType.String).Values<string>());
             }
@@ -50,6 +53,7 @@ public sealed class ApplicationPreferences
     }
 
     public static bool IsKnownTheme(string theme) => theme is "Light" or "Dark" or "Legacy";
+    public static bool IsKnownPreviewOverlayRenderer(string renderer) => renderer is "NativeComposition" or "Legacy";
 
     private int SettingsVersion => _settings["ConfigVersion"]?.Type == JTokenType.Integer
         && int.TryParse(_settings["ConfigVersion"].ToString(), out int version) ? version : 0;
@@ -107,6 +111,15 @@ public sealed class ApplicationPreferences
         if (!ThumbnailMenuThemes.IsKnown(theme)) throw new ArgumentException("Choose an available menu theme.");
         Save("ThumbnailMenuTheme", theme);
         ThumbnailMenuTheme = theme;
+        Changed?.Invoke();
+    }
+
+    public void SetPreviewOverlayRenderer(string renderer)
+    {
+        if (!IsKnownPreviewOverlayRenderer(renderer)) throw new ArgumentException("Choose an available preview graphics mode.");
+        if (PreviewOverlayRenderer == renderer) return;
+        Save("PreviewOverlayRenderer", renderer);
+        PreviewOverlayRenderer = renderer;
         Changed?.Invoke();
     }
 

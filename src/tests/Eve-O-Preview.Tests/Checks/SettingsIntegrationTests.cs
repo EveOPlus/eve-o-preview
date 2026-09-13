@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -195,13 +196,22 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         });
         var affinityPending = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         int activations = 0;
+        int registrations = 0, unregistrations = 0;
         int inputThread = Environment.CurrentManagedThreadId;
         Action<IntPtr> activating = null;
         IntPtr foreground = new IntPtr(101);
         var window = Stub.Create<IWindowManager>((method, args) =>
         {
             if (method.Name == "GetForegroundWindowHandle") return foreground;
-            if (method.Name == "GetLiveThumbnail") return Stub.Create<IDwmThumbnail>();
+            if (method.Name == "GetLiveThumbnail")
+            {
+                registrations++;
+                return Stub.Create<IDwmThumbnail>((operation, _) =>
+                {
+                    if (operation.Name == "Unregister") unregistrations++;
+                    return operation.Name == "Update" ? true : Stub.Default(operation.ReturnType);
+                });
+            }
             if (method.Name == "ActivateWindow")
             {
                 Assert.Equal(inputThread, Environment.CurrentManagedThreadId);
@@ -236,7 +246,11 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         });
         var controller = Stub.Create<IApplicationController>((method, args) => Activator.CreateInstance(method.GetGenericArguments()[0],
             window, config, Stub.Create<IThumbnailManager>(), Stub.Create<IMediator>(), keyboard, logger));
-        var factory = (IThumbnailViewFactory)Activator.CreateInstance(App.GetType("EveOPreview.View.ThumbnailViewFactory"), controller, config);
+        string preferencesPath = Path.Combine(AppContext.BaseDirectory, "factory-graphics-" + Guid.NewGuid().ToString("N") + ".json");
+        var preferences = new ApplicationPreferences(preferencesPath, logger);
+        preferences.SetPreviewOverlayRenderer("Legacy");
+        var factory = (IThumbnailViewFactory)Activator.CreateInstance(App.GetType("EveOPreview.View.ThumbnailViewFactory"), controller, config, preferences);
+        using var factoryLifetime = (IDisposable)factory;
         var mediator = Stub.Create<IMediator>((method, args) => method.Name == "Send" ? affinityPending.Task : Stub.Default(method.ReturnType));
         var manager = (IThumbnailManager)Activator.CreateInstance(App.GetType("EveOPreview.Services.ThumbnailManager"),
             mediator, config, monitor, window, factory, keyboard, Stub.Create<IHookService>(), events, logger);
@@ -244,6 +258,31 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         Call(manager, "UpdateThumbnailsList");
         Call(manager, "RefreshThumbnails");
         var originalViews = manager.GetAllKnownClients();
+        try
+        {
+            Assert.True(registrations > 0, "The factory switch must preserve an actual initialized DWM session.");
+            int registrationsBefore = registrations, unregistrationsBefore = unregistrations;
+            var handles = originalViews.ToDictionary(pair => pair.Key, pair => ((Form)pair.Value).Handle);
+            var sessions = originalViews.ToDictionary(pair => pair.Key, pair => pair.Value.GetType()
+                .GetField("_thumbnail", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(pair.Value));
+            foreach (string renderer in new[] { "NativeComposition", "Legacy" })
+            {
+                preferences.SetPreviewOverlayRenderer(renderer);
+                foreach (var pair in originalViews)
+                {
+                    var current = (ThumbnailView)manager.GetClientByPointer(pair.Key);
+                    Assert.Same(pair.Value, current);
+                    Assert.Equal(handles[pair.Key], current.Handle);
+                    Assert.Same(sessions[pair.Key], current.GetType()
+                        .GetField("_thumbnail", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(current));
+                    Assert.Equal(pair.Value.Title, current.Title);
+                    if (renderer == "Legacy") Assert.Equal(EveOPreview.View.Rendering.OverlayRendererKind.Legacy, current.OverlayRenderer);
+                }
+                Assert.Equal(registrationsBefore, registrations);
+                Assert.Equal(unregistrationsBefore, unregistrations);
+            }
+        }
+        finally { if (File.Exists(preferencesPath)) File.Delete(preferencesPath); }
         config.ThumbnailSize = new Size(500, 300);
         config.TitleFontSettings = new FontSettings { Name = "Arial", Size = 24, ForeColor = Color.Red };
         config.ShowThumbnailFrames = true;
@@ -284,8 +323,6 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         activating = target =>
         {
             Assert.Equal(target, manager.GetActiveClient().Id);
-            foreach (var view in manager.GetAllKnownClients().Values)
-                Assert.Equal(view.Id == target, (bool)typeof(ThumbnailView).GetField("_isHighlightEnabled", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view));
         };
         var press = new KeyEventArgs(Keys.Control | Keys.F8);
         var timer = Stopwatch.StartNew();
@@ -294,6 +331,8 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         Assert.True(press.Handled);
         Assert.Equal(1, activations); // No message pump or async continuation before activation/highlight.
         Assert.Equal(new IntPtr(102), manager.GetActiveClient()?.Id);
+        foreach (var view in manager.GetAllKnownClients().Values)
+            Assert.Equal(view.Id == new IntPtr(102), (bool)typeof(ThumbnailView).GetField("_isHighlightEnabled", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view));
         var keyUp = new KeyEventArgs(Keys.F8); // Modifier was released before the main key.
         foreach (var handler in up.ToArray()) handler(null, keyUp);
         Assert.True(keyUp.Handled);

@@ -21,6 +21,7 @@ The short `AGENTS.md` files provide discovery and local constraints, while the p
 | [Application and configuration](docs/ai/application-and-configuration.md) | Startup/shutdown, Autofac, presenter/UI contracts, every mediator route, shared settings, profiles and migrations |
 | [UI review and preservation map](docs/ai/ui-review.md) | Source UI/UX audit, legacy control parity, theme and profile identity requirements, future DPS/ESI boundaries |
 | [Windows and thumbnails](docs/ai/windows-and-thumbnails.md) | Discovery, DWM/static rendering, overlays, MRU z-order, focus, hotkeys, prediction, CPU affinity, ownership |
+| [Preview rendering](docs/ai/preview-rendering.md) | Portable presentation/graphics contracts, Windows DWM and native composition, compatibility fallback and validation |
 | [Robin and native integration](docs/ai/robin.md) | Injection lifecycle, pipe bytes, DXGI vtable hooks, frame pacing, audio interception, sidecar diagnostics |
 | [Build and test](docs/ai/build-and-test.md) | Project differences, precise Windows commands, native publishing, test coverage and limitations, release side effects |
 | [Source index](docs/ai/source-index.md) | Every tracked baseline path, its role, and the guide to consult |

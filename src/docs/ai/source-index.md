@@ -1,5 +1,7 @@
 # Complete source index and review scope
 
+The [preview rendering guide](preview-rendering.md) covers the implemented Windows image/overlay backends and portable graphics contracts. The earlier [technology review](preview-rendering-review.md) records platform alternatives and remaining Linux work.
+
 Baseline: `60944b521e3c5b442dd379b5208c53a91ae3a573`, reviewed 2026-09-06. This inventory contains all **208 tracked baseline files**: 191 under `src/`, 17 elsewhere. Paths in the tables are relative to the Git root. Newly added AI guides/instruction files are listed separately at the end, not included in the baseline count.
 
 The application, Robin, tests, Mock, configuration, message/handler classes, native bindings, project files, release code, designer wiring and textual resources were reviewed across the subsystem guides. Repeated generated wrappers and resource schemas were inspected for their role, control wiring and payload boundaries. This inventory is a navigation and coverage record, not an assertion that every defect has been found.
@@ -147,6 +149,7 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | --- | --- | --- |
 | [src/Eve-O-Preview/Helper/HotkeyHelpers.cs](../../../src/Eve-O-Preview/Helper/HotkeyHelpers.cs) | KeysConverter parsing; invalid input becomes Keys.None. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/Helper/LoggerHelpers.cs](../../../src/Eve-O-Preview/Helper/LoggerHelpers.cs) | Structured compile-time caller metadata. | [application-and-configuration](application-and-configuration.md) |
+| [src/Eve-O-Preview/Helper/AsyncLogSink.cs](../../../src/Eve-O-Preview/Helper/AsyncLogSink.cs) | Bounded background diagnostic writer, overflow reporting and shutdown drain. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/Helper/ProcessHelpers.cs](../../../src/Eve-O-Preview/Helper/ProcessHelpers.cs) | Open/close raw kernel handles and construct ProcessInfo. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 
 ## Main application: Mediator (55)
@@ -232,6 +235,7 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [src/Eve-O-Preview/Services/Implementation/CpuAffinityService.cs](../../../src/Eve-O-Preview/Services/Implementation/CpuAffinityService.cs) | Topology detection, precomputed role masks, background cache, reset. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/Services/Implementation/DebuggerSidecar.cs](../../../src/Eve-O-Preview/Services/Implementation/DebuggerSidecar.cs) | Hidden host debugger, raw DEBUG_EVENT decoding and debug output. | [robin](robin.md) |
 | [src/Eve-O-Preview/Services/Implementation/DwmThumbnail.cs](../../../src/Eve-O-Preview/Services/Implementation/DwmThumbnail.cs) | DWM registration, destination properties, update/recovery signal. | [windows-and-thumbnails](windows-and-thumbnails.md) |
+| [src/Eve-O-Preview/Services/Implementation/ForegroundWindowObserver.cs](../../../src/Eve-O-Preview/Services/Implementation/ForegroundWindowObserver.cs) | UI-thread foreground notifications, rooted callback and unhook lifetime. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/Services/Implementation/GlobalEvents.cs](../../../src/Eve-O-Preview/Services/Implementation/GlobalEvents.cs) | Synchronous profile-event bridge. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/Services/Implementation/HookService.cs](../../../src/Eve-O-Preview/Services/Implementation/HookService.cs) | Host injection, ownership/FPS/focus/audio pipe sender and cached install state. | [robin](robin.md) |
 | [src/Eve-O-Preview/Services/Implementation/ProcessInfo.cs](../../../src/Eve-O-Preview/Services/Implementation/ProcessInfo.cs) | PID, source HWND, title, owned kernel handle record. | [windows-and-thumbnails](windows-and-thumbnails.md) |
@@ -398,3 +402,25 @@ These files are outside the original baseline count. The [UI review](ui-review.m
 | [src/Eve-O-Preview.UI/ThumbnailMenuThemes.cs](../../Eve-O-Preview.UI/ThumbnailMenuThemes.cs) | Shared palette IDs/colors for native thumbnail menus and the portable live preview |
 | [src/Eve-O-Preview/Mediator/Messages/Thumbnails/SetClientCycleSkipped.cs](../../Eve-O-Preview/Mediator/Messages/Thumbnails/SetClientCycleSkipped.cs) | Exact-title request for a temporary profile-wide cycle skip |
 | [src/Eve-O-Preview/Mediator/Handlers/Thumbnails/SetClientCycleSkippedHandler.cs](../../Eve-O-Preview/Mediator/Handlers/Thumbnails/SetClientCycleSkippedHandler.cs) | Shared workspace/context-menu route to session-only skip state and UI notification |
+
+
+## Preview rendering modernization additions
+
+| Source | Responsibility |
+| --- | --- |
+| [Eve-O-Preview.Preview](../../Eve-O-Preview.Preview/Eve-O-Preview.Preview.csproj), [instructions](../../Eve-O-Preview.Preview/AGENTS.md) | Portable contracts with no graphics toolkit or Windows dependencies |
+| [OverlayContract.cs](../../Eve-O-Preview.Preview/OverlayContract.cs) | Shared title/stat scenes, finite alerts, renderer capability/lifetime contract |
+| [PreviewContract.cs](../../Eve-O-Preview.Preview/PreviewContract.cs) | Native-or-captured image presentation lifetime; opaque client identity |
+| [WindowsDwmPreviewBackend.cs](../../Eve-O-Preview/View/Rendering/WindowsDwmPreviewBackend.cs) | Persistent DWM image relationship and recovery |
+| [WindowsStaticPreviewBackend.cs](../../Eve-O-Preview/View/Rendering/WindowsStaticPreviewBackend.cs) | Compatibility image/control ownership and last-valid-frame retention |
+| [NativeCompositionOverlayRenderer.cs](../../Eve-O-Preview/View/Rendering/NativeCompositionOverlayRenderer.cs) | Shared hardware device, retained graphics assets and compositor animations |
+| [NativeCompositionInterop.cs](../../Eve-O-Preview/View/Rendering/NativeCompositionInterop.cs) | Windows COM ABI for D3D11, D2D and DirectComposition |
+| [OverlaySceneRasterizer.cs](../../Eve-O-Preview/View/Rendering/OverlaySceneRasterizer.cs) | Changed alpha text/marker/stat assets and matching title-settings preview |
+| [OverlayRendererKind.cs](../../Eve-O-Preview/View/Rendering/OverlayRendererKind.cs) | Windows enhanced and compatibility renderer selection |
+| [AvaloniaPreviewOverlay.cs](../../Eve-O-Preview.UI/Previews/AvaloniaPreviewOverlay.cs), [window](../../Eve-O-Preview.UI/Previews/AvaloniaPreviewOverlayWindow.cs), [notes](../../Eve-O-Preview.UI/Previews/README.md) | Portable candidate graphics and validation host; no Linux capture implementation |
+| [WorkspaceView.PreviewGraphics.cs](../../Eve-O-Preview.UI/WorkspaceView.PreviewGraphics.cs) | Modern-only renderer preference and synthetic visual-alert test |
+| [NativeOverlayRenderingTests.cs](../../tests/Eve-O-Preview.Tests/Checks/NativeOverlayRenderingTests.cs) | Retained native lifecycle, alpha assets, unchanged-state reuse and fallback checks |
+| [LoggingResponsivenessTests.cs](../../tests/Eve-O-Preview.Tests/Checks/LoggingResponsivenessTests.cs) | Blocked file-sink isolation, bounded diagnostic overload and shutdown drain |
+| [Portable smoke project](../../tests/Eve-O-Preview.Preview.Smoke/Eve-O-Preview.Preview.Smoke.csproj), [runner](../../tests/Eve-O-Preview.Preview.Smoke/Program.cs), [instructions](../../tests/Eve-O-Preview.Preview.Smoke/README.md) | Headless visual/style/finite-animation verification |
+| [Windows rendering project](../../tests/Preview.RenderingSmoke/Preview.RenderingSmoke.csproj), [runner](../../tests/Preview.RenderingSmoke/Program.cs), [matrix](../../tests/Preview.RenderingSmoke/run-matrix.ps1), [GPU counters](../../tests/Preview.RenderingSmoke/collect-gpu.ps1), [instructions](../../tests/Preview.RenderingSmoke/README.md) | Opt-in mock/live DWM renderer measurements, external PDH sampling and scoped images |
+| [Preview rendering guide](preview-rendering.md), [technology review](preview-rendering-review.md) | Implemented architecture, platform boundaries and validation evidence |

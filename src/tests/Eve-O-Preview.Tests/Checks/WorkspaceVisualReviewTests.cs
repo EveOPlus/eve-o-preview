@@ -179,13 +179,15 @@ public sealed class WorkspaceVisualReviewTests(ITestOutputHelper output)
             {
                 using var image = GetPreviewBitmap(workspace);
                 var colors = Colors(image);
-                return colors.Contains(Color.Red.ToArgb()) && colors.Contains(Color.Lime.ToArgb()) &&
+                // A thin antialiased outline blends with the sample; it need not contain
+                // an exactly opaque Lime pixel as the legacy color-key renderer did.
+                return colors.Contains(Color.Red.ToArgb()) && colors.Select(Color.FromArgb).Any(pixel => pixel.G > 150 && pixel.R < 80 && pixel.B < 80) &&
                     image.GetPixel(image.Width / 2, 5).ToArgb() == Color.Cyan.ToArgb();
             }, "The scheduled preview did not render the complete font/color/highlight draft.");
             using (var pixels = GetPreviewBitmap(workspace))
             {
                 Assert.Contains(Color.Red.ToArgb(), Colors(pixels));
-                Assert.Contains(Color.Lime.ToArgb(), Colors(pixels));
+                Assert.Contains(Colors(pixels).Select(Color.FromArgb), pixel => pixel.G > 150 && pixel.R < 80 && pixel.B < 80);
                 Assert.Contains(Color.Cyan.ToArgb(), Colors(pixels));
                 pixels.Save(Path.Combine(outputDirectory, "native-title-draft-pixels.png"));
             }

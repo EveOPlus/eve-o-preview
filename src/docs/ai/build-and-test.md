@@ -10,7 +10,10 @@ Use this guide when choosing a project, diagnosing test discovery, changing test
 | [EVE-O-Preview.sln](../../EVE-O-Preview.sln) | Full solution: application, Robin, Mock, tests, and the release tooling in `../build`. Use this solution for Test Explorer. Its `Build` solution configuration selects the release-tool project plus Debug configurations of Robin/tests; the name does not mean an ordinary Release build. |
 | [Eve-O-Preview.csproj](../../Eve-O-Preview/Eve-O-Preview.csproj) | SDK project, `net10.0-windows`, WinForms with WPF enabled, assembly name `EVE-O Preview`, unsafe code. Debug is explicitly x64. Release publishing selects `win-x64`. There is no project reference to Robin: building the app does not create the native injection DLL. |
 | [Eve-O-Preview.UI.csproj](../../Eve-O-Preview.UI/Eve-O-Preview.UI.csproj) | Portable `net10.0` Avalonia settings UI library. The Windows host references it and embeds its controls through Avalonia WinForms interoperability. It has no game-process, WinForms or Windows handle contract. |
+| [Preview contracts](../../Eve-O-Preview.Preview/Eve-O-Preview.Preview.csproj) | Plain `net10.0` image-session and overlay contracts. No Windows or UI toolkit dependency; Windows keeps its persistent DWM backend. |
 | [UI smoke project](../../tests/Eve-O-Preview.UI.Smoke/Eve-O-Preview.UI.Smoke.csproj) | Plain `net10.0` executable using Avalonia Headless and Skia. Renders the real UI with a controlled in-memory backend; it does not start the production Windows host or inject Robin. |
+| [Portable overlay smoke](../../tests/Eve-O-Preview.Preview.Smoke/Eve-O-Preview.Preview.Smoke.csproj) | Plain `net10.0` retained scene and finite compositor-animation checks with the portable Avalonia overlay candidate. Does not prove Linux capture/hosting. |
+| [Windows renderer harness](../../tests/Preview.RenderingSmoke/Preview.RenderingSmoke.csproj) | Opt-in mock/live comparison using production DWM views and Legacy/native/Avalonia overlays. Requires an interactive desktop for real compositor evidence; see its [instructions](../../tests/Preview.RenderingSmoke/README.md). |
 | [Nested application solution](../../Eve-O-Preview/Eve-O-Preview.sln) | Contains only the application. Opening it will not expose the test project or Robin/Mock/build projects. |
 | [Robin project](../../Eve-O-Preview.Robin/Eve-O-Preview.Robin.csproj) | `net10.0`, x64, unsafe, NativeAOT shared library (`PublishAot`, `NativeLib=Shared`). A managed `dotnet build` does not establish that the native DLL can be published, loaded, or hooked. |
 | [Test project](../../tests/Eve-O-Preview.Tests/Eve-O-Preview.Tests.csproj) | `net10.0-windows` executable with WinForms/WPF, xUnit v3, `Microsoft.NET.Test.Sdk`, and the Visual Studio adapter. References the application project, not Robin. Uses its own entry point. |
@@ -64,6 +67,15 @@ MSBuild.exe .\Eve-O-Mock\Eve-O-Mock.csproj /p:Configuration=Debug /p:Platform=An
 A failure in the legacy Mock's WPF or package-import targets during a full-solution build does not by itself show that the application or tests fail to build. Select the relevant project before diagnosing a change.
 
 ## Portable UI checks
+
+For preview-renderer changes, run the native overlay cases with the existing suite and the portable overlay smoke separately:
+
+```powershell
+dotnet test .\tests\Eve-O-Preview.Tests\Eve-O-Preview.Tests.csproj -c Debug --filter "FullyQualifiedName~NativeOverlayRenderingTests" -p:UsedAvaloniaProducts=
+dotnet run --project .\tests\Eve-O-Preview.Preview.Smoke\Eve-O-Preview.Preview.Smoke.csproj -p:UsedAvaloniaProducts= -- --output .\bin\portable-preview-smoke
+```
+
+The native checks cover retained uploads/commits, isolated alert state, clipped asset sizing, resource disposal and compatibility fallback. They do not reproduce a physical GPU reset. Use the [rendering guide](preview-rendering.md) for the implemented architecture and measured desktop evidence. When another app is running from the normal output directory, pass an absolute isolated `-p:OutputPath=` under `src/bin` to builds/tests; do not overwrite its assemblies.
 
 Character identity checks use synthetic launch claims and stub HTTP responses:
 `--filter "FullyQualifiedName~CharacterIdentityTests|FullyQualifiedName~CharacterPortraitCacheTests"`.

@@ -347,7 +347,7 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
                 case "ImmediateCycleActivation":
                     Native.SetActiveWindow(client.Handle);
                     c.Refreshing = _ => AssertStack(c, b, a); // Image work must not precede the native raise either.
-                    activating = _ => AssertStack(c, b, a); // Must already be raised when client activation starts.
+                    activating = _ => Check(manager.GetActiveClient()?.Id == c.Id, "focus requested before preview maintenance");
                     manager.GetType().GetMethod("SetActive").Invoke(manager,
                         [new KeyValuePair<IntPtr, IThumbnailView>(c.Id, c)]);
                     activating = null;
@@ -357,16 +357,16 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
                     break;
 
                 case "ImmediateThumbnailActivation":
+                    config.EnableActiveClientHighlight = true;
                     Native.SetActiveWindow(client.Handle);
                     activating = _ =>
                     {
-                        AssertStack(a, b, c);
                         Check(manager.GetActiveClient()?.Id == a.Id, "selection committed before activation");
-                        Check((bool)typeof(ThumbnailView).GetField("_isHighlightEnabled", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(a),
-                            "border applied before activation");
                     };
                     a.Refreshing = _ => throw new Exception("Image capture must not delay immediate activation");
                     a.ThumbnailActivated(a.Id);
+                    Check((bool)typeof(ThumbnailView).GetField("_isHighlightEnabled", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(a),
+                        "border applied immediately after focus without a timer tick");
                     a.Refreshing = null;
                     activating = null;
                     AssertStack(a, b, c); // No UI continuation or refresh tick.

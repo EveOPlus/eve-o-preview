@@ -78,6 +78,8 @@ namespace EveOPreview.Services
         private bool _compatibilityMode;
         private volatile bool _stopped;
         private bool _activationInProgress;
+        private ForegroundWindowObserver _foregroundObserver;
+        private bool _foregroundRefreshPending;
         private readonly HashSet<Keys> _pressedCycleKeys = new HashSet<Keys>();
         #endregion
 
@@ -207,27 +209,30 @@ namespace EveOPreview.Services
             }
 
             IThumbnailView previousActiveClient = this.GetActiveClient();
-            if (previousActiveClient != null)
-            {
-                _logger.Verbose("ThumbnailManager.SetActive: Clearing border from previous active client: {PreviousClient}", previousActiveClient.Title);
-                previousActiveClient.ClearBorder();
-            }
-
-            this.RaiseActivatedThumbnail(newClient.Value);
-            // All visible selection state is committed on the input thread, before
-            // native activation, affinity work, or any asynchronous continuation.
+            // Only in-memory selection bookkeeping precedes the focus request.
+            // Painting, composition, z-order, layouts and affinity must not delay it.
             this.SwitchActiveClient(newClient.Key, newClient.Value.Title, minimizePrevious: false);
+            this._windowManager.ActivateWindow(newClient.Key);
+            ApplyActiveClientAppearance(newClient.Value, previousActiveClient);
+        }
+
+        private void ApplyActiveClientAppearance(IThumbnailView selected, IThumbnailView previousActiveClient)
+        {
+            // Submit the two selection frames before any layout/z-order maintenance.
+            if (previousActiveClient != null && previousActiveClient != selected) previousActiveClient.ClearBorder();
+            selected.SetHighlight(_configuration.EnableActiveClientHighlight, _configuration.ActiveClientHighlightThickness);
+            selected.RefreshAppearance();
+            _logger.Verbose("ThumbnailManager: Active outline submitted for 0x{Handle:X}", selected.Id);
+            this.RaiseActivatedThumbnail(selected);
             bool wasIgnoring = _ignoreViewEvents;
             _ignoreViewEvents = true;
             try
             {
                 foreach (var view in _thumbnailViews.Values)
                 {
-                    view.SetHighlight(_configuration.EnableActiveClientHighlight && view.Id == newClient.Key,
-                        _configuration.ActiveClientHighlightThickness);
                     if (!_isHoverEffectActive && IsManageableThumbnail(view))
-                        view.ThumbnailLocation = _configuration.GetThumbnailLocation(view.Title, newClient.Value.Title, view.ThumbnailLocation);
-                    if (_configuration.HideActiveClientThumbnail && view.Id == newClient.Key) view.Hide();
+                        view.ThumbnailLocation = _configuration.GetThumbnailLocation(view.Title, selected.Title, view.ThumbnailLocation);
+                    if (_configuration.HideActiveClientThumbnail && view.Id == selected.Id) view.Hide();
                     else if (_configuration.HideActiveClientThumbnail && view == previousActiveClient &&
                         !_configuration.IsThumbnailDisabled(view.Title)) view.Show();
                     view.RefreshAppearance();
@@ -235,14 +240,40 @@ namespace EveOPreview.Services
             }
             finally { _ignoreViewEvents = wasIgnoring; }
 
-            _logger.Verbose("ThumbnailManager.SetActive: Activating window for handle 0x{Handle:X}", newClient.Key);
-            this._windowManager.ActivateWindow(newClient.Key);
             this._refreshThumbnailZOrder = true;
-            if (previousActiveClient != null && previousActiveClient.Id != newClient.Key &&
+            if (previousActiveClient != null && previousActiveClient.Id != selected.Id &&
                 _configuration.MinimizeInactiveClients && !_configuration.IsPriorityClient(previousActiveClient.Title))
                 _windowManager.MinimizeWindow(previousActiveClient.Id, false);
             
-            _logger.Verbose("ThumbnailManager.SetActive: Active client set successfully");
+        }
+
+        private void ForegroundWindowChanged(IntPtr handle)
+        {
+            if (_stopped || !_thumbnailViews.ContainsKey(handle) || _foregroundRefreshPending) return;
+            // WinEvent callbacks can reenter during native activation. Coalesce them
+            // into the UI queue and read the latest foreground after native dispatch;
+            // rejecting a mismatched event HWND here can lose the final transition.
+            _foregroundRefreshPending = true;
+            // Send priority uses foreground dispatcher processing. WPF treats Input
+            // priority as background processing, which can starve under continuous input.
+            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Send, new Action(ReconcileForegroundWindow));
+        }
+
+        private void ReconcileForegroundWindow()
+        {
+            _foregroundRefreshPending = false;
+            if (_stopped || _activationInProgress) return;
+            var handle = _windowManager.GetForegroundWindowHandle();
+            if (handle == _activeClient.Handle || !_thumbnailViews.TryGetValue(handle, out var selected)) return;
+            _activationInProgress = true;
+            try
+            {
+                var previous = GetActiveClient();
+                SwitchActiveClient(handle, selected.Title, minimizePrevious: false);
+                ApplyActiveClientAppearance(selected, previous);
+            }
+            catch (Exception ex) { _logger.Error(ex, "Reconciling foreground-client appearance failed"); }
+            finally { _activationInProgress = false; }
         }
 
         public void CycleNextClient(bool isForwards, SortedDictionary<int, string> cycleOrder)
@@ -437,6 +468,12 @@ namespace EveOPreview.Services
         public void Start()
         {
             _stopped = false;
+            if (_foregroundObserver == null)
+            {
+                try { _foregroundObserver = new ForegroundWindowObserver(ForegroundWindowChanged, _logger); }
+                catch (System.ComponentModel.Win32Exception ex)
+                { _logger.Warning(ex, "Foreground notifications unavailable; thumbnail polling remains enabled"); }
+            }
             RegisterAllHotkeys();
             _logger.Verbose("ThumbnailManager.Start: Starting thumbnail manager. RefreshPeriod={RefreshPeriod}ms", this._configuration.ThumbnailRefreshPeriod);
             this._thumbnailUpdateTimer.Start();
@@ -450,6 +487,8 @@ namespace EveOPreview.Services
             _logger.Verbose("ThumbnailManager.Stop: Stopping thumbnail manager");
             this._thumbnailUpdateTimer.Stop();
             _stopped = true;
+            _foregroundObserver?.Dispose();
+            _foregroundObserver = null;
             UnregisterExistingHotkeys();
             _logger.Verbose("ThumbnailManager.Stop: Service stopped");
         }
@@ -761,8 +800,8 @@ namespace EveOPreview.Services
 
         private void RaiseActivatedThumbnail(IThumbnailView view)
         {
-            // Give activation the same immediate feedback as highlighting. Do not wait
-            // for client activation, layout updates, or the periodic refresh to raise it.
+            // Raise immediately after requesting source focus and submitting its frame;
+            // do not wait for layout updates or the periodic refresh.
             this._thumbnailActivationOrder.Remove(view.Id);
             this._thumbnailActivationOrder.Add(view.Id);
             this._refreshThumbnailZOrder = true;

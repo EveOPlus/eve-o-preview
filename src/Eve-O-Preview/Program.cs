@@ -63,6 +63,7 @@ namespace EveOPreview
             else
             {
                 SetupLogger(args);
+                using var logLifetime = Log.Logger as IDisposable;
                 
                 Log.Information("Starting new instance of Eve-O Preview");
                 
@@ -148,16 +149,21 @@ namespace EveOPreview
             var isVerbose = args.Contains("--verbose") || args.Contains("-v");
             var minimumLevel = isVerbose ? LogEventLevel.Verbose : LogEventLevel.Information;
 
-            Log.Logger = new LoggerConfiguration()
+            var fileLogger = new LoggerConfiguration()
                 .MinimumLevel.Is(minimumLevel)
-                .Enrich.FromLogContext()
                 .WriteTo.File("logs/EVE-O Preview Log-.txt",
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 7,
                     fileSizeLimitBytes: 10 * 1024 * 1024,
                     rollOnFileSizeLimit: true,
                     restrictedToMinimumLevel: minimumLevel,
-                    outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] {Properties:j} {Message:lj}{NewLine}{Exception}")
+                    outputTemplate: "{Timestamp:HH:mm:ss.fff} [{Level:u3}] {Properties:j} {Message:lj}{NewLine}{Exception}")
+                .CreateLogger();
+
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Is(minimumLevel)
+                .Enrich.FromLogContext()
+                .WriteTo.Sink(new EveOPreview.Helper.AsyncLogSink(fileLogger))
                 .CreateLogger();
 
             Log.Logger.Information("Logger initialized. Application arguments: {Arguments}", string.Join(", ", args ?? Array.Empty<string>()));

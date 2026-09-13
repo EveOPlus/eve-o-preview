@@ -82,7 +82,7 @@ public sealed partial class WorkspaceView
             Control input;
             if (definition.Kind == SettingKind.Choice)
             {
-                var choices = new ComboBox { Name = "setting-" + definition.Key, ItemsSource = definition.Options, ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((option, _) => Text(option ?? "")), MinHeight = 34, HorizontalAlignment = HorizontalAlignment.Stretch, FontSize = 11 };
+                var choices = new ComboBox { Name = "setting-" + definition.Key, ItemsSource = definition.Options, ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((option, _) => Text(definition.Key == "PreviewOverlayRenderer" ? option == "Legacy" ? "Compatibility graphics" : "Enhanced graphics" : option ?? "")), MinHeight = 34, HorizontalAlignment = HorizontalAlignment.Stretch, FontSize = 11 };
                 if (definition.Key == "TitleFontStyle" && int.TryParse(fieldValue, out var style) && style is >= 0 and < 16) fieldValue = definition.Options![style];
                 choices.SelectedItem = fieldValue;
                 choices.SelectionChanged += (_, _) => Changed(choices.SelectedItem?.ToString() ?? "");
@@ -159,7 +159,8 @@ public sealed partial class WorkspaceView
 
     private void RenderSearch()
     {
-        var matches = SettingCatalog.All.Where(s => s.Matches(_query) || _localization.Contains($"{L(s.Label)} {L(s.Description)} {L(PageLabel(s.Page))}", _query)).ToArray();
+        var matches = SettingCatalog.All.Where(s => (!_theme.Legacy || s.Page != "PreviewGraphics")
+            && (s.Matches(_query) || _localization.Contains($"{L(s.Label)} {L(s.Description)} {L(PageLabel(s.Page))}", _query))).ToArray();
         Heading("Search results", F($"{matches.Length} settings matching “{_query}”. Edit them here; your navigation stays available."));
         foreach (var group in matches.GroupBy(s => s.Page))
         {
@@ -184,6 +185,6 @@ public sealed partial class WorkspaceView
             _page.Children.Add(Card(new StackPanel { Spacing = 9, Children = { Text("No matching settings", 18, _theme.Text, true), Text("Try a shorter term such as “opacity”, “FPS”, “hotkey” or “font”.", 13, _theme.Muted), ActionButton("Clear search", () => { _search.Text = L(""); }) } }));
     }
 
-    private static string PageLabel(string key) => key switch { "General" => "Window behavior & layouts", "Thumbnail" => "Preview windows", "Zoom" => "Hover zoom", "Overlay" => "Titles & highlighting", "AdvancedPreview" => "Advanced preview settings", "FpsAudio" => "Performance & audio", _ => key };
+    private static string PageLabel(string key) => key switch { "General" => "Window behavior & layouts", "Thumbnail" => "Preview windows", "Zoom" => "Hover zoom", "Overlay" => "Titles & highlighting", "AdvancedPreview" => "Advanced preview settings", "PreviewGraphics" => "Preview graphics", "FpsAudio" => "Performance & audio", _ => key };
 
 }

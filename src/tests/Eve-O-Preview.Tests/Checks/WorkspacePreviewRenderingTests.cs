@@ -26,6 +26,67 @@ public sealed class WorkspacePreviewRenderingTests(ITestOutputHelper output)
 {
     private static readonly Color Background = Color.FromArgb(16, 24, 37);
 
+    [Theory]
+    [InlineData(384, 216, 1)]
+    [InlineData(384, 216, 3)]
+    [InlineData(216, 384, 6)]
+    public void NativeActivePreviewHasTheConfiguredThicknessOnEveryEdge(int width, int height, int thickness)
+    {
+        var settings = new Dictionary<string, string>
+        {
+            ["PreviewOverlayRenderer"] = "NativeComposition", ["ShowThumbnailOverlays"] = "False",
+            ["ThumbnailWidth"] = width.ToString(), ["ThumbnailHeight"] = height.ToString(),
+            ["EnableActiveClientHighlight"] = "True", ["ActiveClientHighlightColor"] = "#00FF00",
+            ["ActiveClientHighlightThickness"] = thickness.ToString()
+        };
+        var renderer = new WindowsWorkspacePreviewRenderer();
+        using var stream = new MemoryStream(renderer.RenderPreview(new(settings, "EVE - Preview", Active: true)).Png);
+        using var bitmap = new Bitmap(stream);
+        int border = Color.Lime.ToArgb();
+        Assert.Equal(thickness, Enumerable.Range(0, width).TakeWhile(x => bitmap.GetPixel(x, height / 2).ToArgb() == border).Count());
+        Assert.Equal(thickness, Enumerable.Range(0, width).TakeWhile(x => bitmap.GetPixel(width - 1 - x, height / 2).ToArgb() == border).Count());
+        Assert.Equal(thickness, Enumerable.Range(0, height).TakeWhile(y => bitmap.GetPixel(width / 2, y).ToArgb() == border).Count());
+        Assert.Equal(thickness, Enumerable.Range(0, height).TakeWhile(y => bitmap.GetPixel(width / 2, height - 1 - y).ToArgb() == border).Count());
+    }
+
+    [Theory]
+    [InlineData(true, "Circle with slash")]
+    [InlineData(true, "Pause")]
+    [InlineData(false, "Cross")]
+    public void EnhancedPreviewSampleUsesTheLiveSceneAssets(bool showTitle, string marker)
+    {
+        var font = new FontSettings { Name = "Consolas", Size = 18, Style = FontStyle.Bold | FontStyle.Underline,
+            ForeColor = Color.Cyan, OutlineColor = Color.Black, OutlineWidth = 2,
+            PositionOffsetFromLeft = 9, PositionOffsetFromTop = 12 };
+        var settings = Settings(font);
+        settings["PreviewOverlayRenderer"] = "NativeComposition";
+        settings["ShowThumbnailOverlays"] = showTitle.ToString();
+        settings["CycleSkipIndicatorStyle"] = marker;
+        settings["CycleSkipIndicatorColor"] = "#FF0000";
+        using var expected = new Bitmap(384, 216, PixelFormat.Format32bppArgb);
+        expected.SetResolution(96, 96);
+        using (var graphics = Graphics.FromImage(expected))
+        {
+            graphics.Clear(Background);
+            EveOPreview.View.Rendering.OverlaySceneRasterizer.Draw(graphics, new EveOPreview.Preview.OverlayScene
+            {
+                Title = "Aura Asuna", ShowTitle = showTitle, CycleSkipped = true,
+                MarkerStyle = marker == "Pause" ? EveOPreview.Preview.CycleMarkerStyle.Pause
+                    : marker == "Cross" ? EveOPreview.Preview.CycleMarkerStyle.Cross : EveOPreview.Preview.CycleMarkerStyle.CircleSlash,
+                MarkerColor = 0xFFFF0000,
+                Font = new EveOPreview.Preview.OverlayFont(font.Name, font.Size, (EveOPreview.Preview.OverlayFontStyle)font.Style,
+                    unchecked((uint)font.ForeColor.ToArgb()), unchecked((uint)font.OutlineColor.ToArgb()), font.OutlineWidth,
+                    font.PositionOffsetFromLeft, font.PositionOffsetFromTop)
+            }, new EveOPreview.Preview.PreviewSize(384, 216));
+        }
+        var renderer = new WindowsWorkspacePreviewRenderer();
+        using var encoded = new MemoryStream(renderer.RenderPreview(new(settings, "EVE - Aura Asuna", CycleSkipped: true)).Png);
+        using var actual = new Bitmap(encoded);
+        AssertPixelsEqual(expected, actual, "Enhanced live asset and sample " + marker);
+        Assert.True(Enumerable.Range(0, actual.Width).Any(x => Enumerable.Range(0, actual.Height)
+            .Any(y => actual.GetPixel(x, y).R > 200 && actual.GetPixel(x, y).G < 100)), "The skip marker must actually render.");
+    }
+
     [Fact]
     public async Task StillCaptureSkipsUnavailableClientsAndReturnsABoundedImageWithoutActivation()
     {

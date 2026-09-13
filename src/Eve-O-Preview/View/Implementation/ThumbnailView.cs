@@ -29,6 +29,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Collections.Generic;
+using EveOPreview.Preview;
+using EveOPreview.View.Rendering;
 
 namespace EveOPreview.View
 {
@@ -41,7 +44,7 @@ namespace EveOPreview.View
         #endregion
 
         #region Private fields
-        private readonly ThumbnailOverlay _overlay;
+        private ThumbnailOverlay _overlay;
 
         // Part of the logic (namely current size / position management)
         // was moved to the view due to the performance reasons
@@ -118,6 +121,38 @@ namespace EveOPreview.View
             if (IsDisposed || _overlay.IsDisposed) return;
             _overlay.SetCycleSkipIndicator(_config.IsClientCycleSkipped(Title), _config.CycleSkipIndicatorStyle, _config.CycleSkipIndicatorColor);
         }
+
+        /// <summary>Changes only the graphics overlay; the game image and source identity stay alive.</summary>
+        public void SetOverlayRenderer(OverlayRendererKind kind)
+        {
+            if (_overlay.RendererKind == kind) return;
+            bool wasVisible = _isOverlayVisible;
+            var stats = _overlay.Scene.Stats;
+            var alertBounds = _overlay.Scene.AlertBounds;
+            _overlay.Dispose();
+            _overlay = new ThumbnailOverlay(this, MouseDown_Handler, kind);
+            _overlay.SetOverlayLabel(Title.Replace("EVE - ", ""));
+            if (_titleFontSettings != null) _overlay.SetOverlayFont(_titleFontSettings);
+            _overlay.EnableOverlayLabel(IsOverlayEnabled);
+            _overlay.SetStats(stats);
+            _overlay.SetAlertBounds(alertBounds);
+            _overlay.TopMost = _isTopMost;
+            _overlay.Opacity = _opacity > 0.8 ? 1.0 : 1.0 - (1.0 - _opacity) / 2;
+            RefreshCycleSkipIndicator();
+            _isOverlayVisible = false;
+            _isHighlightChanged = true;
+            if (wasVisible && IsActive) RefreshAppearance(true);
+        }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public OverlayCapabilities GraphicsCapabilities => _overlay.GraphicsCapabilities;
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public OverlayRendererKind OverlayRenderer => _overlay.RendererKind;
+
+        public void SetOverlayStats(IReadOnlyList<OverlayStat> stats) => _overlay.SetStats(stats);
+        public void ShowAlert(PreviewAlert alert) { if (IsActive) _overlay.ShowAlert(alert); }
+        public void ClearAlerts() => _overlay.ClearAlerts();
 
         private void InitializeContextMenu()
         {
@@ -381,6 +416,7 @@ namespace EveOPreview.View
             // The native calls below show both windows. Avoid Form.Show here: an
             // owned form can focus its active control even with ShowWithoutActivation.
             this._isOverlayVisible = true;
+            _overlay.RestoreGraphicsVisibility();
             // Reordering/restoring windows must leave their existing rendered images
             // intact. Image maintenance belongs to the normal refresh path.
 
@@ -403,11 +439,14 @@ namespace EveOPreview.View
             SetHighlight(_config.EnableActiveClientHighlight, _config.ActiveClientHighlightThickness);
         }
 
+        private bool _isHighlightChanged;
+        private Color _highlightColor;
+
         public void SetHighlight(bool enabled, int width)
         {
             Color color = _config.PerClientActiveClientHighlightColor.TryGetValue(Title, out Color perClient)
                 ? perClient : _config.ActiveClientHighlightColor;
-            if (this._isHighlightRequested == enabled && (!enabled || (_highlightWidth == width && BackColor == color)))
+            if (this._isHighlightRequested == enabled && (!enabled || (_highlightWidth == width && _highlightColor == color)))
             {
                 return;
             }
@@ -416,15 +455,14 @@ namespace EveOPreview.View
             {
                 this._isHighlightRequested = true;
                 this._highlightWidth = width;
-                this.BackColor = color;
+                this._highlightColor = color;
             }
             else
             {
                 this._isHighlightRequested = false;
-                this.BackColor = SystemColors.Control;
             }
 
-            this._isSizeChanged = true;
+            this._isHighlightChanged = true;
         }
 
         public void ClearBorder()
@@ -496,6 +534,7 @@ namespace EveOPreview.View
         public void Refresh(bool forceRefresh)
         {
             this.RefreshThumbnail(forceRefresh);
+            if (forceRefresh) this._overlay.MaintainGraphics();
             this.RefreshAppearance(forceRefresh);
         }
 
@@ -503,10 +542,17 @@ namespace EveOPreview.View
 
         private void RefreshAppearance(bool forceRefresh)
         {
-            this.HighlightThumbnail(forceRefresh || this._isSizeChanged);
+            var renderer = _overlay.RendererKind;
+            bool highlightChanged = _isHighlightChanged;
+            this.HighlightThumbnail(forceRefresh || this._isSizeChanged || highlightChanged);
             this.RefreshOverlay(forceRefresh || this._isSizeChanged || this._isLocationChanged);
+            // Initial native creation can fall back while showing the overlay.
+            if (renderer != _overlay.RendererKind) this.HighlightThumbnail(true);
+            if (highlightChanged && _overlay.RendererKind == OverlayRendererKind.Legacy && Visible)
+                Update(); // Submit the compatibility border now, without waiting for WM_PAINT.
 
             this._isSizeChanged = false;
+            this._isHighlightChanged = false;
         }
 
         protected abstract void RefreshThumbnail(bool forceRefresh);
@@ -530,18 +576,51 @@ namespace EveOPreview.View
             {
                 //No highlighting enabled, so no math required
                 this.ResizeThumbnail(baseWidth, baseHeight, 0, 0, 0, 0);
+                this._overlay.SetActiveBorder(null);
+                if (_overlay.RendererKind == OverlayRendererKind.Legacy) BackColor = SystemColors.Control;
                 return;
             }
 
             double baseAspectRatio = ((double)baseWidth) / baseHeight;
 
-            int actualHeight = baseHeight - 2 * this._highlightWidth;
+            int top = Math.Clamp(this._highlightWidth, 0, baseHeight / 2);
+            int actualHeight = baseHeight - 2 * top;
             double desiredWidth = actualHeight * baseAspectRatio;
             int actualWidth = (int)Math.Round(desiredWidth, MidpointRounding.AwayFromZero);
             int highlightWidthLeft = (baseWidth - actualWidth) / 2;
             int highlightWidthRight = baseWidth - actualWidth - highlightWidthLeft;
 
-            this.ResizeThumbnail(this.ClientSize.Width, this.ClientSize.Height, this._highlightWidth, highlightWidthRight, this._highlightWidth, highlightWidthLeft);
+            if (_overlay.RendererKind == OverlayRendererKind.NativeComposition)
+            {
+                // The image is no longer resized for selection. Each overlay edge
+                // can use exactly the configured thickness, independent of aspect ratio.
+                top = Math.Clamp(_highlightWidth, 0, Math.Min(baseWidth, baseHeight) / 2);
+                actualWidth = baseWidth - 2 * top;
+                actualHeight = baseHeight - 2 * top;
+                highlightWidthLeft = highlightWidthRight = top;
+            }
+            var inner = new PreviewRect(highlightWidthLeft, top, Math.Max(0, actualWidth), Math.Max(0, actualHeight));
+            if (_overlay.RendererKind == OverlayRendererKind.NativeComposition)
+            {
+                _overlay.SetActiveBorder(new OverlayBorder(unchecked((uint)_highlightColor.ToArgb()), inner));
+                if (_overlay.RendererKind != OverlayRendererKind.NativeComposition)
+                {
+                    HighlightThumbnail(true); // Recompute the compatibility image inset after device loss.
+                    return;
+                }
+            }
+            if (_overlay.RendererKind == OverlayRendererKind.NativeComposition)
+            {
+                // Selection is a retained frame over the image. Its DWM destination
+                // stays fixed, so a switch needs no DwmUpdateThumbnailProperties call.
+                ResizeThumbnail(baseWidth, baseHeight, 0, 0, 0, 0);
+            }
+            else
+            {
+                BackColor = _highlightColor;
+                ResizeThumbnail(baseWidth, baseHeight, top, highlightWidthRight, top, highlightWidthLeft);
+                _overlay.SetAlertBounds(inner);
+            }
         }
 
         private void RefreshOverlay(bool forceRefresh)
@@ -591,6 +670,9 @@ namespace EveOPreview.View
             {
                 var Params = base.CreateParams;
                 Params.ExStyle |= (int)InteropConstants.WS_EX_TOOLWINDOW;
+                // Preview clicks explicitly activate the source client. The preview
+                // itself must not take keyboard focus during creation or interaction.
+                Params.ExStyle |= 0x08000000; // WS_EX_NOACTIVATE
                 return Params;
             }
         }
@@ -644,7 +726,6 @@ namespace EveOPreview.View
 
         private void HotkeyPressed_Handler(object sender, HandledEventArgs e)
         {
-            this.SetHighlight();
             this.ThumbnailActivated?.Invoke(this.Id);
 
             e.Handled = true;
@@ -799,12 +880,7 @@ namespace EveOPreview.View
                     case MouseButtons.Left when modifierKeys == (Keys.Control | Keys.Shift):
                         break;
                     case MouseButtons.Left:
-                        var oldWindow = this._thumbnailManager.GetActiveClient();
                         this.ThumbnailActivated?.Invoke(this.Id);
-                        this.SetHighlight();
-                        this.Refresh(false);
-
-                        oldWindow?.ClearBorder();
                         break;
                     case MouseButtons.Right:
                         _rightClickStartPosition = Cursor.Position;

@@ -21,13 +21,16 @@ using EveOPreview.Services;
 using Gma.System.MouseKeyHook;
 using MediatR;
 using Serilog;
+using EveOPreview.Preview;
+using EveOPreview.View.Rendering;
 
 namespace EveOPreview.View
 {
     sealed class LiveThumbnailView : ThumbnailView
     {
         #region Private fields
-        private IDwmThumbnail _thumbnail;
+        private IPreviewSession _thumbnail;
+        private readonly IPreviewBackend _backend;
         private Point _startLocation;
         private Point _endLocation;
         private IThumbnailConfiguration _config;
@@ -41,30 +44,26 @@ namespace EveOPreview.View
             this._startLocation = new Point(0, 0);
             this._endLocation = new Point(this.ClientSize);
             this._config = config;
+            // Runtime IDs remain adapter-local; persisted full-title identities are unchanged.
+            _backend = new WindowsDwmPreviewBackend(windowManager, () => Handle, client => new IntPtr(client.Value));
             _logger.Verbose("LiveThumbnailView created for window 0x{Handle:X}", this.Id);
         }
 
         protected override void RefreshThumbnail(bool forceRefresh)
         {
-            if (this._thumbnail != null)
+            if (_thumbnail == null)
             {
-                // DWM maintains the live image. Reapply properties during maintenance,
-                // but replace the relationship only if Windows reports it is unusable.
-                // Re-registering a healthy image can produce a visible gap during switching.
-                if (!forceRefresh || this._thumbnail.Update()) return;
+                _thumbnail = _backend.CreateSession(new PreviewClientId(Id.ToInt64()));
+                ApplyImageBounds();
             }
-
-            IDwmThumbnail obsoleteThumbnail = this._thumbnail;
-            _logger.Verbose("Registering/recovering DWM thumbnail for 0x{Handle:X}", this.Id);
-            this.RegisterThumbnail();
-            obsoleteThumbnail?.Unregister();
+            _thumbnail.Refresh(forceRefresh);
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _thumbnail?.Unregister();
+                _thumbnail?.Dispose();
                 _thumbnail = null;
             }
             base.Dispose(disposing);
@@ -86,17 +85,11 @@ namespace EveOPreview.View
             this._startLocation = new Point(left, top);
             this._endLocation = new Point(right, bottom);
 
-            this._thumbnail?.Move(left, top, right, bottom);
-            this._thumbnail?.Update();
+            ApplyImageBounds();
         }
 
-        private void RegisterThumbnail()
-        {
-            this._thumbnail = this.WindowManager.GetLiveThumbnail(this.Handle, this.Id);
-            this._thumbnail.Move(this._startLocation.X, this._startLocation.Y, this._endLocation.X, this._endLocation.Y);
-            this._thumbnail.Update();
-            _logger.Verbose("DWM thumbnail registered and moved for 0x{Handle:X}", this.Id);
-        }
+        private void ApplyImageBounds() => _thumbnail?.SetBounds(new PreviewRect(
+            _startLocation.X, _startLocation.Y, _endLocation.X - _startLocation.X, _endLocation.Y - _startLocation.Y));
     }
 
 }

@@ -11,6 +11,32 @@ namespace EveOPreview.Tests.Checks;
 
 public sealed class WorkspacePreferencesTests
 {
+    [Fact]
+    public void PreviewGraphicsSelectionSurvivesRestartAndRejectsUnknownValues()
+    {
+        string path = Path.GetTempFileName();
+        using var logger = new LoggerConfiguration().CreateLogger();
+        try
+        {
+            File.WriteAllText(path, "{\"Theme\":\"Light\",\"ConfigVersion\":1,\"FutureSetting\":42}");
+            var preferences = new ApplicationPreferences(path, logger);
+            Assert.Equal("NativeComposition", preferences.PreviewOverlayRenderer);
+            int changes = 0;
+            preferences.Changed += () => changes++;
+            preferences.SetPreviewOverlayRenderer("Legacy");
+            preferences.SetPreviewOverlayRenderer("Legacy");
+            Assert.Equal(1, changes);
+            Assert.Equal("Legacy", new ApplicationPreferences(path, logger).PreviewOverlayRenderer);
+            Assert.Equal("Light", preferences.Theme);
+            Assert.Equal(42, (int)JObject.Parse(File.ReadAllText(path))["FutureSetting"]);
+            string saved = File.ReadAllText(path);
+            Assert.Throws<ArgumentException>(() => preferences.SetPreviewOverlayRenderer("Unknown"));
+            Assert.Equal(saved, File.ReadAllText(path));
+            Assert.Equal(1, changes);
+        }
+        finally { File.Delete(path); }
+    }
+
     [Theory]
     [InlineData("Light")]
     [InlineData("Dark")]

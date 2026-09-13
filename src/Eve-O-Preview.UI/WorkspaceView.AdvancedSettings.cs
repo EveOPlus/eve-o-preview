@@ -22,6 +22,7 @@ public sealed partial class WorkspaceView
 
     private void BuildAdvancedPreviewEditor(Panel parent)
     {
+        if (!_theme.Legacy) BuildPreviewGraphicsEditor(parent);
         parent.Children.Add(Card(new StackPanel { Spacing = 10, Children = {
             Text("Arranging & hiding previews", 14, _theme.Text, true),
             PreviewToggle("EnableThumbnailSnap", "Snap previews together"),

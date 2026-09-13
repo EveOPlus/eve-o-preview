@@ -15,10 +15,10 @@
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using System;
-using System.Drawing;
-using System.Windows.Forms;
 using EveOPreview.Configuration;
 using EveOPreview.Services;
+using EveOPreview.Preview;
+using EveOPreview.View.Rendering;
 using Gma.System.MouseKeyHook;
 using MediatR;
 using Serilog;
@@ -27,89 +27,30 @@ namespace EveOPreview.View
 {
     sealed class StaticThumbnailView : ThumbnailView
     {
-        #region Private fields
-        private readonly PictureBox _thumbnail;
-        private IThumbnailConfiguration _config;
-        private readonly ILogger _logger;
-        #endregion
+        private readonly IPreviewSession _thumbnail;
 
-        public StaticThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager, IMediator mediator, IKeyboardMouseEvents kbmEvents, ILogger logger)
+        public StaticThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager,
+            IMediator mediator, IKeyboardMouseEvents kbmEvents, ILogger logger)
             : base(windowManager, config, thumbnailManager, mediator, kbmEvents)
         {
-            _logger = logger;
-            this._thumbnail = new StaticThumbnailImage
-            {
-                TabStop = false,
-                SizeMode = PictureBoxSizeMode.StretchImage,
-                Location = new Point(0, 0),
-                Size = new Size(this.ClientSize.Width, this.ClientSize.Height)
-            };
-            this.Controls.Add(this._thumbnail);
-            this._config = config;
-            _logger.Verbose("StaticThumbnailView created for window 0x{Handle:X}", this.Id);
+            // The adapter resolves the current source when it captures, including the
+            // initial factory assignment that occurs after this constructor.
+            var backend = new WindowsStaticPreviewBackend(windowManager, this, _ => Id);
+            _thumbnail = backend.CreateSession(default);
+            _thumbnail.SetBounds(new PreviewRect(0, 0, ClientSize.Width, ClientSize.Height));
         }
 
-        protected override void RefreshThumbnail(bool forceRefresh)
-        {
-            if (!forceRefresh)
-            {
-                return;
-            }
+        protected override void RefreshThumbnail(bool forceRefresh) => _thumbnail.Refresh(forceRefresh);
 
-            _logger.Verbose("Refreshing static thumbnail for 0x{Handle:X}", this.Id);
-            var thumbnail = this.WindowManager.GetStaticThumbnail(this.Id);
-            if (thumbnail != null)
-            {
-                var oldImage = this._thumbnail.Image;
-                this._thumbnail.Image = thumbnail;
-                oldImage?.Dispose();
-                _logger.Verbose("Static thumbnail refreshed successfully for 0x{Handle:X}", this.Id);
-            }
-            else
-            {
-                _logger.Warning("Failed to capture static thumbnail for 0x{Handle:X}", this.Id);
-            }
-        }
+        protected override void ResizeThumbnail(int baseWidth, int baseHeight, int highlightWidthTop,
+            int highlightWidthRight, int highlightWidthBottom, int highlightWidthLeft) =>
+            _thumbnail.SetBounds(new PreviewRect(highlightWidthLeft, highlightWidthTop,
+                baseWidth - highlightWidthLeft - highlightWidthRight, baseHeight - highlightWidthTop - highlightWidthBottom));
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing && _thumbnail != null)
-            {
-                _thumbnail.Image?.Dispose();
-                _thumbnail.Image = null;
-            }
+            if (disposing) _thumbnail?.Dispose();
             base.Dispose(disposing);
-        }
-
-        protected override void ResizeThumbnail(int baseWidth, int baseHeight, int highlightWidthTop, int highlightWidthRight, int highlightWidthBottom, int highlightWidthLeft)
-        {
-            var left = 0 + highlightWidthLeft;
-            var top = 0 + highlightWidthTop;
-            if (this.IsLocationUpdateRequired(this._thumbnail.Location, left, top))
-            {
-                _logger.Verbose("Resizing static thumbnail location for 0x{Handle:X} to ({Left},{Top})", this.Id, left, top);
-                this._thumbnail.Location = new Point(left, top);
-            }
-
-            var width = baseWidth - highlightWidthLeft - highlightWidthRight;
-            var height = baseHeight - highlightWidthTop - highlightWidthBottom;
-            if (this.IsSizeUpdateRequired(this._thumbnail.Size, width, height))
-            {
-                _logger.Verbose("Resizing static thumbnail size for 0x{Handle:X} to {Width}x{Height}", this.Id, width, height);
-                this._thumbnail.Size = new Size(width, height);
-            }
-        }
-
-
-
-        private bool IsLocationUpdateRequired(Point currentLocation, int left, int top)
-        {
-            return (currentLocation.X != left) || (currentLocation.Y != top);
-        }
-
-        private bool IsSizeUpdateRequired(Size currentSize, int width, int height)
-        {
-            return (currentSize.Width != width) || (currentSize.Height != height);
         }
     }
 }

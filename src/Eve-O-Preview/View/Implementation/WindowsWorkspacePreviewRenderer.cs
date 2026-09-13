@@ -9,10 +9,12 @@ using System.Linq;
 using System.Windows.Forms;
 using EveOPreview.UI;
 using EveOPreview.View.CustomControl;
+using EveOPreview.Preview;
+using EveOPreview.View.Rendering;
 
 namespace EveOPreview.View;
 
-/// <summary>Renders draft settings with the same GDI+ control used by the live thumbnail overlay.</summary>
+/// <summary>Renders drafts through the selected live overlay's asset renderer.</summary>
 public sealed class WindowsWorkspacePreviewRenderer : IWorkspacePreviewRenderer
 {
     private static readonly Lazy<IReadOnlyList<string>> InstalledFonts = new(() =>
@@ -46,6 +48,9 @@ public sealed class WindowsWorkspacePreviewRenderer : IWorkspacePreviewRenderer
 
         int width = (int)Number("ThumbnailWidth", "384", 1, 3840);
         int height = (int)Number("ThumbnailHeight", "216", 1, 2160);
+        bool native = Value("PreviewOverlayRenderer", "Legacy") == "NativeComposition";
+        int overlayBorder = request.Active && Enabled("EnableActiveClientHighlight", false) && native
+            ? Math.Min((int)Number("ActiveClientHighlightThickness", "3", 1, 6), Math.Min(width, height) / 2) : 0;
         using var bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
         bitmap.SetResolution(96, 96);
         using (var graphics = Graphics.FromImage(bitmap))
@@ -53,7 +58,7 @@ public sealed class WindowsWorkspacePreviewRenderer : IWorkspacePreviewRenderer
             var background = ColorTranslator.FromHtml(request.BackgroundColor);
             graphics.Clear(background);
             var imageBounds = new Rectangle(0, 0, width, height);
-            if (request.Active && Enabled("EnableActiveClientHighlight", false))
+            if (request.Active && Enabled("EnableActiveClientHighlight", false) && !native)
             {
                 int thickness = (int)Number("ActiveClientHighlightThickness", "3", 1, 6);
                 int imageHeight = Math.Max(0, height - 2 * thickness);
@@ -80,23 +85,54 @@ public sealed class WindowsWorkspacePreviewRenderer : IWorkspacePreviewRenderer
                 using var font = new Font(Value("TitleFontName", "Arial"), (float)Number("TitleFontSize", "14.25", 1, 200), style);
                 if (!font.FontFamily.Name.Equals(Value("TitleFontName", "Arial"), StringComparison.OrdinalIgnoreCase))
                     throw new ArgumentException("Choose an installed font to preview it.");
-                using var label = new PreviewLabel
+                if (native)
                 {
-                    AutoSize = true,
-                    Font = font,
-                    Text = request.Title.Replace("EVE - ", ""),
-                    ForeColor = ColorValue("TitleFontForeColor", "#FFA500"),
-                    OutlineColor = ColorValue("TitleFontOutlineColor", "#000000"),
-                    OutlineWidth = (float)Number("TitleFontOutlineWidth", "3", 0, 20)
-                };
-                label.SetTitleVisible(Enabled("ShowThumbnailOverlays", true));
-                label.SetCycleSkipIndicator(request.CycleSkipped, Value("CycleSkipIndicatorStyle", "Circle with slash"), ColorValue("CycleSkipIndicatorColor", "#FF0000"));
-                label.Size = label.GetPreferredSize(Size.Empty);
-                int left = (int)Number("TitleFontOffsetLeft", "10", -10000, 10000);
-                int top = (int)Number("TitleFontOffsetTop", "5", -10000, 10000);
-                graphics.TranslateTransform(left, top);
-                graphics.SetClip(label.ClientRectangle, System.Drawing.Drawing2D.CombineMode.Intersect);
-                label.PaintTitle(graphics);
+                    OverlaySceneRasterizer.Draw(graphics, new OverlayScene
+                    {
+                        Title = request.Title.Replace("EVE - ", ""),
+                        ShowTitle = Enabled("ShowThumbnailOverlays", true),
+                        Font = new OverlayFont(font.FontFamily.Name, font.Size, (OverlayFontStyle)style,
+                            unchecked((uint)ColorValue("TitleFontForeColor", "#FFA500").ToArgb()),
+                            unchecked((uint)ColorValue("TitleFontOutlineColor", "#000000").ToArgb()),
+                            (float)Number("TitleFontOutlineWidth", "3", 0, 20),
+                            (int)Number("TitleFontOffsetLeft", "10", -10000, 10000),
+                            (int)Number("TitleFontOffsetTop", "5", -10000, 10000)),
+                        CycleSkipped = request.CycleSkipped,
+                        MarkerStyle = Value("CycleSkipIndicatorStyle", "Circle with slash") switch
+                        { "Pause" => CycleMarkerStyle.Pause, "Cross" => CycleMarkerStyle.Cross, _ => CycleMarkerStyle.CircleSlash },
+                        MarkerColor = unchecked((uint)ColorValue("CycleSkipIndicatorColor", "#FF0000").ToArgb())
+                    }, new PreviewSize(width, height));
+                }
+                else
+                {
+                    using var label = new PreviewLabel
+                    {
+                        AutoSize = true,
+                        Font = font,
+                        Text = request.Title.Replace("EVE - ", ""),
+                        ForeColor = ColorValue("TitleFontForeColor", "#FFA500"),
+                        OutlineColor = ColorValue("TitleFontOutlineColor", "#000000"),
+                        OutlineWidth = (float)Number("TitleFontOutlineWidth", "3", 0, 20)
+                    };
+                    label.SetTitleVisible(Enabled("ShowThumbnailOverlays", true));
+                    label.SetCycleSkipIndicator(request.CycleSkipped, Value("CycleSkipIndicatorStyle", "Circle with slash"), ColorValue("CycleSkipIndicatorColor", "#FF0000"));
+                    label.Size = label.GetPreferredSize(Size.Empty);
+                    int left = (int)Number("TitleFontOffsetLeft", "10", -10000, 10000);
+                    int top = (int)Number("TitleFontOffsetTop", "5", -10000, 10000);
+                    graphics.TranslateTransform(left, top);
+                    graphics.SetClip(label.ClientRectangle, System.Drawing.Drawing2D.CombineMode.Intersect);
+                    label.PaintTitle(graphics);
+                }
+            }
+            if (overlayBorder > 0)
+            {
+                // Match the retained live frame: uniform edges over a full-size
+                // image, including title ink that reaches the edge of the preview.
+                using var borderBrush = new SolidBrush(ColorValue("ActiveClientHighlightColor", "#ADFF2F"));
+                graphics.FillRectangle(borderBrush, 0, 0, width, overlayBorder);
+                graphics.FillRectangle(borderBrush, 0, height - overlayBorder, width, overlayBorder);
+                graphics.FillRectangle(borderBrush, 0, overlayBorder, overlayBorder, height - 2 * overlayBorder);
+                graphics.FillRectangle(borderBrush, width - overlayBorder, overlayBorder, overlayBorder, height - 2 * overlayBorder);
             }
         }
         using var stream = new MemoryStream();
