@@ -37,7 +37,7 @@ public sealed class WorkspaceForm : Form, IMainFormView, IAsyncSettingsView
         IConfigurationStorage storage, IThumbnailConfiguration configuration, IProfileManager profiles,
         ApplicationPreferences preferences, IWorkspacePortraitProvider portraits, IWorkspacePreviewCapture previewCapture = null,
         EveOPreview.Services.Implementation.CharacterIdentityCache characters = null,
-        EveOPreview.Services.IThumbnailManager thumbnails = null)
+        EveOPreview.Services.IThumbnailManager thumbnails = null, IWorkspaceCombatLogs combatLogs = null, IWorkspaceStaticData staticData = null)
     {
         _context = context;
         _preferences = preferences;
@@ -50,8 +50,8 @@ public sealed class WorkspaceForm : Form, IMainFormView, IAsyncSettingsView
         AutoScaleMode = AutoScaleMode.Dpi;
         ApplyNativeTheme();
         Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath) ?? SystemIcons.Application;
-        Backend = new WindowsWorkspaceBackend(this, this, mediator, storage, configuration, profiles, preferences, logger, portraits, previewCapture, characters, thumbnails);
-        _workspace = new WorkspaceView(Backend);
+        Backend = new WindowsWorkspaceBackend(this, this, mediator, storage, configuration, profiles, preferences, logger, portraits, previewCapture, characters, thumbnails, combatLogs, staticData);
+        _workspace = new WorkspaceView(Backend, combatLogs is null ? null : new[] { CombatLogView.CreateModule() });
         _workspaceHost = new WorkspaceAvaloniaHost { Dock = DockStyle.Fill, Content = _workspace };
         Controls.Add(_workspaceHost);
         var menu = new ContextMenuStrip();
@@ -66,6 +66,9 @@ public sealed class WorkspaceForm : Form, IMainFormView, IAsyncSettingsView
         Resize += (_, _) => { if (WindowState == FormWindowState.Minimized) FormMinimized?.Invoke(); };
         FormClosing += (_, e) =>
         {
+            // Windows is querying, not confirming shutdown. Leave drafts and
+            // services intact in case another application cancels the session end.
+            if (e.CloseReason == CloseReason.WindowsShutDown) { e.Cancel = false; return; }
             if (Backend.IsBusy) { e.Cancel = true; return; }
             if (!MinimizeToTray && _workspace.HasUnappliedEdits)
             {
@@ -76,6 +79,10 @@ public sealed class WorkspaceForm : Form, IMainFormView, IAsyncSettingsView
             var request = new ViewCloseRequest();
             FormCloseRequested?.Invoke(request);
             e.Cancel = !request.Allow;
+        };
+        FormClosed += (_, e) =>
+        {
+            if (e.CloseReason == CloseReason.WindowsShutDown) WindowsSessionEnding?.Invoke();
         };
     }
 
@@ -284,6 +291,8 @@ public sealed class WorkspaceForm : Form, IMainFormView, IAsyncSettingsView
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Action ApplicationExitRequested { get => RequestApplicationExit; set => _exitApplication = value; }
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Action WindowsSessionEnding { get; set; }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Action FormActivated { get; set; }

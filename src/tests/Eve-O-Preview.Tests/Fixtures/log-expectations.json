@@ -1,0 +1,41 @@
+[
+  {
+    "File": "autocannon.txt",
+    "Entries": 75,
+    "NpcAliases": [
+      "Sample NPC 1",
+      "Sample NPC 2",
+      "Sample NPC 3",
+      "Sample NPC 4"
+    ],
+    "IncomingDamage": 644.0,
+    "OutgoingDamage": 1580.0,
+    "IncomingRepair": 0,
+    "OutgoingRepair": 0
+  },
+  {
+    "File": "repairs.txt",
+    "Entries": 102,
+    "NpcAliases": [
+      "Sample NPC 1",
+      "Sample NPC 10",
+      "Sample NPC 2",
+      "Sample NPC 3",
+      "Sample NPC 8",
+      "Sample NPC 9"
+    ],
+    "IncomingDamage": 1973.0,
+    "OutgoingDamage": 12431.0,
+    "IncomingRepair": 1792.0,
+    "OutgoingRepair": 0
+  },
+  {
+    "File": "artillery.txt",
+    "Entries": 6,
+    "NpcAliases": [],
+    "IncomingDamage": 210.0,
+    "OutgoingDamage": 2275.0,
+    "IncomingRepair": 0,
+    "OutgoingRepair": 0
+  }
+]

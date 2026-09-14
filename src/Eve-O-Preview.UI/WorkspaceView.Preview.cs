@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using EveOPreview.Preview;
 
 namespace EveOPreview.UI;
 
@@ -102,7 +103,7 @@ public sealed partial class WorkspaceView
 
     private void AddFontPreview() => _page.Children.Add(BuildTitlePreview(0, 160));
 
-    private IReadOnlyDictionary<string, string> PreviewSettings()
+    private Dictionary<string, string> PreviewSettings()
     {
         var settings = new Dictionary<string, string>(_snapshot.Settings, StringComparer.Ordinal);
         foreach (var draft in _drafts) settings[draft.Key] = draft.Value;
@@ -124,11 +125,30 @@ public sealed partial class WorkspaceView
     {
         if (_disposed || _previewSurfaces.Count == 0) return;
         var settings = PreviewSettings();
+        if (_theme.Legacy) settings["ShowCurrentSolarSystem"] = "False";
+        else if (_backend is IWorkspaceCombatLogs logs)
+            settings["SolarSystemSample"] = logs.ReadLogs().Characters.FirstOrDefault(x => "EVE - " + x.Name == _previewCharacter)?.SolarSystem ?? "Jita";
         try
         {
             foreach (var definition in SettingCatalog.All.Where(s => s.Page is "Thumbnail" or "Overlay"))
                 if (settings.TryGetValue(definition.Key, out var value) && SettingCatalog.Validate(EffectiveDefinition(definition), value, L) is { } error)
                     throw new ArgumentException(L(definition.Label) + ": " + error);
+            if (!_theme.Legacy && _pageId == "Previews")
+            {
+                double height = _previewNarrow ? 40 : 96;
+                if (bool.TryParse(settings.GetValueOrDefault("ShowCurrentSolarSystem"), out var showSystem) && showSystem)
+                {
+                    double.TryParse(settings.GetValueOrDefault("TitleFontSize"), CultureInfo.InvariantCulture, out var titleSize);
+                    double.TryParse(settings.GetValueOrDefault("SolarSystemFontSize"), CultureInfo.InvariantCulture, out var systemSize);
+                    double.TryParse(settings.GetValueOrDefault("TitleFontOffsetTop"), CultureInfo.InvariantCulture, out var top);
+                    if (systemSize <= 0) systemSize = titleSize;
+                    bool vertical = settings.GetValueOrDefault("SolarSystemPlacement", "Below") is "Below" or "Above";
+                    bool.TryParse(settings.GetValueOrDefault("ShowThumbnailOverlays"), out var showTitle);
+                    double rows = showTitle ? vertical ? titleSize + systemSize : Math.Max(titleSize, systemSize) : systemSize;
+                    height = Math.Max(height, Math.Min(160, Math.Max(0, top) + rows * 1.35 + 14));
+                }
+                foreach (var surface in _previewSurfaces) surface.Height = height;
+            }
             if (_backend is IWorkspacePreviewRenderer renderer)
             {
                 var rendered = renderer.RenderPreview(new WorkspacePreviewRequest(settings, _theme.Legacy ? "Sample" : _previewCharacter, !_theme.Legacy && _previewActive, _theme.Legacy ? "#F0F0F0" : "#101925", _previewSkipped, _theme.Legacy ? null : _previewStill?.Png));
@@ -149,6 +169,8 @@ public sealed partial class WorkspaceView
                 foreach (var surface in _previewSurfaces)
                     surface.SetFallback(new PortablePreviewCanvas(settings, _theme.Legacy ? "Sample" : _previewCharacter, !_theme.Legacy && _previewActive, _theme.Legacy ? "#F0F0F0" : "#101925", _previewSkipped, _theme.Legacy ? null : _previewStillBitmap) { Width = _previewPixelWidth, Height = _previewPixelHeight });
             }
+            if (!_theme.Legacy && Enum.TryParse<OverlayPosition>(settings.GetValueOrDefault("TitlePosition", "TopLeft"), out var titlePosition))
+                foreach (var surface in _previewSurfaces) surface.FocusTitle(titlePosition);
             _previewRenderError = null;
         }
         catch (Exception ex) { _previewRenderError = ex.Message; }
@@ -236,6 +258,30 @@ public sealed partial class WorkspaceView
             ConstrainBitmapSize();
             old?.Dispose();
         }
+        public void FocusTitle(OverlayPosition position)
+        {
+            // The compact sample deliberately shows an actual-size strip. Follow
+            // the edited anchor after layout instead of leaving a bottom title offscreen.
+            // Users can still pan freely until the next appearance edit.
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (Child != _actualViewer) return;
+                double horizontal = position switch
+                {
+                    OverlayPosition.TopCenter or OverlayPosition.MiddleCenter or OverlayPosition.BottomCenter => .5,
+                    OverlayPosition.TopRight or OverlayPosition.MiddleRight or OverlayPosition.BottomRight => 1,
+                    _ => 0
+                };
+                double vertical = position switch
+                {
+                    OverlayPosition.MiddleLeft or OverlayPosition.MiddleCenter or OverlayPosition.MiddleRight => .5,
+                    OverlayPosition.BottomLeft or OverlayPosition.BottomCenter or OverlayPosition.BottomRight => 1,
+                    _ => 0
+                };
+                _actualViewer.Offset = new Vector(Math.Max(0, _actualViewer.Extent.Width - _actualViewer.Viewport.Width) * horizontal,
+                    Math.Max(0, _actualViewer.Extent.Height - _actualViewer.Viewport.Height) * vertical);
+            }, DispatcherPriority.Loaded);
+        }
         private void ConstrainBitmapSize()
         {
             if (_bitmap is null) { ConstrainFallbackSize(); return; }
@@ -308,11 +354,28 @@ public sealed partial class WorkspaceView
             double Number(string key, double fallback) => double.TryParse(settings.GetValueOrDefault(key), CultureInfo.InvariantCulture, out var value) ? value : fallback;
             IBrush ColorBrush(string key, string fallback) => Color.TryParse(settings.GetValueOrDefault(key), out var color) ? new SolidColorBrush(color) : B(fallback);
             bool Enabled(string key) => bool.TryParse(settings.GetValueOrDefault(key), out var value) && value;
-            var origin = new Point(Number("TitleFontOffsetLeft", 0), Number("TitleFontOffsetTop", 0));
+            float fontSize = (float)Math.Clamp(Number("TitleFontSize", 14), 1, 200);
+            var family = new FontFamily(settings.GetValueOrDefault("TitleFontName", "Arial"));
+            var style = settings.GetValueOrDefault("TitleFontStyle", "Regular");
+            var face = new Typeface(family, style.Contains("Italic") ? FontStyle.Italic : FontStyle.Normal, style.Contains("Bold") ? FontWeight.Bold : FontWeight.Normal);
+            var titleText = new FormattedText(title.StartsWith("EVE - ", StringComparison.Ordinal) ? title[6..] : title,
+                CultureInfo.InvariantCulture, FlowDirection.LeftToRight, face, fontSize, ColorBrush("TitleFontForeColor", "#FFFFFF"));
+            var scene = new OverlayScene { Title = title, ShowTitle = Enabled("ShowThumbnailOverlays"), CycleSkipped = skipped,
+                TitlePosition = Enum.TryParse<OverlayPosition>(settings.GetValueOrDefault("TitlePosition"), out var position) ? position : OverlayPosition.TopLeft,
+                Font = new(family.Name, fontSize, OffsetX: (int)Number("TitleFontOffsetLeft", 0), OffsetY: (int)Number("TitleFontOffsetTop", 0)),
+                Subtitle = Enabled("ShowCurrentSolarSystem") ? settings.GetValueOrDefault("SolarSystemSample", "Jita") : "",
+                SubtitlePlacement = Enum.TryParse<SubtitlePlacement>(settings.GetValueOrDefault("SolarSystemPlacement"), out var placement) ? placement : SubtitlePlacement.Below,
+                SubtitleFontSize = Number("SolarSystemFontSize", 0) > 0 ? (float)Number("SolarSystemFontSize", 0) : null };
+            var systemBrush = ColorBrush("SolarSystemColor", "#D4E8FF");
+            var subtitleText = new FormattedText(scene.Subtitle, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface(family), scene.EffectiveSubtitleSize, systemBrush);
+            scene = OverlayLayout.Arrange(scene, new PreviewSize((int)Bounds.Width, (int)Bounds.Height),
+                (float)titleText.WidthIncludingTrailingWhitespace, (float)subtitleText.WidthIncludingTrailingWhitespace, 0);
+            var layout = scene.TitleLayout((float)titleText.WidthIncludingTrailingWhitespace, (float)subtitleText.WidthIncludingTrailingWhitespace);
+            var origin = new Point(layout.TitleX, layout.TitleY);
             if (skipped)
             {
                 double size = Math.Clamp(Math.Ceiling(Number("TitleFontSize", 14)), 12, 22);
-                var box = new Rect(origin.X + 2, origin.Y + 3, size - 3, size - 3);
+                var box = new Rect(layout.MarkerX + 2, layout.MarkerY + 3, size - 3, size - 3);
                 var markerPen = new Pen(ColorBrush("CycleSkipIndicatorColor", "#FF0000"), 2);
                 switch (settings.GetValueOrDefault("CycleSkipIndicatorStyle"))
                 {
@@ -322,18 +385,22 @@ public sealed partial class WorkspaceView
                     case "Cross": context.DrawLine(markerPen, box.TopLeft, box.BottomRight); context.DrawLine(markerPen, box.TopRight, box.BottomLeft); break;
                     default: context.DrawEllipse(null, markerPen, box); context.DrawLine(markerPen, box.TopLeft + new Vector(2, 2), box.BottomRight - new Vector(2, 2)); break;
                 }
-                origin += new Vector(size + 5, 0);
             }
             if (Enabled("ShowThumbnailOverlays"))
             {
-                var style = settings.GetValueOrDefault("TitleFontStyle", "Regular");
-                var face = new Typeface(new FontFamily(settings.GetValueOrDefault("TitleFontName", "Arial")), style.Contains("Italic") ? FontStyle.Italic : FontStyle.Normal, style.Contains("Bold") ? FontWeight.Bold : FontWeight.Normal);
-                var text = new FormattedText(title.StartsWith("EVE - ", StringComparison.Ordinal) ? title[6..] : title, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, face, Math.Clamp(Number("TitleFontSize", 14), 1, 200), ColorBrush("TitleFontForeColor", "#FFFFFF"));
-                if (text.BuildGeometry(origin) is { } geometry)
+                if (titleText.BuildGeometry(origin) is { } geometry)
                 {
                     var outline = Number("TitleFontOutlineWidth", 0);
                     if (outline > 0) context.DrawGeometry(null, new Pen(ColorBrush("TitleFontOutlineColor", "#000000"), outline), geometry);
                     context.DrawGeometry(ColorBrush("TitleFontForeColor", "#FFFFFF"), null, geometry);
+                }
+            }
+            if (Enabled("ShowCurrentSolarSystem"))
+            {
+                if (subtitleText.BuildGeometry(new Point(layout.SubtitleX, layout.SubtitleY)) is { } geometry)
+                {
+                    context.DrawGeometry(null, new Pen(Brushes.Black, 2), geometry);
+                    context.DrawGeometry(systemBrush, null, geometry);
                 }
             }
             if (active && Enabled("EnableActiveClientHighlight"))

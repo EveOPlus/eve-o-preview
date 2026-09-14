@@ -66,18 +66,26 @@ namespace EveOPreview.Mediator.Handlers.Services
                 _logger.Information("StartStopServiceHandler: Stopping thumbnail manager service");
                 this._manager.Stop();
 
-                var processes = _procMonitor.GetAllProcesses();
-                _logger.Information("Resetting CPU affinity and FPS limiter for {ProcessCount} clients", processes.Count);
-                
-                _cpuAffinityService.Stop(processes);
-                await _hook.StopAsync(processes).ConfigureAwait(false);
-                
-                _logger.Information("Thumbnail manager service stopped successfully");
+                // Timers and WinEvent hooks stop on their owning UI thread.
+                // Session-end lock/IPC work runs off-thread so the presenter can
+                // enforce a bounded wait without pumping UI continuations.
+                if (message.IsSessionEnding)
+                    await Task.Run(ResetClientsAsync).ConfigureAwait(false);
+                else
+                    await ResetClientsAsync().ConfigureAwait(false);
             }
             catch (Exception exception)
             {
                 _logger.Error(exception, "Error stopping thumbnail manager service");
             }
+        }
+        private async Task ResetClientsAsync()
+        {
+            var processes = _procMonitor.GetAllProcesses();
+            _logger.Information("Resetting CPU affinity and FPS limiter for {ProcessCount} clients", processes.Count);
+            _cpuAffinityService.Stop(processes);
+            await _hook.StopAsync(processes).ConfigureAwait(false);
+            _logger.Information("Thumbnail manager service stopped successfully");
         }
     }
 }

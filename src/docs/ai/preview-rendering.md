@@ -4,6 +4,29 @@ This guide describes the Windows-first implementation introduced after the [tech
 
 ## Ownership and portable boundaries
 
+[Augments](combat-logs.md) now supplies real log-derived alpha/DPS/repair/location
+rows through `ThumbnailView.SetOverlayStats`. Each `OverlayStat` can carry five
+independently coloured symbols and an inline `Suffix` with its own text colour
+and trailing icons. `Visible = false` reserves the row without drawing ink, so
+incoming/outgoing rows never move when activity stops. `OverlayStatsStyle` controls font/offset/edge
+placement in preview-client pixels. Four damage and 32 fixed weapon-platform SVGs are
+embedded in the portable contract assembly and loaded once as polygon geometry.
+Native and portable drawing consume the same geometry, without an SVG runtime
+or file reads on frame callbacks. Scene equality includes stats and their style,
+so unchanged updates retain native assets. Alpha/repair expiry uses a finite
+manager timer; log ingestion never enters the compositor or Robin. `OverlayScene.Subtitle`
+holds the plain system name relative to the title, separate from combat rows.
+`SubtitlePlacement` supports Below (default), Above, Left and Right;
+`SubtitleFontSize` optionally overrides title size. `OverlayScene.TitleLayout`
+positions the combined block at the title offsets using renderer-measured widths.
+Native measurement, drawing and portable previews share that layout. Horizontal
+neighbours do not wrap. System changes invalidate the native title asset; changing
+graphics renderer preserves the size and placement. Modern compatibility graphics
+draws the combined title/system through the same rasterizer while a system is
+visible; the original label remains in use when no system is shown.
+The native title asset includes the subtitle in both rasterization and equality;
+the separate stats asset explicitly excludes it. Renderer switches retain it.
+
 - [Eve-O-Preview.Preview](../../Eve-O-Preview.Preview/OverlayContract.cs) contains toolkit-independent scenes, finite alerts and renderer capabilities. [IPreviewBackend/IPreviewSession](../../Eve-O-Preview.Preview/PreviewContract.cs) represent image presentation without requiring captured frames.
 - [WindowsDwmPreviewBackend](../../Eve-O-Preview/View/Rendering/WindowsDwmPreviewBackend.cs) owns persistent DWM relationships. Bounds changes update existing properties; maintenance retains healthy registrations and populates replacements before releasing obsolete ones. Its source/destination HWND resolver belongs entirely to Windows.
 - [WindowsStaticPreviewBackend](../../Eve-O-Preview/View/Rendering/WindowsStaticPreviewBackend.cs) owns the compatibility bitmap and input-transparent image control. Forced maintenance captures through the existing `WindowManager.GetStaticThumbnail`; failed captures retain the last valid frame.
@@ -12,7 +35,52 @@ This guide describes the Windows-first implementation introduced after the [tech
 
 `PreviewClientId` is ephemeral adapter identity. Existing full window titles remain profile/layout/cycle keys. The new contracts do not make the Windows manager or application lifetime portable; a Linux host still needs its own discovery, window control, shortcuts and capture integration.
 
+`OverlayScene.DamageTint` is an optional transient ARGB wash. Native composition
+keeps one colour pixel behind text and the selection frame; on/off phases attach
+or detach that surface without uploading the image or rasterizing text. Resize
+only changes its scale. The portable renderer uses a separate retained rectangle.
+Modern compatibility graphics uses `CompatibilityDamageTint`, one lazily created,
+nonactivating, input-transparent owned window. Flash phases change only its alpha;
+owner geometry, visibility, opacity and disposal are mirrored without screenshots.
+The main preview/DWM HWND and image relationship are unchanged in either path.
+
+`DamageFlashIntensity` supplies a shared finite Blink/Fade strength. Native
+composition cross-fades cached normal/highlight title assets and changes tint
+visual opacity; no glyph uploads occur on intensity-only frames. Portable
+graphics retain geometry and blend the title brush; compatibility graphics blend
+the title colour and owned-window alpha. Only active damage requests fade ticks.
+`CombatLogSettings.FlashOpacityPercent` sets the tint's maximum alpha before this
+intensity is applied, at 0–100% (default 20%). Zero suppresses the wash, and title
+blending remains independent. Fade is the default; explicit Blink choices survive.
+`OverlayLayout.Arrange` positions measured title/system and stats blocks at nine
+anchors and stacks matching anchors. Native asset cropping happens after layout,
+so splitting title and stats surfaces cannot remove their collision reservation.
+
 ## Windows graphics path
+
+`OutlinedLabel.OnPaint` delegates to `OverlaySceneRasterizer.Draw`, so compatibility
+titles, their settings sample and native title/DPS assets share glyph and marker
+drawing. The label retains its established autosizing and mouse routing.
+`OverlayStatsStyle.FontFamily` and `FontStyle` are nullable: absent values inherit
+the title family/style while preserving the independent combat size and colours.
+The Augments advanced editor saves overrides through `LogOverlayOptions`, with a
+reset to inheritance. Both native asset bounds and portable geometry use those
+values, including alpha spacing and text decorations. A title style change also
+invalidates inherited stats. The settings simulation uses the same options.
+`OverlayStat.Segments` walks the immutable inline suffix chain. Repair segments
+set `PrefixIcons` to place each type icon before its number; alpha retains its
+trailing-icon layout. Native ink bounds, arrangement and drawing and portable
+geometry all measure the complete chain, including gaps. Repair icon and number
+share the configured type colour. Assets still update only when scenes change.
+
+Augments alternates `OverlayScene.TitleColor` for a transient name blink, preserving
+the configured `OverlayFont.Foreground`. Both renderers include it in retained
+scene equality. A shared phase calculation supplies the overview and thumbnail;
+the manager schedules the next transition without reading files or changing DWM.
+Repeated damage extends expiry without restarting the blink cycle.
+`OverlayStat.Icons()` supports four damage components plus an
+optional weapon/unresolved symbol. Raster bounds include every icon; changing
+damage metadata never recreates the source DWM relationship.
 
 [NativeCompositionOverlayRenderer](../../Eve-O-Preview/View/Rendering/NativeCompositionOverlayRenderer.cs) shares one hardware D3D11/DirectComposition device among overlays on the UI thread. It retains graphics surfaces and submits finite compositor animations. It has no application animation timer, screenshot loop, game-frame readback or new IPC. Initialization deliberately does not fall back to a software GPU device.
 
@@ -111,3 +179,9 @@ landscape/portrait pixel cases requiring the configured thickness on every edge.
 The optimized 24-preview mock run also passed production zoom/restore: Windows clamped the requested 25x window to 5580 by 1940 pixels and restored 384 by 216. Its first renderer retained 8,816 scene pixels and two alert pixels. A separate native regression exercised a 9600 by 5400 viewport with fewer than 100,000 retained scene pixels; clipped or entirely off-screen ink does not allocate zero-sized bitmaps.
 
 The unsigned Release application was published as a framework-dependent `win-x64` single file under `src/bin/preview-modernized`. Copying only the executable to an isolated directory and running `--validate-workspace` passed with exit code zero, verifying bundled contracts, UI resources and native rendering dependencies. Robin was unchanged and was not rebuilt or packaged in this application-only check. Existing DPI/Costura warnings and an unavailable NuGet vulnerability-feed warning remain. No Cake, signing, Linux runtime, physical GPU-reset, mixed-DPI/HDR, real audio/FPS-hook or game-frame-time validation ran for this change.
+
+Repair symbols use the embedded [repair SVGs](../../Eve-O-Preview.Preview/Assets/Repairs/README.md):
+shield rim, a helmet silhouette and a three-face cube. They retain the existing
+`Shield`, `Armor` and `Hull` enum identities and configured colours. Polygon
+geometry loads once through `OverlaySymbols`, shared by both rendering paths.
+The separate directional arrows are replaced by the repair row's IN/OUT prefix.

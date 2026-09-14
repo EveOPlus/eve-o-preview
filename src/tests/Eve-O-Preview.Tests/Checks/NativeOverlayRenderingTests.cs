@@ -149,7 +149,7 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
         {
             var size = new PreviewSize(130, 100);
             using var complete = OverlaySceneRasterizer.Render(scene, size);
-            var renderedAsset = method.Invoke(null, [scene, size]);
+            var renderedAsset = method.Invoke(null, [scene, size, true, true]);
             if (renderedAsset == null)
             {
                 for (int y = 0; y < size.Height; y++)

@@ -27,8 +27,8 @@ internal static partial class Program
             string output = Path.Combine(AppContext.BaseDirectory, "screenshots");
             if (args.Length != 0)
             {
-                if (args.Length != 2 || args[0] != "--output")
-                    throw new ArgumentException("Usage: Eve-O-Preview.UI.Smoke [--output <directory>]");
+                if (args.Length is not (2 or 4) || args[0] != "--output" || args.Length == 4 && args[2] != "--catalog")
+                    throw new ArgumentException("Usage: Eve-O-Preview.UI.Smoke [--output <directory> [--catalog <simulation-catalog.json>]]");
                 output = Path.GetFullPath(args[1]);
             }
             Directory.CreateDirectory(output);
@@ -196,6 +196,8 @@ internal static partial class Program
             window.Close();
             Require(backend.PortraitRequests.SequenceEqual(new long[] { 95465272 }), "Request Aura's portrait once across navigation and theme changes.");
             renders += CheckCharacterPortraits(output);
+            renders += CheckCombatLogs(output);
+            if (args.Length == 4) renders += CheckInstalledWeaponChoices(output, args[3]);
             Console.WriteLine($"PASS: {renders} production UI renders; three distinct themes; keyboard-accessible navigation; input validation; draft retention; advanced setting command; settings search; compact scrollable layouts.");
             Console.WriteLine("Screenshots: " + output);
             return 0;
@@ -273,7 +275,7 @@ internal static partial class Program
         Require(backend.Read().ClientPreferences!.Single(entry => entry.Title == saved.Title).BorderColor == "", "Inheriting must remove the character color override.");
     }
 
-    private static T FindControl<T>(WorkspaceView view, string name) where T : Control
+    private static T FindControl<T>(Control view, string name) where T : Control
     {
         Visual scope = view.GetVisualDescendants().OfType<Border>().FirstOrDefault(c => c.Name == "expanded-cycle-order") ?? (Visual)view;
         return scope.GetVisualDescendants().OfType<T>().SingleOrDefault(control => control.Name == name)
@@ -392,7 +394,7 @@ internal static partial class Program
         Require(FindControl<Button>(view, "support-open").IsFocused, "Outside dismissal must restore focus.");
     }
 
-    private static void Click(WorkspaceView view, string name)
+    private static void Click(Control view, string name)
     {
         var button = FindControl<Button>(view, name);
         Require(button.IsEffectivelyVisible && button.IsEnabled, "Button is unavailable: " + name);

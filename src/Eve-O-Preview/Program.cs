@@ -247,6 +247,9 @@ namespace EveOPreview
             builder.RegisterType<CharacterPortraitCache>().AsSelf().As<IWorkspacePortraitProvider>().SingleInstance();
             builder.RegisterType<EveClientUserIdReader>().AsSelf().SingleInstance();
             builder.RegisterType<CharacterIdentityCache>().AsSelf().As<IWorkspaceCharacterProvider>().SingleInstance();
+            builder.RegisterType<EveOPreview.Services.Logs.CharacterSystemCache>().SingleInstance();
+            builder.RegisterType<EveOPreview.Services.StaticData.StaticDataService>().AsSelf().As<IWorkspaceStaticData>().SingleInstance();
+            builder.RegisterType<EveOPreview.Services.Logs.CombatLogService>().AsSelf().As<IWorkspaceCombatLogs>().SingleInstance();
             builder.RegisterType<WindowsWorkspacePreviewCapture>().As<IWorkspacePreviewCapture>().SingleInstance();
 
 

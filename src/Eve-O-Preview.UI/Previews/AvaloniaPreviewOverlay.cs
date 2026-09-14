@@ -17,6 +17,8 @@ public sealed class AvaloniaPreviewOverlay : Panel, IOverlayRenderer
 {
     private readonly SceneCanvas _sceneCanvas = new();
     private readonly AlertCanvas _alertCanvas = new();
+    private readonly Border _damageTint = new() { IsVisible = false, IsHitTestVisible = false };
+    private uint? _damageColor;
     private PreviewSize _pixelSize;
     private TopLevel? _root;
     private bool _disposed;
@@ -26,6 +28,7 @@ public sealed class AvaloniaPreviewOverlay : Panel, IOverlayRenderer
     {
         ClipToBounds = true;
         IsHitTestVisible = false;
+        Children.Add(_damageTint);
         Children.Add(_alertCanvas);
         Children.Add(_sceneCanvas);
         AttachedToVisualTree += OnAttached;
@@ -53,7 +56,14 @@ public sealed class AvaloniaPreviewOverlay : Panel, IOverlayRenderer
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(scene);
+        if (_damageColor != scene.DamageTint)
+        {
+            _damageColor = scene.DamageTint;
+            _damageTint.Background = scene.DamageTint is { } tint ? Brush(tint) : null;
+            _damageTint.IsVisible = scene.DamageTint.HasValue;
+        }
         _alertCanvas.SetAlertBounds(scene.AlertBounds);
+        _damageTint.Opacity = Math.Clamp(scene.DamageFlashIntensity, 0, 1);
         _sceneCanvas.SetScene(scene);
     }
 
@@ -290,7 +300,8 @@ public sealed class AvaloniaPreviewOverlay : Panel, IOverlayRenderer
         private ImmutablePen? _outline;
         private ImmutablePen _marker = new(Brush(0xFFFF0000), 2);
         private static readonly ImmutablePen MarkerContrast = new(Brush(0xFF000000), 4);
-        private static readonly ImmutablePen StatOutline = new(Brush(0xFF000000), 2);
+        private static readonly ImmutablePen StatOutline = new(Brush(0xFF000000), 2, lineJoin: PenLineJoin.Round);
+        private OverlayTitleLayout _titleLayout;
         private PreviewSize _size;
         private double _scale = 1;
         public long RenderCount { get; private set; }
@@ -298,8 +309,16 @@ public sealed class AvaloniaPreviewOverlay : Panel, IOverlayRenderer
 
         public void SetScene(OverlayScene scene)
         {
-            if (_scene == scene || (_scene with { Stats = scene.Stats, AlertBounds = scene.AlertBounds } == scene
+            if (_scene == scene || (_scene with { Stats = scene.Stats, AlertBounds = scene.AlertBounds, DamageTint = scene.DamageTint } == scene
                 && _scene.Stats.SequenceEqual(scene.Stats))) return;
+            if (_scene with { DamageFlashIntensity = scene.DamageFlashIntensity, DamageTint = scene.DamageTint, Stats = scene.Stats } == scene
+                && _scene.Stats.SequenceEqual(scene.Stats))
+            {
+                _scene = scene;
+                _foreground = Brush(scene.EffectiveTitleColor);
+                InvalidateVisual();
+                return;
+            }
             // Keep a bounded private snapshot; a producer cannot mutate retained drawing state.
             _scene = scene with { Stats = scene.Stats.Take(8).ToArray() };
             Rebuild();
@@ -323,43 +342,118 @@ public sealed class AvaloniaPreviewOverlay : Panel, IOverlayRenderer
             var face = new Typeface(new FontFamily(string.IsNullOrWhiteSpace(font.Family) ? "Consolas" : font.Family),
                 font.Style.HasFlag(OverlayFontStyle.Italic) ? FontStyle.Italic : FontStyle.Normal,
                 font.Style.HasFlag(OverlayFontStyle.Bold) ? FontWeight.Bold : FontWeight.Normal);
-            _foreground = Brush(font.Foreground);
+            _foreground = Brush(_scene.EffectiveTitleColor);
             _outline = float.IsFinite(font.OutlineWidth) && font.OutlineWidth > 0.1f
                 ? new ImmutablePen(Brush(font.Outline), Math.Clamp(font.OutlineWidth, 0, 64), lineJoin: PenLineJoin.Round) : null;
             _marker = new ImmutablePen(Brush(_scene.MarkerColor), 2);
+            var titleText = new FormattedText(_scene.Title, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, face, size, _foreground);
+            var subtitleBrush = Brush(_scene.SubtitleColor);
+            var subtitleText = new FormattedText(_scene.Subtitle, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+                new Typeface(font.Family), _scene.EffectiveSubtitleSize, subtitleBrush);
+            var statsStyle = _scene.StatsStyle.FontStyle ?? font.Style;
+            var statsFace = new Typeface(new FontFamily(_scene.StatsStyle.FontFamily ?? font.Family),
+                statsStyle.HasFlag(OverlayFontStyle.Italic) ? FontStyle.Italic : FontStyle.Normal,
+                statsStyle.HasFlag(OverlayFontStyle.Bold) ? FontWeight.Bold : FontWeight.Normal);
+            float statSize = Math.Clamp(_scene.StatsStyle.FontSize, 8, 32);
+            float Advance(string text) => (float)new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+                statsFace, statSize, _foreground).WidthIncludingTrailingWhitespace;
+            float Width(OverlayStat row)
+            {
+                float width = 0; bool first = true;
+                foreach (var part in row.Segments())
+                {
+                    if (!first) width += statSize * (part.PrefixIcons ? .6f : 1);
+                    width += part.Icons().Count() * _scene.StatsStyle.LineHeight + Advance(part.Text);
+                    first = false;
+                }
+                return width;
+            }
+            var arranged = OverlayLayout.Arrange(_scene, _size, (float)titleText.WidthIncludingTrailingWhitespace,
+                (float)subtitleText.WidthIncludingTrailingWhitespace, _scene.Stats.Where(x => x.Visible).Select(Width).DefaultIfEmpty(0).Max());
+            _titleLayout = arranged.TitleLayout((float)titleText.WidthIncludingTrailingWhitespace, (float)subtitleText.WidthIncludingTrailingWhitespace);
             _title = null;
             if (_scene.ShowTitle && _scene.Title.Length != 0)
             {
-                var text = new FormattedText(_scene.Title, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, face, size, _foreground);
-                var origin = new Point(font.OffsetX + (_scene.CycleSkipped ? MarkerSize + 5 : 0), font.OffsetY);
-                _title = text.BuildGeometry(origin);
-                // Avalonia 11.3's outlined BuildGeometry omits these decorations. Retain the
-                // historical title styles with explicit vector lines, sharing fill and outline.
-                if (font.Style.HasFlag(OverlayFontStyle.Underline) || font.Style.HasFlag(OverlayFontStyle.Strikeout))
-                {
-                    var decorated = new GeometryGroup();
-                    if (_title is not null) decorated.Children.Add(_title);
-                    double thickness = Math.Max(1, size / 14);
-                    if (font.Style.HasFlag(OverlayFontStyle.Underline))
-                        decorated.Children.Add(new RectangleGeometry(new Rect(origin.X, origin.Y + text.Baseline + size * 0.08, text.Width, thickness)));
-                    if (font.Style.HasFlag(OverlayFontStyle.Strikeout))
-                        decorated.Children.Add(new RectangleGeometry(new Rect(origin.X, origin.Y + text.Baseline - size * 0.3, text.Width, thickness)));
-                    _title = decorated;
-                }
+                var origin = new Point(_titleLayout.TitleX, _titleLayout.TitleY);
+                _title = TextGeometry(titleText, origin, font.Style, size);
             }
             _stats.Clear();
+            _icons.Clear();
+            if (_scene.Subtitle.Length > 0)
+            {
+                if (subtitleText.BuildGeometry(new Point(_titleLayout.SubtitleX, _titleLayout.SubtitleY)) is { } subtitle)
+                    _stats.Add((subtitle, subtitleBrush));
+            }
             for (int index = 0; index < _scene.Stats.Count; index++)
             {
                 var stat = _scene.Stats[index];
-                var brush = Brush(stat.Color);
-                var text = new FormattedText(stat.Label + ": " + stat.Value, CultureInfo.InvariantCulture,
-                    FlowDirection.LeftToRight, new Typeface("Consolas"), 16, brush);
-                if (text.BuildGeometry(new Point(8, _size.Height - 8 - 20 * (_scene.Stats.Count - index))) is { } geometry)
-                    _stats.Add((geometry, brush));
+                if (!stat.Visible) continue;
+                double statX = arranged.StatsStyle.OffsetX;
+                double statY = arranged.StatsStyle.StartY(_size.Height, _scene.Stats.Count) + _scene.StatsStyle.LineHeight * index;
+                void Icon(OverlaySymbol symbol, uint color)
+                {
+                    if (symbol == OverlaySymbol.None) return;
+                    double size = Math.Clamp(_scene.StatsStyle.FontSize, 8, 32);
+                    foreach (float[] polygon in OverlaySymbols.Fills(symbol))
+                    {
+                        var geometry = new StreamGeometry();
+                        using (var builder = geometry.Open())
+                        {
+                            builder.BeginFigure(new Point(statX + polygon[0] * size / 16, statY + polygon[1] * size / 16), true);
+                            for (int point = 2; point < polygon.Length; point += 2)
+                                builder.LineTo(new Point(statX + polygon[point] * size / 16, statY + polygon[point + 1] * size / 16));
+                            builder.EndFigure(true);
+                        }
+                        _icons.Add((geometry, null, Brush(color)));
+                    }
+                    foreach (float[] stroke in OverlaySymbols.Strokes(symbol))
+                    {
+                        var geometry = new StreamGeometry();
+                        using (var builder = geometry.Open())
+                        {
+                            builder.BeginFigure(new Point(statX + stroke[0] * size / 16, statY + stroke[1] * size / 16), false);
+                            for (int point = 2; point < stroke.Length; point += 2)
+                                builder.LineTo(new Point(statX + stroke[point] * size / 16, statY + stroke[point + 1] * size / 16));
+                            builder.EndFigure(false);
+                        }
+                        _icons.Add((geometry, new ImmutablePen(Brush(color), 1.5, lineJoin: PenLineJoin.Round), null));
+                    }
+                    statX += _scene.StatsStyle.LineHeight;
+                }
+                bool first = true;
+                foreach (var part in stat.Segments())
+                {
+                    double fontSize = Math.Clamp(_scene.StatsStyle.FontSize, 8, 32);
+                    if (!first) statX += fontSize * .6;
+                    bool prefix = first || part.PrefixIcons;
+                    if (prefix) foreach (var icon in part.Icons()) Icon(icon.Symbol, icon.Color);
+                    var brush = Brush(part.Color);
+                    var text = new FormattedText(part.Text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, statsFace, fontSize, brush);
+                    if (TextGeometry(text, new Point(statX, statY), statsStyle, fontSize) is { } geometry) _stats.Add((geometry, brush));
+                    statX += text.WidthIncludingTrailingWhitespace;
+                    if (!prefix) { statX += fontSize * .4; foreach (var icon in part.Icons()) Icon(icon.Symbol, icon.Color); }
+                    first = false;
+                }
             }
         }
 
+        private static Geometry? TextGeometry(FormattedText text, Point origin, OverlayFontStyle style, double size)
+        {
+            var geometry = text.BuildGeometry(origin);
+            // BuildGeometry omits decorations; title and DPS share the same vector strokes.
+            if (!style.HasFlag(OverlayFontStyle.Underline) && !style.HasFlag(OverlayFontStyle.Strikeout)) return geometry;
+            var decorated = new GeometryGroup();
+            if (geometry is not null) decorated.Children.Add(geometry);
+            double thickness = Math.Max(1, size / 14);
+            if (style.HasFlag(OverlayFontStyle.Underline))
+                decorated.Children.Add(new RectangleGeometry(new Rect(origin.X, origin.Y + text.Baseline + size * .08, text.Width, thickness)));
+            if (style.HasFlag(OverlayFontStyle.Strikeout))
+                decorated.Children.Add(new RectangleGeometry(new Rect(origin.X, origin.Y + text.Baseline - size * .3, text.Width, thickness)));
+            return decorated;
+        }
+
         private double MarkerSize => Math.Clamp(Math.Ceiling(float.IsFinite(_scene.Font.Size) ? _scene.Font.Size : 8.25), 12, 22);
+        private readonly List<(Geometry Geometry, ImmutablePen? Pen, IBrush? Fill)> _icons = new();
 
         public override void Render(DrawingContext context)
         {
@@ -367,7 +461,7 @@ public sealed class AvaloniaPreviewOverlay : Panel, IOverlayRenderer
             using var transform = context.PushTransform(Matrix.CreateScale(1 / _scale, 1 / _scale));
             if (_scene.CycleSkipped)
             {
-                var box = new Rect(_scene.Font.OffsetX + 2, _scene.Font.OffsetY + 3, MarkerSize - 3, MarkerSize - 3);
+                var box = new Rect(_titleLayout.MarkerX + 2, _titleLayout.MarkerY + 3, MarkerSize - 3, MarkerSize - 3);
                 DrawMarker(context, MarkerContrast, box);
                 DrawMarker(context, _marker, box);
             }
@@ -380,6 +474,11 @@ public sealed class AvaloniaPreviewOverlay : Panel, IOverlayRenderer
             {
                 context.DrawGeometry(null, StatOutline, stat.Geometry);
                 context.DrawGeometry(stat.Brush, null, stat.Geometry);
+            }
+            foreach (var icon in _icons)
+            {
+                context.DrawGeometry(null, StatOutline, icon.Geometry);
+                context.DrawGeometry(icon.Fill, icon.Pen, icon.Geometry);
             }
         }
 
@@ -402,6 +501,6 @@ public sealed class AvaloniaPreviewOverlay : Panel, IOverlayRenderer
             }
         }
 
-        public void Release() { _title = null; _stats.Clear(); _scene = new(); }
+        public void Release() { _title = null; _stats.Clear(); _icons.Clear(); _scene = new(); }
     }
 }

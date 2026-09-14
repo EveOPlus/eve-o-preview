@@ -12,13 +12,14 @@ using EveOPreview.Configuration.Model;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Mediator.Messages.Process;
 using EveOPreview.UI;
+using EveOPreview.Preview;
 using MediatR;
 using Serilog;
 
 namespace EveOPreview.View;
 
 /// <summary>Maps portable workspace commands to the existing presenter, profile and native services.</summary>
-public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorkspacePreviewRenderer, IWorkspacePreviewCapture, IWorkspacePortraitProvider, IWorkspaceCharacterProvider, IDisposable
+public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorkspacePreviewRenderer, IWorkspacePreviewCapture, IWorkspacePortraitProvider, IWorkspaceCharacterProvider, IWorkspaceCombatLogs, IWorkspaceStaticData, IDisposable
 {
     private readonly EveOPreview.Services.Implementation.CharacterIdentityCache _characters;
     public Task<WorkspaceCharacter> GetCharacterAsync(string fullTitle) =>
@@ -61,7 +62,7 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         IConfigurationStorage storage, IThumbnailConfiguration configuration, IProfileManager profiles,
         ApplicationPreferences preferences, ILogger logger, IWorkspacePortraitProvider portraits, IWorkspacePreviewCapture previewCapture = null,
         EveOPreview.Services.Implementation.CharacterIdentityCache characters = null,
-        EveOPreview.Services.IThumbnailManager thumbnails = null)
+        EveOPreview.Services.IThumbnailManager thumbnails = null, IWorkspaceCombatLogs combatLogs = null, IWorkspaceStaticData staticData = null)
     {
         _view = view; _commits = commits; _mediator = mediator; _storage = storage;
         _configuration = configuration; _profiles = profiles; _preferences = preferences; _logger = logger;
@@ -69,6 +70,8 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         _previewCapture = previewCapture;
         _thumbnails = thumbnails;
         _characters = characters;
+        _combatLogs = combatLogs;
+        _staticData = staticData;
         if (_characters is not null) _characters.Changed += NotifyChanged;
         if (_portraits is IWorkspacePortraitUpdates updates) updates.PortraitChanged += PortraitUpdated;
         preferences.Changed += NotifyChanged;
@@ -90,6 +93,12 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
     public WorkspaceSnapshot Read()
     {
         var values = _settings.ToDictionary(x => x.Key, x => Format(x.Value.Read()));
+        var system = ReadLogSettings().DefaultOverlay;
+        values["ShowCurrentSolarSystem"] = Format(system.SolarSystem);
+        values["SolarSystemColor"] = system.GetAppearance().SystemColor;
+        values["SolarSystemPlacement"] = system.SystemPlacement.ToString();
+        values["TitlePosition"] = system.TitlePosition.ToString();
+        values["SolarSystemFontSize"] = Format(system.SystemFontSize ?? 0);
         values["ToggleHideAllActiveHotkey"] = _view.ToggleHideAllActiveHotkey ?? "";
         values["MinimizeAllClientsHotkey"] = _view.MinimizeAllClientsHotkey ?? "";
         values["ThumbnailMinimumWidth"] = Format(MinimumThumbnailSize.Width);
@@ -283,7 +292,8 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
 
     private async Task<CommandResult> ApplySetting(string key, string value)
     {
-        if (!_settings.TryGetValue(key, out var binding)) return CommandResult.Error("This setting is not available.");
+        bool solarSystem = key is "ShowCurrentSolarSystem" or "SolarSystemColor" or "SolarSystemPlacement" or "SolarSystemFontSize" or "TitlePosition";
+        if (!_settings.TryGetValue(key, out var binding) && !solarSystem) return CommandResult.Error("This setting is not available.");
         var definition = SettingCatalog.Find(key);
         if (definition == null) return CommandResult.Error("This setting has no validation rule.");
         if (key == "ThumbnailWidth") definition = definition with { Minimum = MinimumThumbnailSize.Width, Maximum = MaximumThumbnailSize.Width };
@@ -292,6 +302,21 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         if (error != null) return CommandResult.Error(error);
         if (definition.Kind == SettingKind.Toggle && !bool.TryParse(value, out _)) return CommandResult.Error("Choose on or off.");
         if (definition.Kind == SettingKind.Choice && definition.Options?.Contains(value) != true) return CommandResult.Error("Choose an available option.");
+        if (solarSystem)
+        {
+            var settings = ReadLogSettings();
+            LogOverlayOptions Edit(LogOverlayOptions options) => key switch
+            {
+                "ShowCurrentSolarSystem" => options with { SolarSystem = bool.Parse(value) },
+                "TitlePosition" => options with { TitlePosition = Enum.Parse<OverlayPosition>(value) },
+                "SolarSystemPlacement" => options with { SystemPlacement = Enum.Parse<SubtitlePlacement>(value) },
+                "SolarSystemFontSize" => options with { SystemFontSize = Number(value) == 0 ? null : (float)Number(value) },
+                _ => options with { SystemColor = value }
+            };
+            // Layout controls apply to every thumbnail, including clients with combat customisations.
+            return await SaveLogSettingsAsync(settings with { DefaultOverlay = Edit(settings.DefaultOverlay),
+                Overlays = settings.Overlays.ToDictionary(x => x.Key, x => Edit(x.Value), StringComparer.Ordinal) });
+        }
         if (key == "PreviewOverlayRenderer")
         {
             _preferences.SetPreviewOverlayRenderer(value);

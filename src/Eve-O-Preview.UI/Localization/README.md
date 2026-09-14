@@ -1,5 +1,9 @@
 # Workspace languages
 
+Augments platform names, fighter-primary notes and thumbnail flash opacity
+controls/errors are translated in all 18 catalogs. Persisted enum names and
+English SDE item names remain stable; only their display labels are localized.
+
 Light and Dark offer **Appearance → Language**. The selection applies immediately
 to every profile and survives restart. Automatic follows the Windows UI language;
 unsupported languages fall back to English. Legacy retains its English interface
@@ -15,6 +19,13 @@ The catalogs are embedded UTF-8 JSON and work offline. No translation service,
 language model or new runtime package is needed. The initial catalogs include
 machine-translated descriptions with reviewed navigation and common controls;
 native-speaker review is still needed for specialized game terminology.
+
+Augments uses these catalogs for navigation, settings, choice display templates,
+overview labels and host status messages. SDE names and raw log content retain
+their source language. Its drafts survive the workspace's language rebuild.
+Blink/Fade, the first-download confirmation and position/order controls are
+localized as well. `AugmentLabels` reuses translated position and direction
+labels without changing the persisted enum values.
 
 ## Adding or updating translations
 

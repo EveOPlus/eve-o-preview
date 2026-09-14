@@ -154,7 +154,7 @@ public sealed class WorkspaceVisualReviewTests(ITestOutputHelper output)
             var preview = Find<Border>(workspace, "title-preview");
             var position = preview.TranslatePoint(default, workspace);
             Assert.NotNull(position);
-            Find<AutoCompleteBox>(workspace, "setting-TitleFontName").Text = "Consolas";
+            Find<ComboBox>(workspace, "setting-TitleFontName").SelectedItem = "Consolas";
             Pump();
             SetDecimalByTyping(workspace, "TitleFontSize", 14.25m);
             SetText(workspace, "TitleFontForeColor", "#FF0000");

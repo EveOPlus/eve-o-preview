@@ -1,4 +1,7 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 
@@ -13,8 +16,25 @@ internal static partial class Program
         backend.ExecuteAsync(new("theme", Value: "Dark")).GetAwaiter().GetResult(); Flush();
         view.NavigatePreviewTab("Titles"); Flush();
         FindControl<TextBox>(view, "preview-character-title").Text = "EVE - Appearance"; Flush();
-        FindControl<AutoCompleteBox>(view, "setting-TitleFontName").Text = "Arial"; Flush();
+        FindControl<ComboBox>(view, "setting-TitleFontName").SelectedItem = "Arial"; Flush();
         Require(view.HasUnappliedEdits, "Prepare a real unapplied font edit for language switching.");
+        var titleFont = FindControl<ComboBox>(view, "setting-TitleFontName"); titleFont.IsDropDownOpen = true; Flush();
+        Capture(window, Path.Combine(output, "title-font-dropdown.png")); renders++;
+        titleFont.IsDropDownOpen = false;
+        var titleColour = FindControl<ColorPicker>(view, "pick-TitleFontForeColor");
+        string savedColour = backend.Read().Settings["TitleFontForeColor"];
+        titleColour.Color = Color.Parse("#66AAFF"); Flush();
+        Require(FindControl<TextBox>(view, "setting-TitleFontForeColor").Text == "#66AAFF" && backend.Read().Settings["TitleFontForeColor"] == savedColour,
+            "Title colour selection must update the draft and preview without saving before Apply.");
+        Require(titleColour.PaletteColors!.Count() == 24 && titleColour.IsComponentSliderVisible && titleColour.ColorModel == ColorModel.Rgba,
+            "Title colours must use the shared palette and RGB controls.");
+        titleColour.BringIntoView(); Flush();
+        var point = titleColour.TranslatePoint(new Point(titleColour.Bounds.Width / 2, titleColour.Bounds.Height / 2), window)!.Value;
+        window.MouseDown(point, MouseButton.Left); window.MouseUp(point, MouseButton.Left); Flush();
+        titleColour.SelectedIndex = 2; Flush();
+        Capture(window, Path.Combine(output, "title-colour-rgb-popup.png")); renders++;
+        window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None); window.KeyReleaseQwerty(PhysicalKey.Escape, RawInputModifiers.None); Flush();
+        FindControl<TextBox>(view, "setting-TitleFontForeColor").Text = savedColour; Flush();
         foreach (var language in WorkspaceLocalization.Languages)
         {
             view.Navigate("Appearance"); Flush();
@@ -29,7 +49,7 @@ internal static partial class Program
             Capture(window, Path.Combine(output, "language-" + language.Code + "-appearance.png")); renders++;
             window.Width = 1180; window.Height = 820; Flush();
             view.NavigatePreviewTab("Titles"); Flush();
-            Require(FindControl<AutoCompleteBox>(view, "setting-TitleFontName").Text == "Arial", "Language switching lost the font draft.");
+            Require(FindControl<ComboBox>(view, "setting-TitleFontName").SelectedItem as string == "Arial", "Language switching lost the font draft.");
             Require(FindControl<TextBox>(view, "preview-character-title").Text == "EVE - Appearance", "Language switching translated the sample character name.");
             Require(FindControl<Control>(view, "title-preview").FlowDirection == FlowDirection.LeftToRight, "RTL must not mirror native preview geometry.");
             view.Navigate("Overview"); Flush();

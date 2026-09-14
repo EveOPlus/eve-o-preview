@@ -1,7 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EveOPreview.Preview</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Damage\*.svg" />
+    <EmbeddedResource Include="Assets\Weapons\*.svg" />
+    <EmbeddedResource Include="Assets\Repairs\*.svg" />
+  </ItemGroup>
 </Project>

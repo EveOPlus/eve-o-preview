@@ -24,6 +24,7 @@ public sealed class ApplicationPreferences
     public IReadOnlyList<string> ThumbnailMenuOrder { get; private set; } = ThumbnailMenuActions.DefaultOrder;
     public string ThumbnailMenuTheme { get; private set; } = ThumbnailMenuThemes.FollowApp;
     public string PreviewOverlayRenderer { get; private set; } = "NativeComposition";
+    public CombatLogSettings CombatLogs { get; private set; } = new();
     public string FilePath => _path;
     public event Action Changed;
 
@@ -45,6 +46,11 @@ public sealed class ApplicationPreferences
                 if (ThumbnailMenuThemes.IsKnown(menuTheme)) ThumbnailMenuTheme = menuTheme;
                 var previewRenderer = _settings.Value<string>("PreviewOverlayRenderer");
                 if (IsKnownPreviewOverlayRenderer(previewRenderer)) PreviewOverlayRenderer = previewRenderer;
+                if (_settings["CombatLogs"] is JObject logs)
+                {
+                    try { CombatLogs = NormalizeCombatLogs(logs.ToObject<CombatLogSettings>()); }
+                    catch (ArgumentException) { logger.Warning("Invalid combat log settings; using defaults"); }
+                }
                 if (_settings["ThumbnailMenuOrder"] is JArray order)
                     ThumbnailMenuOrder = ThumbnailMenuActions.Normalize(order.Where(x => x.Type == JTokenType.String).Values<string>());
             }
@@ -121,6 +127,83 @@ public sealed class ApplicationPreferences
         Save("PreviewOverlayRenderer", renderer);
         PreviewOverlayRenderer = renderer;
         Changed?.Invoke();
+    }
+
+    public void SetCombatLogs(CombatLogSettings settings)
+    {
+        var normalized = NormalizeCombatLogs(settings);
+        Save("CombatLogs", JObject.FromObject(normalized));
+        CombatLogs = normalized;
+        Changed?.Invoke();
+    }
+
+    public static CombatLogSettings NormalizeCombatLogs(CombatLogSettings settings)
+    {
+        if (settings is null || settings.WindowSeconds is < 1 or > 300 || settings.RetentionDays is < 1 or > 30)
+            throw new ArgumentException("Use a DPS window of 1–300 seconds and retention of 1–30 days.");
+        if (settings.FlashSeconds is < 1 or > 10 || settings.FlashColor is not { Length: 7 } || settings.FlashColor[0] != '#'
+            || !uint.TryParse(settings.FlashColor.AsSpan(1), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out _))
+            throw new ArgumentException("Choose a flash duration of 1–10 seconds and a colour such as #FF7666.");
+        if (settings.FlashIntervalMilliseconds is < 100 or > 2000)
+            throw new ArgumentException("Choose a flash interval of 100–2000 ms.");
+        if (!Enum.IsDefined(settings.FlashTarget)) throw new ArgumentException("Choose a flash target.");
+        if (!Enum.IsDefined(settings.FlashAnimation)) throw new ArgumentException("Choose a flash animation.");
+        if (settings.FlashOpacityPercent is < 0 or > 100) throw new ArgumentException("Choose a flash opacity of 0–100%.");
+        string directory = settings.Directory?.Trim() ?? "";
+        if (directory.Length > 0)
+        {
+            if (!Path.IsPathFullyQualified(directory)) throw new ArgumentException("Choose an absolute EVE logs folder path.");
+            directory = Path.GetFullPath(directory);
+        }
+        static LogOverlayOptions Validate(LogOverlayOptions options)
+        {
+            if (options is not null && (!Enum.IsDefined(options.TitlePosition) || !Enum.IsDefined(options.RowOrder)
+                || options.Position is { } position && !Enum.IsDefined(position))) throw new ArgumentException("Choose a valid augment position and order.");
+            if (options is null || options.FontSize is < 8 or > 32 || options.OffsetX is < 0 or > 500 || options.OffsetY is < 0 or > 500
+                || options.EventDurationSeconds is < 1 or > 15 || options.Preset is not ("Classic" or "Damage colours" or "Minimal"))
+                throw new ArgumentException("Overlay font must be 8–32 pixels; offsets must be 0–500 pixels.");
+            static string Color(string value)
+            {
+                if (value is null || value.Length != 7 || value[0] != '#' || !uint.TryParse(value.AsSpan(1),
+                    System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out _))
+                    throw new ArgumentException("Use colour values such as #66AAFF.");
+                return value.ToUpperInvariant();
+            }
+            static IReadOnlyDictionary<TKey, CombatVisualStyle> Styles<TKey>(IReadOnlyDictionary<TKey, CombatVisualStyle> styles) where TKey : struct, Enum
+            {
+                if (styles is null || styles.Count > Enum.GetValues<TKey>().Length) throw new ArgumentException("Invalid overlay style settings.");
+                return new System.Collections.ObjectModel.ReadOnlyDictionary<TKey, CombatVisualStyle>(styles.ToDictionary(x => x.Key, x =>
+                {
+                    if (!Enum.IsDefined(x.Key) || x.Value is null || !Enum.IsDefined(x.Value.Icon)) throw new ArgumentException("Choose an available overlay icon.");
+                    return x.Value with { Color = Color(x.Value.Color), TextColor = x.Value.TextColor is null ? null : Color(x.Value.TextColor) };
+                }));
+            }
+            var appearance = options.CustomAppearance;
+            if (!Enum.IsDefined(options.SystemPlacement) || options.SystemFontSize is { } systemSize && (!float.IsFinite(systemSize) || systemSize < 1 || systemSize > 200))
+                throw new ArgumentException("Choose a valid system position and font size.");
+            if (appearance is not null)
+            {
+                if (!Enum.IsDefined(appearance.TextColorMode)) throw new ArgumentException("Choose an available text colour mode.");
+                appearance = appearance with { IncomingColor = Color(appearance.IncomingColor), OutgoingColor = Color(appearance.OutgoingColor), SystemColor = Color(appearance.SystemColor),
+                    Damage = Styles(appearance.Damage), Weapons = Styles(appearance.Weapons), Repairs = Styles(appearance.Repairs) };
+            }
+            string family = options.FontFamily?.Trim();
+            if (family is { Length: > 200 } || family?.Any(char.IsControl) == true
+                || options.FontStyle is { } fontStyle && ((int)fontStyle & ~15) != 0)
+                throw new ArgumentException("Choose a valid font family and style.");
+            return options with { CustomAppearance = appearance, SystemColor = options.SystemColor is null ? null : Color(options.SystemColor),
+                FontFamily = string.IsNullOrEmpty(family) ? null : family };
+        }
+        if (settings.Overlays is null || settings.Overlays.Count > 1000) throw new ArgumentException("Too many character overlay settings.");
+        var overlays = new Dictionary<string, LogOverlayOptions>(StringComparer.Ordinal);
+        foreach (var pair in settings.Overlays)
+        {
+            if (!pair.Key.StartsWith("EVE - ", StringComparison.Ordinal) || pair.Key.Length is < 7 or > 106)
+                throw new ArgumentException("Overlay settings require a full character window title.");
+            overlays[pair.Key] = Validate(pair.Value);
+        }
+        return settings with { Directory = directory, DefaultOverlay = Validate(settings.DefaultOverlay),
+            Overlays = new System.Collections.ObjectModel.ReadOnlyDictionary<string, LogOverlayOptions>(overlays) };
     }
 
     private void Save(string key, JToken value)

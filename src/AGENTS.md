@@ -6,7 +6,7 @@ This directory is `src/` of the Git repository. Start with [README.md](README.md
 
 | Task | Read first |
 | --- | --- |
-| Defect investigation and regression checks | [Defect guide](docs/ai/reported-bugs.md); follow `BUG-` IDs and verify runtime hypotheses against current source |
+| Defect investigation and regression checks | [Defect guide](docs/ai/reported-bugs.md); use its Fixed/Partial statuses, completed checklist and remaining validation before reopening a `BUG-` ID |
 | Future features and implementation gaps | [Feature backlog](docs/ai/feature-backlog.md); establish scope and acceptance criteria before implementation |
 | Startup, dependency injection, UI settings, profiles, MediatR | [Application and configuration](docs/ai/application-and-configuration.md) |
 | Discovery, previews, z-order, hotkeys, cycling, focus, CPU affinity | [Windows and thumbnails](docs/ai/windows-and-thumbnails.md) |
@@ -17,10 +17,13 @@ This directory is `src/` of the Git repository. Start with [README.md](README.md
 
 ## Constraints that matter
 
+- Prefer plain ASCII hyphens (`-`) instead of em dashes in UI text, documentation and responses.
+- Treat committed code and UI as the stable baseline. Avoid changing them unless explicitly requested or required to complete the task; do not introduce incidental refactors, layout changes or wording churn that users must relearn with every check-in.
+- Uncommitted work (staged, unstaged or untracked) is active development and may be revised freely within the feature being developed. A file with uncommitted edits may still contain established code: keep unrelated committed behavior stable and preserve other in-progress work. This distinction calls for care, not an extra approval step for already-authorized work.
 - The main app is .NET 10 Windows with a WinForms lifetime/preview host (also enables WPF). The settings workspace is portable Avalonia in `Eve-O-Preview.UI`; read its local instructions when editing it. Robin is an unsafe x64 NativeAOT shared library. `Eve-O-Mock` is a separate legacy .NET Framework WPF project.
 - Legacy is locked to its existing feature set for legacy use only. Do not add new features, pages or controls to that theme. Continue bug fixes, compatibility work and updates to its existing features, preserving their behavior and familiar layout. New features target modern themes (Light and Dark); users are expected to migrate to a modern theme. Keep a brief notice when selecting Legacy that it may lack newer features.
 - New or older/unversioned global configurations default to Dark. Preserve an explicit theme selection made after that migration, including a manual return to Legacy. This policy belongs to `ApplicationPreferences`, independently of gameplay profile versions; loading an old profile must not overwrite a later manual theme choice.
-- Characters/ESI and DPS overviews are intentionally hidden in every theme. Their reserved module IDs and extension contracts remain for future work; follow [the UI module handoff](Eve-O-Preview.UI/AGENTS.md#future-workspace-modules) when implementing them. Do not restore placeholder tabs or search/About links; expose a real module in modern themes only when its feature is ready.
+- Characters/ESI remains hidden in every theme. The modern Augments module (stable ID `Dps`) implements combat logs, alpha/DPS, location and thumbnail simulation; read [combat logs](docs/ai/combat-logs.md). Follow [the UI module handoff](Eve-O-Preview.UI/AGENTS.md#future-workspace-modules) for other modules; do not restore placeholder tabs or Legacy links.
 - `Program.CreateApplicationContainerBuilder` owns Autofac registration and is shared by normal startup and isolated workspace validation. Services/configuration are shared singletons; live/static thumbnail views are created per dependency. Follow the existing view callback -> presenter -> MediatR -> service path where applicable.
 - Distinguish native window handles (HWND), process handles, and process IDs. Full titles such as `EVE - Name` are persisted identities. Do not casually normalize them or rename JSON keys.
 - Preserve live DWM thumbnail relationships during ordinary refresh/activation. The polling interval controls discovery and property updates, not the game's rendering FPS. `RestoreAndBringToFront` must preserve the nonactivating native window/overlay path.

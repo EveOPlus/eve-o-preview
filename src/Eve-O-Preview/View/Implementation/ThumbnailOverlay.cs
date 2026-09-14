@@ -39,6 +39,7 @@ namespace EveOPreview.View
         private Font _ownedFont;
         private bool _creatingHandle;
         private bool _recreateForCompatibility;
+        private CompatibilityDamageTint _compatibilityTint;
         #endregion
 
         public ThumbnailOverlay(Form owner, Action<object, MouseEventArgs> areaClickAction)
@@ -75,15 +76,56 @@ namespace EveOPreview.View
                 _overlayOpacity = Math.Clamp(value, 0, 1);
                 if (_rendererKind == OverlayRendererKind.Legacy) base.Opacity = _overlayOpacity;
                 else Render(renderer => renderer.SetOpacity(_overlayOpacity));
+                UpdateCompatibilityTint();
             }
         }
 
-        public void SetStats(IReadOnlyList<OverlayStat> stats)
+        public void SetStats(IReadOnlyList<OverlayStat> stats, OverlayStatsStyle style = null)
         {
             var next = stats?.Take(8).ToArray() ?? Array.Empty<OverlayStat>();
-            if (_scene.Stats.SequenceEqual(next)) return;
-            _scene = _scene with { Stats = next };
+            style ??= _scene.StatsStyle;
+            if (_scene.Stats.SequenceEqual(next) && _scene.StatsStyle == style) return;
+            _scene = _scene with { Stats = next, StatsStyle = style };
+            OverlayLabel.Visible = _rendererKind == OverlayRendererKind.Legacy && UseCompatibilityLabel && (_titleEnabled || _cycleSkipped);
             Render(renderer => renderer.SetScene(_scene));
+            if (_rendererKind == OverlayRendererKind.Legacy) Invalidate();
+        }
+
+        public void SetSubtitle(string text, uint color, SubtitlePlacement placement = SubtitlePlacement.Below, float? fontSize = null)
+        {
+            if (_scene.Subtitle == text && _scene.SubtitleColor == color && _scene.SubtitlePlacement == placement && _scene.SubtitleFontSize == fontSize) return;
+            _scene = _scene with { Subtitle = text, SubtitleColor = color, SubtitlePlacement = placement, SubtitleFontSize = fontSize };
+            OverlayLabel.Visible = _rendererKind == OverlayRendererKind.Legacy && UseCompatibilityLabel && (_titleEnabled || _cycleSkipped);
+            Render(renderer => renderer.SetScene(_scene));
+            if (_rendererKind == OverlayRendererKind.Legacy) Invalidate();
+        }
+
+        public void SetTitleColor(uint? color) => SetDamageFlash(color, _scene.DamageTint, _scene.DamageFlashIntensity);
+        public void SetTitlePosition(OverlayPosition position)
+        {
+            if (_scene.TitlePosition == position) return;
+            _scene = _scene with { TitlePosition = position };
+            OverlayLabel.Visible = _rendererKind == OverlayRendererKind.Legacy && UseCompatibilityLabel && (_titleEnabled || _cycleSkipped);
+            Render(renderer => renderer.SetScene(_scene));
+            if (_rendererKind == OverlayRendererKind.Legacy) Invalidate();
+        }
+
+        public void SetDamageFlash(uint? titleColor, uint? tint, double intensity = 1)
+        {
+            intensity = double.IsFinite(intensity) ? Math.Clamp(intensity, 0, 1) : 0;
+            if (_scene.TitleColor == titleColor && _scene.DamageTint == tint && _scene.DamageFlashIntensity == intensity) return;
+            _scene = _scene with { TitleColor = titleColor, DamageTint = tint, DamageFlashIntensity = intensity };
+            OverlayLabel.ForeColor = Color.FromArgb(unchecked((int)_scene.EffectiveTitleColor));
+            Render(renderer => renderer.SetScene(_scene));
+            UpdateCompatibilityTint();
+            if (_rendererKind == OverlayRendererKind.Legacy && !UseCompatibilityLabel) Invalidate();
+        }
+
+        private void UpdateCompatibilityTint()
+        {
+            if (IsDisposed || _rendererKind != OverlayRendererKind.Legacy) return;
+            if (_scene.DamageTint.HasValue && Visible) _compatibilityTint ??= new CompatibilityDamageTint(this);
+            _compatibilityTint?.UpdateTint(_scene.EffectiveDamageTint, _overlayOpacity, Visible);
         }
 
         internal void SetAlertBounds(PreviewRect? bounds)
@@ -106,7 +148,11 @@ namespace EveOPreview.View
         }
 
         public void ClearAlerts() => Render(renderer => renderer.ClearAlerts());
-        public void RestoreGraphicsVisibility() => Render(renderer => renderer.SetVisible(true));
+        public void RestoreGraphicsVisibility()
+        {
+            Render(renderer => renderer.SetVisible(true));
+            UpdateCompatibilityTint();
+        }
 
         internal void MaintainGraphics()
         {
@@ -119,7 +165,11 @@ namespace EveOPreview.View
 
         private void Render(Action<IOverlayRenderer> action)
         {
-            if (_renderer == null) return;
+            if (_renderer == null)
+            {
+                if (_rendererKind == OverlayRendererKind.Legacy && !UseCompatibilityLabel) Invalidate();
+                return;
+            }
             try { action(_renderer); }
             catch (System.Runtime.InteropServices.COMException ex) { UseCompatibilityRenderer(ex); }
         }
@@ -135,7 +185,8 @@ namespace EveOPreview.View
             TransparencyKey = Color.Fuchsia;
             base.Opacity = _overlayOpacity;
             foreach (Control child in Controls) child.Visible = true;
-            OverlayLabel.Visible = _titleEnabled || _cycleSkipped;
+            OverlayLabel.Visible = UseCompatibilityLabel && (_titleEnabled || _cycleSkipped);
+            UpdateCompatibilityTint();
             // Redirection allocation is fixed when the native HWND is created.
             // UpdateStyles alone cannot reliably restore a GDI backing surface.
             if (IsHandleCreated)
@@ -186,18 +237,37 @@ namespace EveOPreview.View
         {
             base.OnClientSizeChanged(e);
             Render(renderer => renderer.Resize(new PreviewSize(ClientSize.Width, ClientSize.Height)));
+            UpdateCompatibilityTint();
+        }
+
+        protected override void OnLocationChanged(EventArgs e)
+        {
+            base.OnLocationChanged(e);
+            UpdateCompatibilityTint();
         }
 
         protected override void OnVisibleChanged(EventArgs e)
         {
             base.OnVisibleChanged(e);
             Render(renderer => renderer.SetVisible(Visible));
+            UpdateCompatibilityTint();
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
         {
             if (_rendererKind == OverlayRendererKind.Legacy) base.OnPaintBackground(e);
         }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            // Compatibility graphics used by modern themes retain the same telemetry.
+            // The host supplies no telemetry when the application theme is Legacy.
+            if (_rendererKind == OverlayRendererKind.Legacy && (_scene.Stats.Count > 0 || !UseCompatibilityLabel))
+                OverlaySceneRasterizer.Draw(e.Graphics, _scene, new(ClientSize.Width, ClientSize.Height), drawTitle: !UseCompatibilityLabel);
+        }
+        private bool UseCompatibilityLabel => _scene.Subtitle.Length == 0 && _scene.TitlePosition == OverlayPosition.TopLeft
+            && (_scene.Stats.Count == 0 || _scene.StatsStyle.EffectivePosition != OverlayPosition.TopLeft);
 
         protected override void WndProc(ref Message message)
         {
@@ -239,12 +309,12 @@ namespace EveOPreview.View
             _ownedFont = new Font(fontSettings.Name, fontSettings.Size, fontSettings.Style);
             this.OverlayLabel.Font = _ownedFont;
             previous?.Dispose();
-            this.OverlayLabel.ForeColor = fontSettings.ForeColor;
+            _scene = _scene with { Font = font };
+            this.OverlayLabel.ForeColor = Color.FromArgb(unchecked((int)_scene.EffectiveTitleColor));
             this.OverlayLabel.OutlineColor = fontSettings.OutlineColor;
             this.OverlayLabel.OutlineWidth = fontSettings.OutlineWidth;
             this.OverlayLabel.Top = fontSettings.PositionOffsetFromTop;
             this.OverlayLabel.Left = fontSettings.PositionOffsetFromLeft;
-            _scene = _scene with { Font = font };
             Render(renderer => renderer.SetScene(_scene));
         }
 
@@ -252,7 +322,7 @@ namespace EveOPreview.View
         {
             _titleEnabled = enable;
             this.OverlayLabel.SetTitleVisible(enable);
-            this.OverlayLabel.Visible = _rendererKind == OverlayRendererKind.Legacy && (enable || _cycleSkipped);
+            this.OverlayLabel.Visible = _rendererKind == OverlayRendererKind.Legacy && UseCompatibilityLabel && (enable || _cycleSkipped);
             if (_scene.ShowTitle == enable) return;
             _scene = _scene with { ShowTitle = enable };
             Render(renderer => renderer.SetScene(_scene));
@@ -262,7 +332,7 @@ namespace EveOPreview.View
         {
             _cycleSkipped = skipped;
             OverlayLabel.SetCycleSkipIndicator(skipped, style, color);
-            OverlayLabel.Visible = _rendererKind == OverlayRendererKind.Legacy && (_titleEnabled || skipped);
+            OverlayLabel.Visible = _rendererKind == OverlayRendererKind.Legacy && UseCompatibilityLabel && (_titleEnabled || skipped);
             var next = _scene with { CycleSkipped = skipped, MarkerStyle = style switch
                 { "Pause" => CycleMarkerStyle.Pause, "Cross" => CycleMarkerStyle.Cross, _ => CycleMarkerStyle.CircleSlash },
                 MarkerColor = unchecked((uint)color.ToArgb()) };

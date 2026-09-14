@@ -12,6 +12,10 @@ The settings content lives in [Eve-O-Preview.UI](../../Eve-O-Preview.UI/Eve-O-Pr
 
 The modern sidebar version label refreshes with backend snapshots: `SetVersionInfo` arrives after the shell is constructed during presenter activation. Until metadata arrives it shows only the application name, without an empty separator.
 
+The registered Augments module (`Dps`) appears under WORKSPACE, immediately after
+Previews & layout, with the shared bar-chart navigation icon. Its existing module
+identity and settings-search section destinations remain the navigation route.
+
 `WorkspaceForm.ApplyTitleBarTheme` applies the shared public `WorkspaceTheme` palette to the native Windows caption and title text using `DwmSetWindowAttribute`. It runs on theme changes, handle creation and Windows theme/settings notifications; a reentrancy guard prevents recursive native theme notifications. Dark/Light changes are applied before the Legacy-size early return. High-contrast mode restores system caption/text colors. Unsupported attributes on older Windows retain the native fallback; exact caption/text colors require Windows 11. The [Windows DWM attribute contract](https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute) defines the flags. The existing workspace host check captures only the test window with `PrintWindow` and checks caption pixels across themes; it does not capture a monitor.
 
 These captures verify startup, theme switches and return from Legacy. Forcing the parent's protected `RecreateHandle` with an attached Avalonia host timed out in a separate private-desktop check; arbitrary parent-handle recreation remains an unverified lifecycle path and needs investigation before relying on it. Normal theme switching does not force handle recreation.
@@ -35,6 +39,24 @@ The modern sample name prefers a named online client, then a saved character fro
 The shared native helper now renders the specified window into memory with `PrintWindow`, without a display-DC copy or screen fallback. The earlier `GetDC`/`BitBlt` implementation could include monitor content on the user's live setup; passing an HWND was not sufficient validation. See [static capture](windows-and-thumbnails.md) for the window-only path and covered-window regression. Restarting the app clears a still retained by an older running build.
 
 ### Appearance scope and profile identity
+
+Modern font and colour editors reuse [WorkspacePickers](../../Eve-O-Preview.UI/WorkspacePickers.cs),
+including title/border settings, per-client colours, generic setting/search rows,
+profile identity and Augments. Fonts/items use searchable fields plus full-list
+popups with visible vertical scrollbars. Colour popups provide a spectrum,
+RGB sliders/numbers, hex entry and a shared 24-colour palette. Selection edits
+the caller's existing draft; each page retains its Apply/Save action.
+`WorkspaceApp` loads the matching Avalonia colour-control theme once.
+
+**Previews & layout → Title & highlight → Current solar system** controls system
+visibility, colour, position relative to the title and a separate font size (or
+**Use title size**). These fields use the normal preview drafts and Apply/Reset
+controls. `WindowsWorkspaceBackend` maps the `ShowCurrentSolarSystem` and
+`SolarSystem*` keys to the existing global log preferences through
+`SaveLogSettingsAsync`, including clients with combat overrides. They do not
+change gameplay profiles or DPS appearance. The sample shows the selected
+character's known system, or Jita as an illustrative fallback. Legacy excludes
+these controls and the system sample.
 
 Light and Dark also expose **Appearance → Language** through
 [WorkspaceView.Localization](../../Eve-O-Preview.UI/WorkspaceView.Localization.cs).
@@ -94,9 +116,9 @@ The profile's `CycleSkipIndicatorStyle` and `CycleSkipIndicatorColor` customize 
 
 A future Linux host can implement the workspace backend contract and reuse the UI. It still needs discovery, activation, capture, hotkey, tray, affinity and native-feature implementations or explicit capability gaps. The current host, its `net10.0-windows` target, DWM and Robin remain Windows-specific. Do not describe the app as supporting Linux because the UI library builds without Windows types.
 
-Characters/ESI and DPS overviews are hidden in all themes, including search and Legacy More/About links. `WorkspaceModules.ReservedIds` retains `Characters` and `Dps`, while `WorkspaceView` accepts optional `WorkspaceModule` registrations for ready features. The current Windows host registers none. Without an implemented module, direct navigation to a reserved ID returns to Overview (General in Legacy). Registered modules appear in modern navigation/search; Legacy rejects them. Keep dormant planned-page renderers as internal design references, not user-facing promises.
+Characters/ESI remains hidden. `WorkspaceModules.ReservedIds` retains `Characters` and `Dps`; the Windows host registers the implemented `Dps` module as **Augments** through `CombatLogView.CreateModule`. Without a registered module, reserved navigation returns to Overview (General in Legacy). Legacy rejects both modules. See [combat logs](combat-logs.md) for automatic/manual folder selection, ingestion/storage, shared and per-client settings, alpha/DPS/repair/location graphics, incoming-name flashes and simulation through the production event path with temporary statistics.
 
-Future character connections and DPS pages must distinguish window titles, runtime window identity and EVE character IDs. ESI authentication/token storage, data refresh and damage/log interpretation belong behind host services. The [module handoff](../../Eve-O-Preview.UI/AGENTS.md#future-workspace-modules) names the registration/lifecycle route and the unfinished backend work. See the [extension requirements](ui-review.md#future-dps-and-esi-extension-requirements) before implementing real integration controls.
+Future integrations must distinguish window titles, runtime window identity and EVE character IDs. ESI authentication/token storage remains unimplemented; damage/log interpretation belongs to the host's `CombatLogService`. The [module handoff](../../Eve-O-Preview.UI/AGENTS.md#future-workspace-modules) names the registration/lifecycle route. See the [extension requirements](ui-review.md#future-dps-and-esi-extension-requirements) before adding other integrations.
 
 
 ## Composition and lifecycle
@@ -126,9 +148,19 @@ Registration is not inferred from interface names. For example, thumbnail notifi
 
 The [MainFormPresenter constructor](../../Eve-O-Preview/Presenters/Implementation/MainFormPresenter.cs) wires callbacks, subscribes to profile events, requests the current/default profile and sends `ChangeSelectedProfile`. `Activate` subsequently loads settings again, reloads controls, optionally minimizes, and sends `StartService`. `ThumbnailManager` can be constructed through notification-handler resolution during these operations; do not assume every singleton is initialized only at `StartService`.
 
-On close, the workspace first protects unapplied edits; `MinimizeToTray` and the presenter's `_exitApplication` then determine whether to minimize or exit. Explicit exit sets `_exitApplication` before closing the view. Full shutdown cancels the first close request, yields back to the UI pump, awaits `StopService`, saves configuration and closes once cleanup completes. `_shutdownInProgress` and `_shutdownCompleted` prevent repeated close requests from starting duplicate cleanup. [StartStopServiceHandler](../../Eve-O-Preview/Mediator/Handlers/Services/StartStopServiceHandler.cs) stops the manager timer, calls the CPU service's terminal reset, and awaits `HookService.StopAsync` for installation completion and native FPS/audio reset requests. Robin is not unloaded. See [Robin](robin.md) for bounded pipe behavior and what native cleanup responses establish.
+On close, the workspace first protects unapplied edits; `MinimizeToTray` and the presenter's `_exitApplication` then determine whether to minimize or exit. Explicit exit sets `_exitApplication` before closing the view. Ordinary Exit cancels the first close request, yields back to the UI pump, awaits `StopService`, saves configuration and closes once cleanup completes. `_shutdownInProgress` and `_shutdownCompleted` prevent repeated close requests from starting duplicate cleanup. [StartStopServiceHandler](../../Eve-O-Preview/Mediator/Handlers/Services/StartStopServiceHandler.cs) stops the manager timer, calls the CPU service's terminal reset, and awaits `HookService.StopAsync` for installation completion and native FPS/audio reset requests. Robin is not unloaded. See [Robin](robin.md) for bounded pipe behavior and what native cleanup responses establish.
 
-[ExceptionHandler](../../Eve-O-Preview/ApplicationBase/ExceptionHandler.cs) uses a deliberately small static-logger/message-box fallback, then exits with code 1. In a DEBUG build with a debugger attached, its setup returns without installing handlers. [LoggerHelpers.WithCallerInfo](../../Eve-O-Preview/Helper/LoggerHelpers.cs) attaches compile-time caller metadata; preserve useful structured logging, but measure logging costs in high-frequency work. Normal startup wraps the rotating file logger in [AsyncLogSink](../../Eve-O-Preview/Helper/AsyncLogSink.cs), a bounded background writer. Input/render callers never wait for disk writes; overload reports dropped diagnostic events, and application exit drains accepted events. Keep `-v` filtering and millisecond event timestamps when changing this route.
+[ExceptionHandler](../../Eve-O-Preview/ApplicationBase/ExceptionHandler.cs) uses a deliberately small static-logger/message-box fallback, then exits with code 1. In a DEBUG build with a debugger attached, its setup returns without installing handlers. [LoggerHelpers.WithCallerInfo](../../Eve-O-Preview/Helper/LoggerHelpers.cs) attaches compile-time caller metadata; preserve useful structured logging, but measure logging costs in high-frequency work. Normal startup wraps the rotating file logger in [AsyncLogSink](../../Eve-O-Preview/Helper/AsyncLogSink.cs), a bounded background writer. Input/render callers never wait for disk writes; overload reports dropped diagnostic events, and application exit drains accepted events within a 500 ms budget. Keep `-v` filtering and millisecond event timestamps when changing this route.
+
+### Windows session ending
+
+Windows shutdown/restart/sign-out is separate from ordinary Exit. Both forms accept `FormClosing` with `CloseReason.WindowsShutDown` immediately, before busy/draft/tray handling. This is `WM_QUERYENDSESSION`: no settings save, service stop, minimize or draft discard is allowed here. If Windows cancels (`WM_ENDSESSION` with false), the application remains usable.
+
+WinForms raises `FormClosed` for confirmed `WM_ENDSESSION`, invoking `IMainFormView.WindowsSessionEnding`. `MainFormPresenter.EndWindowsSession` starts/reuses one native stop and one background configuration save, waiting at most two seconds for their asynchronous work without pumping messages. `StopService.IsSessionEnding` keeps manager timer/hook teardown on the UI thread and moves client enumeration, affinity locks and pipe cleanup to a worker. An ordinary Exit already in progress shares those tasks; its continuation must not close the disposed form again. At the deadline Windows may terminate remaining work; normal applied-settings persistence and Robin's owner-exit reset remain important fallbacks. No native protocol changed.
+
+`AsyncLogSink` gives draining and destination disposal 500 ms at exit. Its writer owns disposal even after the deadline, avoiding a concurrent write/dispose race. A blocked disk cannot hold exit indefinitely; pending diagnostics may be lost when the process ends.
+
+[WindowsShutdownTests](../../tests/Eve-O-Preview.Tests/Checks/WindowsShutdownTests.cs) sends only private-worker window messages through the production forms/presenter/stop handler, with substituted client and storage services. It covers tray on/off, unapplied drafts, busy workspace, cancellation, repeated confirmation, stalled native/save work and an overlapping ordinary Exit. Actual machine shutdown and live EVE teardown require separate validation.
 
 ## UI and configuration contracts
 
@@ -255,13 +287,13 @@ Escape clears a binding to `Keys.None`. Duplicate detection includes general bin
 
 [ClientNameInputBox](../../Eve-O-Preview/View/Implementation/ClientNameInputBox.cs) shows known client names and allows text selection. Its [designer](../../Eve-O-Preview/View/Implementation/ClientNameInputBox.Designer.cs) also declares interface inheritance and properties, so designer files cannot universally be treated as layout-only. Do not rename `EVE - ...` strings merely to match the displayed text.
 
-[OutlinedLabel](../../Eve-O-Preview/View/CustomControl/OutlinedLabel.cs) chooses smoothing deliberately to avoid artifacts against transparent backgrounds: outline drawing starts above 0.1 width, and fill antialiasing is enabled only above 1.9. [DarkModeContextMenuStrip](../../Eve-O-Preview/View/CustomControl/DarkModeContextMenuStrip.cs) has private nested renderer/color-table classes alongside similarly named types in [DarkGoldRenderer.cs](../../Eve-O-Preview/View/CustomControl/DarkGoldRenderer.cs); follow constructor/type resolution before styling. The live About tab belongs to MainForm. The separate `PreviewToy.AboutBox` files are excluded by the current project and contain stale resource references.
+[OutlinedLabel](../../Eve-O-Preview/View/CustomControl/OutlinedLabel.cs) retains label sizing and input while delegating glyphs and markers to `OverlaySceneRasterizer`, shared with native title and DPS text. Font sizes, styles, outlines and colours remain configurable. [DarkModeContextMenuStrip](../../Eve-O-Preview/View/CustomControl/DarkModeContextMenuStrip.cs) has private nested renderer/color-table classes alongside similarly named types in [DarkGoldRenderer.cs](../../Eve-O-Preview/View/CustomControl/DarkGoldRenderer.cs); follow constructor/type resolution before styling. The live About tab belongs to MainForm. The separate `PreviewToy.AboutBox` files are excluded by the current project and contain stale resource references.
 
 ## Remaining boundaries
 
 The settings workflow now protects font/size event suppression, fractional and incomplete numeric input, final-group deletion, cancelled/empty client selections, retained Move Up selection and hotkey capture timeout. RefreshHotkeys reparses and publishes HotkeysChanged so registrations follow group replacement as well as edits. FontSettings itself supplies defaults for partial nested profiles.
 
-View callbacks still include async void and some fire-and-forget MediatR dispatch. UI methods must run on their owning thread; storage serialization is not a general transaction over controls and native clients. SaveApplicationSettings copies all controls before its first await. Shutdown cancels the first FormClosing request, yields back to the UI pump, awaits native cleanup, saves and closes once. Repeated close requests do not start duplicate cleanup. This avoids blocking MediatR continuations on the UI thread. Close-to-tray remains profile-scoped. New configurations and profiles omitting `MinimizeToTray` default to true; an explicitly saved false remains false. The existing setting also controls starting in the tray; that behavior is unchanged.
+View callbacks still include async void and some fire-and-forget MediatR dispatch. UI methods must run on their owning thread; storage serialization is not a general transaction over controls and native clients. SaveApplicationSettings copies all controls before its first await. Ordinary Exit cancels the first FormClosing request, yields back to the UI pump, awaits native cleanup, saves and closes once. Repeated close requests do not start duplicate cleanup. This avoids blocking MediatR continuations on the UI thread. Close-to-tray remains profile-scoped. New configurations and profiles omitting `MinimizeToTray` default to true; an explicitly saved false remains false. The existing setting also controls starting in the tray; that behavior is unchanged.
 
 See [current defect status and evidence](reported-bugs.md) rather than treating old suspected defects as behavior to preserve.
 
@@ -270,3 +302,14 @@ See [current defect status and evidence](reported-bugs.md) rather than treating 
 For a new setting, trace model/interface -> JSON/defaults/restrictions -> view property/control event -> presenter reload/save -> request/notification -> runtime consumer -> save/load/profile switch. For a Robin setting include host/server framing and native bounds. Extend relevant regression coverage for a substantive behavior change; see the [coverage matrix and commands](build-and-test.md).
 
 Use isolated profile fixtures for missing/old/current fields, repeat-load idempotence, malformed nested values and renamed/cloned locations. Use the existing private-desktop runner for UI/window tests instead of launching production startup. Verify real game behavior separately when a setting reaches Robin. A passing parser/UI test does not establish full client reconfiguration or native correctness.
+
+### Module section search
+
+`WorkspaceModule.SearchTargets` supplies section labels, common aliases and a
+callback that sets retained module navigation before `WorkspaceView.Navigate`.
+Search matches each query word against English aliases and localized labels.
+Augments routes DPS/reps/alpha/simulation to Thumbnail augments, log/logs/logging
+and SDE/data terms to Data setup, and counters/jumps/reset to Overview. Matching
+sections replace the duplicate generic module result and count in the search
+summary. Hidden modern modules stay hidden in Legacy search. New or renamed
+features must update these routes or `SettingCatalog` alongside their controls.

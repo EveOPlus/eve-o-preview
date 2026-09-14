@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
-  <!-- Keep the frequently rebuilt UI reference on the normal copy-local path.
+  <!-- Keep the UI and its shared preview contract on the normal copy-local path.
        Otherwise an old loose DLL can shadow Costura's newer embedded assembly.
-       The SDK still bundles this DLL when publishing a single-file release. -->
-  <Costura IncludeDebugSymbols="false" ExcludeAssemblies="Eve-O-Preview.UI" />
+       The SDK still bundles these DLLs when publishing a single-file release. -->
+  <Costura IncludeDebugSymbols="false" ExcludeAssemblies="Eve-O-Preview.UI|Eve-O-Preview.Preview" />
 </Weavers>

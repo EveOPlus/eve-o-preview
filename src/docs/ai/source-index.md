@@ -2,6 +2,11 @@
 
 The [preview rendering guide](preview-rendering.md) covers the implemented Windows image/overlay backends and portable graphics contracts. The earlier [technology review](preview-rendering-review.md) records platform alternatives and remaining Linux work.
 
+The Augments review adds shared `OverlayLayout`/`OverlayColors` presentation helpers,
+`AugmentLabels`, `WorkspaceView.StaticData` consent handling and `AugmentLayoutTests`.
+See [combat logs](combat-logs.md), [static data](static-data.md) and the
+[corpus runner](../../tests/StaticData.Smoke/README.md) for their current routes.
+
 Baseline: `60944b521e3c5b442dd379b5208c53a91ae3a573`, reviewed 2026-09-06. This inventory contains all **208 tracked baseline files**: 191 under `src/`, 17 elsewhere. Paths in the tables are relative to the Git root. Newly added AI guides/instruction files are listed separately at the end, not included in the baseline count.
 
 The application, Robin, tests, Mock, configuration, message/handler classes, native bindings, project files, release code, designer wiring and textual resources were reviewed across the subsystem guides. Repeated generated wrappers and resource schemas were inspected for their role, control wiring and payload boundaries. This inventory is a navigation and coverage record, not an assertion that every defect has been found.
@@ -268,7 +273,7 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | --- | --- | --- |
 | [src/Eve-O-Preview/View/CustomControl/DarkGoldRenderer.cs](../../../src/Eve-O-Preview/View/CustomControl/DarkGoldRenderer.cs) | Standalone renderer/color table; distinguish nested namesakes. | [application-and-configuration](application-and-configuration.md) |
 | [src/Eve-O-Preview/View/CustomControl/DarkModeContextMenuStrip.cs](../../../src/Eve-O-Preview/View/CustomControl/DarkModeContextMenuStrip.cs) | Dark menu plus nested renderer/color table. | [application-and-configuration](application-and-configuration.md) |
-| [src/Eve-O-Preview/View/CustomControl/OutlinedLabel.cs](../../../src/Eve-O-Preview/View/CustomControl/OutlinedLabel.cs) | Transparent outlined text with intentional smoothing thresholds. | [application-and-configuration](application-and-configuration.md) |
+| [src/Eve-O-Preview/View/CustomControl/OutlinedLabel.cs](../../../src/Eve-O-Preview/View/CustomControl/OutlinedLabel.cs) | Compatibility label layout/input; delegates glyphs and markers to the shared title/DPS rasterizer. | [preview-rendering](preview-rendering.md) |
 | [src/Eve-O-Preview/View/Implementation/ClientNameInputBox.Designer.cs](../../../src/Eve-O-Preview/View/Implementation/ClientNameInputBox.Designer.cs) | Controls plus interface inheritance and selection properties. | [application-and-configuration](application-and-configuration.md) |
 | [src/Eve-O-Preview/View/Implementation/ClientNameInputBox.cs](../../../src/Eve-O-Preview/View/Implementation/ClientNameInputBox.cs) | Known/manual client selection dialog behavior. | [application-and-configuration](application-and-configuration.md) |
 | [src/Eve-O-Preview/View/Implementation/ClientNameInputBox.resx](../../../src/Eve-O-Preview/View/Implementation/ClientNameInputBox.resx) | Resource schema/designer metadata; binary payloads are not C# logic. | [application-and-configuration](application-and-configuration.md) |
@@ -421,6 +426,42 @@ These files are outside the original baseline count. The [UI review](ui-review.m
 | [WorkspaceView.PreviewGraphics.cs](../../Eve-O-Preview.UI/WorkspaceView.PreviewGraphics.cs) | Modern-only renderer preference and synthetic visual-alert test |
 | [NativeOverlayRenderingTests.cs](../../tests/Eve-O-Preview.Tests/Checks/NativeOverlayRenderingTests.cs) | Retained native lifecycle, alpha assets, unchanged-state reuse and fallback checks |
 | [LoggingResponsivenessTests.cs](../../tests/Eve-O-Preview.Tests/Checks/LoggingResponsivenessTests.cs) | Blocked file-sink isolation, bounded diagnostic overload and shutdown drain |
+| [WindowsShutdownTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WindowsShutdownTests.cs) | Isolated Windows session query/cancellation/confirmation, busy/draft/tray handling and bounded cleanup |
 | [Portable smoke project](../../tests/Eve-O-Preview.Preview.Smoke/Eve-O-Preview.Preview.Smoke.csproj), [runner](../../tests/Eve-O-Preview.Preview.Smoke/Program.cs), [instructions](../../tests/Eve-O-Preview.Preview.Smoke/README.md) | Headless visual/style/finite-animation verification |
 | [Windows rendering project](../../tests/Preview.RenderingSmoke/Preview.RenderingSmoke.csproj), [runner](../../tests/Preview.RenderingSmoke/Program.cs), [matrix](../../tests/Preview.RenderingSmoke/run-matrix.ps1), [GPU counters](../../tests/Preview.RenderingSmoke/collect-gpu.ps1), [instructions](../../tests/Preview.RenderingSmoke/README.md) | Opt-in mock/live DWM renderer measurements, external PDH sampling and scoped images |
 | [Preview rendering guide](preview-rendering.md), [technology review](preview-rendering-review.md) | Implemented architecture, platform boundaries and validation evidence |
+
+## Augments additions
+
+See [combat logs](combat-logs.md) for invariants, research sources and validation.
+
+| Source | Responsibility |
+| --- | --- |
+| [CombatLogContract.cs](../../Eve-O-Preview.UI/CombatLogContract.cs) | Portable settings, parsed events, immutable snapshots and host capability |
+| [CombatLogView.cs](../../Eve-O-Preview.UI/CombatLogView.cs), [appearance controls](../../Eve-O-Preview.UI/CombatLogView.Appearance.cs), [name flashes](../../Eve-O-Preview.UI/CombatLogView.DamageFlash.cs) | Modern Augments module, shared/per-client and Simple/Advanced controls, source selection, simulation and incoming-damage indication |
+| [CombatOverlayFormatter.cs](../../Eve-O-Preview.UI/CombatOverlayFormatter.cs) | Shared alpha/DPS sample and live-event presentation |
+| [EveLogDirectory.cs](../../Eve-O-Preview/Services/Logs/EveLogDirectory.cs) | Windows Documents detection, redirected-folder support and manual override |
+| [CompleteLogReader.cs](../../Eve-O-Preview/Services/Logs/CompleteLogReader.cs) | Shared read-only handles, stable file identity, complete Unicode lines and byte cursors |
+| [EveLogParser.cs](../../Eve-O-Preview/Services/Logs/EveLogParser.cs) | Listener attribution, damage/repair parsing, source classification and Local locations |
+| [CombatLogStore.cs](../../Eve-O-Preview/Services/Logs/CombatLogStore.cs) | Transactional SQLite history, checkpoints, totals, reset and retention |
+| [CombatLogService.cs](../../Eve-O-Preview/Services/Logs/CombatLogService.cs) | Event-driven watchers, worker, recovery and immutable publication |
+| [Simulation worker](../../Eve-O-Preview/Services/Logs/CombatLogService.Simulation.cs), [sequence](../../Eve-O-Preview.UI/CombatSimulationSequence.cs) | Normal combat dispatch/aggregation on a temporary in-memory copy, with real ingestion preserved |
+| [CharacterSystemCache.cs](../../Eve-O-Preview/Services/Logs/CharacterSystemCache.cs) | Shared latest-known system names, ready for additional observation sources |
+| [ThumbnailManager.CombatLogs.cs](../../Eve-O-Preview/Services/Implementation/ThumbnailManager.CombatLogs.cs) | Coalesced retained thumbnail updates and finite event expiry |
+| [WindowsWorkspaceBackend.CombatLogs.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.CombatLogs.cs) | Windows host capability forwarding |
+| [OverlaySymbols.cs](../../Eve-O-Preview.Preview/OverlaySymbols.cs), [damage SVGs](../../Eve-O-Preview.Preview/Assets/Damage/README.md), [weapon SVGs and T1 references](../../Eve-O-Preview.Preview/Assets/Weapons/README.md), [repair SVGs](../../Eve-O-Preview.Preview/Assets/Repairs/README.md) | Shared vector damage, fixed weapon-platform and repair symbols |
+| [LogCatalog.json](../../Eve-O-Preview/Resources/LogCatalog.json), [generator](../../scripts/generate-log-catalog.py) | Embedded offline FC SDE aliases and reproducible generator |
+| [StaticDataService](../../Eve-O-Preview/Services/StaticData/StaticDataService.cs), [database](../../Eve-O-Preview/Services/StaticData/StaticDataDatabase.cs) | Complete compressed SDE, background download/import, atomic generations and cached item lookups; see [static data](static-data.md) |
+| [WeaponPlatformClassifier](../../Eve-O-Preview/Services/StaticData/WeaponPlatformClassifier.cs), [local index upgrade](../../Eve-O-Preview/Services/StaticData/StaticDataDatabase.Upgrade.cs), [platform regressions](../../tests/Eve-O-Preview.Tests/Checks/StaticDataTests.Platforms.cs) | Group/effect/parent evidence, transactional offline reclassification, old enum/custom-style compatibility and simulation cadence |
+| [StaticDataContract](../../Eve-O-Preview.UI/StaticDataContract.cs), [static data controls](../../Eve-O-Preview.UI/CombatLogView.StaticData.cs) | Portable download/status/cancellation capability in Augments Data setup |
+| [Thumbnail augments README](../augments/README.md) | User setup, shared/per-client settings, themes, simulation, damage evidence and history |
+| [CombatSimulationCatalog](../../Eve-O-Preview.UI/CombatSimulationCatalog.cs), [simulation controls](../../Eve-O-Preview.UI/CombatLogView.Simulation.cs), [SDE projection](../../Eve-O-Preview/Services/StaticData/StaticDataDatabase.Simulation.cs) | Searchable NPC faction/ship and compatible player weapon/ammo selections, lazy catalog and resolved attack profiles |
+| [Character overview](../../Eve-O-Preview.UI/CombatLogView.Overview.cs) | Compact portrait rows, keyboard/click navigation and stable live character details |
+| [Activity storage](../../Eve-O-Preview/Services/Logs/CombatLogStore.Activity.cs), [activity checks](../../tests/Eve-O-Preview.Tests/Checks/CombatActivityTests.cs) | Durable travel, hit, target and repair counters; retained-history migration, replay/retention, rollback and simulation isolation |
+| [Recorded DPS storage](../../Eve-O-Preview/Services/Logs/CombatLogStore.Dps.cs), [average checks](../../tests/Eve-O-Preview.Tests/Checks/CombatDpsAverageTests.cs) | Valid middle intervals, slow volleys, weighted averages until reset, version-3 migration, delayed sources and retained evidence |
+| [Character reset](../../Eve-O-Preview/Services/Logs/CombatLogStore.Reset.cs), [reset checks](../../tests/Eve-O-Preview.Tests/Checks/CombatCharacterResetTests.cs), [log fixtures](../../tests/Eve-O-Preview.Tests/Fixtures/README.md) | Selected-character cutoffs, replay/restart isolation and privacy-neutral bundled combat samples |
+| [Damage name blink](../../Eve-O-Preview.UI/CombatDamageFlash.cs) | Shared phase, source selection and next-transition calculation for overview and thumbnail names |
+| [StaticDataTests](../../tests/Eve-O-Preview.Tests/Checks/StaticDataTests.cs), [SDE/corpus smoke](../../tests/StaticData.Smoke/Program.cs) | Offline/update/cancellation regression and opt-in full-download/corpus validation |
+| [CombatLogTests.cs](../../tests/Eve-O-Preview.Tests/Checks/CombatLogTests.cs), [native checks](../../tests/Eve-O-Preview.Tests/Checks/CombatOverlayNativeTests.cs) | Complete-line, sharing, watcher recovery, persistence, parsing and actual native thumbnail simulation checks |
+| [Program.CombatLogs.cs](../../tests/Eve-O-Preview.UI.Smoke/Program.CombatLogs.cs) | Production Augments control interactions and Light/Dark captures |
+| [Live simulation check](../../tests/Preview.RenderingSmoke/Program.CombatSimulation.cs) | Opt-in real EVE DWM/logs, temporary overview statistics, normal graphics and restoration checks |

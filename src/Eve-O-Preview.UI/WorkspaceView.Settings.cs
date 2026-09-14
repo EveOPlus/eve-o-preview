@@ -88,6 +88,14 @@ public sealed partial class WorkspaceView
                 choices.SelectionChanged += (_, _) => Changed(choices.SelectedItem?.ToString() ?? "");
                 input = choices;
             }
+            else if (!_theme.Legacy && definition.Key == "TitleFontName")
+            {
+                _fontNames ??= _backend is IWorkspacePreviewRenderer renderer ? renderer.FontFamilies
+                    : FontManager.Current.SystemFonts.Select(f => f.Name).OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase).ToArray();
+                var font = WorkspacePickers.FontFamily(_fontNames, fieldValue, "setting-" + definition.Key, L("Font family"));
+                font.SelectionChanged += (_, _) => Changed(font.SelectedItem as string ?? "");
+                input = font;
+            }
             else
             {
                 var box = new TextBox { FlowDirection = Avalonia.Media.FlowDirection.LeftToRight, Name = "setting-" + definition.Key, Text = fieldValue, MinHeight = 34, FontSize = 12, Watermark = L(definition.Kind == SettingKind.Color ? "#RRGGBB" : ""), HorizontalContentAlignment = HorizontalAlignment.Left };
@@ -104,10 +112,20 @@ public sealed partial class WorkspaceView
                     box.MinHeight = 70;
                 }
                 input = box;
+                if (!_theme.Legacy && definition.Kind == SettingKind.Color)
+                {
+                    var picker = WorkspacePickers.Color(Color.TryParse(box.Text, out var initial) ? initial : Color.Parse(_theme.Accent),
+                        "pick-" + definition.Key, F($"Open color picker for {L(definition.Label)}"));
+                    picker.ColorChanged += (_, e) => box.Text = $"#{e.NewColor.R:X2}{e.NewColor.G:X2}{e.NewColor.B:X2}";
+                    box.TextChanged += (_, _) => { if (Color.TryParse(box.Text, out var next) && picker.Color != next) picker.Color = next; };
+                    var colorRow = new Grid { ColumnDefinitions = new("64,*"), ColumnSpacing = 6 };
+                    colorRow.Children.Add(picker); Grid.SetColumn(box, 1); colorRow.Children.Add(box);
+                    input = colorRow;
+                }
             }
             AutomationProperties.SetName(input, L(definition.Label));
             AutomationProperties.SetHelpText(input, L(definition.Description));
-            if (definition.Kind is SettingKind.AudioIds or SettingKind.Choice or SettingKind.Text)
+            if (definition.Kind is SettingKind.AudioIds or SettingKind.Choice or SettingKind.Text || !_theme.Legacy && definition.Kind == SettingKind.Color)
             {
                 stack.Children.Add(input);
                 var buttonRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 3, HorizontalAlignment = HorizontalAlignment.Right };
@@ -159,9 +177,21 @@ public sealed partial class WorkspaceView
 
     private void RenderSearch()
     {
-        var matches = SettingCatalog.All.Where(s => (!_theme.Legacy || s.Page != "PreviewGraphics")
+        var matches = SettingCatalog.All.Where(s => (!_theme.Legacy || s.Page != "PreviewGraphics" && s.Key != "ShowCurrentSolarSystem" && !s.Key.StartsWith("SolarSystem", StringComparison.Ordinal))
             && (s.Matches(_query) || _localization.Contains($"{L(s.Label)} {L(s.Description)} {L(PageLabel(s.Page))}", _query))).ToArray();
-        Heading("Search results", F($"{matches.Length} settings matching “{_query}”. Edit them here; your navigation stays available."));
+        var routes = new[] { ("Switching", "Cycle groups, hotkeys and keyboard shortcuts"), ("Clients", "Active clients and preview visibility"), ("ClientSettings", "Character colors & minimization"), ("Profiles", "Profiles, clone, rename, delete and profile accent color"), ("Appearance", "Appearance, themes, Light, Dark and Legacy") };
+        var showGlobalShortcuts = "hide all show all minimize all minimise all global hotkey keyboard shortcuts ToggleHideAllActiveHotkey MinimizeAllClientsHotkey".Contains(_query, StringComparison.OrdinalIgnoreCase);
+        var featureMatches = routes.Where(r => r.Item2.Contains(_query, StringComparison.OrdinalIgnoreCase) || _localization.Contains(L(r.Item2), _query)
+            || r.Item1 == "Appearance" && _localization.Contains(L("Language") + " language", _query)
+            || r.Item1 == "ClientSettings" && "PriorityClients PerClientActiveClientHighlightColor priority border minimization exceptions offline".Contains(_query, StringComparison.OrdinalIgnoreCase)).ToArray();
+        var queryWords = _query.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        var sectionMatches = _modules.Where(_ => !_theme.Legacy).SelectMany(module => module.SearchTargets.Select(target => (module, target)))
+            .Where(x => queryWords.All(word =>
+                _localization.Contains(string.Join(" ", x.target.Keywords.Prepend(x.target.Title).Prepend(x.module.Title)), word)
+                || _localization.Contains(string.Join(" ", x.target.Keywords.Prepend(x.target.Title).Prepend(x.module.Title).Select(L)), word))).ToArray();
+        var moduleMatches = _modules.Where(m => !_theme.Legacy && !sectionMatches.Any(x => x.module.Id == m.Id)
+            && (_localization.Contains($"{m.Title} {m.Description}", _query) || _localization.Contains($"{L(m.Title)} {L(m.Description)}", _query))).ToArray();
+        Heading("Search results", F($"{matches.Length + featureMatches.Length + sectionMatches.Length + moduleMatches.Length} settings matching “{_query}”. Edit them here; your navigation stays available."));
         foreach (var group in matches.GroupBy(s => s.Page))
         {
             _page.Children.Add(Text(PageLabel(group.Key), 12, _theme.Accent, true));
@@ -172,16 +202,13 @@ public sealed partial class WorkspaceView
             foreach (var definition in group) rows.Children.Add(SettingRow(definition));
             _page.Children.Add(Card(rows, new Thickness(20, 0)));
         }
-        var routes = new[] { ("Switching", "Cycle groups, hotkeys and keyboard shortcuts"), ("Clients", "Active clients and preview visibility"), ("ClientSettings", "Character colors & minimization"), ("Profiles", "Profiles, clone, rename, delete and profile accent color"), ("Appearance", "Appearance, themes, Light, Dark and Legacy") };
-        var showGlobalShortcuts = "hide all show all minimize all minimise all global hotkey keyboard shortcuts ToggleHideAllActiveHotkey MinimizeAllClientsHotkey".Contains(_query, StringComparison.OrdinalIgnoreCase);
         if (showGlobalShortcuts) AddGlobalHotkeys();
-        var featureMatches = routes.Where(r => r.Item2.Contains(_query, StringComparison.OrdinalIgnoreCase) || _localization.Contains(L(r.Item2), _query)
-            || r.Item1 == "Appearance" && _localization.Contains(L("Language") + " language", _query)
-            || r.Item1 == "ClientSettings" && "PriorityClients PerClientActiveClientHighlightColor priority border minimization exceptions offline".Contains(_query, StringComparison.OrdinalIgnoreCase)).ToArray();
         foreach (var route in featureMatches) _page.Children.Add(ActionButton(F($"Open {L(route.Item2)}  →"), () => Navigate(route.Item1)));
-        var moduleMatches = _modules.Where(m => !_theme.Legacy && $"{m.Title} {m.Description}".Contains(_query, StringComparison.OrdinalIgnoreCase)).ToArray();
+        foreach (var (module, target) in sectionMatches)
+            _page.Children.Add(ActionButton(F($"Open {L(module.Title) + " - " + L(target.Title)}  →"),
+                () => { target.PrepareNavigation(); Navigate(module.Id); }, "search-module-" + module.Id + "-" + target.Id));
         foreach (var module in moduleMatches) _page.Children.Add(ActionButton(F($"Open {module.Title}  →"), () => Navigate(module.Id)));
-        if (matches.Length == 0 && featureMatches.Length == 0 && moduleMatches.Length == 0 && !showGlobalShortcuts)
+        if (matches.Length == 0 && featureMatches.Length == 0 && moduleMatches.Length == 0 && sectionMatches.Length == 0 && !showGlobalShortcuts)
             _page.Children.Add(Card(new StackPanel { Spacing = 9, Children = { Text("No matching settings", 18, _theme.Text, true), Text("Try a shorter term such as “opacity”, “FPS”, “hotkey” or “font”.", 13, _theme.Muted), ActionButton("Clear search", () => { _search.Text = L(""); }) } }));
     }
 

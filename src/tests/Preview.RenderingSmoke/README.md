@@ -48,6 +48,34 @@ image/overlay pair; it does not capture an entire monitor or the desktop.
 & .\bin\preview-validation\Preview.RenderingSmoke.exe --live --restore-sources --renderer native --effects all --seconds 30 --capture --output .\bin\preview-results\live-native-alerts
 ```
 
+`--combat-simulation` exercises the Augments service -> manager -> native renderer
+with real EVE windows and shared log reads, using isolated settings and a separate
+real-history database. The default target is all visible harness thumbnails.
+Events follow normal aggregation and notification paths without TEST labels;
+temporary overview statistics disappear on Stop/expiry while real ingestion
+continues. Captures verify plain system names below titles and damage/repair
+graphics. A deterministic incoming all-types event also verifies the actual title
+colour, synchronised whole-thumbnail tint and all four incoming alpha icons beside
+DPS on every thumbnail, including restoration after simulation ends.
+Fade captures verify low, intermediate and peak strengths on the shared clock;
+the fade stage uses 10% maximum thumbnail opacity and asserts its native ARGB alpha.
+A six-source deterministic repair sample verifies three compact type-coloured
+icon/amount pairs in each direction, combined as HP/s over the configured window.
+Streaming repair checks retain normal hit-size variation. A three-second rate
+window verifies single, combined, then single repair samples on both native
+rows, each retaining its IN/OUT prefix.
+Every platform is also tested with and without known damage composition, including
+weapon-only, damage-only, combined and empty icon strips without unknown markers.
+top-left, centre and bottom-right captures exercise stacked title/system and DPS
+positions with reordered rows through the normal settings path.
+`combat-result.json` records temporary totals, persisted-entry exclusion,
+event counts, focus and DWM relationships. Choose a count no greater than the
+number of real clients; this mode rejects duplicate sources.
+
+```powershell
+& .\bin\preview-validation\Preview.RenderingSmoke.exe --live --renderer native --combat-simulation --count 3 --seconds 15 --capture --output .\bin\preview-results\live-combat
+```
+
 `--effects one|all` adds neutral synthetic text/counter rows and
 a one-second synthetic red flash every two seconds, without shaking,
 on one or all previews. It never reads actual incoming damage or game stats. Legacy supports

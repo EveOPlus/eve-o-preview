@@ -3,10 +3,13 @@
 `AvaloniaPreviewOverlay` implements `IOverlayRenderer` from the portable Preview project.
 It preserves native-pixel title size, offsets, outlined styles and all three skip markers,
 including markers with titles hidden. Scene changes rebuild retained geometry; up to 8
-stat rows appear at the bottom. An equal replacement state does not invalidate the scene.
+stat rows use nine selectable positions. `OverlayLayout.Arrange` measures and stacks
+title/system and meter blocks sharing an anchor. An equal replacement state does
+not invalidate the scene. Incoming damage uses a separate retained tint rectangle;
+fade frames update its opacity and the title brush without rebuilding glyph geometry.
 
 The alert layer is a separate `CompositionCustomVisual`. Finite opacity and offset
-keyframes run in Avalonia's compositor. There is no UI timer, managed per-frame scene
+keyframes run in Avalonia's compositor. This separate alert API has no UI timer, managed per-frame scene
 rebuild or alert-frame request loop. Shake only moves alert graphics within fixed clipped
 bounds. Clear, hide, detach and disposal stop animations and hide the alert visual.
 Reduced motion uses a steady alert followed by expiry. Alerts received before attachment

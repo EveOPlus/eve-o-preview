@@ -93,6 +93,7 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
             });
         };
         BuildShell();
+        AttachedToVisualTree += (_, _) => Dispatcher.UIThread.Post(OfferStaticDataDownload);
     }
 
     public void Dispose()
@@ -117,12 +118,14 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
         _previewStillBitmap = null;
     }
 
-    public bool HasUnappliedEdits => _drafts.Count > 0 || _formDrafts.Count > 0;
+    public bool HasUnappliedEdits => _drafts.Count > 0 || _formDrafts.Count > 0 || _modules.Any(x => x.Drafts?.HasUnappliedEdits == true);
 
     public void RequestDiscardDrafts(Action confirmed) => Confirm("Discard unapplied edits?", "Applied settings are already saved. Your unapplied field edits will be discarded when this window closes.", "Discard edits & close", () =>
     {
-        _drafts.Clear(); _formDrafts.Clear(); confirmed(); return Task.CompletedTask;
+        _drafts.Clear(); _formDrafts.Clear(); DiscardModuleDrafts(); confirmed(); return Task.CompletedTask;
     });
+
+    private void DiscardModuleDrafts() { foreach (var module in _modules) module.Drafts?.Discard(); }
 
     public void Navigate(string pageId)
     {
@@ -136,6 +139,7 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
         _query = "";
         if (_search is not null) _search.Text = L("");
         RenderPage(false);
+        Dispatcher.UIThread.Post(OfferStaticDataDownload);
     }
 
     public void RefreshFromBackend()
@@ -143,6 +147,7 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
         if (_disposed) return;
         var next = _backend.Read();
         bool languageChanged = next.UiLanguage != _snapshot.UiLanguage;
+        bool discardForProfileChange = next.ProfileName != _snapshot.ProfileName && !_preserveDraftsOnRefresh;
         if (_cancelMenuDrag is not null)
         {
             if (!languageChanged && next.Theme == _snapshot.Theme && next.ThumbnailMenuTheme == _snapshot.ThumbnailMenuTheme
@@ -151,13 +156,14 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
         }
         if (_cancelOrderDrag is not null && next.ProfileName == _snapshot.ProfileName && next.Theme == _snapshot.Theme && !languageChanged) return;
         if (languageChanged) { _cancelOrderDrag?.Invoke(); _cancelMenuDrag?.Invoke(); }
-        if (next.ProfileName != _snapshot.ProfileName && !_preserveDraftsOnRefresh)
+        if (discardForProfileChange)
         {
             _cancelOrderDrag?.Invoke();
             DismissConfirmation();
             _orderScroll = null;
             _drafts.Clear();
             _formDrafts.Clear();
+            DiscardModuleDrafts();
             _failedSettings.Clear();
             _retryCommands.Clear();
             _lastPreviewImage = null;
@@ -185,8 +191,10 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
         else
         {
             UpdateHeader();
-            if (!_deferPageRefresh) RenderPage(true);
+            if (_moduleContent is IWorkspaceLiveModule liveModule && !discardForProfileChange) liveModule.RefreshWorkspace();
+            else if (!_deferPageRefresh) RenderPage(true);
         }
+        Dispatcher.UIThread.Post(OfferStaticDataDownload);
     }
 
     private void OnBackendChanged()
@@ -287,6 +295,8 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
             AddNav(nav, "Overview", "Overview", "overview");
             AddNav(nav, "Clients", "Clients", "clients");
             AddNav(nav, "Previews", "Previews & layout", "preview");
+            if (_modules.FirstOrDefault(module => module.Id == "Dps") is { } augments)
+                AddNav(nav, augments.Id, augments.Title, "chart");
             AddNav(nav, "Switching", "Switching & hotkeys", "cycle");
             AddNav(nav, "FpsAudio", "Performance & audio", "performance");
             nav.Children.Add(Text("PERSONALIZE", 9, _theme.Muted, true, margin: new Thickness(12, 23, 0, 8)));
@@ -345,7 +355,7 @@ public sealed partial class WorkspaceView : UserControl, IDisposable
             if (HasUnappliedEdits)
             {
                 UpdateHeader();
-                Confirm("Switch profile?", F($"Your unapplied edits will be discarded. Applied settings are already saved in {_snapshot.ProfileName}."), "Discard edits & switch", async () => { _drafts.Clear(); _formDrafts.Clear(); await Run(new("profile-switch", selected.Id)); });
+                Confirm("Switch profile?", F($"Your unapplied edits will be discarded. Applied settings are already saved in {_snapshot.ProfileName}."), "Discard edits & switch", async () => { _drafts.Clear(); _formDrafts.Clear(); DiscardModuleDrafts(); await Run(new("profile-switch", selected.Id)); });
             }
             else await Run(new("profile-switch", selected.Id));
         };

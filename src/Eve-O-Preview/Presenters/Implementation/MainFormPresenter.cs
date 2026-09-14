@@ -51,6 +51,9 @@ namespace EveOPreview.Presenters
         private bool _exitApplication;
         private bool _shutdownInProgress;
         private bool _shutdownCompleted;
+        private bool _windowsSessionEnding;
+        private Task _stopTask;
+        private Task _saveOnExitTask;
         #endregion
 
         public MainFormPresenter(
@@ -93,6 +96,7 @@ namespace EveOPreview.Presenters
             this.View.ThumbnailStateChanged = this.UpdateThumbnailState;
             this.View.DocumentationLinkActivated = this.OpenDocumentationLink;
             this.View.ApplicationExitRequested = this.ExitApplication;
+            this.View.WindowsSessionEnding = this.EndWindowsSession;
             this.View.GetClientNameFromInput = this.GetClientDescriptionFromInputBox;
             this.View.CaptureNewHotkey = this.SendCaptureNewHotkeyRequest;
             this.View.FpsLimiterChanged = this.TriggerSetFpsLimiter;
@@ -218,14 +222,15 @@ namespace EveOPreview.Presenters
                     // Cancel this close, let the FormClosing callback return, and keep
                     // pumping UI continuations while MediatR/native cleanup completes.
                     await Task.Yield();
-                    await _mediator.Send(new StopService());
-                    _configurationStorage.Save();
+                    if (_windowsSessionEnding) return;
+                    await (_stopTask ??= _mediator.Send(new StopService()));
+                    await SaveOnExitAsync();
                 }
                 catch (Exception ex) { _logger.Error(ex, "Application shutdown cleanup failed"); }
                 finally
                 {
                     _shutdownCompleted = true;
-                    View.Close();
+                    if (!_windowsSessionEnding) View.Close();
                 }
                 return;
             }
@@ -233,6 +238,26 @@ namespace EveOPreview.Presenters
             _logger.Verbose("MainFormPresenter.Close: Minimizing instead of closing");
             request.Allow = false;
             this.View.Minimize();
+        }
+
+        private Task SaveOnExitAsync() => _saveOnExitTask ??= Task.Run(() => _configurationStorage.Save());
+
+        private void EndWindowsSession()
+        {
+            if (_windowsSessionEnding) return;
+            _windowsSessionEnding = true;
+            _shutdownCompleted = true;
+            _shutdownInProgress = true;
+            // FormClosed means WM_ENDSESSION was confirmed. Windows may terminate
+            // us when it returns: don't defer work to the UI pump or call Close.
+            try
+            {
+                var save = SaveOnExitAsync(); // Persist even if native cleanup stalls.
+                _stopTask ??= _mediator.Send(new StopService { IsSessionEnding = true });
+                Task.WhenAll(_stopTask, save).WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+            }
+            catch (TimeoutException) { _logger.Warning("Windows session cleanup exceeded its two-second budget"); }
+            catch (Exception ex) { _logger.Error(ex, "Windows session cleanup failed"); }
         }
 
         private async void UpdateThumbnailsSize()

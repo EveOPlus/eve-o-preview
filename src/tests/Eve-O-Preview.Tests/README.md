@@ -21,6 +21,28 @@ dotnet test tests/Eve-O-Preview.Tests/Eve-O-Preview.Tests.csproj --filter "Displ
 
 The project uses xUnit v3 and the Visual Studio test adapter. It covers the following behaviors:
 
+- Augments checks cover complete shared log reads, duplicate delivery, rollover,
+  storage migration/restart, activity counters, simulation isolation, static-data
+  import/cancellation, compatibility with older preferences, damage filtering,
+  Blink/Fade strength, nine title/DPS positions and stable row ordering. Native
+  renderer checks assert that fade-only changes do not upload glyph surfaces.
+  Platform SVG checks render all 32 fixed weapon icons at 12, 16 and 24 pixels,
+  verifying embedded geometry and distinct monochrome images.
+  `StaticDataTests.Platforms` covers representative real offline catalog items,
+  transactional upgrades of old installed indexes (including forced rollback),
+  enum/custom-style compatibility, metadata-only enrichment and modeled cadence.
+  `AugmentLayoutTests` also verifies fade opacity endpoints and persistence.
+  `CombatDpsAverageTests` covers valid-middle sampling, slow volleys, idle gaps,
+  weighted lifetime averages, independent directions/categories, pending tails,
+  delayed files, duplicate delivery, transactional rollback, scoped reset,
+  migration, retention/restart, source retraction and simulation isolation.
+  `CombatCharacterResetTests` checks character-only and all-character resets across
+  counter scopes, replay, restart and simulation. `CombatLogFixtureTests` replays
+  the bundled anonymized autocannon, repair and artillery samples without network
+  access or personal files. These are normal Test Explorer/Run All cases; the
+  existing runner structure is unchanged. Live-client diagnostics remain separate
+  integration tools.
+
 - Three legacy-profile cases cover missing, malformed and expired keys,
   preserved feature settings, and removal of obsolete licensing fields on save.
 - Two FPS cases verify that enabling and disabling respect the user's setting.

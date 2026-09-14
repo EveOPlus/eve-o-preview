@@ -24,6 +24,10 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
     private nint _borderRoot, _borderEffect, _borderSurface;
     private nint _borderTop, _borderBottom, _borderLeft, _borderRight;
     private uint? _borderColor;
+    private nint _damageVisual, _damageSurface;
+    private uint? _damageColor;
+    private nint _damageEffect, _titleEffect, _flashTitleVisual, _flashTitleEffect, _flashTitleSurface;
+    private long _flashTitlePixels;
     private long _titlePixels, _statsPixels;
     private PreviewSize _size;
     private OverlayScene _scene = new();
@@ -39,7 +43,17 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
             _device = SharedDevice.Acquire();
             _target = CreateTarget(_device.Composition, hwnd);
             _root = CreateVisual(_device.Composition);
+            _damageVisual = CreateVisual(_device.Composition);
             _sceneVisual = CreateVisual(_device.Composition);
+            _flashTitleVisual = CreateVisual(_device.Composition);
+            _damageEffect = CreateEffect(_device.Composition);
+            _titleEffect = CreateEffect(_device.Composition);
+            _flashTitleEffect = CreateEffect(_device.Composition);
+            SetEffect(_damageVisual, _damageEffect);
+            SetEffect(_sceneVisual, _titleEffect);
+            SetEffect(_flashTitleVisual, _flashTitleEffect);
+            NativeCompositionInterop.SetOpacity(_titleEffect, 1);
+            NativeCompositionInterop.SetOpacity(_flashTitleEffect, 0);
             _statsVisual = CreateVisual(_device.Composition);
             _alertClipVisual = CreateVisual(_device.Composition);
             _alertVisual = CreateVisual(_device.Composition);
@@ -72,9 +86,11 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
             AddVisual(_alertVisual, _leftVisual);
             AddVisual(_alertVisual, _rightVisual);
             AddVisual(_alertClipVisual, _alertVisual);
-            // Alerts are behind text so stats/title remain legible during a flash.
+            // Damage tint and alerts are behind text so names/stats remain legible.
+            AddVisual(_root, _damageVisual);
             AddVisual(_root, _alertClipVisual);
             AddVisual(_root, _sceneVisual);
+            AddVisual(_root, _flashTitleVisual);
             AddVisual(_root, _statsVisual);
             AddVisual(_root, _borderRoot);
             SetRoot(_target, _root);
@@ -90,8 +106,9 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
     /// <summary>Instrumentation counts state uploads/transactions; never counts game frames.</summary>
     public long SurfaceUploadCount { get; private set; }
     public long CommitCount { get; private set; }
-    public long SceneSurfacePixels => _titlePixels + _statsPixels;
+    public long SceneSurfacePixels => _titlePixels + _flashTitlePixels + _statsPixels;
     public long AlertSurfacePixels => _alertSurface == 0 ? 0 : 2;
+    public long DamageTintSurfacePixels => _damageSurface == 0 ? 0 : 1;
     public PreviewRect AlertClipBounds { get; private set; }
     public OverlayBorder ActiveBorder => _scene.ActiveBorder;
 
@@ -116,7 +133,9 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
         SetClip(_root, size.Width, size.Height);
         UpdateAlertGeometry();
         UpdateBorder();
+        UpdateDamageTint();
         UploadScene(titleChanged: true, statsChanged: true);
+        UpdateDamageIntensity();
         CommitChanges();
     }
 
@@ -126,14 +145,25 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
         ArgumentNullException.ThrowIfNull(scene);
         if (SceneEquals(_scene, scene)) return;
         bool titleChanged = !TitleEquals(_scene, scene);
-        bool statsChanged = _scene.Font.Family != scene.Font.Family || !_scene.Stats.SequenceEqual(scene.Stats);
+        bool statsChanged = _scene.Font.Family != scene.Font.Family || _scene.Font.Style != scene.Font.Style
+            || _scene.StatsStyle != scene.StatsStyle || !_scene.Stats.SequenceEqual(scene.Stats);
+        // Placement can depend on both blocks. Colour/intensity changes cannot.
+        bool layoutChanged = _scene.TitlePosition != scene.TitlePosition || _scene.StatsStyle != scene.StatsStyle
+            || _scene.Font != scene.Font || _scene.Title != scene.Title || _scene.Subtitle != scene.Subtitle
+            || _scene.SubtitlePlacement != scene.SubtitlePlacement || _scene.SubtitleFontSize != scene.SubtitleFontSize
+            || _scene.ShowTitle != scene.ShowTitle || _scene.CycleSkipped != scene.CycleSkipped || _scene.Stats.Count != scene.Stats.Count;
+        titleChanged |= layoutChanged;
+        statsChanged |= layoutChanged;
         bool alertBoundsChanged = _scene.AlertBounds != scene.AlertBounds;
         bool borderChanged = _scene.ActiveBorder != scene.ActiveBorder;
+        bool damageChanged = _scene.DamageTint != scene.DamageTint;
         _scene = scene;
         if (_size.Width == 0) return;
         UploadScene(titleChanged, statsChanged);
         if (alertBoundsChanged) UpdateAlertGeometry();
         if (borderChanged) UpdateBorder();
+        if (damageChanged) UpdateDamageTint();
+        UpdateDamageIntensity();
         CommitChanges();
     }
 
@@ -257,6 +287,33 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
         SetScaleAndOffset(_rightVisual, border, Math.Max(0, height - 2 * border), width - border, border);
     }
 
+    private void UpdateDamageTint()
+    {
+        SetScaleAndOffset(_damageVisual, _size.Width, _size.Height, 0, 0);
+        if (_scene.DamageTint is not { } tint)
+        {
+            SetContent(_damageVisual, 0);
+            return; // Keep the single colour pixel for the next on phase.
+        }
+        if (_damageColor != tint || _damageSurface == 0)
+        {
+            using var pixel = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
+            using (var graphics = Graphics.FromImage(pixel)) graphics.Clear(Color.FromArgb(unchecked((int)tint)));
+            ReplaceSurface(ref _damageSurface, _damageVisual, pixel);
+            _damageColor = tint;
+        }
+        else SetContent(_damageVisual, _damageSurface);
+    }
+
+    private void UpdateDamageIntensity()
+    {
+        float amount = (float)Math.Clamp(_scene.DamageFlashIntensity, 0, 1);
+        NativeCompositionInterop.SetOpacity(_damageEffect, amount);
+        float title = _scene.TitleColor.HasValue ? amount : 0;
+        NativeCompositionInterop.SetOpacity(_titleEffect, 1 - title);
+        NativeCompositionInterop.SetOpacity(_flashTitleEffect, title);
+    }
+
     private void UpdateBorder()
     {
         var border = _scene.ActiveBorder;
@@ -291,12 +348,17 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
     {
         if (titleChanged)
         {
-            using var title = OverlaySceneRasterizer.RenderAsset(_scene with { Stats = Array.Empty<OverlayStat>() }, _size);
+            using var title = OverlaySceneRasterizer.RenderAsset(_scene with { TitleColor = null }, _size, drawStats: false);
             UpdateAsset(ref _sceneSurface, _sceneVisual, title, ref _titlePixels);
+            // Two bounded text assets cross-fade using retained visual opacity.
+            // Animation ticks never rerasterize glyphs or upload game pixels.
+            using var flashTitle = _scene.TitleColor.HasValue ? OverlaySceneRasterizer.RenderAsset(
+                _scene with { DamageFlashIntensity = 1 }, _size, drawStats: false) : null;
+            UpdateAsset(ref _flashTitleSurface, _flashTitleVisual, flashTitle, ref _flashTitlePixels);
         }
         if (statsChanged)
         {
-            using var stats = OverlaySceneRasterizer.RenderAsset(_scene with { Title = "", ShowTitle = false, CycleSkipped = false }, _size);
+            using var stats = OverlaySceneRasterizer.RenderAsset(_scene, _size, drawTitle: false);
             UpdateAsset(ref _statsSurface, _statsVisual, stats, ref _statsPixels);
         }
     }
@@ -333,12 +395,15 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
 
     private void CommitChanges() { Commit(_device.Composition); CommitCount++; }
     private static bool TitleEquals(OverlayScene left, OverlayScene right) =>
-        left.Title == right.Title && left.ShowTitle == right.ShowTitle &&
+        left.TitlePosition == right.TitlePosition &&
+        left.Title == right.Title && left.TitleColor == right.TitleColor && left.ShowTitle == right.ShowTitle && left.Subtitle == right.Subtitle && left.SubtitleColor == right.SubtitleColor &&
+        left.SubtitlePlacement == right.SubtitlePlacement && left.SubtitleFontSize == right.SubtitleFontSize &&
         left.Font == right.Font && left.CycleSkipped == right.CycleSkipped && left.MarkerStyle == right.MarkerStyle &&
         left.MarkerColor == right.MarkerColor;
     private static bool SceneEquals(OverlayScene left, OverlayScene right) =>
         ReferenceEquals(left, right) || TitleEquals(left, right) &&
-        left.AlertBounds == right.AlertBounds && left.ActiveBorder == right.ActiveBorder &&
+        left.AlertBounds == right.AlertBounds && left.ActiveBorder == right.ActiveBorder && left.DamageTint == right.DamageTint && left.StatsStyle == right.StatsStyle &&
+        left.DamageFlashIntensity == right.DamageFlashIntensity &&
         (ReferenceEquals(left.Stats, right.Stats) || left.Stats.SequenceEqual(right.Stats));
 
     private void VerifyThread()
@@ -363,6 +428,9 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
         finally
         {
             Release(ref _sceneSurface); Release(ref _statsSurface); Release(ref _alertSurface); Release(ref _tintSurface);
+            Release(ref _damageSurface); Release(ref _damageVisual);
+            Release(ref _damageEffect); Release(ref _titleEffect); Release(ref _flashTitleEffect);
+            Release(ref _flashTitleSurface); Release(ref _flashTitleVisual);
             Release(ref _sceneVisual); Release(ref _statsVisual); Release(ref _alertVisual); Release(ref _alertClipVisual); Release(ref _root);
             Release(ref _tintVisual); Release(ref _topVisual); Release(ref _bottomVisual); Release(ref _leftVisual); Release(ref _rightVisual);
             Release(ref _rootEffect); Release(ref _alertEffect); Release(ref _target);

@@ -34,7 +34,7 @@ using System.Windows.Threading;
 
 namespace EveOPreview.Services
 {
-    sealed class ThumbnailManager : IThumbnailManager, IDisposable
+    sealed partial class ThumbnailManager : IThumbnailManager, IDisposable
     {
         #region Private constants
         private const int WINDOW_POSITION_THRESHOLD_LOW = -10_000;
@@ -84,6 +84,10 @@ namespace EveOPreview.Services
         #endregion
 
         public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents, IHookService hookService, IGlobalEvents globalEvents, ILogger logger)
+            : this(mediator, configuration, processMonitor, windowManager, factory, keyboardMouseEvents, hookService, globalEvents, logger, null, null) { }
+
+        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents, IHookService hookService, IGlobalEvents globalEvents, ILogger logger,
+            Logs.CombatLogService combatLogs = null, ApplicationPreferences preferences = null)
         {
             this._mediator = mediator;
             this._processMonitor = processMonitor;
@@ -94,6 +98,7 @@ namespace EveOPreview.Services
             _hookService = hookService;
             _globalEvents = globalEvents;
             _logger = logger;
+            InitializeCombatLogs(combatLogs, preferences);
 
             _logger.Verbose("ThumbnailManager: Constructor initializing. RefreshPeriod={RefreshPeriod}ms, ThumbnailSize={Width}x{Height}", 
                 configuration.ThumbnailRefreshPeriod, configuration.ThumbnailSize.Width, configuration.ThumbnailSize.Height);
@@ -468,6 +473,7 @@ namespace EveOPreview.Services
         public void Start()
         {
             _stopped = false;
+            _combatLogs?.Start();
             if (_foregroundObserver == null)
             {
                 try { _foregroundObserver = new ForegroundWindowObserver(ForegroundWindowChanged, _logger); }
@@ -487,6 +493,8 @@ namespace EveOPreview.Services
             _logger.Verbose("ThumbnailManager.Stop: Stopping thumbnail manager");
             this._thumbnailUpdateTimer.Stop();
             _stopped = true;
+            _combatLogs?.Stop();
+            ApplyCombatOverlays();
             _foregroundObserver?.Dispose();
             _foregroundObserver = null;
             UnregisterExistingHotkeys();
@@ -496,6 +504,7 @@ namespace EveOPreview.Services
         public void Dispose()
         {
             Stop();
+            DisposeCombatLogs();
             _globalEvents.CurrentProfileChanged -= HandleCurrentProfileChanged;
             _globalEvents.HotkeysChanged -= RegisterAllHotkeys;
             _thumbnailUpdateTimer.Tick -= ThumbnailUpdateTimerTick;
@@ -577,6 +586,7 @@ namespace EveOPreview.Services
                     viewsAdded.Add(view.Title);
 
                     this.ApplyClientLayout(view.Id, view.Title);
+                    ApplyCombatOverlay(view);
                 }
             }
 
@@ -608,6 +618,7 @@ namespace EveOPreview.Services
             view.ThumbnailActivated = ThumbnailActivated;
             view.ThumbnailDeactivated = ThumbnailDeactivated;
             ApplyClientLayout(view.Id, view.Title);
+            ApplyCombatOverlay(view);
             return view;
         }
 

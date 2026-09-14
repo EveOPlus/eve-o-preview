@@ -22,7 +22,7 @@ using Size = System.Drawing.Size;
 
 namespace EveOPreview.RenderingSmoke;
 
-internal static class Program
+internal static partial class Program
 {
     [STAThread]
     private static int Main(string[] args)
@@ -144,6 +144,8 @@ internal static class Program
                 }
                 Pump(TimeSpan.FromSeconds(1));
                 VerifyWindows(views);
+                if (args.Contains("--combat-simulation"))
+                    return ValidateCombatSimulation(views, renderer, config, logger, options);
                 long foregroundAfterShow = Native.GetForegroundWindow().ToInt64();
                 bool creationCapturedFocus = OwnsForeground(views, portableOverlays);
                 if (creationCapturedFocus && initialForeground != 0)

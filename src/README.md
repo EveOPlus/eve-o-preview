@@ -2,6 +2,8 @@
 
 EVE-O Preview manages multiple EVE client windows: live or captured previews, rapid focus changes and cycling, layouts, FPS limits, CPU affinity, and selective audio muting. The settings workspace is an Avalonia UI with Light, Dark and Legacy themes, hosted by the existing Windows application. This guide is a reusable context entry point for understanding and changing the implementation.
 
+For Augments setup, themes, simulation, damage icons and history, see the [Thumbnail augments README](docs/augments/README.md).
+
 **Theme maintenance policy:** Legacy is locked to its existing feature set for legacy use only. Do not add new features, pages or controls to Legacy. Continue fixing bugs, maintaining compatibility and updating its existing features without removing them or disrupting the familiar layout. All new feature work targets modern themes, currently Light and Dark, and users are expected to migrate to a modern theme. Theme selection must briefly tell users that Legacy may lack newer features; this notice should not interrupt switching themes.
 
 **Theme migration:** New and older/unversioned global settings open in Dark, even if an older file selected Legacy. Users may manually select Legacy again; preserve that choice on later launches and profile switches. `ApplicationPreferences` versions the existing global settings file independently of gameplay profiles, retaining unrelated preferences and the established portable/installed storage policy.
@@ -16,12 +18,13 @@ The short `AGENTS.md` files provide discovery and local constraints, while the p
 
 | Guide | What it explains |
 | --- | --- |
-| [Reported bugs and investigation leads](docs/ai/reported-bugs.md) | Twelve tracked findings with evidence, current-version limits, workarounds, source routes and reproduction checks |
-| [Future feature backlog](docs/ai/feature-backlog.md) | Nineteen unimplemented, partial or exploratory ideas with current-code checks and acceptance criteria |
+| [Reported bugs and investigation leads](docs/ai/reported-bugs.md) | Tracked fixed/partial defects, completed checklist, evidence and remaining validation |
+| [Future feature backlog](docs/ai/feature-backlog.md) | Twenty unimplemented, partial or exploratory ideas with current-code checks and acceptance criteria |
 | [Application and configuration](docs/ai/application-and-configuration.md) | Startup/shutdown, Autofac, presenter/UI contracts, every mediator route, shared settings, profiles and migrations |
 | [UI review and preservation map](docs/ai/ui-review.md) | Source UI/UX audit, legacy control parity, theme and profile identity requirements, future DPS/ESI boundaries |
 | [Windows and thumbnails](docs/ai/windows-and-thumbnails.md) | Discovery, DWM/static rendering, overlays, MRU z-order, focus, hotkeys, prediction, CPU affinity, ownership |
 | [Preview rendering](docs/ai/preview-rendering.md) | Portable presentation/graphics contracts, Windows DWM and native composition, compatibility fallback and validation |
+| [Augments: combat logs, alpha, DPS and location](docs/ai/combat-logs.md) | Event-driven shared file reads, automatic/manual folder selection, parsed storage, classification, thumbnail styling and simulation |
 | [Robin and native integration](docs/ai/robin.md) | Injection lifecycle, pipe bytes, DXGI vtable hooks, frame pacing, audio interception, sidecar diagnostics |
 | [Build and test](docs/ai/build-and-test.md) | Project differences, precise Windows commands, native publishing, test coverage and limitations, release side effects |
 | [Source index](docs/ai/source-index.md) | Every tracked baseline path, its role, and the guide to consult |

@@ -12,6 +12,7 @@ using EveOPreview.Configuration.Model;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Tests.Infrastructure;
 using EveOPreview.UI;
+using EveOPreview.Preview;
 using EveOPreview.View;
 using MediatR;
 using Serilog;
@@ -23,6 +24,61 @@ public interface IWorkspaceTestView : IMainFormView, IAsyncSettingsView { }
 
 public sealed class WorkspaceBackendTests
 {
+    [Fact]
+    public async Task StatisticsResetForwardsSelectedCharacterAndCounterScope()
+    {
+        string selected = null; CombatResetScope scope = CombatResetScope.All;
+        var logs = Stub.Create<IWorkspaceCombatLogs>((method, args) =>
+        {
+            if (method.Name == "ResetCombatAsync" && args.Length == 2)
+            { scope = (CombatResetScope)args[0]; selected = (string)args[1]; return Task.FromResult(CommandResult.Ok()); }
+            return Stub.Default(method.ReturnType);
+        });
+        using var fixture = new Fixture(logs);
+        Assert.True((await fixture.Backend.ResetCombatAsync(CombatResetScope.Repairs, "Sample Pilot")).Success);
+        Assert.Equal("Sample Pilot", selected); Assert.Equal(CombatResetScope.Repairs, scope);
+        Assert.True((await fixture.Backend.ResetCombatAsync(CombatResetScope.Damage)).Success);
+        Assert.Null(selected); Assert.Equal(CombatResetScope.Damage, scope);
+    }
+
+    [Fact]
+    public async Task SolarSystemLayoutSettingsApplyToEveryClientWithoutChangingCombatStyles()
+    {
+        var perClient = new LogOverlayOptions { Advanced = true, FontSize = 22, Preset = "Minimal",
+            CustomAppearance = CombatAppearance.Preset("Classic") with { IncomingColor = "#112233" } };
+        var settings = new CombatLogSettings { Overlays = new Dictionary<string, LogOverlayOptions> { ["EVE - Pilot One"] = perClient } };
+        var logs = Stub.Create<IWorkspaceCombatLogs>((method, args) =>
+        {
+            if (method.Name == "ReadLogSettings") return settings;
+            if (method.Name == "SaveLogSettingsAsync") { settings = (CombatLogSettings)args[0]; return Task.FromResult(CommandResult.Ok()); }
+            return Stub.Default(method.ReturnType);
+        });
+        using var fixture = new Fixture(logs);
+        Assert.True((await fixture.Execute("setting", "ShowCurrentSolarSystem", "False")).Success);
+        Assert.True((await fixture.Execute("setting", "SolarSystemColor", "#55BBDD")).Success);
+        Assert.False(settings.DefaultOverlay.SolarSystem);
+        Assert.False(settings.DefaultOverlay.Advanced);
+        Assert.Equal("#55BBDD", settings.DefaultOverlay.GetAppearance().SystemColor);
+        Assert.Equal(perClient with { SolarSystem = false, SystemColor = "#55BBDD" }, settings.Overlays["EVE - Pilot One"]);
+        Assert.Equal("false", fixture.Backend.Read().Settings["ShowCurrentSolarSystem"]);
+        Assert.Equal("#55BBDD", fixture.Backend.Read().Settings["SolarSystemColor"]);
+        Assert.False((await fixture.Execute("setting", "SolarSystemColor", "invalid")).Success);
+        Assert.False((await fixture.Execute("setting", "ShowCurrentSolarSystem", "invalid")).Success);
+        Assert.True((await fixture.Execute("setting", "SolarSystemPlacement", "Left")).Success);
+        Assert.True((await fixture.Execute("setting", "SolarSystemFontSize", "22")).Success);
+        Assert.All(settings.Overlays.Values.Append(settings.DefaultOverlay), options =>
+        { Assert.Equal(SubtitlePlacement.Left, options.SystemPlacement); Assert.Equal(22f, options.SystemFontSize); });
+        Assert.False((await fixture.Execute("setting", "SolarSystemPlacement", "invalid")).Success);
+        Assert.True((await fixture.Execute("setting", "SolarSystemFontSize", "0")).Success);
+        Assert.Null(settings.DefaultOverlay.SystemFontSize);
+        Assert.True((await fixture.Execute("setting", "TitlePosition", "BottomRight")).Success);
+        Assert.All(settings.Overlays.Values.Append(settings.DefaultOverlay), options => Assert.Equal(OverlayPosition.BottomRight, options.TitlePosition));
+        Assert.Equal("BottomRight", fixture.Backend.Read().Settings["TitlePosition"]);
+        Assert.Equal(perClient.CustomAppearance, settings.Overlays["EVE - Pilot One"].CustomAppearance);
+        Assert.False((await fixture.Execute("setting", "TitlePosition", "invalid")).Success);
+        Assert.Equal(0, fixture.Commits);
+    }
+
     [Fact]
     public async Task PreviewGraphicsIsGlobalAndDoesNotCommitGameplaySettings()
     {
@@ -395,7 +451,7 @@ public sealed class WorkspaceBackendTests
         public Func<Task> CommitAction { get; set; } = () => Task.CompletedTask;
         public bool FailSave { get; set; }
 
-        public Fixture()
+        public Fixture(IWorkspaceCombatLogs combatLogs = null)
         {
             Configuration = (IThumbnailConfiguration)Activator.CreateInstance(typeof(ThumbnailView).Assembly
                 .GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
@@ -434,7 +490,7 @@ public sealed class WorkspaceBackendTests
             var profileManager = Stub.Create<IProfileManager>((method, _) => method.Name == "get_ProfileLocations" ? profiles : Stub.Default(method.ReturnType));
             Preferences = new ApplicationPreferences(AppearancePath, Logger);
             Backend = new WindowsWorkspaceBackend(View, View, mediator, storage, Configuration, profileManager, Preferences, Logger,
-                Stub.Create<IWorkspacePortraitProvider>((_, _) => Task.FromResult<byte[]>(null)));
+                Stub.Create<IWorkspacePortraitProvider>((_, _) => Task.FromResult<byte[]>(null)), combatLogs: combatLogs);
         }
 
         public Task<CommandResult> Execute(string action, string target = "", string value = "") => Backend.ExecuteAsync(new(action, target, value));

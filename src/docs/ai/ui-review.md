@@ -106,7 +106,7 @@ Keep portable shell state, navigation and commands separate from Windows `HWND`,
 
 ## Future DPS and ESI extension requirements
 
-Implement these future capabilities in modern themes only. Their tabs and placeholder links are hidden in all themes. Reserved IDs and module registration remain in the code; follow [the module handoff](../../Eve-O-Preview.UI/AGENTS.md#future-workspace-modules). Dormant Legacy placeholder code does not authorize adding its eventual features to Legacy.
+Implement integrations in modern themes only. Characters/ESI remains hidden; `Dps` now registers the real [Augments module](combat-logs.md), with separate overview, thumbnail augments and data setup tabs. That guide supersedes the earlier DPS planning row below for implemented behavior. Reserved IDs and module registration remain in the code; follow [the module handoff](../../Eve-O-Preview.UI/AGENTS.md#future-workspace-modules). Legacy placeholder code does not authorize adding features to Legacy.
 
 | Extension | UI model to leave room for | Implementation boundary for a later feature |
 | --- | --- | --- |

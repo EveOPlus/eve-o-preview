@@ -54,6 +54,10 @@ namespace EveOPreview.View
             _logger.Verbose("MainForm: Initializing main window form");
 
             InitializeComponent();
+            FormClosed += (_, e) =>
+            {
+                if (e.CloseReason == CloseReason.WindowsShutDown) WindowsSessionEnding?.Invoke();
+            };
 
             this.ThumbnailsList.DisplayMember = "Title";
 
@@ -507,6 +511,8 @@ namespace EveOPreview.View
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Action ApplicationExitRequested { get; set; }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public Action WindowsSessionEnding { get; set; }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Action FormActivated { get; set; }
@@ -716,6 +722,7 @@ namespace EveOPreview.View
 
         private void MainFormClosing_Handler(object sender, FormClosingEventArgs e)
         {
+            if (e.CloseReason == CloseReason.WindowsShutDown) { e.Cancel = false; return; }
             SaveCustomMutedEventIds();
             _logger.Verbose("MainForm: Form closing requested");
             ViewCloseRequest request = new ViewCloseRequest();

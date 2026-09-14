@@ -119,7 +119,7 @@ Cycle hotkeys, direct client hotkeys and thumbnail clicks share synchronous `Set
 
 [ForegroundWindowObserver](../../Eve-O-Preview/Services/Implementation/ForegroundWindowObserver.cs) subscribes to `EVENT_SYSTEM_FOREGROUND` with `WINEVENT_OUTOFCONTEXT` on the existing UI message loop. `Start` registers once and `Stop`/`Dispose` unhooks; the callback delegate remains rooted. Known EVE source notifications (Alt-Tab or direct game clicks) coalesce into one high-priority (`DispatcherPriority.Send`) UI dispatch, which reads the latest actual foreground and reconciles selection/appearance without requesting focus again or waiting for discovery. Native event callbacks can reenter during activation: do not simply discard a notification because its event HWND differs from the current foreground inside that callback. Reading the latest foreground after dispatch avoids replaying stale event HWNDs and losing the final transition. `Send` uses foreground dispatcher processing; WPF can defer `Input` priority while native input remains pending. Stopped and unknown windows are ignored; the normal activation guard prevents reentry. Polling remains the discovery/recovery and external-focus-loss hiding path, including fallback if registration fails. This adds no injected callback, input hook, or IPC channel. See [Microsoft's event-hook contract](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwineventhook).
 
-Production logging uses [AsyncLogSink](../../Eve-O-Preview/Helper/AsyncLogSink.cs): a single background reader writes the existing rotating file sink. Its bounded 2,048-event queue never waits on an input/render producer. Overload drops events and reports their count; shutdown drains accepted events and disposes the file sink. This matters especially with `-v`, where switching emits multiple diagnostic records. Millisecond event timestamps and the active-outline submission record aid comparison; synchronous disk flushes must not be restored to input callbacks.
+Production logging uses [AsyncLogSink](../../Eve-O-Preview/Helper/AsyncLogSink.cs): a single background reader writes the existing rotating file sink. Its bounded 2,048-event queue never waits on an input/render producer. Overload drops events and reports their count; shutdown allows 500 ms for draining accepted events and disposing the file sink. The worker owns disposal; blocked writes or disposal may outlive that budget without blocking process exit. This matters especially with `-v`, where switching emits multiple diagnostic records. Millisecond event timestamps and the active-outline submission record aid comparison; synchronous disk flushes must not be restored to input callbacks.
 
 ## Hotkeys and cycle semantics
 
@@ -161,7 +161,7 @@ Client-window layouts are separate from thumbnail locations. `ApplyClientLayout`
 | --- | --- | --- | --- | --- |
 | At least 8 | First 2 | Next 2 | Next 2 | Remaining indices after 6 |
 | 4–7 | First 1 | Next 1 | Next 1 | Remaining indices after 3 |
-| Below 4 | Automatic affinity unsupported | — | — | — |
+| Below 4 | Automatic affinity unsupported | - | - | - |
 
 If E threads exist, their mask replaces the background mask. The service does not set priority class (`SetPriorityClass` is commented out); comments about spare OS capacity describe intent, not an exclusive CPU reservation.
 
@@ -196,6 +196,17 @@ CPU topology now includes GroupCount, maps homogeneous efficiency-class-zero pro
 For behavior changes, use the existing [thumbnail z-order checks](../../tests/Eve-O-Preview.Tests/Checks/ThumbnailZOrderTests.cs) and [live-thumbnail checks](../../tests/Eve-O-Preview.Tests/Checks/LiveThumbnailTests.cs), then the test guide's documented execution path. Cover hidden previews, owner/overlay ordering, preserved foreground focus, healthy versus failed DWM relationships, overlap/MRU behavior, source minimize/restore, compatibility images, hover, and relevant feature settings. Only broaden tests to behaviors affected by the edit.
 
 ## Reviewed-file coverage
+
+The later [Augments integration](combat-logs.md) is in
+`ThumbnailManager.CombatLogs`. Log-worker events marshal to the manager's owning
+dispatcher, coalesce by character title and update only retained stat scenes.
+Finite alpha/repair expiry and rolling DPS clocks do not read EVE files. Start,
+Stop, title changes and disposal coordinate subscription/visual lifetime.
+Simulation targets all visible thumbnails by default, with optional per-client
+selection. It uses the normal notification/aggregation/rendering path in a modern
+theme. Temporary overview statistics are discarded on completion; real ingestion
+continues. DWM relationships, focus and z-order are preserved. Source window
+geometry and Robin are outside this path.
 
 This guide's review read the complete contents of the following files, including designer wiring and `.resx` metadata. `HookService.cs` and `DebuggerSidecar.cs` belong to the separate hook-runtime review; main-form/presenter/configuration/mediator/test implementation coverage belongs to the other repository guides.
 

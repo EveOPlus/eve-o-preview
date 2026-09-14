@@ -35,18 +35,24 @@ internal sealed class AsyncLogSink : ILogEventSink, IDisposable
 
     private async Task WriteEvents()
     {
-        await foreach (var entry in _events.Reader.ReadAllAsync().ConfigureAwait(false))
+        try
         {
-            _destination.Write(entry);
-            long dropped = Interlocked.Exchange(ref _dropped, 0);
-            if (dropped > 0) _destination.Warning("Diagnostic log queue full; dropped {Count} events to preserve input responsiveness", dropped);
+            await foreach (var entry in _events.Reader.ReadAllAsync().ConfigureAwait(false))
+            {
+                _destination.Write(entry);
+                long dropped = Interlocked.Exchange(ref _dropped, 0);
+                if (dropped > 0) _destination.Warning("Diagnostic log queue full; dropped {Count} events to preserve input responsiveness", dropped);
+            }
         }
+        finally { (_destination as IDisposable)?.Dispose(); }
     }
 
     public void Dispose()
     {
         _events.Writer.TryComplete();
-        try { _writer.GetAwaiter().GetResult(); } // Drain only on shutdown, never on input.
-        finally { (_destination as IDisposable)?.Dispose(); }
+        // The worker owns disposal too: a blocked write/flush must not hold exit
+        // indefinitely or race destination disposal with an unfinished write.
+        try { _writer.WaitAsync(TimeSpan.FromMilliseconds(500)).GetAwaiter().GetResult(); }
+        catch (TimeoutException) { }
     }
 }

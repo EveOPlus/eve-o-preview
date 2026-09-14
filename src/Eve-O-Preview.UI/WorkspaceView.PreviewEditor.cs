@@ -146,7 +146,7 @@ public sealed partial class WorkspaceView
         else BuildLayoutEditor(editor);
         var preview = BuildPinnedPreview();
         if (!_previewNarrow) Grid.SetColumn(preview, 1);
-        else preview.Margin = new Thickness(0, 0, 10, 12);
+        else preview.Margin = new Thickness(0, 0, 10, 8);
         body.Children.Add(preview);
         Grid.SetRow(body, _previewNarrow ? 1 : 2); workspace.Children.Add(body);
         _scroll.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
@@ -205,7 +205,7 @@ public sealed partial class WorkspaceView
             content.Children.Add(sampleTitle);
             content.Children.Add(_previewStatusText);
         }
-        var card = Card(content, new Thickness(_previewNarrow ? 10 : 13));
+        var card = Card(content, new Thickness(_previewNarrow ? 6 : 13));
         pane.Children.Add(card);
         var apply = new StackPanel { Spacing = 7, Margin = new Thickness(0, 10, 0, 0) };
         var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7 };
@@ -252,7 +252,8 @@ public sealed partial class WorkspaceView
         title.Children.Add(FontStyleField());
         title.Children.Add(ColorField("TitleFontForeColor", "Text color"));
         title.Children.Add(FieldGrid("*,100", ColorField("TitleFontOutlineColor", "Outline color"), NumberField("TitleFontOutlineWidth", "Width", 0.1m)));
-        title.Children.Add(FieldGrid("*,*", NumberField("TitleFontOffsetLeft", "Left offset (px)"), NumberField("TitleFontOffsetTop", "Top offset (px)")));
+        if (!_theme.Legacy) title.Children.Add(TitlePositionField());
+        title.Children.Add(FieldGrid("*,*", NumberField("TitleFontOffsetLeft", "Horizontal offset (px)"), NumberField("TitleFontOffsetTop", "Vertical offset (px)")));
         parent.Children.Add(Card(title, new Thickness(14)));
         var skipped = new StackPanel { Spacing = 9 };
         skipped.Children.Add(Text("Skipped characters", 13, _theme.Text, true));
@@ -270,6 +271,10 @@ public sealed partial class WorkspaceView
         highlight.Children.Add(FieldGrid("*,100", ColorField("ActiveClientHighlightColor", "Border color"), NumberField("ActiveClientHighlightThickness", "Thickness")));
         highlight.Children.Add(ActionButton("Per-character border colors", () => Navigate("ClientSettings"), "open-character-colors"));
         parent.Children.Add(Card(highlight, new Thickness(14)));
+        if (_backend is IWorkspaceCombatLogs)
+        {
+            parent.Children.Add(Card(BuildSolarSystemEditor(), new Thickness(14)));
+        }
         parent.Children.Add(PreviewToggle("ShowThumbnailFrames", "Show standard window frames"));
         parent.Children.Add(Text("Offsets are measured from the preview's top-left corner. Negative offsets can crop the title. Window frames appear on real preview windows.", 11, _theme.Muted));
     }
@@ -327,25 +332,9 @@ public sealed partial class WorkspaceView
     private Control FontFamilyField()
     {
         _fontNames ??= _backend is IWorkspacePreviewRenderer renderer ? renderer.FontFamilies : FontManager.Current.SystemFonts.Select(f => f.Name).OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase).ToArray();
-        var font = new AutoCompleteBox { FlowDirection = Avalonia.Media.FlowDirection.LeftToRight, Name = "setting-TitleFontName", Text = DraftValue("TitleFontName", "Arial"), ItemsSource = _fontNames, MinimumPrefixLength = 0, FilterMode = AutoCompleteFilterMode.Contains, MinHeight = 32, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Stretch };
-        AutomationProperties.SetName(font, L("Title font family. Type or choose an installed font"));
-        font.TextChanged += (_, _) => StagePreviewSetting("TitleFontName", font.Text ?? "");
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,30") };
-        row.Children.Add(font);
-        var show = ActionButton("⌄", () => { }, "show-font-list");
-        show.Padding = new Thickness(6, 2);
-        AutomationProperties.SetName(show, L("Show installed font families"));
-        show.Click += (_, _) =>
-        {
-            var list = new ListBox { ItemsSource = _fontNames, SelectedItem = font.Text, Width = 280, MaxHeight = 280, FontSize = 12 };
-            AutomationProperties.SetName(list, L("Installed font families"));
-            var flyout = new Flyout { Content = list };
-            list.SelectionChanged += (_, _) => { if (list.SelectedItem is string selected) { font.Text = selected; flyout.Hide(); } };
-            flyout.ShowAt(show);
-            if (list.SelectedItem is not null) list.ScrollIntoView(list.SelectedItem);
-        };
-        Grid.SetColumn(show, 1); row.Children.Add(show);
-        return LabeledPreviewField("TitleFontName", "Font family", row);
+        var font = WorkspacePickers.FontFamily(_fontNames, DraftValue("TitleFontName", "Arial"), "setting-TitleFontName", L("Font family"));
+        font.SelectionChanged += (_, _) => StagePreviewSetting("TitleFontName", font.SelectedItem as string ?? "");
+        return LabeledPreviewField("TitleFontName", "Font family", font);
     }
 
     private Control FontStyleField()
@@ -366,55 +355,32 @@ public sealed partial class WorkspaceView
 
     private Control ColorField(string key, string label)
     {
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,88"), ColumnSpacing = 7 };
+        var row = new Grid { ColumnDefinitions = new("*,96"), ColumnSpacing = 7 };
         var value = DraftValue(key, "#FFFFFF");
-        var hex = new TextBox { FlowDirection = Avalonia.Media.FlowDirection.LeftToRight, Name = "setting-" + key, Text = value, Watermark = L("#RRGGBB"), MinHeight = 32, FontSize = 11 };
-        AutomationProperties.SetName(hex, SettingCatalog.Find(key)?.Label ?? label);
-        var picker = ActionButton("", () => { }, "pick-" + key);
-        picker.Width = 30; picker.Height = 30; picker.Padding = default;
-        picker.Background = Color.TryParse(value, out var initial) ? new SolidColorBrush(initial) : Brushes.Transparent;
-        AutomationProperties.SetName(picker, F($"Open color picker for {L(label)}"));
-        picker.Click += (_, _) => ShowColorPicker(picker, hex);
-        hex.TextChanged += (_, _) => { if (Color.TryParse(hex.Text, out var color)) picker.Background = new SolidColorBrush(color); StagePreviewSetting(key, hex.Text ?? ""); };
-        row.Children.Add(picker);
-        var palette = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-        foreach (var color in new[] { "#FFFFFF", "#000000", "#FFCC66", "#7DCFB6", "#7EA5FF", "#E995AE" })
+        var hex = new TextBox { FlowDirection = FlowDirection.LeftToRight, Name = "setting-" + key, Text = value, MinHeight = 32, FontSize = 11 };
+        AutomationProperties.SetName(hex, L(label));
+        var picker = WorkspacePickers.Color(Color.TryParse(value, out var initial) ? initial : Colors.White, "pick-" + key, L(label));
+        bool updating = false;
+        picker.ColorChanged += (_, args) =>
         {
-            var swatch = ActionButton("", () => hex.Text = color, "swatch-" + key + "-" + color[1..]);
-            swatch.Width = 18; swatch.Height = 18; swatch.Margin = new Thickness(0, 0, 3, 3); swatch.Padding = default;
-            swatch.Background = B(color); swatch.BorderBrush = B(_theme.Muted);
-            AutomationProperties.SetName(swatch, L(label) + " " + color);
-            palette.Children.Add(swatch);
-        }
-        Grid.SetColumn(palette, 1); row.Children.Add(palette);
-        Grid.SetColumn(hex, 2); row.Children.Add(hex);
+            if (updating) return;
+            hex.Text = $"#{args.NewColor.R:X2}{args.NewColor.G:X2}{args.NewColor.B:X2}";
+        };
+        hex.TextChanged += (_, _) =>
+        {
+            updating = true;
+            try { if (Color.TryParse(hex.Text, out var color)) picker.Color = color; }
+            finally { updating = false; }
+            StagePreviewSetting(key, hex.Text ?? "");
+        };
+        row.Children.Add(picker); Grid.SetColumn(hex, 1); row.Children.Add(hex);
         return LabeledPreviewField(key, label, row);
     }
 
     private void ShowColorPicker(Button anchor, TextBox hex, string saveHint = "Preview changes immediately. Use Apply changes to save.")
     {
-        var color = Color.TryParse(hex.Text, out var parsed) ? parsed : Colors.White;
-        var body = new StackPanel { Spacing = 10, Width = 255, Margin = new Thickness(8) };
-        body.Children.Add(Text("Choose a color", 14, _theme.Text, true));
-        var sample = new Border { Height = 28, Background = new SolidColorBrush(color), BorderBrush = B(_theme.Border), BorderThickness = new Thickness(1) };
-        body.Children.Add(sample);
-        var sliders = new List<Slider>();
-        foreach (var channel in new[] { ("Red", color.R), ("Green", color.G), ("Blue", color.B) })
-        {
-            var slider = new Slider { Minimum = 0, Maximum = 255, Value = channel.Item2, TickFrequency = 1, IsSnapToTickEnabled = true };
-            AutomationProperties.SetName(slider, F($"{L(channel.Item1)} color channel"));
-            sliders.Add(slider);
-            body.Children.Add(new StackPanel { Spacing = 2, Children = { Text(channel.Item1, 11, _theme.Muted), slider } });
-        }
-        foreach (var slider in sliders) slider.PropertyChanged += (_, e) =>
-        {
-            if (e.Property != RangeBase.ValueProperty) return;
-            var selected = Color.FromRgb((byte)sliders[0].Value, (byte)sliders[1].Value, (byte)sliders[2].Value);
-            hex.Text = $"#{selected.R:X2}{selected.G:X2}{selected.B:X2}";
-            sample.Background = new SolidColorBrush(selected);
-        };
-        body.Children.Add(Text(saveHint, 11, _theme.Muted));
-        new Flyout { Content = body }.ShowAt(anchor);
+        WorkspacePickers.ShowColor(anchor, Color.TryParse(hex.Text, out var color) ? color : Colors.White,
+            selected => hex.Text = $"#{selected.R:X2}{selected.G:X2}{selected.B:X2}");
     }
 
     private Control DraftAnchorEditor()

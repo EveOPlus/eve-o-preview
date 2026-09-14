@@ -78,19 +78,24 @@ public sealed class WindowsWorkspacePreviewRenderer : IWorkspacePreviewRenderer
                 graphics.DrawImage(source, imageBounds);
             }
 
-            if (Enabled("ShowThumbnailOverlays", true) || request.CycleSkipped)
+            if (Enabled("ShowThumbnailOverlays", true) || request.CycleSkipped || Enabled("ShowCurrentSolarSystem", false))
             {
                 if (!Enum.TryParse<FontStyle>(Value("TitleFontStyle", "Regular"), out var style) || ((int)style & ~15) != 0)
                     throw new ArgumentException("Choose a valid title style before previewing.");
                 using var font = new Font(Value("TitleFontName", "Arial"), (float)Number("TitleFontSize", "14.25", 1, 200), style);
                 if (!font.FontFamily.Name.Equals(Value("TitleFontName", "Arial"), StringComparison.OrdinalIgnoreCase))
                     throw new ArgumentException("Choose an installed font to preview it.");
-                if (native)
+                if (native || Enabled("ShowCurrentSolarSystem", false))
                 {
                     OverlaySceneRasterizer.Draw(graphics, new OverlayScene
                     {
                         Title = request.Title.Replace("EVE - ", ""),
                         ShowTitle = Enabled("ShowThumbnailOverlays", true),
+                        Subtitle = Enabled("ShowCurrentSolarSystem", false) ? Value("SolarSystemSample", "Jita") : "",
+                        SubtitleColor = unchecked((uint)ColorValue("SolarSystemColor", "#D4E8FF").ToArgb()),
+                        SubtitlePlacement = Enum.TryParse<SubtitlePlacement>(Value("SolarSystemPlacement", "Below"), out var placement) ? placement : SubtitlePlacement.Below,
+                        TitlePosition = Enum.TryParse<OverlayPosition>(Value("TitlePosition", "TopLeft"), out var position) ? position : OverlayPosition.TopLeft,
+                        SubtitleFontSize = Number("SolarSystemFontSize", "0", 0, 200) is > 0 and var systemSize ? (float)systemSize : null,
                         Font = new OverlayFont(font.FontFamily.Name, font.Size, (OverlayFontStyle)style,
                             unchecked((uint)ColorValue("TitleFontForeColor", "#FFA500").ToArgb()),
                             unchecked((uint)ColorValue("TitleFontOutlineColor", "#000000").ToArgb()),

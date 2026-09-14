@@ -35,6 +35,7 @@ Use a Windows x64 system supported by .NET 10. EVE-O Preview requires Windows; L
 | Set cycling hotkeys or rearrange characters | **Switching & hotkeys** |
 | Limit FPS, manage CPU affinity or mute selected sounds | **Performance & audio** |
 | Clone, rename or switch configurations | Top **Profile** dropdown → **Manage profiles…** |
+| Show damage, repairs, systems or incoming-damage flashes | **Augments**; title/system placement is in **Title & highlight** |
 | Choose a theme or customize the thumbnail right-click menu | **Appearance** |
 | Open documentation, Discord or project information | **Help & about** |
 | Stop EVE-O completely | **Exit**, beside Help & about |
@@ -79,6 +80,31 @@ In **Previews & layout**:
 The **Clients** page saves each character's preview visibility in the active profile. **Hide all previews** is a quick way to clear the screen without removing your layout.
 
 Turning off remembered game window positions or separate preview layouts clears the corresponding saved positions. Clone your profile first if you want to experiment and return to the old arrangement.
+
+## Thumbnail augments
+
+In Light or Dark, open **Augments → Log setup** and enable **Read EVE logs**.
+Enable game-message and Local chat logging in EVE first. The usual log folder is
+detected automatically; an advanced folder picker supports other locations.
+If FC static data is missing, a popup asks before downloading. Cancelling leaves
+basic log reading and augments available; item-dependent simulation is disabled.
+
+**Thumbnail augments → All thumbnails** is the shared setup for the fleet.
+Simple mode starts with the Classic alpha + DPS theme and the current system
+below the character name. Advanced groups position/order, fonts and separate
+damage, weapon and repair colours/icons. Per-client settings are optional.
+The incoming indicator can blink or fade on the title, the whole thumbnail, or
+both, with one colour, interval, duration and NPC/player filter.
+
+Place the title/system in **Previews & layout → Title & highlight** and the DPS
+block in **Thumbnail augments → Advanced → Position & order**. Both offer nine
+positions; matching positions stack the title/system above DPS. Row order is
+configurable. **Simulate** uses standard T2 weapons/ammo or an NPC faction/ship
+and the real display path; temporary stats disappear when it stops.
+
+See the [Augments guide](src/docs/augments/README.md) for first-time setup,
+damage evidence, simulation, offline use and upgrading. Augments Overview opens
+each character's detailed damage, repair and travel history from a compact row.
 
 ## Cycle through your fleet
 
@@ -134,7 +160,7 @@ Automatic CPU affinity assigns processor resources according to active and predi
 
 Profiles hold gameplay settings, preview layouts, cycle groups, character visibility and a profile accent. Use the top **Profile** dropdown to switch setups. Choose **Manage profiles…** at the bottom of that dropdown to clone a working setup before experimenting, rename it or delete a profile you no longer need. Legacy keeps its **Profiles** tab. **Default** cannot be deleted. EVE-O currently starts with Default rather than remembering your last selection.
 
-Application theme and thumbnail-menu layout/style are global, shared across profiles.
+Application theme, thumbnail-menu layout/style and Augments settings/history are global, shared across profiles.
 
 ### Where settings are stored
 
@@ -144,8 +170,10 @@ EVE-O looks for an existing `Profiles` folder beside its executable first, then 
 | --- | --- |
 | Each profile | `Profiles\<profile name>\EVE-O Preview.json` |
 | Global preferences | `EVE-O Preview.settings.json`, beside the resolved Profiles folder, with a Local AppData fallback if needed |
+| Combat history | `Logs\Combat.sqlite`, beside global preferences; local SQLite with automatic upgrades |
+| Offline static data | `StaticData`, beside global preferences; reusable after upgrading |
 
-To back up or move your setup, **Exit EVE-O**, then copy the entire `Profiles` folder and the global settings file. Keep those files when updating the application. If settings appear to be missing, check both storage locations and whether you launched a different copy of EVE-O.
+To back up or move your setup, **Exit EVE-O**, then copy the entire `Profiles` folder, global settings file, `Logs` and `StaticData` directories. Keep those files when updating the application. If settings appear to be missing, check both storage locations and whether you launched a different copy of EVE-O.
 
 ### Advanced settings
 
@@ -187,7 +215,7 @@ Select **Save character settings** to apply, or **Discard character edits** to u
 
 For help, [pop into Discord and say hi](https://discord.gg/HzQHBtTEcB). To [report a bug](https://github.com/EveOPlus/eve-o-preview/issues), include the version from **Help & about**, steps to reproduce, theme, number of clients and relevant display settings. The included **Launch Eve-O Preview with Verbose Logging.cmd** can collect more detail. Review logs before sharing them because they can contain character names and local paths.
 
-ESI character login and DPS overview configuration are not available yet; their unfinished pages are hidden.
+ESI character login is not available yet. Log-based combat statistics, simulation and thumbnail configuration are available in Augments.
 
 ## Say thanks in New Eden
 

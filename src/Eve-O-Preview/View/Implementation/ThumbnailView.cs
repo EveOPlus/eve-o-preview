@@ -128,13 +128,25 @@ namespace EveOPreview.View
             if (_overlay.RendererKind == kind) return;
             bool wasVisible = _isOverlayVisible;
             var stats = _overlay.Scene.Stats;
+            var statsStyle = _overlay.Scene.StatsStyle;
+            var subtitle = _overlay.Scene.Subtitle;
+            var subtitleColor = _overlay.Scene.SubtitleColor;
+            var subtitlePlacement = _overlay.Scene.SubtitlePlacement;
+            var subtitleSize = _overlay.Scene.SubtitleFontSize;
+            var titleColor = _overlay.Scene.TitleColor;
+            var titlePosition = _overlay.Scene.TitlePosition;
+            var damageTint = _overlay.Scene.DamageTint;
+            var damageIntensity = _overlay.Scene.DamageFlashIntensity;
             var alertBounds = _overlay.Scene.AlertBounds;
             _overlay.Dispose();
             _overlay = new ThumbnailOverlay(this, MouseDown_Handler, kind);
             _overlay.SetOverlayLabel(Title.Replace("EVE - ", ""));
             if (_titleFontSettings != null) _overlay.SetOverlayFont(_titleFontSettings);
             _overlay.EnableOverlayLabel(IsOverlayEnabled);
-            _overlay.SetStats(stats);
+            _overlay.SetStats(stats, statsStyle);
+            _overlay.SetSubtitle(subtitle, subtitleColor, subtitlePlacement, subtitleSize);
+            _overlay.SetDamageFlash(titleColor, damageTint, damageIntensity);
+            _overlay.SetTitlePosition(titlePosition);
             _overlay.SetAlertBounds(alertBounds);
             _overlay.TopMost = _isTopMost;
             _overlay.Opacity = _opacity > 0.8 ? 1.0 : 1.0 - (1.0 - _opacity) / 2;
@@ -151,6 +163,12 @@ namespace EveOPreview.View
         public OverlayRendererKind OverlayRenderer => _overlay.RendererKind;
 
         public void SetOverlayStats(IReadOnlyList<OverlayStat> stats) => _overlay.SetStats(stats);
+        public void SetOverlayStats(IReadOnlyList<OverlayStat> stats, OverlayStatsStyle style) => _overlay.SetStats(stats, style);
+        public void SetSystemName(string system, uint color, SubtitlePlacement placement = SubtitlePlacement.Below, float? fontSize = null)
+            => _overlay.SetSubtitle(system, color, placement, fontSize);
+        public void SetDamageTitleColor(uint? color) => _overlay.SetTitleColor(color);
+        public void SetDamageFlash(uint? titleColor, uint? tint, double intensity = 1) => _overlay.SetDamageFlash(titleColor, tint, intensity);
+        public void SetTitlePosition(OverlayPosition position) => _overlay.SetTitlePosition(position);
         public void ShowAlert(PreviewAlert alert) { if (IsActive) _overlay.ShowAlert(alert); }
         public void ClearAlerts() => _overlay.ClearAlerts();
 

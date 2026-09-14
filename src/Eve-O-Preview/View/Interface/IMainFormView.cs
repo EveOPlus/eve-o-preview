@@ -73,6 +73,7 @@ namespace EveOPreview.View
 		void RefreshZoomSettings();
         
         Action ApplicationExitRequested { get; set; }
+        Action WindowsSessionEnding { get; set; }
 		Action FormActivated { get; set; }
 		Action FormMinimized { get; set; }
 		Action<ViewCloseRequest> FormCloseRequested { get; set; }

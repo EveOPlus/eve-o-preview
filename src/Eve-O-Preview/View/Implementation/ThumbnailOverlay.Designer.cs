@@ -22,6 +22,8 @@ namespace EveOPreview.View
             }
             if (disposing)
             {
+                _compatibilityTint?.Dispose();
+                _compatibilityTint = null;
                 _renderer?.Dispose();
                 _renderer = null;
                 _ownedFont?.Dispose();
