@@ -260,8 +260,9 @@ flowchart LR
   reset/disabled ingestion does not erase it, and future ESI can use the same
   update path. Its change event updates thumbnails without requiring combat.
 - `ThumbnailManager.CombatLogs` coalesces events onto its owning dispatcher and
-  updates retained stats. Its finite expiry timer and the worker's DPS display
-  clock never read EVE files. Native composition and compatibility rendering use
+  updates retained stats. Its finite expiry timer never reads EVE files. The
+  worker clock also schedules the Local-tail fallback described below.
+  Native composition and compatibility rendering use
   `OverlaySceneRasterizer`; the settings preview uses `AvaloniaPreviewOverlay`.
   `OverlayStatsStyle` uses preview-client pixels. Ordinary updates retain DWM
   relationships, focus, image dimensions and MRU z-order.
@@ -281,7 +282,15 @@ chat logs only, including directory creation/rename. Duplicate notifications
 coalesce by path; overflow replaces watchers and reconciles from durable offsets.
 Failures yield to the writer and schedule at most four retries (50, 250, 1000,
 5000 ms); further changes or the visible Retry action can resume reading. There
-is no recurring directory scan or source-file timer.
+is no recurring directory scan. A 250 ms worker wake checks the length through a
+shared read handle for the newest known Local session per listener. Windows can
+delay Size/LastWrite notifications for cached writes until the writer closes,
+even when a complete system-change entry is already readable. Changed lengths
+queue the normal complete-line reader (including truncation); unchanged files do
+not read content, parse or commit. The probe compares against the last checked
+byte length, so an unchanged partial line does not cause repeated reads.
+Older Local files and game logs remain notification-driven. The fallback stops
+when reading is disabled/stopped and preserves the bounded access-failure retries.
 
 ## Data and inference limits
 
@@ -417,8 +426,9 @@ anything to Robin or the game process. Relevant primary sources:
 Acceptance criteria:
 
 1. Event-driven creation/change/rename handling, watcher-before-scan startup and
-   overflow reconciliation. No recurring filesystem scan. Bounded retries are
-   only for a failed read or watcher recovery.
+   overflow reconciliation. No recurring filesystem scan. A targeted 250 ms
+   latest-Local length probe handles delayed notifications from open writers;
+   bounded access retries remain separate.
 2. Read-only, short-lived handles with ReadWrite/Delete sharing. Only complete
    newline-terminated entries cross the parsing boundary, including split BOMs,
    UTF-8 characters, UTF-16 code units and CRLF. Bound memory for malformed lines.

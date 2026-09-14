@@ -705,6 +705,53 @@ public sealed class CombatLogTests
     }
 
     [Fact]
+    public async Task OpenLocalWriterPublishesSystemChangesWithoutCloseOrNotification()
+    {
+        using var folder = new TempFolder(); using var logger = new LoggerConfiguration().CreateLogger();
+        string logs = Path.Combine(folder.Path, "logs");
+        Directory.CreateDirectory(Path.Combine(logs, "Gamelogs"));
+        Directory.CreateDirectory(Path.Combine(logs, "Chatlogs"));
+        string local = Path.Combine(logs, "Chatlogs", "Local_session.txt");
+        File.WriteAllText(local, "Channel Name: Local\r\nListener: Pilot One\r\n[ 2026.09.13 12:00:00 ] EVE System > Channel changed to Local : Jita\r\n", Encoding.Unicode);
+        var preferences = new ApplicationPreferences(Path.Combine(folder.Path, "settings.json"), logger);
+        preferences.SetCombatLogs(new() { Enabled = true, Directory = logs });
+        var service = new CombatLogService(preferences, null, logger, Path.Combine(folder.Path, "combat.db"), Catalog(), () => Now.AddSeconds(10));
+        try
+        {
+            await WaitFor(service, x => x.Characters.Any(c => c.SolarSystem == "Jita"));
+            // Windows may delay size/write notifications until an open writer closes.
+            // Suppress notifications explicitly so the regression is deterministic.
+            var watchers = (List<FileSystemWatcher>)typeof(CombatLogService).GetField("_watchers", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(service)!;
+            foreach (var watcher in watchers) watcher.EnableRaisingEvents = false;
+            using var writer = new FileStream(local, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete);
+            writer.Write(Encoding.Unicode.GetBytes("\uFEFF[ 2026.09.13 12:00:01 ] EVE System > Channel changed to Local : Amarr"));
+            writer.Flush();
+            await Task.Delay(700, TestContext.Current.CancellationToken);
+            Assert.Equal("Jita", service.CurrentSystems.GetSystem("Pilot One"));
+            long partialReads = service.Diagnostics.Reads;
+            await Task.Delay(700, TestContext.Current.CancellationToken);
+            Assert.Equal(partialReads, service.Diagnostics.Reads); // Unchanged partial bytes are not reread.
+            writer.Write(Encoding.Unicode.GetBytes("\r\n")); writer.Flush();
+            await WaitFor(service, x => x.Characters.Any(c => c.SolarSystem == "Amarr"));
+            Assert.Equal("Amarr", service.CurrentSystems.GetSystem("Pilot One"));
+            writer.Write(Encoding.Unicode.GetBytes("\uFEFF[ 2026.09.13 12:00:02 ] EVE System > Channel changed to Local : Jita\r\n")); writer.Flush();
+            await WaitFor(service, x => x.Characters.Any(c => c.SolarSystem == "Jita"));
+            Assert.Equal("Jita", service.CurrentSystems.GetSystem("Pilot One"));
+            Assert.Equal(1, service.Diagnostics.Reconciliations);
+            service.Stop();
+            await WaitFor(service, x => x.Status == "Stopped");
+            long reads = service.Diagnostics.Reads;
+            writer.Write(Encoding.Unicode.GetBytes("\uFEFF[ 2026.09.13 12:00:03 ] EVE System > Channel changed to Local : Amarr\r\n")); writer.Flush();
+            await Task.Delay(700, TestContext.Current.CancellationToken);
+            Assert.Equal(reads, service.Diagnostics.Reads);
+            Assert.Equal("Jita", service.CurrentSystems.GetSystem("Pilot One"));
+            service.Start();
+            await WaitFor(service, x => x.Characters.Any(c => c.SolarSystem == "Amarr"));
+        }
+        finally { service.Dispose(); await service.Completion.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken); }
+    }
+
+    [Fact]
     public async Task WatcherFollowsConcurrentFilesPartialWritesRotationAndRestartWithoutPolling()
     {
         using var folder = new TempFolder(); using var logger = new LoggerConfiguration().CreateLogger();

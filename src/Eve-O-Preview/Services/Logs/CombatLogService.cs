@@ -32,6 +32,8 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
     private readonly ConcurrentQueue<(string Action, CombatResetScope Scope, string? Character, TaskCompletionSource<CommandResult> Result)> _commands = new();
     private readonly Dictionary<string, int> _failures = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<FileSystemWatcher> _watchers = new();
+    private readonly Dictionary<string, (string Path, DateTimeOffset Session, long Length)> _localTails = new(StringComparer.OrdinalIgnoreCase);
+    private long _lastLocalProbe;
     private readonly Timer _clock;
     private CombatLogSnapshot _snapshot;
     private CombatLogSnapshot _lastRealSnapshot;
@@ -179,6 +181,7 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
                             EnsureWatchers();
                             Reconcile(store!);
                         }
+                        ProbeLocalTails();
                         foreach (string path in _dirty.Keys.Take(64))
                         {
                             if (_stop.IsCancellationRequested) break;
@@ -191,8 +194,8 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
                     if (Stopwatch.GetElapsedTime(_lastPrune).TotalSeconds >= 60)
                     { store?.Prune(_now(), _settings.RetentionDays); _lastPrune = Stopwatch.GetTimestamp(); }
                     AdvanceSimulation();
-                    // Bound UI work under a burst. The timer here updates the display,
-                    // never scans or reads EVE files.
+                    // Bound UI work under a burst. The timer also wakes the small
+                    // Local-tail fallback; it never enumerates log directories.
                     if (_dirty.IsEmpty || Stopwatch.GetElapsedTime(_lastPublish).TotalMilliseconds >= 100) PublishCurrent(store);
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException or System.Text.Json.JsonException)
@@ -223,7 +226,7 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
         string directory = EveLogDirectory.Resolve(next.Directory);
         bool restart = directory != _directory || next.Enabled != _settings.Enabled || !_running;
         _directory = directory; _settings = next;
-        if (restart) { CloseWatchers(); _dirty.Clear(); _failures.Clear(); _warning = null; }
+        if (restart) { CloseWatchers(); _dirty.Clear(); _localTails.Clear(); _failures.Clear(); _warning = null; }
         _status = !_running ? "Stopped" : !next.Enabled ? "Disabled - enable log reading to begin" : "Watching EVE logs";
         if (next.Enabled && _running && (restart || _watchers.Count == 0)) Interlocked.Exchange(ref _rescan, 1);
     }
@@ -303,10 +306,12 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
             Interlocked.Increment(ref _fileReadCount);
             StoredLogFile? previous;
             LogReadBatch batch;
+            long length;
             using (var stream = CompleteLogReader.OpenShared(path))
             {
                 string identity = CompleteLogReader.Identity(stream);
                 previous = store.ReadFile(identity);
+                length = stream.Length;
                 batch = CompleteLogReader.Read(stream, identity, previous?.Cursor);
             }
             var header = previous is not null && previous.Cursor.Generation == batch.Cursor.Generation ? previous.Header : new LogHeader();
@@ -322,6 +327,12 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
             }
             store.Commit(new(path, batch.Cursor, header), entries);
             _simulationStore?.Commit(new(path, batch.Cursor, header), entries);
+            if (chat && !header.Ambiguous && header.Channel == "Local" && header.Listener is { } listener)
+            {
+                var session = header.Session ?? entries.Select(x => x.Entry.Timestamp).DefaultIfEmpty(DateTimeOffset.MinValue).Max();
+                if (!_localTails.TryGetValue(listener, out var tail) || session >= tail.Session || tail.Path.Equals(path, StringComparison.OrdinalIgnoreCase))
+                    _localTails[listener] = (path, session > tail.Session ? session : tail.Session, length);
+            }
             if (!header.Ambiguous)
                 // EVE timestamps have one-second precision and writes can be delayed.
                 // Recent newly committed hits trigger a full receipt-time indicator;
@@ -356,6 +367,30 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
         catch (OperationCanceledException) { }
     }
 
+    private void ProbeLocalTails()
+    {
+        if (Stopwatch.GetElapsedTime(_lastLocalProbe).TotalMilliseconds < 250) return;
+        _lastLocalProbe = Stopwatch.GetTimestamp();
+        // Cached writes can be readable before Windows emits Size/LastWrite.
+        // Query an actual shared handle, not cached directory metadata. Only the
+        // newest known Local session per listener needs this fallback; old files
+        // and discovery still use notifications. Remember the checked byte length,
+        // not the complete-line offset, so an unchanged partial line is not reread.
+        foreach (var pair in _localTails.ToArray())
+        {
+            var tail = pair.Value;
+            if (_failures.ContainsKey(tail.Path)) continue; // Preserve bounded retries.
+            try
+            {
+                using var stream = CompleteLogReader.OpenShared(tail.Path);
+                if (stream.Length != tail.Length) Dirty(tail.Path); // Growth or truncation.
+            }
+            catch (FileNotFoundException) { _localTails.Remove(pair.Key); }
+            catch (DirectoryNotFoundException) { _localTails.Remove(pair.Key); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Dirty(tail.Path); }
+        }
+    }
+
     private void Publish(CombatLogStore store)
     {
         var identities = _characters?.KnownCharacters.ToDictionary(x => x.Key, x => x.Value.CharacterId, StringComparer.OrdinalIgnoreCase)
@@ -381,7 +416,8 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
             || snapshot.Characters.Any(x => x.RepairRates.Any(r => r.PerSecond.Incoming > 0 || r.PerSecond.Outgoing > 0))
             || snapshot.RecentEntries.Any(x => x.Direction.HasValue && x.Timestamp > _now()));
         bool flashing = indicators?.Values.Any(x => x.Any is { } time && time.AddSeconds(_settings.FlashSeconds) > _now()) == true;
-        _clock.Change(live || flashing || IsSimulating ? 250 : Timeout.Infinite, Timeout.Infinite);
+        bool localTails = _settings.Enabled && _running && _localTails.Count > 0;
+        _clock.Change(live || flashing || IsSimulating || localTails ? 250 : Timeout.Infinite, Timeout.Infinite);
     }
     private void Notify()
     {
