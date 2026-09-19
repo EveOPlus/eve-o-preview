@@ -21,6 +21,11 @@ public enum WeaponPlatform
     Hybrid = 31, Projectile = 32
 }
 public enum CombatEffect { Damage, ShieldRepair, ArmorRepair, HullRepair }
+// Persisted values: append only. Log language is independent of workspace language.
+public enum LogLanguage { Automatic, English, Chinese, Russian, German, French, Japanese, Korean, Spanish }
+public enum LogEventKind { Unknown, Damage, Repair, SystemChange, Decloak, Mining, Bounty, MiningResidue,
+    CombatMiss, Capacitor, WarpDisruption, ElectronicWarfare, Navigation, Cloak,
+    MiningStatus, Salvage, Cargo, Drone, Targeting, Module, Fleet, SkillTraining, Connection }
 public enum CombatTextColorMode { Direction, DamageType, WeaponPlatform }
 public sealed record CombatVisualStyle(string Color, OverlaySymbol Icon, string? TextColor = null);
 public sealed record CombatAppearance
@@ -151,6 +156,7 @@ public sealed record CombatLogSettings
 {
     public bool Enabled { get; init; }
     public string Directory { get; init; } = "";
+    public LogLanguage Language { get; init; } = LogLanguage.Automatic;
     public int WindowSeconds { get; init; } = 10;
     public int RetentionDays { get; init; } = 7;
     public bool FlashIncomingDamage { get; init; } = true;
@@ -206,6 +212,16 @@ public sealed record ParsedLogEntry(DateTimeOffset Timestamp, string Character, 
     string? SolarSystem = null, long? SolarSystemId = null, CombatEffect Effect = CombatEffect.Damage,
     string? Weapon = null, WeaponPlatform Platform = WeaponPlatform.Unknown, CombatDamageType DamageType = CombatDamageType.Unknown)
 {
+    public LogLanguage Language { get; init; } = LogLanguage.Automatic;
+    public LogEventKind EventKind { get; init; }
+    // Identifies a matching client template; identical text can have several IDs.
+    public int? MessageId { get; init; }
+    // Non-combat values never populate Amount/Direction or enter DPS/repair totals.
+    public decimal? Quantity { get; init; }
+    public decimal? ResidueQuantity { get; init; }
+    public string? Unit { get; init; }
+    public string? ItemName { get; init; }
+    public long? ItemTypeId { get; init; }
     public DamageTypes DamageTypes { get; init; }
     public DamageEvidence DamageEvidence { get; init; }
     public long? DamageSourceTypeId { get; init; }

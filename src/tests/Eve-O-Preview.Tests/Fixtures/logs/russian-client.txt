@@ -1,0 +1,13 @@
+------------------------------------------------------------
+  Игровой журнал
+  Слушатель: Sample Observer
+  Сеанс начат: 2026.01.01 00:00:00
+------------------------------------------------------------
+[ 2026.01.01 00:00:04 ] (hint) Попытка присоединиться к каналу
+[ 2026.01.01 00:00:21 ] (None) Выход из дока <localized hint="Sample Station">Sample Station* в звездную систему <localized hint="Jita">Jita*.
+[ 2026.01.01 00:01:37 ] (combat) <color=0xffcc0000><b>130</b> <color=0x77ffffff><font size=10>из</font> <b><color=0xffffffff><localized hint="Overmind Destructor Delta">Overmind Destructor Delta*</b><font size=10><color=0x77ffffff> - Попал
+[ 2026.01.01 00:01:44 ] (combat) <color=0xff00ffff><b>983</b> <color=0x77ffffff><font size=10>на</font> <b><color=0xffffffff><localized hint="Overmind Destructor Delta">Overmind Destructor Delta*</b><font size=10><color=0x77ffffff> - <localized hint="Nova Light Missile">Nova Light Missile*</localized> - Попал
+[ 2026.01.01 00:04:07 ] (notify) Маскировка выключается: вы подлетели к объекту <localized hint="Caldari Research Station">Caldari Research Station*.
+[ 2026.01.01 00:08:48 ] (mining) <color=0x77ffffff>Вы добыли <font size=12><color=#ff8dc169>1<color=0x77ffffff><font size=10> ед. ресурса <color=0xffffffff><font size=12><localized hint="Bezdnacine">Bezdnacine*
+[ 2026.01.01 00:08:58 ] (mining) <color=0x77ffffff>Вы добыли <font size=12><color=#ff8dc169>1<color=0x77ffffff><font size=10> ед. ресурса <color=0xffffffff><font size=12><localized hint="Bezdnacine">Bezdnacine*
+[ 2026.01.01 00:09:59 ] (notify) Civilian Miner* завершил функционирование. Ваш грузовой отсек полон.

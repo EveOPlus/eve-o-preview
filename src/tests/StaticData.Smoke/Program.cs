@@ -8,6 +8,7 @@ using Serilog;
 
 // Explicit opt-in network/corpus check, never part of the ordinary unit suite.
 // Output is aggregate-only; character names and raw logs are not copied to artifacts.
+if (args.Length >= 2 && args[0] == "--log-audit") return LogAudit.Run(args[1], args.Length > 2 ? args[2] : null);
 if (args.Length < 2 || args[0] is not ("--download" or "--audit" or "--simulation-catalog" or "--record" or "--weapon-icons"))
     throw new ArgumentException("--download <static-data-directory> OR --audit <static-data-directory> <Gamelogs-directory> OR --simulation-catalog <static-data-directory>");
 using var logger = new LoggerConfiguration().CreateLogger();

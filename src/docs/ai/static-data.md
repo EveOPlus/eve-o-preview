@@ -33,6 +33,10 @@ The database format uses:
   only its block, rather than a dataset or the whole export.
 - `names` and `combat`: indexed localized type aliases, category, weapon platform,
   damage mask and NPC gun/missile metadata.
+- `system_names`: all localized solar-system aliases from `mapSolarSystems`.
+  Added transactionally from older complete exports on first open; no download
+  is needed. Ambiguous aliases yield no ID. Log parsing resolves visible names
+  through these indexes instead of guessing the language of markup hints.
 - `manifest`: local schema version, FC build and complete dataset/record counts.
 - `combat_index`: independent classification revision (currently 2). Older
   schema-2 databases without this table are revision 1.
@@ -107,13 +111,10 @@ icons for missing facts. No damage amounts
 are redistributed. Completed SDE updates refresh current real-window metadata
 without replaying alerts, changing totals/cursors or reinterpreting simulated data.
 
-The embedded fallback catalog is generated from this same production index, so
-NPC and item evidence still works before download or when offline. An installed
-SDE is authoritative. Regenerate using the matching original ZIP and database:
-
-```powershell
-python scripts/generate-log-catalog.py path/to/sde-jsonl.zip path/to/sde-build.sqlite
-```
+The committed [embedded fallback catalog](../../Eve-O-Preview/Resources/LogCatalog.json)
+contains SDE-derived NPC and item evidence for use before download or when offline.
+An installed SDE is authoritative. Catalog maintenance must preserve the production
+index's matching and ambiguity rules.
 
 ## Simulation catalog
 
@@ -179,7 +180,7 @@ incoming weapons and the user's selected outgoing weapon are separate streams,
 each with its own cadence. Repair log text follows the observed `remote ... by/to`
 format. Both damage and repair numbers are invariant-culture log text.
 
-## Validation
+## Validation scope
 
 `StaticDataTests` exercises complete dataset retention, named-item/NPC precedence,
 unknown player ammunition, offline reopen, cache invalidation, update failure and
@@ -192,33 +193,26 @@ dotnet run --project tests/StaticData.Smoke -- --audit bin/static-data-check pat
 dotnet run --project tests/StaticData.Smoke -- --simulation-catalog bin/static-data-check
 ```
 
-The September 14 year-to-date corpus check read every available file dated from
-January 1 onward (2,980 files; 382,519 parsed entries). The production parser recognized 40,105 incoming damage entries
-and 126,081 outgoing entries. Of 39,491 positive incoming hits, 37,995 (96.2%) had
-SDE-supported composition; 33,578 incoming entries had multiple components.
-The other positive hits lacked sufficient item/attack evidence. Zero-damage NPC
-attack messages explain most additional entries without a damage composition.
-One additional damage-like line had no listener and was excluded from character
-statistics. The audit reports aggregates only; local corpora and generated databases stay
-outside tracked source. These checks do not prove live client disk-flush latency.
+The corpus audit reports aggregates and distinguishes positive hits with
+SDE-supported composition from entries without enough item/attack evidence.
+Zero-damage attacks do not establish damage composition; unattributed lines do
+not enter character statistics. Local corpora and generated databases stay
+outside tracked source. For multilingual game/Local replay and its remaining
+sample gaps, see [log languages](log-languages.md#real-client-sample-gaps).
+Neither audit proves live client disk-flush latency.
 
-The earlier catalog check against build 3503375 found 18 combat factions, 5,223 NPCs,
-899 weapons and 823 ammunition types. It round-tripped 12,508 generated entries
-through the production parser with zero direction, classification, platform,
-damage, amount, effect, weapon, evidence or source-ID differences. Catalog loading
-and the comparison completed in about 3.2 seconds; the smoke process retained
-approximately 13.8 MB of managed memory after collection. It also checked
-Guristas group-based attribution, separate Hypnosian Warden guns/missiles,
-small/large charge incompatibility, blaster/railgun T2 restrictions and T1 rocket
-launcher restrictions. Focused integration tests verify selected source IDs,
-NPC/Player totals and indicators, invalid selection rejection and removal of
-temporary stats. UI smoke checks cover search selection, dependent ammo/faction
-lists and clearing an incomplete search.
+The simulation-catalog check round-trips compatible ammunition pairs in both
+directions and NPC scenarios through the production parser. It compares direction,
+classification, platform, damage, amount, effect, weapon, evidence and source IDs.
+It checks faction attribution, separate NPC gun/missile evidence, charge-size and
+T1/T2 restrictions, fighter primary attacks, long superweapon cycles and rejection
+of utility-only members. Generic fallbacks remain distinct from modeled weapons.
 
-The complete platform update supersedes that earlier catalog: 187 weapons in 27
-modeled families and 303 standard ammunition choices, with the same 18 factions
-and 5,223 NPCs. All compatible ammunition pairs in both directions plus every
-NPC scenario produced 13,869 round trips with zero differences. The full raw
-audit covered 52,999 types and 1,610 groups, including category 23 batteries,
-category 66 structure modules and category 87 fighters. It identified generic
-fallbacks and utility members separately from modeled damaging weapons.
+Focused integration tests cover selected source IDs, NPC/Player totals and
+indicators, invalid selections and removal of temporary statistics.
+[Log-name checks](../../tests/Eve-O-Preview.Tests/Checks/StaticDataTests.LogNames.cs)
+use a controlled SDE export to verify localized/English aliases, ambiguity,
+visible-name precedence over hints and transactional offline system-index upgrades.
+UI smoke checks cover selection controls, dependent ammunition/faction lists and
+clearing an incomplete search. These checks establish their specific assertions,
+not exhaustive coverage of every installed SDE build or client display setting.

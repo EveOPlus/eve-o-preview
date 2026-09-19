@@ -147,6 +147,7 @@ public sealed class ApplicationPreferences
         if (settings.FlashIntervalMilliseconds is < 100 or > 2000)
             throw new ArgumentException("Choose a flash interval of 100–2000 ms.");
         if (!Enum.IsDefined(settings.FlashTarget)) throw new ArgumentException("Choose a flash target.");
+        if (!Enum.IsDefined(settings.Language)) throw new ArgumentException("Choose a log language.");
         if (!Enum.IsDefined(settings.FlashAnimation)) throw new ArgumentException("Choose a flash animation.");
         if (settings.FlashOpacityPercent is < 0 or > 100) throw new ArgumentException("Choose a flash opacity of 0–100%.");
         string directory = settings.Directory?.Trim() ?? "";

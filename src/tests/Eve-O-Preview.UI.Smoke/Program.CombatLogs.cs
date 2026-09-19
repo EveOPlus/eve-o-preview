@@ -87,7 +87,7 @@ internal static partial class Program
             Require(view.GetVisualDescendants().Any(x => x.Name == "nav-Dps"), "Ready combat module must be available in modern navigation.");
             foreach (var (terms, route, tab) in new[] {
                 (new[] { "dps", "reps", "incoming reps", "outgoing repairs", "alpha", "weapon icons", "weapon platform", "ammo", "ammunition", "damage type", "unknown", "thumbnail augments", "repair rate", "DPS settings" }, "thumbnail-augments", 1),
-                (new[] { "log", "logs", "logging", "log folder", "configure logs", "data setup", "FC static data", "SDE" }, "data-setup", 2),
+                (new[] { "log", "logs", "logging", "log folder", "configure logs", "data setup", "log language", "Chinese logs", "FC static data", "SDE" }, "data-setup", 2),
                 (new[] { "reset statistics", "jumps", "average DPS", "combined statistics", "repair totals", "repair cycles" }, "overview", 0) })
             foreach (string query in terms)
             {
@@ -484,6 +484,19 @@ internal static partial class Program
                 simultaneous.IsChecked = false; Flush();
             }
             FindControl<TabControl>(view, "logs-tabs").SelectedIndex = 2; Flush();
+            var logLanguage = FindControl<ComboBox>(view, "logs-language");
+            Require(logLanguage.Items.Count == 9, "Only Automatic and the eight game log languages should be selectable.");
+            foreach (var language in new[] { LogLanguage.Korean, LogLanguage.Spanish })
+            {
+                logLanguage.SelectedItem = language; Flush();
+                Require(backend.Settings.Language == language, "Every supported game log language must reach the host.");
+            }
+            logLanguage.SelectedItem = LogLanguage.Chinese; Flush();
+            Require(backend.Settings.Language == LogLanguage.Chinese, "Log language must reach the host independently of workspace language.");
+            logLanguage.BringIntoView(); Flush();
+            Capture(window, Path.Combine(output, theme.ToLowerInvariant() + "-log-language.png")); renders++;
+            logLanguage.SelectedItem = LogLanguage.Automatic; Flush();
+            Require(backend.Settings.Language == LogLanguage.Automatic, "Automatic file detection must be selectable again.");
             Require(FindControl<TextBlock>(view, "logs-static-status").Text!.Contains("102 datasets"), "The complete installed SDE must be visible in Data setup.");
             int downloads = backend.Downloads; Click(view, "logs-static-download");
             Require(backend.Downloads == downloads + 1, "Download/update must reach the static data service.");

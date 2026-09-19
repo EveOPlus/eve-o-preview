@@ -78,6 +78,15 @@ public sealed class StaticDataService : IWorkspaceStaticData, IDisposable
     /// <summary>Caller owns the returned document. All datasets remain available for future features.</summary>
     public JsonDocument? ReadRecord(string dataset, string key)
     { lock (_gate) return _disposed ? null : _database?.ReadRecord(dataset, key); }
+    public long? FindSystem(string name)
+    {
+        lock (_gate)
+        {
+            if (_disposed || _database is null) return null;
+            try { return _database.FindSystem(name); }
+            catch (Microsoft.Data.Sqlite.SqliteException) { return null; }
+        }
+    }
     private Task<CombatSimulationCatalog>? _simulationCatalog;
     private readonly CancellationTokenSource _catalogStop = new();
     public Task<CombatSimulationCatalog> ReadSimulationCatalogAsync()

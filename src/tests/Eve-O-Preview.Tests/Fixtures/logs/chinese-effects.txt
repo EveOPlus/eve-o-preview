@@ -1,0 +1,11 @@
+﻿------------------------------------------------------------
+  游戏记录
+  收听者: Sample Observer
+  进程开始: 2026.01.01 00:00:00
+------------------------------------------------------------
+[ 2026.01.01 00:00:00 ] (None) 从<localized hint="Amarr">Amarr*跳到<localized hint="Jita">Jita*
+[ 2026.01.01 00:00:01 ] (combat) <color=0x77ffffff><font size=10>来自</font> <color=0xffffffff><b>Sample Attacker<b><fontsize=13><color=0xffFF3333> <localized hint="Exequror Navy Issue">送葬者级海军型*<color=0xFF3399FF> [SAMPLE]</color><color=0xFF66FF00> (SAMPLE)</color></b> <color=0xffffffff><b>试图跃迁扰频</b><color=0x77ffffff><font size=10> <b><color=0xffffffff></font>Sample Defender<b><fontsize=13><color=0xffFF3333> <localized hint="Phobos">伏波斯级*<color=0xFF3399FF> [SAMPLE]</color><color=0xFF66FF00> (SAMPLE)</color>
+[ 2026.01.01 00:00:02 ] (combat) <color=0xffe57f7f><b>165 GJ</b><color=0x77ffffff><font size=10>能量中和</font><b><color=0xffffffff>Sample Pilot<b><fontsize=13><color=0xffFF3333> <localized hint="Cyclone Fleet Issue">飓风级舰队型*<color=0xFF3399FF> [SAMPLE]</color><color=0xFF66FF00> (SAMPLE)</color></b><color=0x77ffffff><font size=10> - <localized hint="Medium Infectious Scoped Energy Neutralizer">中型传染视野型能量中和器*</font>
+[ 2026.01.01 00:00:03 ] (notify) 自动导航关闭
+[ 2026.01.01 00:00:04 ] (combat) <color=0xffffffff><b>Sample Jammer<b><fontsize=13><color=0xffFF3333> <localized hint="Hecate">赫卡特级*</b>的<color=0x77ffffff><font size=10><localized hint="Sentient Burst Jammer">缚魂脉冲干扰器*</font>令<color=0x77ffffff><font size=10>你的</font><color=0xffffffff><b>目标锁定丢失</b>
+[ 2026.01.01 00:00:05 ] (notify) 若要无人机执行该指令，必须有一个活动的目标。请先找个目标，然后再试一次。

@@ -1,0 +1,15 @@
+------------------------------------------------------------
+  ゲームログ
+  傍聴者: Sample Observer
+  セッション開始: 2026.01.01 00:00:00
+------------------------------------------------------------
+[ 2026.01.01 00:04:47 ] (combat) <color=0xffcc0000><b>34</b> <color=0x77ffffff><font size=10>から</font> <b><color=0xffffffff><localized hint="Interfering Phase-III Legionary">インターフェアフェーズIIIリージョナリー*</b><font size=10><color=0x77ffffff> - 小破
+[ 2026.01.01 00:04:47 ] (combat) <color=0xffcc0000><b>132</b> <color=0x77ffffff><font size=10>から</font> <b><color=0xffffffff><localized hint="Overmind Destructor Delta">オーバーマインド・デストラクター・デルタ*</b><font size=10><color=0x77ffffff> - 直撃
+[ 2026.01.01 00:04:47 ] (combat) <color=0xffcc0000><b>33</b> <color=0x77ffffff><font size=10>から</font> <b><color=0xffffffff><localized hint="Interfering Phase-IV Legionary">インターフェアフェーズIVリージョナリー*</b><font size=10><color=0x77ffffff> - 軽微
+[ 2026.01.01 00:04:47 ] (combat) <localized hint="Vexing Phase-II Legionary">ヴェックスフェーズIIリージョナリー*の攻撃はあなたを完全に外した
+[ 2026.01.01 00:04:55 ] (combat) <color=0xffcc0000><b>403</b> <color=0x77ffffff><font size=10>から</font> <b><color=0xffffffff><localized hint="Overmind Destructor Delta">オーバーマインド・デストラクター・デルタ*</b><font size=10><color=0x77ffffff> - 大破
+[ 2026.01.01 00:06:59 ] (notify) 付近の<localized hint="Pochven Conduit Gate (Interstellar)">ポクヴェン・導管ゲート（惑星間）*に接近したため、クロークが解除されます。
+[ 2026.01.01 00:08:35 ] (notify) 付近の<localized hint="Caldari Research Station">カルダリ研究ステーション*に接近したため、クロークが解除されます。
+[ 2026.01.01 00:13:11 ] (mining) <color=0x77ffffff>あなたは<font size=12><color=#ff8dc169>1<color=0x77ffffff><font size=10>ユニットの<color=0xffffffff><font size=12><localized hint="Bezdnacine">ベズドナシン*を採掘しました
+[ 2026.01.01 00:13:31 ] (mining) <color=0x77ffffff>あなたは<font size=12><color=#ff8dc169>1<color=0x77ffffff><font size=10>ユニットの<color=0xffffffff><font size=12><localized hint="Bezdnacine">ベズドナシン*を採掘しました
+[ 2026.01.01 00:14:42 ] (notify) あなたの<localized hint="Civilian Miner">民間人仕様採掘機*はオペレーションを完了しました。自艦のカーゴホールドは満載状態です。

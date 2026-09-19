@@ -14,6 +14,16 @@ and `Chatlogs`, then select **Apply folder**. **Use automatic location** removes
 the custom path. If reading fails, check the displayed status and use **Retry
 reading logs**.
 
+**Log language** defaults to **Automatic (per file)**, allowing clients with
+different languages. You can select English, Chinese, French, German, Japanese,
+Korean, Russian or Spanish manually. This is separate from the interface language
+and applies to new entries; saved history is unchanged. Coverage varies by message
+type. All eight languages have client-template tests; recorded English, Chinese,
+Japanese and Russian fixtures cover specific client formats. See the
+[coverage and remaining samples](../ai/log-languages.md#real-client-sample-gaps).
+Formatting tags are removed while visible item and system names are resolved
+using the installed static data.
+
 If FC static data is missing, a popup offers to download it. Choose **Download**
 to open Data setup, where progress and **Cancel download** are available. Cancel
 the popup to continue without it; it is offered at most once per session.

@@ -52,6 +52,9 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
     public Task Completion => _worker;
     public event Action? LogsChanged;
     public event Action<CombatOverlayEvent>? CombatEvent;
+    /// <summary>Recognized recent game/Local events. Consumers must dispatch to their
+    /// own thread; this runs on the reader worker and never replays old history.</summary>
+    public event Action<ParsedLogEntry>? LogEvent;
     public event Func<CombatSimulation, Task<CommandResult>>? SimulationRequested;
     public CharacterSystemCache CurrentSystems { get; }
 
@@ -148,8 +151,7 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
                     if (Interlocked.Exchange(ref _staticDataDirty, 0) != 0 && store is not null)
                     {
                         var players = new HashSet<string>(_characters?.KnownCharacters.Keys ?? [], StringComparer.OrdinalIgnoreCase);
-                        store.RefreshDamageMetadata(_now(), _settings.WindowSeconds, entry => EveLogParser.Parse(
-                            $"[ {entry.Timestamp.UtcDateTime:yyyy.MM.dd HH:mm:ss} ] ({entry.Category}) {entry.Text}", new(entry.Character), false, _catalog, players) ?? entry);
+                        store.RefreshDamageMetadata(_now(), _settings.WindowSeconds, entry => EveLogParser.Reparse(entry, _catalog, players));
                         // Temporary simulation events already carry their chosen damage
                         // composition; never reinterpret them as NPC weapon guesses.
                     }
@@ -270,7 +272,7 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
         return Path.GetExtension(path).Equals(".txt", StringComparison.OrdinalIgnoreCase)
             && (string.Equals(parent, Path.Combine(_directory, "Gamelogs"), StringComparison.OrdinalIgnoreCase)
                 || string.Equals(parent, Path.Combine(_directory, "Chatlogs"), StringComparison.OrdinalIgnoreCase)
-                    && Path.GetFileName(path).StartsWith("Local_", StringComparison.OrdinalIgnoreCase));
+                    && EveLogParser.IsLocalFile(Path.GetFileName(path)));
     }
 
     private void Reconcile(CombatLogStore store)
@@ -284,8 +286,9 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
             string path = Path.Combine(_directory, folder);
             if (!Directory.Exists(path)) { _status = "Waiting for Gamelogs and Chatlogs folders"; continue; }
             // Metadata enumeration only at startup, reconfiguration or watcher recovery.
-            foreach (var file in new DirectoryInfo(path).EnumerateFiles(folder == "Chatlogs" ? "Local_*.txt" : "*.txt"))
+            foreach (var file in new DirectoryInfo(path).EnumerateFiles("*.txt"))
             {
+                if (folder == "Chatlogs" && !EveLogParser.IsLocalFile(file.Name)) continue;
                 if (_stop.IsCancellationRequested || !_running) return;
                 if (!known.Contains(file.FullName) && file.LastWriteTimeUtc < _now().UtcDateTime.AddDays(-_settings.RetentionDays)) continue;
                 // Consume reconciliation sequentially instead of filling the bounded
@@ -321,13 +324,18 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
             bool chat = Path.GetDirectoryName(path)!.Equals(Path.Combine(_directory, "Chatlogs"), StringComparison.OrdinalIgnoreCase);
             foreach (var line in batch.Lines)
             {
-                ParsedLogEntry? entry = EveLogParser.Parse(line.Text, header, chat, _catalog, players);
+                ParsedLogEntry? entry = EveLogParser.Parse(line.Text, header, chat, _catalog, players, _settings.Language);
+                // Older checkpoints have no language. New message evidence can fill
+                // that hint without replaying a file or changing its durable offset.
+                if (_settings.Language == LogLanguage.Automatic && header.Language == LogLanguage.Automatic
+                    && entry is { EventKind: not LogEventKind.Unknown, Language: not LogLanguage.Automatic })
+                    header = header with { Language = entry.Language };
                 // Never allow a bad clock or corrupted future entry to pin live DPS/location.
                 if (entry is not null && entry.Timestamp <= _now().AddSeconds(2)) entries.Add(new(line.Offset, entry));
             }
             store.Commit(new(path, batch.Cursor, header), entries);
             _simulationStore?.Commit(new(path, batch.Cursor, header), entries);
-            if (chat && !header.Ambiguous && header.Channel == "Local" && header.Listener is { } listener)
+            if (chat && !header.Ambiguous && EveLogParser.IsLocalChannel(header.Channel) && header.Listener is { } listener)
             {
                 var session = header.Session ?? entries.Select(x => x.Entry.Timestamp).DefaultIfEmpty(DateTimeOffset.MinValue).Max();
                 if (!_localTails.TryGetValue(listener, out var tail) || session >= tail.Session || tail.Path.Equals(path, StringComparison.OrdinalIgnoreCase))
@@ -337,9 +345,14 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
                 // EVE timestamps have one-second precision and writes can be delayed.
                 // Recent newly committed hits trigger a full receipt-time indicator;
                 // startup history still cannot replay an old fight as a live alert.
-                foreach (var entry in entries.Where(x => x.Entry.Direction.HasValue && x.Entry.Timestamp >= _now().AddSeconds(-30)))
+                foreach (var entry in entries.Where(x => x.Entry.Timestamp >= _now().AddSeconds(-30)))
                     if (previous is null || previous.Cursor.Generation != batch.Cursor.Generation || entry.Offset >= previous.Cursor.Offset)
-                        AcceptCombatEntry(entry.Entry, simulated: false);
+                    {
+                        if (entry.Entry.Direction.HasValue) AcceptCombatEntry(entry.Entry, simulated: false);
+                        if (entry.Entry.EventKind != LogEventKind.Unknown)
+                            try { LogEvent?.Invoke(entry.Entry); }
+                            catch (Exception ex) { _logger.Warning("Log event subscriber failed ({ErrorType})", ex.GetType().Name); }
+                    }
             _failures.Remove(path);
             if (_warning == AccessWarning && !_failures.Any(x => x.Value > 4)) _warning = null;
             if (batch.OversizedLines > 0) _warning = "Some malformed or oversized log lines were skipped.";

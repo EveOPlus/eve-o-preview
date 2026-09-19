@@ -1,4 +1,8 @@
 {
+  "Log language": "Log language",
+  "Automatic (per file)": "Automatic (per file)",
+  "Applies to new entries; stored history is unchanged.": "Applies to new entries; stored history is unchanged.",
+  "Choose a log language.": "Choose a log language.",
   "Preview graphics": "Preview graphics",
   "Enhanced graphics": "Enhanced graphics",
   "Compatibility graphics": "Compatibility graphics",
@@ -969,5 +973,6 @@
   "Average DPS samples since {0:g}. Idle time and the first and last 10 seconds of combat are excluded.": "Average DPS samples since {0:g}. Idle time and the first and last 10 seconds of combat are excluded.",
   "repair totals": "repair totals",
   "repair cycles": "repair cycles",
-  "Resets the selected counters for {0} only.": "Resets the selected counters for {0} only."
+  "Resets the selected counters for {0} only.": "Resets the selected counters for {0} only.",
+  "Online": "Online"
 }

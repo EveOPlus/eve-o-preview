@@ -46,4 +46,6 @@ Read the build guide for prerequisites, filters, native publishing, and manual v
 
 For documentation-only edits, check links, source references, and `git diff --check`; no application launch is needed. For behavior changes, run checks appropriate to the affected path and report what actually ran, what passed, and what remains unverified. Keep generated files, local profiles/logs, package caches, and release output out of unrelated diffs.
 
-Update the relevant guide when changing an invariant, protocol, feature route, or build command. Use stable symbol names and relative file links instead of copying large implementations or line-number inventories. Keep this entry point short; detailed explanations belong in `docs/ai/`.
+Follow the [repository tooling policy](../AGENTS.md): keep ad hoc scripts temporary and ignored by source control, or remove them on completion. Permanent tooling belongs in C# within the existing solution and build/test workflow.
+
+Update the relevant guide in place when changing an invariant, protocol, feature route, or build command. Documentation must describe the current state: merge additions into the relevant sections and replace superseded text instead of appending dated updates or a running validation history. Preserve current limitations and remaining checks; Git records change history. Use stable symbol names and relative file links instead of copying large implementations or line-number inventories. Keep this entry point short; detailed explanations belong in `docs/ai/`.

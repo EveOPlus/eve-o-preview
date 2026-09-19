@@ -340,71 +340,62 @@ retain direct log evidence as authoritative. ESI capability is not yet establish
 
 ### Language and catalog coverage
 
-Damage direction and listener/session patterns cover the six researched client
-languages (English, German, French, Russian, Japanese and Chinese). Current Local
-system-message and remote shield/armor/hull-repair patterns are English. Local
-location requires the Local header, exact EVE System message and a known SDE
-system; player chat cannot impersonate a location event by mentioning one.
+The [language and event parser guide](log-languages.md) documents the per-file
+automatic detection, manual language override, plain-text extraction and typed
+game/Local events. English, Chinese, French, German, Japanese, Korean, Russian and
+Spanish use client templates with native hit-quality strings and standalone tests.
+Rules cover combat, travel, decloaking, mining/residue, bounty, capacitor effects,
+salvage, cargo, drones, targeting, modules, fleet and skill-training notifications.
+Recorded English, Chinese, Japanese and Russian fixtures cover specific client
+formats; the language guide tracks remaining event and display-setting gaps.
+Local location requires a Local header, exact localized EVE system sender and a
+known SDE system; player chat cannot impersonate a location event by mentioning one.
 Unsupported game text remains a recent parsed entry and contributes to a visible
 unrecognized/non-damage count, without being silently counted as zero damage.
 Source counts mean observed source files, including older sessions. The current
 system is the latest known name, retained in memory for reuse. Observation times
 remain available internally and in the overview; the thumbnail shows only the name.
 
-The embedded fallback comes from FC JSONL SDE build **3503375** (2026-09-10):
+The embedded fallback comes from FC JSONL SDE build **3503375**:
 39,020 normalized NPC aliases, 25,723 NPC attack profiles, 14,427 system aliases
-and 15,566 weapon/item aliases. The production SDE index is also used by the
-[generator](../../scripts/generate-log-catalog.py), preserving matching rules.
-Runtime now downloads and manages the complete SDE; see [static data](static-data.md).
+and 15,566 weapon/item aliases. The runtime downloads and manages the complete
+SDE; see [static data](static-data.md).
+Installed system aliases come from its derived `system_names` index, while
+NPC/weapon/ore aliases use the existing type index. Visible localized names are
+retained; markup hints never override SDE name resolution.
 
-## Validation
+## Validation scope
 
-The final Windows suite passed **201/201**; the workspace smoke passed **180**
-production renders and the portable overlay smoke passed. Tests include temporary
-synthetic writers, split Unicode, old/new concurrent logs, exclusive sharing,
-watcher recovery, restart, storage rollback, classification, simulation isolation,
-real native thumbnail graphics/focus and SVG colour pixels. Light/Dark captures
-were inspected for Simple/Advanced configuration and alpha/DPS/repair appearance.
-The built Windows executable also passed `--validate-workspace` startup with exit
-code zero, using isolated configuration and no live EVE integration.
-An opt-in live validation then exercised three running EVE clients for 12 seconds:
-35 simulated events used production notifications and transient overview totals;
-Stop/expiry restored real totals, with zero persisted simulation entries. All three
-current systems were detected and shown as plain subtitles. Thumbnail captures
-confirmed the actual thumbnail name colour, all four incoming damage icons, normal
-production text and repair icons. Indicator settings are in Thumbnail augments. Foreground focus and the three
-DWM registrations remained unchanged. This uses isolated application settings and
-history with real EVE windows/logs; it does not replace the already-running app.
-The subsequent inline-alpha update passed 29 combat checks, 13 native renderer
-checks, 184 UI renders and portable rendering checks. Exact pixel comparisons
-verify fixed outgoing-row positions when incoming hides, for top/bottom layouts.
-A two-client live run received 18 events and verified inline alpha, title colour,
-restored totals and zero persisted simulation entries. Both DWM registrations
-and foreground focus remained unchanged. These checks use simulated combat.
-The subsequent blink/font update passed 67 focused combat, native rendering,
-title-preview and thumbnail-input checks, 188 workspace renders and the portable
-renderer smoke. Coverage includes periodic overview/native name transitions,
+Reader and storage tests cover synthetic concurrent writers, split Unicode,
+exclusive sharing, watcher recovery, restart, rollback, classification and
+simulation isolation. The [language guide](log-languages.md#adding-patterns-and-testing)
+describes multilingual grammar, recorded fixtures, remaining sample gaps and the
+reported settings-resource assertion that remains unresolved in the broader suite.
+
+Native rendering checks cover thumbnail graphics/focus, SVG colour pixels,
+stable outgoing-row positions when incoming hides, periodic name transitions,
 rapid-hit phase retention, source filtering, saved intervals, shared title/DPS
-glyphs, font inheritance, overrides, reset and drafts. A further two-client live
-run verified blinking, Minimal alpha icons, spaced alpha values and shared font
-override/reset, with 16 events, unchanged focus/DWM counts and no persisted
-simulation entries. Captured normal/flash phases and font overrides were inspected.
-See [build and test](build-and-test.md#augments-checks-2026-09-13) for commands,
-dependency packaging and the distinction between these checks and live gameplay.
+glyphs, font inheritance, overrides and reset. Workspace and portable overlay
+smoke checks exercise Light/Dark controls, Simple/Advanced configuration,
+alpha/DPS/repair appearance and draft preservation. `--validate-workspace` checks
+startup using isolated configuration.
 
-## Research and design (2026-09-13)
+The opt-in live harness uses real EVE windows/logs with isolated application
+settings and history. Its simulated events exercise production notifications,
+temporary overview totals, system subtitles, damage/repair icons, blinking and
+font overrides. Check that Stop/expiry restores real totals, simulation entries
+are never persisted, and focus/DWM registrations remain unchanged. Simulated
+combat does not establish live gameplay or client disk-flush latency.
+See [build and test](build-and-test.md) for commands and dependency packaging.
+
+## Reader and storage design
 
 The implementation reads the client's files in the host process. It does not add
-anything to Robin or the game process. Relevant primary sources:
+anything to Robin or the game process. It tracks each file independently, including
+overlapping sessions, and supports UTF-8 game logs and UTF-16 Local logs. Overview
+labels are display text, so a label alone cannot authenticate a pilot identity.
+Platform behavior governing the reader:
 
-- [PELD's reader](https://github.com/ArtificialQualia/PyEveLiveDPS/blob/master/PyEveLiveDPS/logreader.py)
-  establishes localized listener/session headers, damage direction and formatted
-  combat text. Its overview-dependent extraction is evidence that a label is not
-  always an unambiguous pilot name. Its single-newest-file replacement policy is
-  insufficient for overlapping files, so this implementation tracks each file.
-- [SMT's reader](https://github.com/Slazanger/SMT/blob/master/EVEData/EveManager.cs)
-  uses shared reads and Local channel system messages for location. Game logs are
-  UTF-8; Local chat logs can be UTF-16.
 - [FileSystemWatcher](https://learn.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher)
   can deliver duplicate notifications and lose notifications on buffer overflow.
   Callbacks therefore only enqueue work; durable offsets determine what is new.

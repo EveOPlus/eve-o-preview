@@ -16,6 +16,15 @@ public sealed partial class CombatLogView
     };
     private string ChoiceText(object? value) => value switch
     {
+        LogLanguage.Automatic => L("Automatic (per file)"),
+        LogLanguage.English => "English",
+        LogLanguage.Chinese => "简体中文",
+        LogLanguage.Russian => "Русский",
+        LogLanguage.German => "Deutsch",
+        LogLanguage.French => "Français",
+        LogLanguage.Japanese => "日本語",
+        LogLanguage.Korean => "한국어",
+        LogLanguage.Spanish => "Español",
         SimulationFaction faction => faction.Id == 0 ? L("All factions") : faction.Name,
         SimulationNpc npc => npc.Id == 0 ? L("Any ship") : npc.Name,
         SimulationWeapon weapon => weapon.Name,

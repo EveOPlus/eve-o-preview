@@ -1,0 +1,11 @@
+------------------------------------------------------------
+  ゲームログ
+  傍聴者: Sample Observer
+  セッション開始: 2026.01.01 00:00:00
+------------------------------------------------------------
+[ 2026.01.01 00:34:16 ] (combat) <color=0xffcc0000><b>40</b> <color=0x77ffffff><font size=10>から</font> <b><color=0xffffffff><localized hint="Interfering Phase-IV Legionary">インターフェアフェーズIVリージョナリー*</b><font size=10><color=0x77ffffff> - 直撃
+[ 2026.01.01 00:34:18 ] (combat) <color=0xffcc0000><b>17</b> <color=0x77ffffff><font size=10>から</font> <b><color=0xffffffff><localized hint="Vexing Phase-II Legionary">ヴェックスフェーズIIリージョナリー*</b><font size=10><color=0x77ffffff> - 軽微
+[ 2026.01.01 00:34:20 ] (combat) <color=0xffcc0000><b>126</b> <color=0x77ffffff><font size=10>から</font> <b><color=0xffffffff><localized hint="Overmind Destructor Delta">オーバーマインド・デストラクター・デルタ*</b><font size=10><color=0x77ffffff> - 直撃
+[ 2026.01.01 00:34:23 ] (combat) <color=0xff00ffff><b>492</b> <color=0x77ffffff><font size=10>から</font> <b><color=0xffffffff><localized hint="Overmind Destructor Delta">オーバーマインド・デストラクター・デルタ*</b><font size=10><color=0x77ffffff> - <localized hint="Nova Light Missile">ノヴァライトミサイル*</localized> - 直撃
+[ 2026.01.01 00:34:31 ] (combat) <color=0xff00ffff><b>393</b> <color=0x77ffffff><font size=10>から</font> <b><color=0xffffffff><localized hint="Interfering Phase-IV Legionary">インターフェアフェーズIVリージョナリー*</b><font size=10><color=0x77ffffff> - <localized hint="Nova Light Missile">ノヴァライトミサイル*</localized> - 直撃
+[ 2026.01.01 00:34:41 ] (combat) <color=0xff00ffff><b>268</b> <color=0x77ffffff><font size=10>から</font> <b><color=0xffffffff><localized hint="Interfering Phase-IV Legionary">インターフェアフェーズIVリージョナリー*</b><font size=10><color=0x77ffffff> - <localized hint="Nova Light Missile">ノヴァライトミサイル*</localized> - 直撃

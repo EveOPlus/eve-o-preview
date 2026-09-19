@@ -27,6 +27,7 @@ public sealed partial class StaticDataDatabase : IDisposable
     {
         FilePath = path;
         UpgradeCombatIndex(path);
+        UpgradeSystemNames(path);
         _db = Open(path, SqliteOpenMode.ReadOnly);
         try
         {
@@ -172,6 +173,7 @@ public sealed partial class StaticDataDatabase : IDisposable
         progress?.Invoke(0.82, $"Indexing item names and damage attributes");
         BuildCombatIndex(db, transaction, cancellation);
         WriteCombatIndexVersion(db, transaction);
+        BuildSystemNames(db, transaction, cancellation);
         using var finish = db.CreateCommand(); finish.Transaction = transaction;
         finish.CommandText = "INSERT INTO manifest VALUES(2,$build,$datasets,$records)";
         finish.Parameters.AddWithValue("$build", build); finish.Parameters.AddWithValue("$datasets", files.Length); finish.Parameters.AddWithValue("$records", records);

@@ -30,7 +30,7 @@ public sealed partial class StaticDataTests
             using (var service = new StaticDataService(root, logger, http))
             {
                 Assert.True((await service.UpdateStaticDataAsync()).Success);
-                Assert.Equal(42, service.Build); Assert.Equal(7, service.ReadStaticData().Datasets);
+                Assert.Equal(42, service.Build); Assert.Equal(8, service.ReadStaticData().Datasets);
                 var simulationCatalog = await service.ReadSimulationCatalogAsync();
                 Assert.Same(simulationCatalog, await service.ReadSimulationCatalogAsync());
                 using var future = service.ReadRecord("futureDataset", "test-key");
@@ -148,6 +148,11 @@ public sealed partial class StaticDataTests
                 void Add(string name, string data) { using var writer = new StreamWriter(zip.CreateEntry(name + ".jsonl").Open(), new UTF8Encoding(false)); writer.Write(data); }
                 Add("_sde", $"{{\"_key\":\"sde\",\"buildNumber\":{Build}}}");
                 Add("futureDataset", """{"_key":"test-key","value":"kept for future features"}""");
+                Add("mapSolarSystems", """
+                    {"_key":30000142,"name":{"en":"Jita","zh":"吉他","ru":"Джита"}}
+                    {"_key":30002187,"name":{"en":"Amarr","zh":"共享别名"}}
+                    {"_key":30000001,"name":{"en":"Other System","zh":"共享别名"}}
+                    """);
                 Add("factions", """
                     {"_key":500010,"name":{"en":"Guristas Pirates"}}
                     {"_key":500024,"name":{"en":"Drifters"}}
@@ -166,7 +171,7 @@ public sealed partial class StaticDataTests
                     {"_key":10,"groupID":1,"factionID":500024,"name":{"en":"Sample Warden"}}
                     {"_key":11,"groupID":8,"name":{"en":"Scout"}}
                     {"_key":12,"groupID":1,"name":{"en":"Guristas Lookalike"}}
-                    {"_key":20,"groupID":2,"name":{"en":"Sample Missile"}}
+                    {"_key":20,"groupID":2,"name":{"en":"Sample Missile","zh":"示例导弹"}}
                     {"_key":30,"groupID":3,"name":{"en":"Sample Laser"}}
                     {"_key":40,"groupID":4,"name":{"en":"Sample Smartbomb"}}
                     {"_key":50,"groupID":5,"published":true,"metaGroupID":2,"capacity":0.2,"name":{"en":"Sample Blaster II"}}

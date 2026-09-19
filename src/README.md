@@ -8,7 +8,7 @@ For Augments setup, themes, simulation, damage icons and history, see the [Thumb
 
 **Theme migration:** New and older/unversioned global settings open in Dark, even if an older file selected Legacy. Users may manually select Legacy again; preserve that choice on later launches and profile switches. `ApplicationPreferences` versions the existing global settings file independently of gameplay profiles, retaining unrelated preferences and the established portable/installed storage policy.
 
-The baseline review was against commit `60944b521e3c5b442dd379b5208c53a91ae3a573` on 2026-09-06; UI architecture updates are recorded from 2026-09-07. The review covers the application, injected library, tests, mock, project metadata, and release tooling. [The source index](docs/ai/source-index.md) records the complete baseline inventory, later additions and the treatment of resources and binary assets. This is a source-based navigation guide, not a claim that all native behavior has been exercised or benchmarked.
+This guide covers the application, injected library, tests, mock, project metadata and release tooling. [The source index](docs/ai/source-index.md) groups source paths and resources by subsystem. The guides describe the current implementation and its validation boundaries; they do not establish that all native behavior has been exercised or benchmarked.
 
 ## Use this with an AI assistant
 
@@ -25,9 +25,10 @@ The short `AGENTS.md` files provide discovery and local constraints, while the p
 | [Windows and thumbnails](docs/ai/windows-and-thumbnails.md) | Discovery, DWM/static rendering, overlays, MRU z-order, focus, hotkeys, prediction, CPU affinity, ownership |
 | [Preview rendering](docs/ai/preview-rendering.md) | Portable presentation/graphics contracts, Windows DWM and native composition, compatibility fallback and validation |
 | [Augments: combat logs, alpha, DPS and location](docs/ai/combat-logs.md) | Event-driven shared file reads, automatic/manual folder selection, parsed storage, classification, thumbnail styling and simulation |
+| [Log language and event parsing](docs/ai/log-languages.md) | Automatic/manual log language, overview markup, multilingual combat/travel/decloak/mining/bounty events and SDE names |
 | [Robin and native integration](docs/ai/robin.md) | Injection lifecycle, pipe bytes, DXGI vtable hooks, frame pacing, audio interception, sidecar diagnostics |
 | [Build and test](docs/ai/build-and-test.md) | Project differences, precise Windows commands, native publishing, test coverage and limitations, release side effects |
-| [Source index](docs/ai/source-index.md) | Every tracked baseline path, its role, and the guide to consult |
+| [Source index](docs/ai/source-index.md) | Source paths grouped by subsystem, their roles, and the guides to consult |
 
 There are also local instructions for the [main app](Eve-O-Preview/AGENTS.md), [Robin](Eve-O-Preview.Robin/AGENTS.md), and [tests](tests/AGENTS.md). Read the relevant local file when navigating from a higher directory; do not assume every tool automatically loads instructions in child directories.
 
@@ -154,4 +155,4 @@ Do not treat the guides' investigation notes as proven runtime bugs.
 
 Add explanations close to an unusual implementation when its reason would otherwise be lost; use the existing symbol and link it from the guide. Directory `AGENTS.md` files already provide local guidance without adding repetitive AI tags to every source file. Avoid duplicating the entire guide into multiple assistant-specific files.
 
-When changing code, update the relevant route, invariant, protocol table, or validation note in the same change. Refresh the source index when paths are added/moved. Preserve the distinction between intentional behavior, historical rationale, observed risks, and behavior proven by tests. Read the build guide before running release tooling; for this documentation review, no live game injection, crash sidecar, or release task is needed.
+When changing code, update the relevant route, invariant, protocol table, or validation scope in place in the same change. Refresh the source index when paths are added, moved or removed. Merge useful additions into the current explanation and remove superseded text; keep change history in Git. Preserve the distinction between intentional behavior, compatibility rationale, observed risks, and behavior proven by tests. Read the build guide before running release tooling; documentation-only edits need link, source-reference and whitespace checks, not live game injection, a crash sidecar, or release tasks.

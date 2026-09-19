@@ -56,7 +56,7 @@ public sealed partial class CombatLogView : UserControl, IDisposable, IWorkspace
                     "Incoming", "Outgoing", "Shield repairs", "Armour repairs", "Hull repairs", "armor", "Show DPS", "Show alpha",
                     "Show weapon icons", "weapon platform", "ammunition", "ammo", "damage type", "unknown", "Incoming damage indicator", "Simulation", "simulator", "thumbnail overlays", "flashing", "opacity", "settings"], () => drafts.Tab = 1),
                 new("data-setup", "Data setup", ["log", "logs", "logging", "log setup", "Read EVE logs", "FC static data", "SDE", "download", "data sources",
-                    "log folder", "Folder containing Gamelogs and Chatlogs", "configure", "settings"], () => drafts.Tab = 2),
+                    "log folder", "Log language", "language detection", "Chinese logs", "English logs", "Russian logs", "German logs", "French logs", "Japanese logs", "Korean logs", "Spanish logs", "Folder containing Gamelogs and Chatlogs", "configure", "settings"], () => drafts.Tab = 2),
                 new("overview", "Overview", ["Reset statistics", "counters", "Jumps", "travel", "combat totals", "Average DPS", "Combined statistics", "repair totals", "repair cycles"], () => drafts.Tab = 0)
             ]
         };
@@ -76,6 +76,9 @@ public sealed partial class CombatLogView : UserControl, IDisposable, IWorkspace
         setup.Children.Add(Toggle("Read EVE logs", "logs-enabled", settings.Enabled,
             value => Save(_logs.ReadLogSettings() with { Enabled = value })));
         setup.Children.Add(Text("Enable game-message and Local chat logging in EVE.", 12));
+        setup.Children.Add(Choice("Log language", "logs-language", Enum.GetValues<LogLanguage>(), settings.Language,
+            value => Save(_logs.ReadLogSettings() with { Language = value })));
+        setup.Children.Add(Text("Applies to new entries; stored history is unchanged.", 12));
         _detectedDirectory = Text("Detecting EVE logs folder…", 12); _detectedDirectory.Name = "logs-detected-directory";
         setup.Children.Add(_detectedDirectory);
         var manual = new StackPanel { Spacing = 8 };

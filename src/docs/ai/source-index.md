@@ -1,19 +1,20 @@
-# Complete source index and review scope
+# Source navigation index
 
-The [preview rendering guide](preview-rendering.md) covers the implemented Windows image/overlay backends and portable graphics contracts. The earlier [technology review](preview-rendering-review.md) records platform alternatives and remaining Linux work.
+This index groups the application, Robin, portable UI, tests, Mock, resources and
+release tooling by subsystem. Repository-qualified paths start at the Git root;
+short labels link directly to their source. A source listing is a navigation aid,
+not proof of runtime behavior or a complete defect audit. See
+[build and test](build-and-test.md) for validation scope and the
+[defect guide](reported-bugs.md) for current status and remaining checks.
 
-The Augments review adds shared `OverlayLayout`/`OverlayColors` presentation helpers,
-`AugmentLabels`, `WorkspaceView.StaticData` consent handling and `AugmentLayoutTests`.
-See [combat logs](combat-logs.md), [static data](static-data.md) and the
-[corpus runner](../../tests/StaticData.Smoke/README.md) for their current routes.
+The [preview rendering guide](preview-rendering.md) covers Windows image/overlay
+backends and portable graphics contracts; the [technology review](preview-rendering-review.md)
+explains platform alternatives and remaining Linux work. Augments presentation,
+log ingestion and SDE routes are described in [combat logs](combat-logs.md),
+[log languages](log-languages.md) and [static data](static-data.md).
 
-Baseline: `60944b521e3c5b442dd379b5208c53a91ae3a573`, reviewed 2026-09-06. This inventory contains all **208 tracked baseline files**: 191 under `src/`, 17 elsewhere. Paths in the tables are relative to the Git root. Newly added AI guides/instruction files are listed separately at the end, not included in the baseline count.
-
-The application, Robin, tests, Mock, configuration, message/handler classes, native bindings, project files, release code, designer wiring and textual resources were reviewed across the subsystem guides. Repeated generated wrappers and resource schemas were inspected for their role, control wiring and payload boundaries. This inventory is a navigation and coverage record, not an assertion that every defect has been found.
-
-Binary/resource treatment: icon and partner image metadata were inspected, not their pixels; MainForm's embedded icons were decoded for metadata; the release CSS font is a binary payload. The public certificate was inspected without importing it and contains no private key. Both GPL v3 files were identified and verified byte-identical; this was not a license/legal audit. `assets/stuff.zip` contains `stuff.7z`; the inner archive was not unpacked or audited and no build reference to it was found in the reviewed release code. None of these payloads was executed.
-
-Excluded from source review: ignored package/download caches, `bin`/`obj`/`publish`, `.vs`, generated local state, user settings, logs, profiles and temporary output. There are no tracked `tools` sources or CI workflow files at this baseline. The local `.vscode` directory was empty. The IDE log name in the task did not supply log contents. That baseline documentation review did not run applications/tests/native hooks. The subsequent defect investigation did; see [validation scope](build-and-test.md) and [results](reported-bugs.md).
+Ignored package/download caches, `bin`/`obj`/`publish`, `.vs`, generated local
+state, user settings, logs, profiles and temporary output are outside this index.
 
 Local AI artifacts belong in ignored `bin/`, `.ai-work/`, `.ai-output/`, `docs/user/images/` or `docs/images/`. The root `.gitignore` also excludes local AI session/cache files, raw downloaded image references and superseded artwork experiments. Shared `AGENTS.md` files, subsystem guides, test/probe sources and embedded UI resources remain versioned. The public README is text-only; screenshots stay local.
 
@@ -314,21 +315,19 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [src/tests/Eve-O-Preview.Tests/Program.cs](../../../src/tests/Eve-O-Preview.Tests/Program.cs) | Custom STA xUnit versus private-desktop-worker entry dispatch. | [build-and-test](build-and-test.md) |
 | [src/tests/Eve-O-Preview.Tests/README.md](../../../src/tests/Eve-O-Preview.Tests/README.md) | Harness usage, discovery, worker isolation and scenario documentation. | [build-and-test](build-and-test.md) |
 
-## AI documentation added by this review
+## Repository instructions and subsystem guides
 
-- [Defect investigation guide](reported-bugs.md): twelve technical investigation candidates with source routes and focused checks.
+- [Defect investigation guide](reported-bugs.md): defect status, source routes, focused checks and remaining validation.
 - [Git-root AGENTS.md](../../../AGENTS.md): discovers the source guides from the repository root.
 - [Source README](../../README.md): architecture, task routes, performance map, prompt starters.
 - [Source AGENTS.md](../../AGENTS.md): concise common instructions.
 - [Main-app instructions](../../Eve-O-Preview/AGENTS.md), [Robin instructions](../../Eve-O-Preview.Robin/AGENTS.md), [test instructions](../../tests/AGENTS.md): local entry points.
 - [Application/configuration guide](application-and-configuration.md), [window/thumbnail guide](windows-and-thumbnails.md), [Robin guide](robin.md), [build/test guide](build-and-test.md), and this index: detailed source context.
-- [Future feature backlog](feature-backlog.md): nineteen unimplemented/partial/exploratory ideas, current source distinctions and acceptance checks.
+- [Future feature backlog](feature-backlog.md): unimplemented/partial/exploratory ideas, current source distinctions and acceptance checks.
 
-Update the appropriate table when adding, deleting or moving a source file. Keep baseline coverage distinct from subsequent changes; do not count a generated path list as evidence of a fresh semantic review.
+Update the appropriate subsystem table when adding, deleting or moving a source file. Merge entries into their relevant sections; do not append chronological additions or treat a generated path list as evidence of a semantic review.
 
-## Integration additions from the defect investigation
-
-Paths remain relative to the Git root; these are outside the original baseline count.
+## Host and native integration tests
 
 | File | Purpose |
 | --- | --- |
@@ -342,9 +341,9 @@ Paths remain relative to the Git root; these are outside the original baseline c
 | `src/tests/Robin.NativeSmoke/build-probe.ps1` | Build the two controlled native fixtures using VS x64 tools |
 | `src/tests/Robin.NativeSmoke/README.md` | Commands, prerequisites and validation boundaries |
 
-## UI modernization additions
+## Portable UI and Windows host integration
 
-These files are outside the original baseline count. The [UI review](ui-review.md) records the prior UI inventory and preservation requirements; the [application guide](application-and-configuration.md) describes the current portable UI / Windows host boundary.
+The [UI review](ui-review.md) describes control-preservation requirements; the [application guide](application-and-configuration.md) explains the portable UI / Windows host boundary.
 
 | File | Purpose |
 | --- | --- |
@@ -409,7 +408,7 @@ These files are outside the original baseline count. The [UI review](ui-review.m
 | [src/Eve-O-Preview/Mediator/Handlers/Thumbnails/SetClientCycleSkippedHandler.cs](../../Eve-O-Preview/Mediator/Handlers/Thumbnails/SetClientCycleSkippedHandler.cs) | Shared workspace/context-menu route to session-only skip state and UI notification |
 
 
-## Preview rendering modernization additions
+## Preview rendering
 
 | Source | Responsibility |
 | --- | --- |
@@ -431,9 +430,9 @@ These files are outside the original baseline count. The [UI review](ui-review.m
 | [Windows rendering project](../../tests/Preview.RenderingSmoke/Preview.RenderingSmoke.csproj), [runner](../../tests/Preview.RenderingSmoke/Program.cs), [matrix](../../tests/Preview.RenderingSmoke/run-matrix.ps1), [GPU counters](../../tests/Preview.RenderingSmoke/collect-gpu.ps1), [instructions](../../tests/Preview.RenderingSmoke/README.md) | Opt-in mock/live DWM renderer measurements, external PDH sampling and scoped images |
 | [Preview rendering guide](preview-rendering.md), [technology review](preview-rendering-review.md) | Implemented architecture, platform boundaries and validation evidence |
 
-## Augments additions
+## Augments, log parsing and static data
 
-See [combat logs](combat-logs.md) for invariants, research sources and validation.
+See [combat logs](combat-logs.md) for invariants, source routes and validation scope.
 
 | Source | Responsibility |
 | --- | --- |
@@ -443,6 +442,10 @@ See [combat logs](combat-logs.md) for invariants, research sources and validatio
 | [EveLogDirectory.cs](../../Eve-O-Preview/Services/Logs/EveLogDirectory.cs) | Windows Documents detection, redirected-folder support and manual override |
 | [CompleteLogReader.cs](../../Eve-O-Preview/Services/Logs/CompleteLogReader.cs) | Shared read-only handles, stable file identity, complete Unicode lines and byte cursors |
 | [EveLogParser.cs](../../Eve-O-Preview/Services/Logs/EveLogParser.cs) | Listener attribution, damage/repair parsing, source classification and Local locations |
+| [Language selection](../../Eve-O-Preview/Services/Logs/EveLogLanguages.cs), [templates](../../Eve-O-Preview/Services/Logs/EveLogLanguageCatalog.cs), [compiler](../../Eve-O-Preview/Services/Logs/EveLogTemplates.cs), [plain text](../../Eve-O-Preview/Services/Logs/EveLogText.cs), [guide](log-languages.md) | Eight game languages, per-file detection/manual override, client templates and overview markup extraction |
+| [System alias index](../../Eve-O-Preview/Services/StaticData/StaticDataDatabase.SystemNames.cs), [name checks](../../tests/Eve-O-Preview.Tests/Checks/StaticDataTests.LogNames.cs) | Full-SDE localized system lookup, ambiguity and offline index upgrade |
+| [Language checks](../../tests/Eve-O-Preview.Tests/Checks/LogLanguageTests.cs), [template cases](../../tests/Eve-O-Preview.Tests/Checks/LogTemplateTests.cs), [corpus audit](../../tests/StaticData.Smoke/LogAudit.cs) | Typed combat/non-combat events, custom overview labels, attribution, persistence and opt-in aggregate-only replay |
+| [Chinese fixture checks](../../tests/Eve-O-Preview.Tests/Checks/ChineseLogFixtureTests.cs), [Japanese fixture checks](../../tests/Eve-O-Preview.Tests/Checks/JapaneseLogFixtureTests.cs), [mixed-name checks](../../tests/Eve-O-Preview.Tests/Checks/MixedNameLogFixtureTests.cs), [fixture inventory](../../tests/Eve-O-Preview.Tests/Fixtures/logs/README.md) | Recorded client formats and controlled English-name variations across all eight languages |
 | [CombatLogStore.cs](../../Eve-O-Preview/Services/Logs/CombatLogStore.cs) | Transactional SQLite history, checkpoints, totals, reset and retention |
 | [CombatLogService.cs](../../Eve-O-Preview/Services/Logs/CombatLogService.cs) | Event-driven watchers, worker, recovery and immutable publication |
 | [Simulation worker](../../Eve-O-Preview/Services/Logs/CombatLogService.Simulation.cs), [sequence](../../Eve-O-Preview.UI/CombatSimulationSequence.cs) | Normal combat dispatch/aggregation on a temporary in-memory copy, with real ingestion preserved |
@@ -450,7 +453,7 @@ See [combat logs](combat-logs.md) for invariants, research sources and validatio
 | [ThumbnailManager.CombatLogs.cs](../../Eve-O-Preview/Services/Implementation/ThumbnailManager.CombatLogs.cs) | Coalesced retained thumbnail updates and finite event expiry |
 | [WindowsWorkspaceBackend.CombatLogs.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.CombatLogs.cs) | Windows host capability forwarding |
 | [OverlaySymbols.cs](../../Eve-O-Preview.Preview/OverlaySymbols.cs), [damage SVGs](../../Eve-O-Preview.Preview/Assets/Damage/README.md), [weapon SVGs and T1 references](../../Eve-O-Preview.Preview/Assets/Weapons/README.md), [repair SVGs](../../Eve-O-Preview.Preview/Assets/Repairs/README.md) | Shared vector damage, fixed weapon-platform and repair symbols |
-| [LogCatalog.json](../../Eve-O-Preview/Resources/LogCatalog.json), [generator](../../scripts/generate-log-catalog.py) | Embedded offline FC SDE aliases and reproducible generator |
+| [LogCatalog.json](../../Eve-O-Preview/Resources/LogCatalog.json) | Embedded offline FC SDE aliases |
 | [StaticDataService](../../Eve-O-Preview/Services/StaticData/StaticDataService.cs), [database](../../Eve-O-Preview/Services/StaticData/StaticDataDatabase.cs) | Complete compressed SDE, background download/import, atomic generations and cached item lookups; see [static data](static-data.md) |
 | [WeaponPlatformClassifier](../../Eve-O-Preview/Services/StaticData/WeaponPlatformClassifier.cs), [local index upgrade](../../Eve-O-Preview/Services/StaticData/StaticDataDatabase.Upgrade.cs), [platform regressions](../../tests/Eve-O-Preview.Tests/Checks/StaticDataTests.Platforms.cs) | Group/effect/parent evidence, transactional offline reclassification, old enum/custom-style compatibility and simulation cadence |
 | [StaticDataContract](../../Eve-O-Preview.UI/StaticDataContract.cs), [static data controls](../../Eve-O-Preview.UI/CombatLogView.StaticData.cs) | Portable download/status/cancellation capability in Augments Data setup |
