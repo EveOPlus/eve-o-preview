@@ -238,7 +238,9 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
-| [src/Eve-O-Preview/Services/Implementation/CpuAffinityService.cs](../../../src/Eve-O-Preview/Services/Implementation/CpuAffinityService.cs) | Topology detection, precomputed role masks, background cache, reset. | [windows-and-thumbnails](windows-and-thumbnails.md) |
+| [src/Eve-O-Preview/Services/Implementation/CpuAffinityService.cs](../../../src/Eve-O-Preview/Services/Implementation/CpuAffinityService.cs) | Cached role CPU Sets, topology refresh, original restrictions and restoration. | [windows-and-thumbnails](windows-and-thumbnails.md) |
+| [src/Eve-O-Preview/Services/Implementation/CpuPlacementPolicy.cs](../../../src/Eve-O-Preview/Services/Implementation/CpuPlacementPolicy.cs) | Physical-core/SMT pools, capacity classes and stable cache/NUMA homes. | [windows-and-thumbnails](windows-and-thumbnails.md) |
+| [src/Eve-O-Preview/Services/Interop/WindowsCpuSetApi.cs](../../../src/Eve-O-Preview/Services/Interop/WindowsCpuSetApi.cs) | Windows CPU-set topology parsing, constraints and process-default assignments. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/Services/Implementation/DebuggerSidecar.cs](../../../src/Eve-O-Preview/Services/Implementation/DebuggerSidecar.cs) | Hidden host debugger, raw DEBUG_EVENT decoding and debug output. | [robin](robin.md) |
 | [src/Eve-O-Preview/Services/Implementation/DwmThumbnail.cs](../../../src/Eve-O-Preview/Services/Implementation/DwmThumbnail.cs) | DWM registration, destination properties, update/recovery signal. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/Services/Implementation/ForegroundWindowObserver.cs](../../../src/Eve-O-Preview/Services/Implementation/ForegroundWindowObserver.cs) | UI-thread foreground notifications, rooted callback and unhook lifetime. | [windows-and-thumbnails](windows-and-thumbnails.md) |

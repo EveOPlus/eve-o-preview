@@ -251,7 +251,13 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         preferences.SetPreviewOverlayRenderer("Legacy");
         var factory = (IThumbnailViewFactory)Activator.CreateInstance(App.GetType("EveOPreview.View.ThumbnailViewFactory"), controller, config, preferences);
         using var factoryLifetime = (IDisposable)factory;
-        var mediator = Stub.Create<IMediator>((method, args) => method.Name == "Send" ? affinityPending.Task : Stub.Default(method.ReturnType));
+        var affinityMessages = new List<EveOPreview.Mediator.Messages.Process.UpdateCpuAffinity>();
+        var mediator = Stub.Create<IMediator>((method, args) =>
+        {
+            if (method.Name != "Send") return Stub.Default(method.ReturnType);
+            if (args[0] is EveOPreview.Mediator.Messages.Process.UpdateCpuAffinity message) affinityMessages.Add(message);
+            return affinityPending.Task;
+        });
         var manager = (IThumbnailManager)Activator.CreateInstance(App.GetType("EveOPreview.Services.ThumbnailManager"),
             mediator, config, monitor, window, factory, keyboard, Stub.Create<IHookService>(), events, logger);
         using var lifetime = (IDisposable)manager;
@@ -340,6 +346,18 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         foreach (var handler in down.ToArray()) handler(null, new KeyEventArgs(Keys.Control | Keys.F8));
         Assert.Equal(new IntPtr(103), manager.GetActiveClient()?.Id);
         Assert.Equal(2, activations);
+        var prediction = affinityMessages.Last();
+        Call(manager, "ThumbnailUpdateTimerTick", null, EventArgs.Empty);
+        Assert.Equal(prediction.ActiveWindowHandle, affinityMessages.Last().ActiveWindowHandle);
+        Assert.Equal(prediction.NextWindowHandle, affinityMessages.Last().NextWindowHandle);
+        Assert.Equal(prediction.PrevWindowHandle, affinityMessages.Last().PrevWindowHandle);
+        // Ordinary Alt+Tab updates scheduling without issuing another focus request.
+        foreground = new IntPtr(101);
+        Call(manager, "ReconcileForegroundWindow");
+        Assert.Equal(foreground, affinityMessages.Last().ActiveWindowHandle);
+        Assert.Equal(IntPtr.Zero, affinityMessages.Last().NextWindowHandle);
+        Assert.Equal(new IntPtr(103), affinityMessages.Last().PrevWindowHandle);
+        Assert.Equal(2, activations);
         affinityPending.SetResult();
         config.CycleGroups.Clear();
         refresh.Handle(new RefreshHotkeys(), CancellationToken.None).GetAwaiter().GetResult();
@@ -373,11 +391,12 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         using var host = Process.GetCurrentProcess();
         _ = host.Handle;
         for (int i = 0; i < 10; i++) monitor.GetUpdatedProcesses(out _, out _, out _);
-        host.Refresh();
-        int handlesBefore = host.HandleCount;
+        // Query only this process: Process.HandleCount's system snapshot can itself
+        // initialize runtime handles between the baseline and the second sample.
+        Assert.True(Native.GetProcessHandleCount(host.Handle, out uint handlesBefore));
         for (int i = 0; i < 200; i++) monitor.GetUpdatedProcesses(out _, out _, out _);
-        host.Refresh();
-        Assert.InRange(host.HandleCount - handlesBefore, -10, 10);
+        Assert.True(Native.GetProcessHandleCount(host.Handle, out uint handlesAfter));
+        Assert.InRange((long)handlesAfter - handlesBefore, -10, 10);
         Assert.Equal(handle, Assert.Single(monitor.GetAllProcesses()).ProcessHandle);
         window.Text = "EVE - B";
         Application.DoEvents();
@@ -386,27 +405,42 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         Assert.Equal("EVE - B", Assert.Single(changed).Title);
         Assert.Equal(handle, Assert.Single(changed).ProcessHandle);
         var config = NewConfig();
-        var cpu = new CpuAffinityService(logger, config);
+        using var cpu = new CpuAffinityService(logger, config);
+        var cpuSets = new WindowsCpuSetApi();
         Assert.True(KernelNativeMethods.GetProcessAffinityMask(handle, out var original, out _));
+        Assert.True(WindowsCpuSetApi.TryReadDefaultSets(handle, out var originalSets));
         try
         {
             cpu.UpdateAffinity(process, changed.Single(), process, monitor.GetAllProcesses());
-            if (cpu.PCores.Count >= 4)
-            {
-                var expected = (IntPtr)typeof(CpuAffinityService).GetField("_activeMask", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(cpu);
-                expected = (IntPtr)(expected.ToInt64() & original.ToInt64());
-                Assert.True(KernelNativeMethods.GetProcessAffinityMask(handle, out var actual, out _));
-                Assert.Equal(expected == IntPtr.Zero ? original : expected, actual);
-            }
+            Assert.True(KernelNativeMethods.GetProcessAffinityMask(handle, out var actual, out _));
+            Assert.Equal(original, actual);
+            Assert.True(WindowsCpuSetApi.TryReadDefaultSets(handle, out var assigned));
+            Assert.NotEmpty(assigned);
+            var topology = cpuSets.ReadTopology();
+            Assert.All(assigned, id => Assert.Contains(topology, c => c.Id == id));
             cpu.ResetAll(monitor.GetAllProcesses());
+            Assert.True(WindowsCpuSetApi.TryReadDefaultSets(handle, out var restored));
+            Assert.Equal(originalSets, restored);
+            // Preserve a launcher/user CPU-set restriction, including nonempty reset.
+            var restricted = assigned.Take(Math.Min(2, assigned.Length)).ToArray();
+            Assert.True(cpuSets.TrySet(handle, restricted));
+            cpu.UpdateAffinity(process, null, null, monitor.GetAllProcesses());
+            Assert.True(WindowsCpuSetApi.TryReadDefaultSets(handle, out var restrictedActual));
+            Assert.All(restrictedActual, id => Assert.Contains(id, restricted));
+            cpu.ResetAll(monitor.GetAllProcesses());
+            Assert.True(WindowsCpuSetApi.TryReadDefaultSets(handle, out var restrictedRestored));
+            Assert.Equal(restricted, restrictedRestored);
+            Assert.True(cpuSets.TrySet(handle, originalSets));
             Assert.True(KernelNativeMethods.GetProcessAffinityMask(handle, out var reset, out _));
             Assert.Equal(original, reset);
             cpu.Stop(monitor.GetAllProcesses());
             cpu.UpdateAffinity(process, null, null, monitor.GetAllProcesses());
             Assert.True(KernelNativeMethods.GetProcessAffinityMask(handle, out var afterStop, out _));
             Assert.Equal(original, afterStop);
+            Assert.True(WindowsCpuSetApi.TryReadDefaultSets(handle, out var stoppedSets));
+            Assert.Equal(originalSets, stoppedSets);
         }
-        finally { KernelNativeMethods.SetProcessAffinityMask(handle, original); }
+        finally { Assert.True(cpuSets.TrySet(handle, originalSets)); }
         var windows = new WindowManager(Stub.Create<IHookService>(), logger);
         for (int i = 0; i < 20; i++) using (var capture = windows.GetStaticThumbnail(window.Handle)) Assert.NotNull(capture);
         window.ClientSize = new Size(100, 100);

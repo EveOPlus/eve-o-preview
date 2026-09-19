@@ -80,6 +80,7 @@ namespace EveOPreview.Services
         private bool _activationInProgress;
         private ForegroundWindowObserver _foregroundObserver;
         private bool _foregroundRefreshPending;
+        private (IntPtr Active, IntPtr Predicted, IntPtr Previous) _affinityClients;
         private readonly HashSet<Keys> _pressedCycleKeys = new HashSet<Keys>();
         #endregion
 
@@ -276,6 +277,7 @@ namespace EveOPreview.Services
                 var previous = GetActiveClient();
                 SwitchActiveClient(handle, selected.Title, minimizePrevious: false);
                 ApplyActiveClientAppearance(selected, previous);
+                UpdateActivationAffinity(handle, IntPtr.Zero, previous?.Id ?? IntPtr.Zero);
             }
             catch (Exception ex) { _logger.Error(ex, "Reconciling foreground-client appearance failed"); }
             finally { _activationInProgress = false; }
@@ -517,6 +519,10 @@ namespace EveOPreview.Services
             _logger.Verbose("ThumbnailManager.ThumbnailUpdateTimerTick: Timer tick - updating thumbnails list and refreshing");
             this.UpdateThumbnailsList();
             this.RefreshThumbnails();
+            // Admit new clients and apply refreshed topology while retaining the
+            // predicted/previous roles. The service skips unchanged assignments.
+            if (!_stopped && _configuration.EnableAutomaticCpuAffinity)
+                UpdateActivationAffinity(_affinityClients.Active, _affinityClients.Predicted, _affinityClients.Previous);
         }
 
         private async void UpdateThumbnailsList()
@@ -675,7 +681,10 @@ namespace EveOPreview.Services
             // No need to minimize EVE clients when switching out to non-EVE window (like thumbnail)
             if (!string.IsNullOrEmpty(foregroundWindowTitle))
             {
+                var previousHandle = _activeClient.Handle;
                 this.SwitchActiveClient(foregroundWindowHandle, foregroundWindowTitle);
+                if (previousHandle != foregroundWindowHandle)
+                    UpdateActivationAffinity(foregroundWindowHandle, IntPtr.Zero, previousHandle);
             }
 
             bool hideAllThumbnails = this._configuration.HideThumbnailsOnLostFocus && !(isClientWindow || isMainWindowActive);
@@ -1010,6 +1019,7 @@ namespace EveOPreview.Services
 
         private async void UpdateActivationAffinity(IntPtr active, IntPtr predicted, IntPtr previous)
         {
+            _affinityClients = (active, predicted, previous);
             try { await _mediator.Send(new UpdateCpuAffinity(active, predicted, previous)); }
             catch (Exception ex) { _logger.Error(ex, "Updating activation CPU affinity failed"); }
         }

@@ -48,6 +48,12 @@ The project uses xUnit v3 and the Visual Studio test adapter. It covers the foll
 - Two FPS cases verify that enabling and disabling respect the user's setting.
 - One resource check verifies that no licensing key is embedded.
 - One UI case checks FPS, audio and CPU-affinity control availability.
+- CPU placement cases cover physical-core/SMT grouping, Intel hybrid and homogeneous
+  layouts, three capacity classes, cache/NUMA locality, processor groups, original
+  restrictions, persistent predictions, cached updates and native failure recovery.
+  The isolated settings worker verifies Windows CPU-set assignment/restoration,
+  unchanged hard affinity, terminal shutdown and ordinary Alt+Tab routing. These
+  checks do not establish live EVE frame-rate gains or optimal per-CPU budgets.
 - Custom audio cases cover ID parsing, deduplication, profile persistence,
   validation and automatic saving in the UI, and sending/clearing custom IDs
   alongside presets through a simulated audio pipe. UI renders are saved as

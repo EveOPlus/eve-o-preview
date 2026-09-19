@@ -19,9 +19,9 @@
     <TargetZone>LocalIntranet</TargetZone>
     <AssemblyOriginatorKeyFile />
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <FileVersion>10.1.0.18</FileVersion>
-    <AssemblyVersion>10.1.0.18</AssemblyVersion>
-    <Version>10.1.0.18</Version>
+    <FileVersion>10.1.0.19</FileVersion>
+    <AssemblyVersion>10.1.0.19</AssemblyVersion>
+    <Version>10.1.0.19</Version>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -43,6 +43,7 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Eve-O-Preview.Tests" />
     <ProjectReference Include="..\Eve-O-Preview.Preview\Eve-O-Preview.Preview.csproj" />
     <ProjectReference Include="..\Eve-O-Preview.UI\Eve-O-Preview.UI.csproj" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.20" />

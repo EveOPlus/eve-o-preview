@@ -21,6 +21,7 @@ internal static class Native
         IntPtr threadAttributes, bool inherit, uint flags, IntPtr environment, string directory, ref StartupInfo startup, out ProcessInfo process);
     [DllImport("kernel32.dll", SetLastError = true)] public static extern uint WaitForSingleObject(IntPtr handle, uint timeout);
     [DllImport("kernel32.dll", SetLastError = true)] public static extern bool GetExitCodeProcess(IntPtr process, out uint code);
+    [DllImport("kernel32.dll", SetLastError = true)] public static extern bool GetProcessHandleCount(IntPtr process, out uint count);
     [DllImport("kernel32.dll")] public static extern bool TerminateProcess(IntPtr process, uint code);
     [DllImport("kernel32.dll")] public static extern bool CloseHandle(IntPtr handle);
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
