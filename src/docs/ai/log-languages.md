@@ -53,6 +53,8 @@ formats and are not inputs to this reader.
   Bounty currency comes from the client's currency label (`星币` in Chinese);
   the parsed unit remains `ISK` in every language.
 - `EveLogLanguages` indexes grammars by category and caches candidate ordering.
+- `LogTextPattern` retains expressions and a required literal without constructing
+  a regex. `LogRegexCache` owns the bounded, expiring matcher working set.
 - `EveLogParser` validates numbers, attribution and SDE names, then emits
   `ParsedLogEntry`. The retained legacy service/contract names preserve consumers;
   they do not restrict the parser to combat.
@@ -64,6 +66,62 @@ formats and are not inputs to this reader.
 The framework does not add alert controls or a separate dashboard for every new
 event kind. It makes those events available to consumers without treating them as
 damage.
+
+## Parser memory and matcher lifetime
+
+Keep language/header metadata separate from executable matchers. All eight
+languages remain available for mixed-language files, but reading headers,
+filtering Local filenames and calculating shared-wording signatures must not
+construct regex engines. Each template stores an exact required literal chosen
+from its unconditional text. A missing literal rejects the candidate before
+touching the matcher cache. Whitespace, interchangeable colons, conditional
+branches and optional weapon suffixes cannot become false rejection conditions.
+
+`LogRegexCache` shares at most **32** matchers, keyed by expression, and evicts the
+least recently used entry at capacity. Use refreshes a **30-second** idle deadline;
+a five-second timer removes expired entries even when ingestion is idle. The
+timer stops when the cache is empty and restarts on demand. Definitions and
+language signatures hold no matcher references. An in-flight match keeps its own
+local reference, so expiry/eviction is safe across readers. The existing
+`NonBacktracking` engine, 250 ms match timeout and parser input limits remain.
+Expiry releases ownership for normal garbage collection; it does not force a GC
+or promise an immediate reduction in Windows working set.
+
+The startup investigation identified eager construction of 1,272 matchers
+(1,264 event rules plus eight Local rules) as the large retained allocation.
+A live heap dump traced roughly 839 MiB of dictionary arrays and 136 MiB of
+decision-tree nodes to regex Unicode caches rooted by the language catalog;
+verbose logging was not the dominant owner. An isolated parser reproduction
+without logging retained about 1.28 GiB before parsing any messages.
+
+The before/after fixture replay produced identical serialized results for all
+**1,286** bundled template cases. In separate processes, retained managed memory
+after repeated-message parsing fell from **1,322 MiB to 12 MiB**; after traversing
+the entire multilingual corpus it fell from **1,414 MiB to 55 MiB**. The real timer
+then emptied the cache and retained memory fell to **11 MiB**. These measurements
+include the offline name catalog and probe data, use full collections to measure
+retained objects, and are not whole-application working-set claims.
+
+Cold first-message time in that replay fell from about **4.24 s to 0.10 s**.
+Ten thousand repeats took **138 ms before and 128 ms after**. Traversing every
+template after warmup took **0.46 s before and 4.64 s after**: uncommon rules now
+pay construction cost when encountered and can be rebuilt after eviction.
+This deliberately trades cold, diverse replay speed for bounded memory; ordinary
+repeated messages reuse their active matchers. These are diagnostic samples, not
+latency guarantees. `LogParserMemoryTests` checks metadata allocation, capacity,
+reuse, idle release without new input, concurrent readers and literal-filter
+compatibility. The language/template and recorded-log suites cover parsing.
+
+The rebuilt Windows Debug app was also checked with the saved configuration,
+**12 live thumbnails and verbose logging enabled**. The main process settled at
+about **213 MiB private memory / 284 MiB working set**, compared with about
+**1.56 GiB private memory** before. Its separate crash sidecar used about 7 MiB
+private memory. This is a startup/idle observation, not a sustained live-combat
+benchmark. The full **440-test** suite passed with test collections serialized
+(`-- xUnit.ParallelizeTestCollections=false`). Parallel runs encountered
+timing-sensitive named-pipe audio assertions and the unchanged 50 ms markup
+regex timeout; those limits and tests were not weakened. The 101 focused parser
+and fixture checks also passed with normal scheduling.
 
 ## Event fields
 

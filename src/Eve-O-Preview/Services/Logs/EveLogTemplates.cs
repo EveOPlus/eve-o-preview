@@ -28,24 +28,26 @@ internal static class EveLogTemplates
         DamageDirection? direction = null, CombatEffect effect = CombatEffect.Damage,
         bool fragment = false, bool requiresDamageColor = false, string currency = "ISK")
     {
-        string expression = Compile(template, kind, currency: currency);
+        string expression = Compile(template, kind, out string requiredLiteral, currency: currency);
         if (fragment)
             expression = "(?<amount>" + EveLogLanguages.Number + @")\s*" + expression
                 + @"(?:\s+-\s+(?<suffix>.*))?";
-        return new(category, kind, EveLogLanguages.Pattern("^" + expression + "$"), direction,
+        return new(category, kind, new LogTextPattern("^" + expression + "$", requiredLiteral), direction,
             effect, id, requiresDamageColor);
     }
 
-    internal static Regex Local(string template, string localName)
+    internal static LogTextPattern Local(string template, string localName)
     {
         // The channel name is composed by the client: localized Local + colon +
         // system. Keep suffix punctuation from the template (notably Spanish).
         string text = template.Replace("{channelName}", "{localChannel}", StringComparison.Ordinal);
-        return EveLogLanguages.Pattern("^" + Compile(text, LogEventKind.SystemChange,
-            Literal(localName) + @"\s*[:：]\s*(?<system>.+?)") + "$");
+        string expression = Compile(text, LogEventKind.SystemChange, out string requiredLiteral,
+            Literal(localName) + @"\s*[:：]\s*(?<system>.+?)");
+        return new("^" + expression + "$", requiredLiteral);
     }
 
-    private static string Compile(string template, LogEventKind kind, string? localChannel = null, string currency = "ISK")
+    private static string Compile(string template, LogEventKind kind, out string requiredLiteral,
+        string? localChannel = null, string currency = "ISK")
     {
         // extraNameText is the ship/ticker decoration attached directly to the
         // peer. Capture it together, leaving the existing SDE/label resolver in charge.
@@ -56,11 +58,26 @@ internal static class EveLogTemplates
         bool optionalWeapon = kind == LogEventKind.Repair && template.EndsWith(weaponTail, StringComparison.Ordinal);
         if (optionalWeapon) template = template[..^weaponTail.Length];
         var result = new StringBuilder();
+        string longestLiteral = "";
+        void AppendLiteral(string text)
+        {
+            result.Append(Literal(text));
+            // Whitespace and colons have flexible regex spellings. Only select
+            // an unconditional, exact token; omit branch alternatives and the
+            // optional repair-weapon suffix. This is a rejection filter only.
+            int start = 0;
+            for (int i = 0; i <= text.Length; i++)
+                if (i == text.Length || char.IsWhiteSpace(text[i]) || text[i] is ':' or '：')
+                {
+                    if (i - start > longestLiteral.Length) longestLiteral = text[start..i];
+                    start = i + 1;
+                }
+        }
         var captured = new HashSet<string>(StringComparer.Ordinal);
         int offset = 0;
         foreach (Match argument in Argument.Matches(template))
         {
-            result.Append(Literal(template[offset..argument.Index]));
+            AppendLiteral(template[offset..argument.Index]);
             string token = argument.Groups[1].Value;
             if (token.Contains("->", StringComparison.Ordinal))
             {
@@ -109,10 +126,11 @@ internal static class EveLogTemplates
             }
             offset = argument.Index + argument.Length;
         }
-        result.Append(Literal(template[offset..]));
+        AppendLiteral(template[offset..]);
         // Weapon display can be absent. Only make a terminal weapon suffix
         // optional; Japanese direction-bearing endings must remain mandatory.
         if (optionalWeapon) result.Append(@"(?:\s+-\s+(?<suffix>.+?))?");
+        requiredLiteral = longestLiteral;
         return result.ToString();
     }
 

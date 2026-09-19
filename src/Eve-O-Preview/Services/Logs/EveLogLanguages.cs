@@ -2,17 +2,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using EveOPreview.UI;
 
 namespace EveOPreview.Services.Logs;
 
-internal sealed record LogMessagePattern(string Category, LogEventKind Kind, Regex Text,
+internal sealed record LogMessagePattern(string Category, LogEventKind Kind, LogTextPattern Text,
     DamageDirection? Direction = null, CombatEffect Effect = CombatEffect.Damage,
     int? MessageId = null, bool RequiresDamageColor = false);
 
 internal sealed record LogLanguageDefinition(LogLanguage Language, string Listener, string Session,
-    string[] ChannelKeys, string LocalName, string SystemSender, Regex LocalMessage,
+    string[] ChannelKeys, string LocalName, string SystemSender, LogTextPattern LocalMessage,
     LogMessagePattern[] Messages, string[] HitQualities)
 {
     internal IReadOnlyDictionary<string, LogMessagePattern[]> ByCategory { get; } = Messages
@@ -25,8 +24,6 @@ internal static class EveLogLanguages
     // Log numeric rendering is independent of the operating system culture. The
     // templates alone do not establish decimal-comma rendering: do not guess it.
     internal const string Number = @"(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\.[0-9]+)?";
-    internal static Regex Pattern(string text) => new(text,
-        RegexOptions.CultureInvariant | RegexOptions.NonBacktracking, TimeSpan.FromMilliseconds(250));
     internal static readonly LogLanguageDefinition[] All = EveLogLanguageCatalog.Create();
     private static readonly Dictionary<LogLanguage, LogLanguageDefinition[]> Manual = All.ToDictionary(x => x.Language, x => new[] { x });
     private static readonly Dictionary<LogLanguage, LogLanguageDefinition[]> Automatic = All.ToDictionary(x => x.Language,
