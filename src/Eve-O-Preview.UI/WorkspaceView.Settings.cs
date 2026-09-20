@@ -82,10 +82,22 @@ public sealed partial class WorkspaceView
             Control input;
             if (definition.Kind == SettingKind.Choice)
             {
-                var choices = new ComboBox { Name = "setting-" + definition.Key, ItemsSource = definition.Options, ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((option, _) => Text(definition.Key == "PreviewOverlayRenderer" ? option == "Legacy" ? "Compatibility graphics" : "Enhanced graphics" : option ?? "")), MinHeight = 34, HorizontalAlignment = HorizontalAlignment.Stretch, FontSize = 11 };
+                string ChoiceLabel(string? option) => definition.Key switch
+                {
+                    "PreviewOverlayRenderer" => option == "Legacy" ? "Compatibility graphics" : "Enhanced graphics",
+                    "HotkeyInputMethod" => option == "Windows" ? "Windows hotkeys" : "Global input",
+                    "GlobalHotkeyTrigger" => option == "KeyUp" ? "Key up" : "Key down",
+                    _ => option ?? ""
+                };
+                var choices = new ComboBox { Name = "setting-" + definition.Key, ItemsSource = definition.Options, ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((option, _) => Text(ChoiceLabel(option))), MinHeight = 34, HorizontalAlignment = HorizontalAlignment.Stretch, FontSize = 11 };
                 if (definition.Key == "TitleFontStyle" && int.TryParse(fieldValue, out var style) && style is >= 0 and < 16) fieldValue = definition.Options![style];
                 choices.SelectedItem = fieldValue;
                 choices.SelectionChanged += (_, _) => Changed(choices.SelectedItem?.ToString() ?? "");
+                if (definition.Key == "HotkeyInputMethod")
+                {
+                    choices.DropDownOpened += (_, _) => TrackHotkeyDiagnosticGesture(true);
+                    choices.DropDownClosed += (_, _) => TrackHotkeyDiagnosticGesture(false);
+                }
                 input = choices;
             }
             else if (!_theme.Legacy && definition.Key == "TitleFontName")
@@ -177,7 +189,9 @@ public sealed partial class WorkspaceView
 
     private void RenderSearch()
     {
-        var matches = SettingCatalog.All.Where(s => (!_theme.Legacy || s.Page != "PreviewGraphics" && s.Key != "ShowCurrentSolarSystem" && !s.Key.StartsWith("SolarSystem", StringComparison.Ordinal))
+        var searchableSettings = _hotkeyDiagnosticsUnlocked ? SettingCatalog.All.Append(SettingCatalog.HotkeyPassthroughDiagnostic) : SettingCatalog.All;
+        var matches = searchableSettings.Where(s => (s.Key != "GlobalHotkeyTrigger" || _snapshot.Settings.GetValueOrDefault("HotkeyInputMethod", "Global") == "Global")
+            && (!_theme.Legacy || s.Page != "Hotkeys" && s.Page != "PreviewGraphics" && s.Key != "ShowCurrentSolarSystem" && !s.Key.StartsWith("SolarSystem", StringComparison.Ordinal))
             && (s.Matches(_query) || _localization.Contains($"{L(s.Label)} {L(s.Description)} {L(PageLabel(s.Page))}", _query))).ToArray();
         var routes = new[] { ("Switching", "Cycle groups, hotkeys and keyboard shortcuts"), ("Clients", "Active clients and preview visibility"), ("ClientSettings", "Character colors & minimization"), ("Profiles", "Profiles, clone, rename, delete and profile accent color"), ("Appearance", "Appearance, themes, Light, Dark and Legacy") };
         var showGlobalShortcuts = "hide all show all minimize all minimise all global hotkey keyboard shortcuts ToggleHideAllActiveHotkey MinimizeAllClientsHotkey".Contains(_query, StringComparison.OrdinalIgnoreCase);
@@ -198,8 +212,9 @@ public sealed partial class WorkspaceView
             if (group.Key == "Overlay") _page.Children.Add(ActionButton("Open title & highlight editor", () => NavigatePreviewTab("Titles"), "search-open-title-editor", true));
             if (group.Key is "Thumbnail" or "Zoom") _page.Children.Add(ActionButton("Open size & zoom editor", () => NavigatePreviewTab("Layout"), "search-open-layout-editor", true));
             if (group.Key == "AdvancedPreview") _page.Children.Add(ActionButton("Open advanced preview settings", () => NavigatePreviewTab("Advanced"), "search-open-advanced-editor", true));
+            if (group.Key == "Hotkeys") _page.Children.Add(ActionButton("Open hotkey settings", () => { _showGlobalShortcuts = true; Navigate("Switching"); }, "search-open-hotkeys", true));
             var rows = new StackPanel();
-            foreach (var definition in group) rows.Children.Add(SettingRow(definition));
+            foreach (var definition in group) rows.Children.Add(definition.Key == "DiagnosticHotkeyPassthrough" ? HotkeyDiagnosticRow() : SettingRow(definition));
             _page.Children.Add(Card(rows, new Thickness(20, 0)));
         }
         if (showGlobalShortcuts) AddGlobalHotkeys();

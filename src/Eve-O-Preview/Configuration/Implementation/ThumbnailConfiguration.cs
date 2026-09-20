@@ -104,6 +104,12 @@ namespace EveOPreview.Configuration.Implementation
         [JsonProperty("UiAccentColor")]
         public string UiAccentColor { get; set; } = "";
 
+        [JsonProperty("UseWindowsHotkeys")]
+        public bool UseWindowsHotkeys { get; set; }
+
+        [JsonProperty("GlobalHotkeysOnRelease")]
+        public bool GlobalHotkeysOnRelease { get; set; }
+
         [JsonProperty("CycleGroups")]
         public List<CycleGroup> CycleGroups { get; set; } = new List<CycleGroup>();
 

@@ -433,7 +433,7 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
             return Stub.Default(method.ReturnType);
         });
         var manager = (IThumbnailManager)Activator.CreateInstance(assembly.GetType("EveOPreview.Services.ThumbnailManager")!,
-            mediator, config, Stub.Create<IProcessMonitor>(), windows, Stub.Create<IThumbnailViewFactory>(), keyboard,
+            mediator, config, Stub.Create<IProcessMonitor>(), windows, Stub.Create<IThumbnailViewFactory>(), Stub.Create<IHotkeyService>(),
             Stub.Create<IHookService>(), Stub.Create<IGlobalEvents>(), logger);
         using var first = CreateView(101, "EVE - First highlight");
         using var second = CreateView(102, "EVE - Second highlight");

@@ -15,8 +15,16 @@ public sealed record SettingDefinition(string Key, string Label, string Descript
 /// <summary>Portable metadata for the settings surface and platform-adapter validation.</summary>
 public static class SettingCatalog
 {
+    // Intentionally excluded from All: search must not reveal diagnostics before the unlock gesture.
+    public static SettingDefinition HotkeyPassthroughDiagnostic { get; } = new(
+        "DiagnosticHotkeyPassthrough", "Diagnostic key passthrough",
+        "Diagnostics only - do not use in production. Global input sends shortcut keys to the active application before queuing the hotkey action. Turns off when EVE-O restarts or you select Windows hotkeys.",
+        "Hotkeys", SettingKind.Toggle, Aliases: "diagnostic passthrough suppression keyboard hook");
+
     public static IReadOnlyList<SettingDefinition> All { get; } = new SettingDefinition[]
     {
+        new("HotkeyInputMethod", "Hotkey method", "Choose how this profile detects shortcuts: Global input uses a keyboard hook; Windows hotkeys uses shortcuts registered with Windows.", "Hotkeys", SettingKind.Choice, Options: new[] { "Global", "Windows" }, Aliases: "keyboard shortcut input global events register hotkey cycling implementation Windows hotkeys profile"),
+        new("GlobalHotkeyTrigger", "Hotkey trigger", "Run this profile's hotkey actions when the shortcut key is pressed or released. Available with Global input.", "Hotkeys", SettingKind.Choice, Options: new[] { "KeyDown", "KeyUp" }, Aliases: "keyboard shortcut press release key down up trigger timing profile"),
         new("ProfileAccentColor", "Profile accent color", "Give this profile a distinct color cue. Leave empty to use the selected theme's accent.", "Profiles", SettingKind.Color, Aliases: "colour identity personalization"),
         new("EnableThumbnailSnap", "Snap previews together", "Align a preview with nearby previews when arranging it.", "AdvancedPreview", SettingKind.Toggle, Aliases: "snap placement layout"),
         new("HideDelaySeconds", "Delay before hiding (seconds)", "Wait before hiding previews outside EVE. Rounded up to the next client check; 0 hides on the next check.", "AdvancedPreview", SettingKind.Number, 0, 3600, Aliases: "HideThumbnailsDelay lost focus"),

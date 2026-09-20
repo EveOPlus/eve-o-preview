@@ -112,8 +112,32 @@ internal static partial class Program
                 renders += theme == "Legacy" ? 2 : 3;
                 CheckAdvancedSettings(window, view, backend, output, theme);
                 renders += 3;
+                if (theme != "Legacy")
+                {
+                    view.Navigate("Switching"); Flush(); Click(view, "switching-global");
+                    var inputMode = FindControl<ComboBox>(view, "setting-HotkeyInputMethod");
+                    Require(inputMode.SelectedItem?.ToString() == "Global", "Global input must be the default method.");
+                    Capture(window, Path.Combine(output, theme.ToLowerInvariant() + "-hotkey-default.png"));
+                    inputMode.SelectedItem = "Windows"; Flush(); Click(view, "apply-HotkeyInputMethod");
+                    Require(backend.Commands.Last().Target == "HotkeyInputMethod" && backend.Commands.Last().Value == "Windows", "The native method must use the settings backend.");
+                    Capture(window, Path.Combine(output, theme.ToLowerInvariant() + "-hotkey-mode.png"));
+                    renders += 2;
+                    var hotkeySearch = FindControl<TextBox>(view, "search-settings");
+                    hotkeySearch.Text = "Windows hotkeys"; Flush();
+                    Click(view, "search-open-hotkeys"); Flush();
+                    Require(FindControl<ComboBox>(view, "setting-HotkeyInputMethod").IsVisible, "Search must open the input settings.");
+                    inputMode = FindControl<ComboBox>(view, "setting-HotkeyInputMethod");
+                    inputMode.SelectedItem = "Global"; Flush(); Click(view, "apply-HotkeyInputMethod");
+                    Click(view, "switching-groups"); Flush();
+                }
+                else
+                {
+                    view.Navigate("CycleGroups"); Flush();
+                    Require(!view.GetVisualDescendants().Any(c => c.Name == "setting-HotkeyInputMethod"), "Legacy must not expose the new input-mode setting.");
+                }
             }
             Require(hashes.Distinct().Count() == 3, "The three themes must produce different rendered appearances.");
+            renders += CheckHotkeyDiagnostics(output);
 
             backend.ExecuteAsync(new WorkspaceCommand("theme", Value: "Dark")).GetAwaiter().GetResult();
             view.RefreshFromBackend();

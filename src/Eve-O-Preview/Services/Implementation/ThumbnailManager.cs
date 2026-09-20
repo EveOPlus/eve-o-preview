@@ -20,7 +20,6 @@ using EveOPreview.Mediator.Messages;
 using EveOPreview.Mediator.Messages.Process;
 using EveOPreview.Services.Interface;
 using EveOPreview.View;
-using Gma.System.MouseKeyHook;
 using MediatR;
 using Serilog;
 using System;
@@ -59,7 +58,9 @@ namespace EveOPreview.Services
         private bool _refreshThumbnailZOrder;
         private bool _wasAlwaysOnTop;
         private IntPtr _lastForegroundWindowHandle;
-        private IKeyboardMouseEvents _keyboardMouseEvents;
+        private readonly IHotkeyService _hotkeys;
+        private readonly ApplicationPreferences _hotkeyPreferences;
+        private bool _diagnosticHotkeyPassthrough;
         private readonly IHookService _hookService;
         private readonly IGlobalEvents _globalEvents;
         private readonly ILogger _logger;
@@ -81,13 +82,12 @@ namespace EveOPreview.Services
         private ForegroundWindowObserver _foregroundObserver;
         private bool _foregroundRefreshPending;
         private (IntPtr Active, IntPtr Predicted, IntPtr Previous) _affinityClients;
-        private readonly HashSet<Keys> _pressedCycleKeys = new HashSet<Keys>();
         #endregion
 
-        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents, IHookService hookService, IGlobalEvents globalEvents, ILogger logger)
-            : this(mediator, configuration, processMonitor, windowManager, factory, keyboardMouseEvents, hookService, globalEvents, logger, null, null) { }
+        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IHotkeyService hotkeys, IHookService hookService, IGlobalEvents globalEvents, ILogger logger)
+            : this(mediator, configuration, processMonitor, windowManager, factory, hotkeys, hookService, globalEvents, logger, null, null) { }
 
-        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IKeyboardMouseEvents keyboardMouseEvents, IHookService hookService, IGlobalEvents globalEvents, ILogger logger,
+        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IHotkeyService hotkeys, IHookService hookService, IGlobalEvents globalEvents, ILogger logger,
             Logs.CombatLogService combatLogs = null, ApplicationPreferences preferences = null)
         {
             this._mediator = mediator;
@@ -95,7 +95,10 @@ namespace EveOPreview.Services
             this._windowManager = windowManager;
             this._configuration = configuration;
             this._thumbnailViewFactory = factory;
-            this._keyboardMouseEvents = keyboardMouseEvents;
+            this._hotkeys = hotkeys;
+            _hotkeyPreferences = preferences;
+            _diagnosticHotkeyPassthrough = preferences?.DiagnosticHotkeyPassthrough ?? false;
+            if (preferences != null) preferences.Changed += HotkeyPreferencesChanged;
             _hookService = hookService;
             _globalEvents = globalEvents;
             _logger = logger;
@@ -322,155 +325,46 @@ namespace EveOPreview.Services
             return null;
         }
 
-        private List<KeyEventHandler> _trackedHotkeyDownDelegates = new List<KeyEventHandler>();
-        private List<KeyEventHandler> _trackedHotkeyUpDelegates = new List<KeyEventHandler>();
+    public string HotkeyRegistrationWarning => _hotkeys.RegistrationWarning;
+    public IReadOnlyList<FormattableString> HotkeyRegistrationWarnings => _hotkeys.RegistrationWarnings;
 
         public void RegisterAllHotkeys()
         {
             if (_stopped) return;
-            var cycleGroups = this._configuration.CycleGroups;
-            UnregisterExistingHotkeys();
-
-            _logger.Verbose("ThumbnailManager.RegisterAllHotkeys: Registering all hotkeys for {GroupCount} cycle groups", cycleGroups.Count);
-
-            foreach (var cycleGroup in cycleGroups)
+            // Read the incoming profile on every replacement, including RefreshHotkeys during load.
+            if (_configuration.UseWindowsHotkeys && _diagnosticHotkeyPassthrough)
             {
-                RegisterCycleClientHotkey(cycleGroup);
+                _diagnosticHotkeyPassthrough = false;
+                _hotkeyPreferences?.SetDiagnosticHotkeyPassthrough(false);
             }
-
-            RegisterGeneralHotkeys();
-            
-            _logger.Verbose("ThumbnailManager.RegisterAllHotkeys: Hotkey registration completed. Total tracked: Down={DownCount}, Up={UpCount}", 
-                _trackedHotkeyDownDelegates.Count, _trackedHotkeyUpDelegates.Count);
-        }
-
-        private void UnregisterExistingHotkeys()
-        {
-            _logger.Verbose("ThumbnailManager.UnregisterExistingHotkeys: Unregistering {DownCount} down hotkeys and {UpCount} up hotkeys",
-                _trackedHotkeyDownDelegates.Count, _trackedHotkeyUpDelegates.Count);
-
-            foreach (var existingDown in _trackedHotkeyDownDelegates)
+            var bindings = new List<HotkeyBinding>();
+            bool onRelease = !_configuration.UseWindowsHotkeys && _configuration.GlobalHotkeysOnRelease;
+            foreach (var group in _configuration.CycleGroups)
             {
-                _keyboardMouseEvents.KeyDown -= existingDown;
+                // A stable snapshot survives UI edits until Replace invalidates queued actions.
+                var order = new SortedDictionary<int, string>(group.ClientsOrder);
+                foreach (var key in group.ForwardHotkeys)
+                    bindings.Add(new(key, () => CycleNextClient(true, order), onRelease));
+                foreach (var key in group.BackwardHotkeys)
+                    bindings.Add(new(key, () => CycleNextClient(false, order), onRelease));
             }
-            _trackedHotkeyDownDelegates.Clear();
-
-            foreach (var existingUp in _trackedHotkeyUpDelegates)
-            {
-                _keyboardMouseEvents.KeyUp -= existingUp;
-            }
-            _trackedHotkeyUpDelegates.Clear();
-            _pressedCycleKeys.Clear();
+            bindings.Add(new(_configuration.ToggleHideActiveClientsHotkey,
+                () => _ = _mediator.Send(new ThumbnailToggleHideAll()), onRelease));
+            bindings.Add(new(_configuration.MinimizeAllClientsHotkey,
+                () => _ = _mediator.Send(new MinimizeAllClients()), onRelease));
+            _hotkeys.Replace(bindings, _configuration.UseWindowsHotkeys ? HotkeyMode.OperatingSystem : HotkeyMode.Global, _diagnosticHotkeyPassthrough);
         }
 
-        public void RegisterCycleClientHotkey(CycleGroup cycleGroup)
+        private void HotkeyPreferencesChanged()
         {
-            _logger.Verbose("ThumbnailManager.RegisterCycleClientHotkey: Registering cycle group: {Description}", cycleGroup.Description);
-            RegisterCycleClientHotkey(cycleGroup.ForwardHotkeysParsedAndOrdered, true, cycleGroup.ClientsOrder);
-            RegisterCycleClientHotkey(cycleGroup.BackwardHotkeysParsedAndOrdered, false, cycleGroup.ClientsOrder);
+            bool passthrough = _hotkeyPreferences.DiagnosticHotkeyPassthrough;
+            if (_diagnosticHotkeyPassthrough == passthrough) return;
+            _diagnosticHotkeyPassthrough = passthrough;
+            RegisterAllHotkeys();
         }
 
-        internal void RegisterCycleClientHotkey(List<Keys> keys, bool isForwards, SortedDictionary<int, string> cycleOrder)
-        {
-            _logger.Verbose("ThumbnailManager.RegisterCycleClientHotkey: Registering hotkeys. Direction={Direction}, KeyCount={KeyCount}", 
-                isForwards ? "Forward" : "Backward", keys.Count);
-            
-            KeyEventHandler newDownDelegate = (sender, e) =>
-            {
-                try
-                {
-                    if (e.Handled || e.KeyData == Keys.None)
-                    {
-                        return;
-                    }
-
-                    foreach (var hotkey in keys)
-                    {
-                        if (e.KeyData == hotkey)
-                        {
-                            _logger.Verbose("ThumbnailManager: Cycle hotkey down pressed. Direction={Direction}", isForwards ? "Forward" : "Backward");
-
-                            if (this._windowManager.IsCurrentlySwitching || _activationInProgress)
-                            {
-                                e.Handled = true;
-                                _logger.Verbose("ThumbnailManager: Window switch in progress, ignoring hotkey");
-                                return;
-                            }
-
-                            _pressedCycleKeys.Add(e.KeyCode);
-                            this.CycleNextClient(isForwards, cycleOrder);
-                            e.Handled = true;
-                            return;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "ThumbnailManager: Error while handling cycle hotkey down");
-                }
-            };
-
-            _keyboardMouseEvents.KeyDown += newDownDelegate;
-            _trackedHotkeyDownDelegates.Add(newDownDelegate);
-
-            KeyEventHandler newUpDelegate = (sender, e) =>
-            {
-                try
-                {
-                    if (e.KeyData == Keys.None)
-                    {
-                        return;
-                    }
-
-                    if (_pressedCycleKeys.Remove(e.KeyCode)) e.Handled = true;
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "ThumbnailManager: Error while handling cycle hotkey up");
-                }
-            };
-
-            _keyboardMouseEvents.KeyUp += newUpDelegate;
-            _trackedHotkeyUpDelegates.Add(newUpDelegate);
-        }
-
-        public void RegisterGeneralHotkeys()
-        {
-            _logger.Verbose("ThumbnailManager.RegisterGeneralHotkeys: Registering general hotkeys (hide all, minimize all)");
-            
-            // Using the KeyUp for this one so it has less chance of impacting the flow of other more important hotkeys (like client cycling)
-            KeyEventHandler newUpDelegate = (sender, e) =>
-            {
-                try
-                {
-                    if (e.KeyData == Keys.None)
-                    {
-                        return;
-                    }
-
-                    if (e.KeyData == _configuration.ToggleHideActiveClientsHotkeyParsed)
-                    {
-                        _logger.Verbose("ThumbnailManager: Toggle hide all active clients hotkey pressed");
-                        _mediator.Send(new ThumbnailToggleHideAll());
-                        e.Handled = true;
-                    }
-                    else if (e.KeyData == _configuration.MinimizeAllClientsHotkeyParsed)
-                    {
-                        _logger.Verbose("ThumbnailManager: Minimize all clients hotkey pressed");
-                        _mediator.Send(new MinimizeAllClients());
-                        e.Handled = true;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "ThumbnailManager: Error handling general hotkey");
-                }
-
-            };
-
-            _keyboardMouseEvents.KeyUp += newUpDelegate;
-            _trackedHotkeyUpDelegates.Add(newUpDelegate);
-        }
+        private void UnregisterExistingHotkeys() => _hotkeys.Replace(Array.Empty<HotkeyBinding>(),
+            _configuration.UseWindowsHotkeys ? HotkeyMode.OperatingSystem : HotkeyMode.Global);
 
         public void Start()
         {
@@ -507,6 +401,7 @@ namespace EveOPreview.Services
         {
             Stop();
             DisposeCombatLogs();
+            if (_hotkeyPreferences != null) _hotkeyPreferences.Changed -= HotkeyPreferencesChanged;
             _globalEvents.CurrentProfileChanged -= HandleCurrentProfileChanged;
             _globalEvents.HotkeysChanged -= RegisterAllHotkeys;
             _thumbnailUpdateTimer.Tick -= ThumbnailUpdateTimerTick;

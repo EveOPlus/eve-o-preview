@@ -99,7 +99,7 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
         });
         using var logger = new LoggerConfiguration().CreateLogger();
         var manager = (IThumbnailManager)Activator.CreateInstance(assembly.GetType("EveOPreview.Services.ThumbnailManager"),
-            mediator, config, processMonitor, windowManager, factory, keyboard,
+            mediator, config, processMonitor, windowManager, factory, Stub.Create<IHotkeyService>(),
             Stub.Create<IHookService>(), Stub.Create<IGlobalEvents>(), logger);
         Call(manager, "UpdateThumbnailsList");
         var views = manager.GetAllKnownClients().Values.Cast<Preview>().OrderBy(v => v.Id.ToInt64()).ToArray();

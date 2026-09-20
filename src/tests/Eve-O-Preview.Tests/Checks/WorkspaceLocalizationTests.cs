@@ -48,6 +48,39 @@ public sealed class WorkspaceLocalizationTests
         }
     }
 
+    [Fact]
+    public void HotkeyControlsDiagnosticsAndErrorsHaveTranslationsWithoutChangingShortcutNames()
+    {
+        string[] display = ["Hotkeys", "Global input", "Windows hotkeys", "Key down", "Key up",
+            "Open hotkey settings", "Choose Key down or Key up.", "Trigger timing is available with Global input.",
+            "Hotkeys trigger on key release.", "Hotkeys trigger on key press.",
+            "Choose On or Off for diagnostic passthrough.", "Diagnostic passthrough requires Global input.",
+            "Diagnostic key passthrough enabled for this session. Do not use in production.",
+            "Diagnostic key passthrough disabled.", "Choose an available hotkey method.",
+            "Windows hotkeys enabled.", "Global input enabled.", "Timed out. No shortcut was captured.",
+            "Shortcut recording cancelled.", "Shortcut recording could not start. Try again or restart EVE-O.",
+            "Global shortcuts could not start. Try Windows hotkeys or restart EVE-O.",
+            "Windows could not register these shortcuts (they may be reserved or in use): {0}", "Invalid shortcuts: {0}"];
+        var definitions = SettingCatalog.All.Where(x => x.Page == "Hotkeys")
+            .Append(SettingCatalog.HotkeyPassthroughDiagnostic);
+        foreach (var language in WorkspaceLocalization.Languages)
+        {
+            var catalog = Catalog(language.Code);
+            foreach (string text in display.Concat(definitions.SelectMany(x => new[] { x.Label, x.Description })))
+            {
+                Assert.True(catalog.ContainsKey(text), language.Code + ": " + text);
+                if (language.Code != "en") Assert.NotEqual(text, catalog[text]);
+            }
+            var localization = new WorkspaceLocalization(language.Code);
+            const string shortcuts = "Ctrl+F16, Alt+F17, {KeyUp}";
+            string warning = localization.Format($"Windows could not register these shortcuts (they may be reserved or in use): {shortcuts}");
+            Assert.EndsWith(shortcuts, warning);
+            Assert.StartsWith(catalog["Windows could not register these shortcuts (they may be reserved or in use): {0}"].Split("{0}")[0], warning);
+            Assert.EndsWith(shortcuts, localization.Format($"Invalid shortcuts: {shortcuts}"));
+            Assert.Equal("KeyUp", localization.Get("KeyUp"));
+        }
+    }
+
     [Theory]
     [InlineData("de-AT", "de")]
     [InlineData("es-MX", "es")]

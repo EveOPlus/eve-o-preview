@@ -24,6 +24,8 @@ public sealed class ApplicationPreferences
     public IReadOnlyList<string> ThumbnailMenuOrder { get; private set; } = ThumbnailMenuActions.DefaultOrder;
     public string ThumbnailMenuTheme { get; private set; } = ThumbnailMenuThemes.FollowApp;
     public string PreviewOverlayRenderer { get; private set; } = "NativeComposition";
+    // Diagnostic state is session-only; it must never silently carry into ordinary use after restart.
+    public bool DiagnosticHotkeyPassthrough { get; private set; }
     public CombatLogSettings CombatLogs { get; private set; } = new();
     public string FilePath => _path;
     public event Action Changed;
@@ -93,6 +95,23 @@ public sealed class ApplicationPreferences
         string normalized = WorkspaceLocalization.NormalizePreference(language);
         Save("UiLanguage", normalized);
         UiLanguage = normalized;
+        Changed?.Invoke();
+    }
+
+    // Compatibility with development profiles created before hotkey settings became profile-owned.
+    // Explicit profile values always win; the next profile save writes both fields independently.
+    internal void ApplyLegacyHotkeyDefaults(JObject profile, IThumbnailConfiguration configuration)
+    {
+        if (profile.Property("UseWindowsHotkeys", StringComparison.OrdinalIgnoreCase) == null)
+            configuration.UseWindowsHotkeys = _settings["UseWindowsHotkeys"]?.Type == JTokenType.Boolean && _settings.Value<bool>("UseWindowsHotkeys");
+        if (profile.Property("GlobalHotkeysOnRelease", StringComparison.OrdinalIgnoreCase) == null)
+            configuration.GlobalHotkeysOnRelease = _settings["GlobalHotkeysOnRelease"]?.Type == JTokenType.Boolean && _settings.Value<bool>("GlobalHotkeysOnRelease");
+    }
+
+    public void SetDiagnosticHotkeyPassthrough(bool enabled)
+    {
+        if (DiagnosticHotkeyPassthrough == enabled) return;
+        DiagnosticHotkeyPassthrough = enabled;
         Changed?.Invoke();
     }
 

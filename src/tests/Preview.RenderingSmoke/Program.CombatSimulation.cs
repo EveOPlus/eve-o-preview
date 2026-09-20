@@ -33,7 +33,7 @@ internal static partial class Program
         var assembly = typeof(ThumbnailView).Assembly;
         var manager = (IThumbnailManager)Activator.CreateInstance(assembly.GetType("EveOPreview.Services.ThumbnailManager")!,
             NoOp.Create<IMediator>(), config, NoOp.Create<IProcessMonitor>(), windows, NoOp.Create<IThumbnailViewFactory>(),
-            NoOp.Create<IKeyboardMouseEvents>(), NoOp.Create<IHookService>(), NoOp.Create<IGlobalEvents>(), logger, logs, preferences)!;
+            NoOp.Create<IHotkeyService>(), NoOp.Create<IHookService>(), NoOp.Create<IGlobalEvents>(), logger, logs, preferences)!;
         var known = (Dictionary<nint, IThumbnailView>)manager.GetType().GetField("_thumbnailViews", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(manager)!;
         OverlayScene Scene(ThumbnailView view)
         {

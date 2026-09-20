@@ -218,6 +218,7 @@ namespace EveOPreview
 
             // Singleton registration is used for services
             // Low-level services
+            builder.RegisterType<WindowsHotkeyService>().As<IHotkeyService>().SingleInstance();
             builder.RegisterType<WindowManager>().As<IWindowManager>().SingleInstance();
             builder.RegisterType<HookService>().As<IHookService>().SingleInstance();
             builder.RegisterType<ProcessMonitor>().As<IProcessMonitor>().SingleInstance();

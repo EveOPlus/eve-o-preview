@@ -37,12 +37,17 @@ namespace EveOPreview.Configuration.Implementation
         private readonly IMediator _mediator;
         private readonly ILogger _logger;
         private readonly IGlobalEvents _globalEvents;
+        private readonly ApplicationPreferences _preferences;
         private readonly object _storageLock = new object();
 
         public ProfileLocation CurrentProfile { get; set; }
 
         public ConfigurationStorage(IAppConfig appConfig, IThumbnailConfiguration thumbnailConfiguration, IMediator mediator, IProfileManager profileManager, ILogger logger, IGlobalEvents globalEvents)
+            : this(appConfig, thumbnailConfiguration, mediator, profileManager, logger, globalEvents, null) { }
+
+        public ConfigurationStorage(IAppConfig appConfig, IThumbnailConfiguration thumbnailConfiguration, IMediator mediator, IProfileManager profileManager, ILogger logger, IGlobalEvents globalEvents, ApplicationPreferences preferences)
         {
+            _preferences = preferences;
             this._appConfig = appConfig;
             this._thumbnailConfiguration = thumbnailConfiguration;
             _mediator = mediator;
@@ -71,6 +76,7 @@ namespace EveOPreview.Configuration.Implementation
                     // and malformed input must never partially overwrite the active singleton.
                     var candidate = new ThumbnailConfiguration();
                     JsonConvert.PopulateObject(rawData, candidate, jsonSerializerSettings);
+                    _preferences?.ApplyLegacyHotkeyDefaults(JObject.Parse(rawData), candidate);
                     candidate.ApplyRestrictions();
 
                     AutoMigrateVersion1Config(rawData, candidate);

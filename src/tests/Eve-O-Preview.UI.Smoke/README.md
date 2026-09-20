@@ -36,6 +36,11 @@ and cycling pages. Legacy renders at its original 460 by 417 client size;
 modern themes also render at 940 by 650 and the minimum 784 by 581 client area.
 Each modern size preserves independent scrolling for navigation and settings.
 
+Hotkey localization checks render the method, press/release timing and unlocked
+diagnostic controls in all 18 languages, verify translated search and selected
+option labels, and retain the raw method/trigger values. The separate diagnostic
+gesture checks verify the hidden option's unlock and method restrictions.
+
 Augments checks cover combined statistics above the character list, time-weighted
 recorded averages, missing-sample placeholders and explicit repair HP/cycle units
 in Incoming/Outgoing columns. Search phrases for averages, combined statistics and

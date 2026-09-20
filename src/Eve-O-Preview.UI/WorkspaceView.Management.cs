@@ -2,15 +2,57 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using System.Diagnostics;
 
 namespace EveOPreview.UI;
 
 public sealed partial class WorkspaceView
 {
     private bool _showGlobalShortcuts;
+    private bool _hotkeyDiagnosticsUnlocked;
+    private bool _hotkeyDiagnosticDropdownOpen;
+    private int _hotkeyDiagnosticCycles;
+    private long _hotkeyDiagnosticSequenceStarted;
+    private long _hotkeyDiagnosticLastToggle;
+
+    private void TrackHotkeyDiagnosticGesture(bool opened)
+    {
+        if (_theme.Legacy || _hotkeyDiagnosticsUnlocked) return;
+        long now = Stopwatch.GetTimestamp();
+        // Ten complete open/close cycles in ten seconds, with no gap longer than two seconds.
+        if (_hotkeyDiagnosticSequenceStarted == 0 || Stopwatch.GetElapsedTime(_hotkeyDiagnosticSequenceStarted, now).TotalSeconds > 10
+            || Stopwatch.GetElapsedTime(_hotkeyDiagnosticLastToggle, now).TotalSeconds > 2)
+        {
+            _hotkeyDiagnosticCycles = 0;
+            _hotkeyDiagnosticDropdownOpen = false;
+            _hotkeyDiagnosticSequenceStarted = now;
+        }
+        _hotkeyDiagnosticLastToggle = now;
+        if (opened) { _hotkeyDiagnosticDropdownOpen = true; return; }
+        if (!_hotkeyDiagnosticDropdownOpen) return;
+        _hotkeyDiagnosticDropdownOpen = false;
+        if (++_hotkeyDiagnosticCycles < 10) return;
+        _hotkeyDiagnosticsUnlocked = true;
+        // Finish popup closure before rebuilding controls; retain any unapplied method selection.
+        Avalonia.Threading.Dispatcher.UIThread.Post(() => { if (!_disposed) RenderPage(true); });
+    }
+
+    private Control HotkeyDiagnosticRow()
+    {
+        var row = SettingRow(SettingCatalog.HotkeyPassthroughDiagnostic);
+        row.IsEnabled = _snapshot.Settings.GetValueOrDefault("HotkeyInputMethod", "Global") == "Global";
+        return row;
+    }
 
     private void AddGlobalHotkeys()
     {
+        if (!_theme.Legacy)
+        {
+            AddSettings("Hotkeys", s => s.Key != "GlobalHotkeyTrigger" || _snapshot.Settings.GetValueOrDefault("HotkeyInputMethod", "Global") == "Global");
+            if (_hotkeyDiagnosticsUnlocked) _page.Children.Add(Card(HotkeyDiagnosticRow(), new Thickness(16, 0)));
+            string warning = _snapshot.Settings.GetValueOrDefault("HotkeyRegistrationWarning", "");
+            if (!string.IsNullOrEmpty(warning)) _page.Children.Add(Text(warning, 12, _theme.Accent));
+        }
         var shortcuts = new StackPanel { Spacing = 12, Children = { Text("GLOBAL SHORTCUTS", 10, _theme.Accent, true), Text("Use Record, then press a key combination. Escape cancels capture. Clear removes the binding.", 11, _theme.Muted), HotkeyRow("Show / hide all previews", "ToggleHideAllActiveHotkey", _snapshot.Settings.GetValueOrDefault("ToggleHideAllActiveHotkey", "")), HotkeyRow("Minimize all clients", "MinimizeAllClientsHotkey", _snapshot.Settings.GetValueOrDefault("MinimizeAllClientsHotkey", "")) } };
         _page.Children.Add(Card(shortcuts));
     }

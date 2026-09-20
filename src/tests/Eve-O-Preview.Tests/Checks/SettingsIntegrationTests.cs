@@ -172,7 +172,7 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         Assert.Empty(clients.Items.Cast<object>());
         using var input = new ClientNameInputBox();
         input.LoadKnownClients(new List<string>());
-        var capture = new CaptureNewHotkeyHandler(Stub.Create<IKeyboardMouseEvents>(), config, logger);
+        var capture = new CaptureNewHotkeyHandler(Stub.Create<IHotkeyService>((m, _) => m.Name == "CaptureAsync" ? Task.FromException<string>(new TimeoutException()) : Stub.Default(m.ReturnType)), config, logger);
         Assert.False(capture.Handle(new CaptureNewHotkey("", 1), CancellationToken.None).GetAwaiter().GetResult().IsValid);
     }
 
@@ -184,14 +184,13 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         var config = NewConfig();
         config.EnableAutomaticCpuAffinity = false;
         var events = new GlobalEvents();
-        var down = new List<KeyEventHandler>();
-        var up = new List<KeyEventHandler>();
-        var keyboard = Stub.Create<IKeyboardMouseEvents>((method, args) =>
+        var keyboard = Stub.Create<IKeyboardMouseEvents>();
+        var bindings = new List<HotkeyBinding>();
+        HotkeyMode registeredMode = HotkeyMode.Global;
+        bool registeredPassthrough = false;
+        var hotkeys = Stub.Create<IHotkeyService>((method, args) =>
         {
-            if (method.Name == "add_KeyDown") down.Add((KeyEventHandler)args[0]);
-            if (method.Name == "remove_KeyDown") down.Remove((KeyEventHandler)args[0]);
-            if (method.Name == "add_KeyUp") up.Add((KeyEventHandler)args[0]);
-            if (method.Name == "remove_KeyUp") up.Remove((KeyEventHandler)args[0]);
+            if (method.Name == "Replace") { bindings.Clear(); bindings.AddRange((IReadOnlyList<HotkeyBinding>)args[0]); registeredMode = (HotkeyMode)args[1]; registeredPassthrough = (bool)args[2]; }
             return Stub.Default(method.ReturnType);
         });
         var affinityPending = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -259,7 +258,7 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
             return affinityPending.Task;
         });
         var manager = (IThumbnailManager)Activator.CreateInstance(App.GetType("EveOPreview.Services.ThumbnailManager"),
-            mediator, config, monitor, window, factory, keyboard, Stub.Create<IHookService>(), events, logger);
+            mediator, config, monitor, window, factory, hotkeys, Stub.Create<IHookService>(), events, logger, null, preferences);
         using var lifetime = (IDisposable)manager;
         Call(manager, "UpdateThumbnailsList");
         Call(manager, "RefreshThumbnails");
@@ -330,20 +329,35 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         {
             Assert.Equal(target, manager.GetActiveClient().Id);
         };
-        var press = new KeyEventArgs(Keys.Control | Keys.F8);
+        var cycle = bindings.Single(b => b.Shortcut == "Control+F8");
+        Assert.All(bindings, b => Assert.False(b.OnRelease));
+        config.GlobalHotkeysOnRelease = true;
+        events.PublishHotkeysChanged();
+        Assert.All(bindings, b => Assert.True(b.OnRelease));
+        preferences.SetDiagnosticHotkeyPassthrough(true);
+        Assert.True(registeredPassthrough);
+        config.UseWindowsHotkeys = true;
+        events.PublishCurrentProfileChanged(new SelectedProfileChangedNotification(null));
+        Assert.False(registeredPassthrough);
+        Assert.All(bindings, b => Assert.False(b.OnRelease));
+        Assert.Equal(HotkeyMode.OperatingSystem, registeredMode);
+        Assert.Contains(bindings, binding => binding.Shortcut == "Control+F8");
+        config.UseWindowsHotkeys = false;
+        events.PublishCurrentProfileChanged(new SelectedProfileChangedNotification(null));
+        Assert.Equal(HotkeyMode.Global, registeredMode);
+        Assert.All(bindings, b => Assert.True(b.OnRelease));
+        config.GlobalHotkeysOnRelease = false;
+        events.PublishHotkeysChanged();
+        Assert.All(bindings, b => Assert.False(b.OnRelease));
         var timer = Stopwatch.StartNew();
-        foreach (var handler in down.ToArray()) handler(null, press);
+        cycle.Execute();
         Assert.True(timer.ElapsedMilliseconds < 500, "Pending affinity must not delay the input callback");
-        Assert.True(press.Handled);
         Assert.Equal(1, activations); // No message pump or async continuation before activation/highlight.
         Assert.Equal(new IntPtr(102), manager.GetActiveClient()?.Id);
         foreach (var view in manager.GetAllKnownClients().Values)
             Assert.Equal(view.Id == new IntPtr(102), (bool)typeof(ThumbnailView).GetField("_isHighlightEnabled", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view));
-        var keyUp = new KeyEventArgs(Keys.F8); // Modifier was released before the main key.
-        foreach (var handler in up.ToArray()) handler(null, keyUp);
-        Assert.True(keyUp.Handled);
         // A second deliberate cycle is accepted immediately while unrelated async work is pending.
-        foreach (var handler in down.ToArray()) handler(null, new KeyEventArgs(Keys.Control | Keys.F8));
+        cycle.Execute();
         Assert.Equal(new IntPtr(103), manager.GetActiveClient()?.Id);
         Assert.Equal(2, activations);
         var prediction = affinityMessages.Last();
@@ -361,10 +375,7 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         affinityPending.SetResult();
         config.CycleGroups.Clear();
         refresh.Handle(new RefreshHotkeys(), CancellationToken.None).GetAwaiter().GetResult();
-        Assert.Empty(down);
-        press = new KeyEventArgs(Keys.Control | Keys.F8);
-        foreach (var handler in down.ToArray()) handler(null, press);
-        Assert.False(press.Handled);
+        Assert.DoesNotContain(bindings, binding => binding.Shortcut == "Control+F8");
         config.EnableCompatibilityMode = true;
         runtimeSettings.Handle(new ThumbnailRuntimeSettingsUpdated(), CancellationToken.None).GetAwaiter().GetResult();
         Assert.All(manager.GetAllKnownClients().Values, view => Assert.Equal("StaticThumbnailView", view.GetType().Name));

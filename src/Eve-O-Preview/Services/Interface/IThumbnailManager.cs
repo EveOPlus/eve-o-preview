@@ -30,6 +30,8 @@ namespace EveOPreview.Services
         void UpdateThumbnailFrames();
         void UpdateThumbnailTitleFont();
         void RegisterAllHotkeys();
+        string HotkeyRegistrationWarning { get; }
+        IReadOnlyList<FormattableString> HotkeyRegistrationWarnings => Array.Empty<FormattableString>();
 
         IThumbnailView GetClientByTitle(string title);
         IThumbnailView GetClientByPointer(System.IntPtr ptr);

@@ -26,6 +26,63 @@ public sealed class ProfileWorkflowTests
     private static readonly Assembly App = typeof(MainForm).Assembly;
 
     [Fact]
+    public async Task HotkeyMethodAndTriggerSwitchSaveAndCloneWithEachProfile()
+    {
+        using var fixture = new Fixture();
+        var native = fixture.WriteProfile("Native", """{"ConfigVersion":3,"UseWindowsHotkeys":true,"GlobalHotkeysOnRelease":true}""");
+        var global = fixture.WriteProfile("Global", """{"ConfigVersion":3}""");
+        await fixture.Switch(native);
+        Assert.True(fixture.Config.UseWindowsHotkeys);
+        Assert.True(fixture.Config.GlobalHotkeysOnRelease);
+        await fixture.Switch(global);
+        Assert.False(fixture.Config.UseWindowsHotkeys);
+        Assert.False(fixture.Config.GlobalHotkeysOnRelease);
+        fixture.Config.GlobalHotkeysOnRelease = true;
+        fixture.Storage.Save();
+        var saved = JObject.Parse(File.ReadAllText(global.FullPath));
+        Assert.False((bool)saved["UseWindowsHotkeys"]);
+        Assert.True((bool)saved["GlobalHotkeysOnRelease"]);
+        await fixture.Switch(native);
+        Assert.True(fixture.Config.UseWindowsHotkeys);
+        await fixture.Switch(global);
+        Assert.False(fixture.Config.UseWindowsHotkeys);
+        Assert.True(fixture.Config.GlobalHotkeysOnRelease);
+        fixture.Profiles.CloneCurrentProfile();
+        var clone = fixture.Profiles.ProfileLocations.Single(p => p.FriendlyName == "Global (2)");
+        await fixture.Switch(clone);
+        Assert.False(fixture.Config.UseWindowsHotkeys);
+        Assert.True(fixture.Config.GlobalHotkeysOnRelease);
+        fixture.Config.GlobalHotkeysOnRelease = false;
+        fixture.Storage.Save();
+        await fixture.Switch(global);
+        Assert.True(fixture.Config.GlobalHotkeysOnRelease);
+    }
+
+    [Fact]
+    public async Task OldGlobalHotkeyChoicesSeedOnlyMissingProfileFields()
+    {
+        using var fixture = new Fixture("""{"UseWindowsHotkeys":true,"GlobalHotkeysOnRelease":true}""");
+        var old = fixture.WriteProfile("Old", """{"ConfigVersion":3}""");
+        var explicitGlobal = fixture.WriteProfile("Explicit", """{"ConfigVersion":3,"UseWindowsHotkeys":false,"GlobalHotkeysOnRelease":false}""");
+        await fixture.Switch(old);
+        Assert.True(fixture.Config.UseWindowsHotkeys);
+        Assert.True(fixture.Config.GlobalHotkeysOnRelease);
+        fixture.Storage.Save();
+        var migrated = JObject.Parse(File.ReadAllText(old.FullPath));
+        Assert.True((bool)migrated["UseWindowsHotkeys"]);
+        Assert.True((bool)migrated["GlobalHotkeysOnRelease"]);
+        await fixture.Switch(explicitGlobal);
+        Assert.False(fixture.Config.UseWindowsHotkeys);
+        Assert.False(fixture.Config.GlobalHotkeysOnRelease);
+        fixture.Storage.Save();
+        await fixture.Switch(old);
+        Assert.True(fixture.Config.UseWindowsHotkeys);
+        await fixture.Switch(explicitGlobal);
+        Assert.False(fixture.Config.UseWindowsHotkeys);
+        Assert.False(fixture.Config.GlobalHotkeysOnRelease);
+    }
+
+    [Fact]
     public async Task CycleSkipsArePerProfileAndSessionOnlyWhileMarkerSettingsAreSaved()
     {
         using var fixture = new Fixture();
@@ -177,9 +234,12 @@ public sealed class ProfileWorkflowTests
         private readonly Serilog.Core.Logger _logger = new LoggerConfiguration().CreateLogger();
         private readonly ChangeSelectedProfileHandler _switch;
 
-        public Fixture()
+        public Fixture(string legacyPreferences = "{}")
         {
             WriteProfile("Existing", "{}");
+            string preferencesPath = Path.Combine(Root, "global-settings.json");
+            File.WriteAllText(preferencesPath, legacyPreferences);
+            var preferences = new ApplicationPreferences(preferencesPath, _logger);
             var refresh = (IRequestHandler<RefreshHotkeys>)Activator.CreateInstance(App.GetType("EveOPreview.Mediator.Handlers.Configuration.RefreshHotkeysHandler"), Config, _logger, Stub.Create<IGlobalEvents>());
             var mediator = Stub.Create<IMediator>((method, args) =>
             {
@@ -189,7 +249,7 @@ public sealed class ProfileWorkflowTests
                 return Stub.Default(method.ReturnType);
             });
             Profiles = (ProfileManager)Activator.CreateInstance(typeof(ProfileManager), BindingFlags.Instance | BindingFlags.NonPublic, null, new object[] { _logger, mediator, Root }, null);
-            Storage = (IConfigurationStorage)Activator.CreateInstance(App.GetType("EveOPreview.Configuration.Implementation.ConfigurationStorage"), Stub.Create<IAppConfig>(), Config, mediator, Profiles, _logger, Stub.Create<IGlobalEvents>());
+            Storage = (IConfigurationStorage)Activator.CreateInstance(App.GetType("EveOPreview.Configuration.Implementation.ConfigurationStorage"), Stub.Create<IAppConfig>(), Config, mediator, Profiles, _logger, Stub.Create<IGlobalEvents>(), preferences);
             _switch = new ChangeSelectedProfileHandler(Storage, mediator, _logger);
         }
 

@@ -172,6 +172,80 @@ monitor scan-out. The cursor and original foreground are restored in `finally`.
 This mode sends only the verified switching key, and never inputs into the game
 client itself. Run it only as part of authorized live switching validation.
 
+## Live hotkey input latency
+
+`--live --input-latency` exercises the production `WindowsHotkeyService`,
+`ThumbnailManager`, native DWM/composition views, `WindowManager` and CPU affinity
+handler against every accessible EVE client (at least two). Close EVE-O Preview
+first to avoid competing registrations/CPU assignments. This is an explicit live
+interaction test: it sends 50 Ctrl+F16 forward cycles and 50 Ctrl+F17 backward
+cycles while keeping Ctrl held, with at least 50 ms between inputs. It does not
+edit user profiles or inject Robin. Existing Robin wake endpoints participate
+only if every client reports a version. Add `--windows-hotkeys` to exercise
+`RegisterHotKey` instead of the default dedicated global hook.
+
+```powershell
+dotnet run --project .\tests\Preview.RenderingSmoke\Preview.RenderingSmoke.csproj -c Debug -- --live --input-latency --mouse-checks --output .\bin\hotkey-validation\global
+dotnet run --project .\tests\Preview.RenderingSmoke\Preview.RenderingSmoke.csproj -c Debug -- --live --input-latency --mouse-checks --windows-hotkeys --output .\bin\hotkey-validation\windows
+```
+
+`input-latency.json` records input-to-focus-request, input-to-foreground,
+request-to-foreground, and input-to-processed-`WM_NULL` distributions and samples.
+Foreground sampling runs independently of the app's UI at approximately 1 ms.
+`WM_NULL` is a measurement after activation, never a prerequisite for production
+focus; its reply confirms message processing, not an EVE gameplay action or frame
+presentation. The input mode is set only on the harness's in-memory profile.
+Original CPU assignments, minimized source states and foreground are restored.
+
+The harness also sends F24 only to a guarded test window on a separate recipient
+UI thread while deliberately pausing the hotkey owner's UI for 250 ms. This checks
+that unrelated input is not held behind the owner's UI. The test returns failure
+for a missing switch/message response or an unrelated-input delay of 100 ms or more.
+The high-resolution sampling timer and deliberate pause exist only in validation.
+
+`--mouse-checks` also sends guarded mouse input to the actual preview image,
+title/overlay and menus, verifies source activation and hover zoom, and exercises
+right-button hold dragging, menu-driven movement/free resizing, Shift-resizing
+and mouse-up cleanup through the real shared MouseKeyHook subscriptions. It
+restores preview geometry and cursor position. Only clicks targeting a verified
+preview or its open menu are sent. Modifier-click and minimize-command routing,
+mode changes/capture during movement, and subscription cleanup on closure are
+covered separately by the private-desktop `ThumbnailMouseTests`.
+
+Current Debug validation used five real clients, native composition and automatic
+CPU affinity, with no active Robin endpoint. Both input modes completed 100/100
+switches while Ctrl stayed held, and passed all 14 live mouse checks. Global
+input-to-request median/p95 was 0.29/1.04 ms; input-to-foreground median/p95 was
+15.36/30.93 ms (maximum 32.38 ms). All clients answered the post-focus message
+within 39.24 ms of input. Unrelated input arrived in 7.03 ms during the 250 ms UI
+pause. Windows mode's input-to-request median/p95 was 1.18/2.55 ms and foreground
+median/p95 was 16.91/33.35 ms. These are observed runs, not universal latency
+guarantees or a long-session CPU benchmark; low-FPS Robin wake behavior was not
+exercised.
+
+### Diagnostic passthrough and trigger timing
+
+`--diagnostic-input` creates two guarded test windows and sends F24 only while
+one owns foreground. It uses the production Windows input service to check
+key-down/key-up triggers, suppression on/off, original-recipient delivery before
+the diagnostic focus switch, recording suppression, and restoration after
+capture or disabling diagnostics. It restores foreground and releases the test
+key on exit. It does not send keys to EVE or change saved preferences.
+
+```powershell
+dotnet run --project .\tests\Preview.RenderingSmoke\Preview.RenderingSmoke.csproj -c Debug -- --diagnostic-input --output .\bin\hotkey-validation\diagnostic-input
+```
+
+The native check passed all 33 assertions and writes `diagnostic-input.json`.
+It caught and guards against using Send-priority dispatch for passthrough: that
+can focus the destination before the original key is delivered. Diagnostic
+actions now yield to pending UI input; normal hotkeys retain their immediate
+dispatch path. These guarded Windows recipients establish event delivery, not
+EVE's gameplay handling or a cross-process acknowledgement. The portable UI
+smoke separately checks neutral labels, both trigger choices, ten-cycle unlock,
+idle-gap reset, hidden search, mode availability and Legacy isolation in Light
+and Dark.
+
 For external GPU sampling, start a sufficiently long harness run on the
 interactive desktop, then collect performance counters in a separate PowerShell:
 
@@ -205,8 +279,10 @@ settings workspace. Therefore standalone memory differences are not a direct
 measurement of incremental memory in the complete application.
 
 The main executable alone does not measure GPU allocation/utilization; use the
-optional counter helper for those. Neither tool measures source frame times, capture age, actual
-combat alert latency, native hooking/audio or end-to-end focus-switch latency.
+optional counter helper for those. Neither tool measures source frame times,
+capture age, actual combat alert latency or native Robin hooking/audio. The
+opt-in input test measures Windows foreground/message timing, not the time to
+the next game frame or gameplay response.
 DWM process counters can be inaccessible even on the interactive desktop. The
 automated private-desktop suite remains necessary for configured hiding, native
 menus, hover/zoom, MRU cycling and compatibility capture behavior. Multi-monitor

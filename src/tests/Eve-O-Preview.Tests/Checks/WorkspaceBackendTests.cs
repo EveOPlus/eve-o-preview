@@ -80,6 +80,63 @@ public sealed class WorkspaceBackendTests
     }
 
     [Fact]
+    public async Task HotkeyMethodIsValidatedAndCommitsTheSelectedProfile()
+    {
+        using var fixture = new Fixture();
+        Assert.Equal("Global", fixture.Backend.Read().Settings["HotkeyInputMethod"]);
+        Assert.True((await fixture.Execute("setting", "HotkeyInputMethod", "Windows")).Success);
+        Assert.True(fixture.Configuration.UseWindowsHotkeys);
+        Assert.Equal("Windows", fixture.Backend.Read().Settings["HotkeyInputMethod"]);
+        Assert.False((await fixture.Execute("setting", "HotkeyInputMethod", "invalid")).Success);
+        Assert.True(fixture.Configuration.UseWindowsHotkeys);
+        Assert.True((await fixture.Execute("setting", "HotkeyInputMethod", "Global")).Success);
+        Assert.False(fixture.Configuration.UseWindowsHotkeys);
+        Assert.Equal(2, fixture.Commits);
+        Assert.False(File.Exists(fixture.Preferences.FilePath));
+    }
+
+    [Fact]
+    public async Task HotkeyDiagnosticsAreSessionOnlyAndReleaseTimingIsGlobalOnly()
+    {
+        using var fixture = new Fixture();
+        Assert.Equal("False", fixture.Backend.Read().Settings["DiagnosticHotkeyPassthrough"]);
+        Assert.Equal("KeyDown", fixture.Backend.Read().Settings["GlobalHotkeyTrigger"]);
+        Assert.False((await fixture.Execute("setting", "DiagnosticHotkeyPassthrough", "invalid")).Success);
+        Assert.False((await fixture.Execute("setting", "GlobalHotkeyTrigger", "invalid")).Success);
+        Assert.True((await fixture.Execute("setting", "GlobalHotkeyTrigger", "KeyUp")).Success);
+        Assert.True((await fixture.Execute("setting", "DiagnosticHotkeyPassthrough", "True")).Success);
+        Assert.True(fixture.Preferences.DiagnosticHotkeyPassthrough);
+        using var logger = new LoggerConfiguration().CreateLogger();
+        var reloaded = new ApplicationPreferences(fixture.Preferences.FilePath, logger);
+        Assert.True(fixture.Configuration.GlobalHotkeysOnRelease);
+        Assert.False(reloaded.DiagnosticHotkeyPassthrough);
+        Assert.True((await fixture.Execute("setting", "HotkeyInputMethod", "Windows")).Success);
+        Assert.False(fixture.Preferences.DiagnosticHotkeyPassthrough);
+        Assert.False((await fixture.Execute("setting", "DiagnosticHotkeyPassthrough", "True")).Success);
+        Assert.False((await fixture.Execute("setting", "GlobalHotkeyTrigger", "KeyDown")).Success);
+        Assert.True((await fixture.Execute("setting", "HotkeyInputMethod", "Global")).Success);
+        Assert.Equal("KeyUp", fixture.Backend.Read().Settings["GlobalHotkeyTrigger"]);
+        Assert.Equal("False", fixture.Backend.Read().Settings["DiagnosticHotkeyPassthrough"]);
+        Assert.Equal(3, fixture.Commits);
+    }
+
+    [Theory]
+    [InlineData("HotkeyInputMethod", "Windows")]
+    [InlineData("GlobalHotkeyTrigger", "KeyUp")]
+    public async Task HotkeyProfileChangesAwaitTheSettingsCommit(string key, string value)
+    {
+        using var fixture = new Fixture();
+        var saved = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        fixture.CommitAction = () => saved.Task;
+        var command = fixture.Execute("setting", key, value);
+        Assert.False(command.IsCompleted);
+        saved.SetResult();
+        Assert.True((await command).Success);
+        Assert.Equal(value, fixture.Backend.Read().Settings[key]);
+        Assert.Equal(1, fixture.Commits);
+    }
+
+    [Fact]
     public async Task PreviewGraphicsIsGlobalAndDoesNotCommitGameplaySettings()
     {
         using var fixture = new Fixture();
@@ -437,6 +494,36 @@ public sealed class WorkspaceBackendTests
         Assert.DoesNotContain(fixture.Messages, message => message is ThumbnailRuntimeSettingsUpdated);
     }
 
+    [Fact]
+    public async Task RegistrationErrorsUseCurrentLanguageAndPreserveRawShortcutNames()
+    {
+        const string shortcut = "Ctrl+F16";
+        FormattableString[] messages = [$"Windows could not register these shortcuts (they may be reserved or in use): {shortcut}", $"Invalid shortcuts: {"Unknown+Key"}"];
+        string english = string.Join(" ", messages.Select(x => x.ToString()));
+        var thumbnails = Stub.Create<EveOPreview.Services.IThumbnailManager>((method, _) => method.Name switch
+        {
+            "get_HotkeyRegistrationWarnings" => messages,
+            "get_HotkeyRegistrationWarning" => english,
+            _ => Stub.Default(method.ReturnType)
+        });
+        using var fixture = new Fixture(thumbnails: thumbnails);
+        foreach (string language in new[] { "de", "ja", "ar" })
+        {
+            fixture.Preferences.SetLanguage(language);
+            var localization = new WorkspaceLocalization(language);
+            string expected = string.Join(" ", messages.Select(localization.Format));
+            Assert.NotEqual(english, expected);
+            Assert.Equal(expected, fixture.Backend.Read().Settings["HotkeyRegistrationWarning"]);
+            var result = await fixture.Execute("setting", "HotkeyInputMethod", "Windows");
+            Assert.False(result.Success);
+            Assert.Equal(expected, result.Localize(localization.Get));
+            Assert.Contains(shortcut, result.Message);
+            Assert.Contains("Unknown+Key", result.Message);
+        }
+        fixture.Preferences.SetTheme("Legacy");
+        Assert.Equal(english, fixture.Backend.Read().Settings["HotkeyRegistrationWarning"]);
+    }
+
     private sealed class Fixture : IDisposable
     {
         public readonly string AppearancePath = Path.Combine(Path.GetTempPath(), "EveOPreviewAppearance-" + Guid.NewGuid().ToString("N") + ".json");
@@ -451,7 +538,7 @@ public sealed class WorkspaceBackendTests
         public Func<Task> CommitAction { get; set; } = () => Task.CompletedTask;
         public bool FailSave { get; set; }
 
-        public Fixture(IWorkspaceCombatLogs combatLogs = null)
+        public Fixture(IWorkspaceCombatLogs combatLogs = null, EveOPreview.Services.IThumbnailManager thumbnails = null)
         {
             Configuration = (IThumbnailConfiguration)Activator.CreateInstance(typeof(ThumbnailView).Assembly
                 .GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
@@ -490,7 +577,7 @@ public sealed class WorkspaceBackendTests
             var profileManager = Stub.Create<IProfileManager>((method, _) => method.Name == "get_ProfileLocations" ? profiles : Stub.Default(method.ReturnType));
             Preferences = new ApplicationPreferences(AppearancePath, Logger);
             Backend = new WindowsWorkspaceBackend(View, View, mediator, storage, Configuration, profileManager, Preferences, Logger,
-                Stub.Create<IWorkspacePortraitProvider>((_, _) => Task.FromResult<byte[]>(null)), combatLogs: combatLogs);
+                Stub.Create<IWorkspacePortraitProvider>((_, _) => Task.FromResult<byte[]>(null)), combatLogs: combatLogs, thumbnails: thumbnails);
         }
 
         public Task<CommandResult> Execute(string action, string target = "", string value = "") => Backend.ExecuteAsync(new(action, target, value));

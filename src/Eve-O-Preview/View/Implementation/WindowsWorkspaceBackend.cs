@@ -90,6 +90,14 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
     public void AddClients(IList<IThumbnailDescription> clients) { foreach (var client in clients) _clients[client.Title] = client; }
     public void RemoveClients(IList<IThumbnailDescription> clients) { foreach (var client in clients) _clients.Remove(client.Title); }
 
+    private string LocalizedHotkeyWarning()
+    {
+        var messages = _thumbnails?.HotkeyRegistrationWarnings;
+        if (messages is null || messages.Count == 0) return _thumbnails?.HotkeyRegistrationWarning ?? "";
+        var localization = new WorkspaceLocalization(_preferences.Theme == "Legacy" ? "en" : _preferences.UiLanguage);
+        return string.Join(" ", messages.Select(localization.Format));
+    }
+
     public WorkspaceSnapshot Read()
     {
         var values = _settings.ToDictionary(x => x.Key, x => Format(x.Value.Read()));
@@ -100,6 +108,10 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         values["TitlePosition"] = system.TitlePosition.ToString();
         values["SolarSystemFontSize"] = Format(system.SystemFontSize ?? 0);
         values["ToggleHideAllActiveHotkey"] = _view.ToggleHideAllActiveHotkey ?? "";
+        values["HotkeyInputMethod"] = _configuration.UseWindowsHotkeys ? "Windows" : "Global";
+        values["DiagnosticHotkeyPassthrough"] = _preferences.DiagnosticHotkeyPassthrough.ToString();
+        values["GlobalHotkeyTrigger"] = _configuration.GlobalHotkeysOnRelease ? "KeyUp" : "KeyDown";
+        values["HotkeyRegistrationWarning"] = LocalizedHotkeyWarning();
         values["MinimizeAllClientsHotkey"] = _view.MinimizeAllClientsHotkey ?? "";
         values["ThumbnailMinimumWidth"] = Format(MinimumThumbnailSize.Width);
         values["ThumbnailMinimumHeight"] = Format(MinimumThumbnailSize.Height);
@@ -292,6 +304,34 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
 
     private async Task<CommandResult> ApplySetting(string key, string value)
     {
+        if (key == "GlobalHotkeyTrigger")
+        {
+            if (value is not ("KeyDown" or "KeyUp")) return CommandResult.Error("Choose Key down or Key up.");
+            if (_configuration.UseWindowsHotkeys) return CommandResult.Error("Trigger timing is available with Global input.");
+            _configuration.GlobalHotkeysOnRelease = value == "KeyUp";
+            await Commit();
+            return CommandResult.Ok(value == "KeyUp" ? "Hotkeys trigger on key release." : "Hotkeys trigger on key press.");
+        }
+        if (key == "DiagnosticHotkeyPassthrough")
+        {
+            if (!bool.TryParse(value, out bool enabled)) return CommandResult.Error("Choose On or Off for diagnostic passthrough.");
+            if (enabled && _configuration.UseWindowsHotkeys) return CommandResult.Error("Diagnostic passthrough requires Global input.");
+            _preferences.SetDiagnosticHotkeyPassthrough(enabled);
+            return CommandResult.Ok(enabled ? "Diagnostic key passthrough enabled for this session. Do not use in production." : "Diagnostic key passthrough disabled.");
+        }
+        if (key == "HotkeyInputMethod")
+        {
+            if (value is not ("Global" or "Windows")) return CommandResult.Error("Choose an available hotkey method.");
+            bool enabled = value == "Windows";
+            _configuration.UseWindowsHotkeys = enabled;
+            if (enabled) _preferences.SetDiagnosticHotkeyPassthrough(false);
+            await Commit();
+            string warning = LocalizedHotkeyWarning();
+            if (!string.IsNullOrEmpty(warning)) return CommandResult.Error(warning);
+            return CommandResult.Ok(enabled
+                ? "Windows hotkeys enabled."
+                : "Global input enabled.");
+        }
         bool solarSystem = key is "ShowCurrentSolarSystem" or "SolarSystemColor" or "SolarSystemPlacement" or "SolarSystemFontSize" or "TitlePosition";
         if (!_settings.TryGetValue(key, out var binding) && !solarSystem) return CommandResult.Error("This setting is not available.");
         var definition = SettingCatalog.Find(key);
@@ -419,7 +459,7 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         string replacement = "";
         if (command.Action == "hotkey-capture")
         {
-            // The existing handler pumps Windows messages. Yield first so the Recording status paints.
+            // Capture is asynchronous; yield first so the Recording status paints.
             await Task.Yield();
             var captured = await _mediator.Send(new CaptureNewHotkey(current ?? "", 10000));
             if (!captured.IsValid) return CommandResult.Error(captured.ErrorMessage ?? "No shortcut was captured.");
@@ -428,6 +468,8 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         }
         set(replacement);
         await Commit();
+        if (!string.IsNullOrEmpty(_thumbnails?.HotkeyRegistrationWarning))
+            return CommandResult.Error(LocalizedHotkeyWarning());
         return CommandResult.Ok(command.Action == "hotkey-clear" ? "Shortcut cleared" : "Shortcut saved");
     }
 

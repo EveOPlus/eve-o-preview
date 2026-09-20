@@ -33,8 +33,10 @@ internal static partial class Program
             Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            if (args.Contains("--diagnostic-input")) return ValidateDiagnosticInput(options.Output);
             if (options.Renderer == "avalonia") AppBuilder.Configure<WorkspaceApp>().UsePlatformDetect().SetupWithoutStarting();
             var liveSources = Native.FindClients();
+            if (args.Contains("--input-latency")) return ValidateInputLatency(args, liveSources, options.Output);
             if (args.Contains("--production-hotkeys")) return ValidateProductionHotkeys(args, liveSources, options.Output);
             if (options.List)
             {
@@ -540,7 +542,7 @@ internal static partial class Program
         config.ThumbnailRefreshPeriod = 60_000; // External-focus checks must finish without a discovery tick.
         var manager = (IThumbnailManager)Activator.CreateInstance(typeof(ThumbnailView).Assembly.GetType("EveOPreview.Services.ThumbnailManager")!,
             NoOp.Create<IMediator>(), config, NoOp.Create<IProcessMonitor>(), windowManager, NoOp.Create<IThumbnailViewFactory>(),
-            NoOp.Create<IKeyboardMouseEvents>(), NoOp.Create<IHookService>(), NoOp.Create<IGlobalEvents>(), logger)!;
+            NoOp.Create<IHotkeyService>(), NoOp.Create<IHookService>(), NoOp.Create<IGlobalEvents>(), logger)!;
         var known = (Dictionary<IntPtr, IThumbnailView>)manager.GetType().GetField("_thumbnailViews", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(manager)!;
         foreach (var view in views) known.Add(view.Id, view);
         var selection = manager.GetType().GetMethod("SetActive")!;
@@ -990,6 +992,29 @@ internal static class Native
     {
         Input[] input = [new() { Type = 1, Keyboard = new() { Key = 0x7F } }, new() { Type = 1, Keyboard = new() { Key = 0x7F, Flags = 2 } }];
         if (SendInput(2, input, Marshal.SizeOf<Input>()) != 2) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Could not send the verified production cycling hotkey.");
+    }
+    public static void KeyTransition(ushort key, bool down)
+    {
+        Input[] input = [new() { Type = 1, Keyboard = new() { Key = key, Flags = down ? 0u : 2u } }];
+        if (SendInput(1, input, Marshal.SizeOf<Input>()) != 1)
+            throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Could not send the test hotkey transition.");
+    }
+    public static void MouseTransition(bool right, bool down)
+    {
+        Input[] input = [new() { Type = 0, Mouse = new() { Flags = right ? down ? 8u : 16u : down ? 2u : 4u } }];
+        if (SendInput(1, input, Marshal.SizeOf<Input>()) != 1)
+            throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Could not send the guarded thumbnail mouse transition.");
+    }
+    public static void MoveMouseTo(int x, int y)
+    {
+        var desktop = SystemInformation.VirtualScreen;
+        Input[] input = [new() { Type = 0, Mouse = new()
+        {
+            X = (int)Math.Round((x - desktop.Left) * 65535.0 / (desktop.Width - 1)),
+            Y = (int)Math.Round((y - desktop.Top) * 65535.0 / (desktop.Height - 1)), Flags = 0xC001
+        } }];
+        if (SendInput(1, input, Marshal.SizeOf<Input>()) != 1)
+            throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Could not send guarded thumbnail mouse movement.");
     }
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")] public static extern IntPtr SetWindowLongPtr(IntPtr hwnd, int index, IntPtr value);
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")] public static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);

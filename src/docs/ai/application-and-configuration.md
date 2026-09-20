@@ -135,7 +135,7 @@ The UI project reference is excluded from Costura embedding and follows normal c
 
 | Lifetime | Registrations and purpose |
 | --- | --- |
-| Singleton instances | Serilog logger, `Hook.GlobalEvents()` from MouseKeyHook, WinForms `ApplicationContext` |
+| Singleton instances | Serilog logger, `Hook.GlobalEvents()` from MouseKeyHook (thumbnail mouse gestures only), WinForms `ApplicationContext` |
 | Singleton low-level services | `WindowManager`, `HookService`, `ProcessMonitor`, `CpuAffinityService` |
 | Singleton configuration/events | `ProfileManager`, `ConfigurationStorage`, `AppConfig`, `ThumbnailConfiguration`, `ApplicationPreferences`, `CharacterPortraitCache`, `GlobalEvents` |
 | Singleton application objects | `ThumbnailManager`, `ThumbnailViewFactory`, `ThumbnailDescription`, concrete `MainFormPresenter`, `ApplicationController` |
@@ -227,7 +227,7 @@ Messages live under [Mediator/Messages](../../Eve-O-Preview/Mediator/Messages); 
 | `GetCurrentProfileLocation` | Handler returns storage's current location, falling back to `ProfileManager.GetDefaultProfileLocation` |
 | `CloneCurrentProfile`, `DeleteCurrentProfile`, `RenameCurrentProfile` | Corresponding handler -> `ProfileManager` operation |
 | `CaptureNewHotkey` -> `CaptureNewHotkeyResponse` | Capture handler listens for input and checks duplicates; returns validity, key data/text and error |
-| `RefreshHotkeys` | Refresh handler cleans null strings and rebuilds parsed key collections; does not itself call `RegisterAllHotkeys` |
+| `RefreshHotkeys` | Cleans null strings, rebuilds parsed key collections and publishes `HotkeysChanged`; the manager replaces its complete input-service snapshot |
 | `SetFpsLimiter` | Handler sends target updates through `HookService` to known clients |
 | `SetFpsLimiterEnabled` | Handler installs hooks if enabled, sends zero FPS targets if disabled |
 | `SetAudioSettings` | Handler installs/updates hooks, then sends mute settings to known clients |
@@ -243,7 +243,7 @@ Messages live under [Mediator/Messages](../../Eve-O-Preview/Mediator/Messages); 
 | `ThumbnailToggleHideAllChangedNotification` | Handler -> presenter -> button/tab status; manager observes hide state on refresh |
 | `MinimizeClient`, `MinimizeAllClients` | Handlers call `WindowManager.MinimizeWindow(..., true)`; source filenames use `Minimise` |
 
-[GlobalEvents](../../Eve-O-Preview/Services/Implementation/GlobalEvents.cs) is a synchronous bridge for two profile events. Presenter listeners reload controls/refresh lists; the manager's current-profile listener re-registers global hotkey delegates. Do not assume this bridge reapplies every feature when a profile changes.
+[GlobalEvents](../../Eve-O-Preview/Services/Implementation/GlobalEvents.cs) is a synchronous bridge for two profile events. Presenter listeners reload controls/refresh lists; the manager's current-profile listener replaces the complete hotkey-service binding snapshot. Do not assume this bridge reapplies every feature when a profile changes.
 
 ## Persisted model and defaults
 
@@ -281,9 +281,11 @@ Profile notification updates the UI and existing views, timer/hide intervals, fo
 
 ## Hotkey capture and UI details
 
-[CaptureNewHotkeyHandler](../../Eve-O-Preview/Mediator/Handlers/Configuration/CaptureNewHotkeyHandler.cs) uses global `KeyDown` despite the method name `CaptureNextKeyUp`. It ignores modifier-only presses, records `KeyData`, pumps `Application.DoEvents()` and sleeps 15 ms while waiting, and unregisters the temporary delegate in `finally`. The presenter requests a 10,000 ms timeout and the form disables itself while listening. This is a synchronous message-pumping workaround: replacing it with a blocking wait without a message pump can stop input delivery; a redesign needs deliberate reentrancy/cancellation handling.
+[CaptureNewHotkeyHandler](../../Eve-O-Preview/Mediator/Handlers/Configuration/CaptureNewHotkeyHandler.cs) awaits `IHotkeyService.CaptureAsync`, which suspends all active hotkeys before listening and restores the latest profile in `finally`. Capture completes on release of the first non-modifier key, retaining the chord's modifiers from key-down. The presenter requests a 10,000 ms timeout. Modern workspace capture is asynchronous; the retained original WinForms view's synchronous callback can wait because keyboard delivery is on the independent input thread.
 
-Escape clears a binding to `Keys.None`. Duplicate detection includes general bindings and all groups; retaining the currently edited binding is permitted. [RefreshHotkeysHandler](../../Eve-O-Preview/Mediator/Handlers/Configuration/RefreshHotkeysHandler.cs) reparses strings, while actual global delegate registration/consumption lives in `ThumbnailManager`. Read [the window guide](windows-and-thumbnails.md) before changing cycling or registration semantics.
+Escape returns `Keys.None`; the workspace leaves the existing binding unchanged. Duplicate detection includes general bindings and every group, while permitting the currently edited shortcut. [RefreshHotkeysHandler](../../Eve-O-Preview/Mediator/Handlers/Configuration/RefreshHotkeysHandler.cs) reparses profile strings and publishes `HotkeysChanged`; `ThumbnailManager` then replaces the full service snapshot using the current profile's `IThumbnailConfiguration.UseWindowsHotkeys` and `GlobalHotkeysOnRelease`. Both settings are persisted in the profile and apply immediately on a profile switch. The default global hook and optional Windows registrations share the same profile, capture and shutdown lifecycle. Read [hotkey implementation and validation](windows-and-thumbnails.md#hotkeys-and-cycle-semantics).
+
+Modern Hotkey method choices are neutrally labeled Global input and Windows hotkeys. `GlobalHotkeyTrigger` maps Key down/Key up to the profile's `GlobalHotkeysOnRelease` field; only Global input exposes that control. Both controls await the existing settings commit, and profile load/save/clone includes their values. `ConfigurationStorage` seeds omitted fields from the earlier global settings through `ApplicationPreferences.ApplyLegacyHotkeyDefaults`; explicit profile values take precedence, and subsequent profile saves include both fields. Without earlier settings, defaults are Global input and Key down. Hidden `DiagnosticHotkeyPassthrough` remains session-only and does not write the global settings file or gameplay profiles. Ten rapid dropdown open/close cycles reveal it; ordinary search keeps it hidden until then. Selecting or switching to a profile using Windows hotkeys clears passthrough, while retaining that profile's saved trigger choice. Backend validation rejects enabling passthrough or changing trigger timing while Windows hotkeys is selected.
 
 [ClientNameInputBox](../../Eve-O-Preview/View/Implementation/ClientNameInputBox.cs) shows known client names and allows text selection. Its [designer](../../Eve-O-Preview/View/Implementation/ClientNameInputBox.Designer.cs) also declares interface inheritance and properties, so designer files cannot universally be treated as layout-only. Do not rename `EVE - ...` strings merely to match the displayed text.
 

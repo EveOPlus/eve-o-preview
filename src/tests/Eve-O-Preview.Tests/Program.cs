@@ -20,7 +20,9 @@ internal static class Program
         Console.SetError(output);
         try
         {
-            if (args[1] == "feature-controls") FeatureAvailabilityTests.CheckControls();
+            if (args[1].StartsWith("thumbnail-mouse-")) ThumbnailMouseTests.Check(args[1][16..]);
+            else if (args[1] == "hotkey-lifecycle") HotkeyTests.CheckLifecycle();
+            else if (args[1] == "feature-controls") FeatureAvailabilityTests.CheckControls();
             else if (args[1] == "workspace-host") WorkspaceHostTests.CheckHost();
             else if (args[1] == "workspace-dpi") WorkspaceHostTests.CheckHost(checkDpi: true);
             else if (args[1] == "workspace-composition") WorkspaceCompositionTests.CheckComposition();

@@ -28,6 +28,12 @@ notes and thumbnail flash opacity controls/errors are translated in all 18
 catalogs. Persisted enum names and English SDE item names remain stable; only
 their display labels are localized.
 
+Hotkey method, press/release timing, the hidden diagnostic passthrough controls,
+capture status and registration errors use all 18 catalogs. Registration error
+templates keep shortcut names as separate arguments; those names are never
+translated. Method and timing choices belong to the selected profile, while
+the display language remains global.
+
 Augments Data setup has a separate **Log language** preference, defaulting to
 per-file automatic detection. It controls message grammars independently of UI
 language. Its selector, help and validation text use all 18 UI catalogs; language
@@ -69,6 +75,10 @@ have several unrelated dictionary meanings:
 | Regular / Bold / Strikeout | Font styles: normal weight, heavy weight and a line through the text. |
 | Accent / Opacity | A theme highlight colour and how opaque an element is. |
 | Clear | Remove a binding or field value; in "make permissions clear", explain them understandably. |
+| Key down / Key up | Pressing / releasing the shortcut's keyboard key, not arrow keys or movement directions. |
+| Hotkey trigger | The moment the shortcut action runs, not a weapon trigger. |
+| Global input / Windows hotkeys | A system-wide keyboard hook / shortcuts registered with Windows. Neither label recommends one method over the other. |
+| Diagnostic key passthrough | Forward the original shortcut input to the active application before queuing the action. This does not confirm the application processed it. |
 | Unsigned decimal IDs | Nonnegative integers written in base ten, separated by commas; neither fractions nor signed documents. |
 | Muting / CPU affinity | Suppress selected sounds / assign processor cores. |
 | Hits / Largest dealt | Combat impacts / the largest outgoing damage amount. |

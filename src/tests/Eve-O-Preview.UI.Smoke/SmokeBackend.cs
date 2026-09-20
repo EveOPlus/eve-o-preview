@@ -9,6 +9,7 @@ internal sealed class SmokeBackend : IWorkspaceBackend, IWorkspacePortraitProvid
     public Task<WorkspaceCharacter?> CharacterResult { get; set; } = Task.FromResult<WorkspaceCharacter?>(null);
     public Task<WorkspaceCharacter?> GetCharacterAsync(string fullTitle) => CharacterResult;
     private readonly Dictionary<string, HashSet<string>> _skips = new();
+    private readonly Dictionary<string, (string Method, string Trigger)> _profileHotkeys = new();
     private readonly TaskCompletionSource<byte[]?> _portrait = new();
     public List<long> PortraitRequests { get; } = new();
     public Task<byte[]?> GetCharacterPortraitAsync(long characterId)
@@ -29,6 +30,9 @@ internal sealed class SmokeBackend : IWorkspaceBackend, IWorkspacePortraitProvid
         new Dictionary<string, string>
         {
             ["MinimizeToTray"] = "true",
+            ["HotkeyInputMethod"] = "Global",
+            ["GlobalHotkeyTrigger"] = "KeyDown",
+            ["DiagnosticHotkeyPassthrough"] = "False",
             ["ProfileAccentColor"] = "#6D9FFF",
             ["ThumbnailRefreshPeriod"] = "500",
             ["HideDelaySeconds"] = "1",
@@ -166,7 +170,10 @@ internal sealed class SmokeBackend : IWorkspaceBackend, IWorkspacePortraitProvid
                 {
                     [command.Target] = command.Value
                 };
+                if (command.Target == "HotkeyInputMethod" && command.Value == "Windows") settings["DiagnosticHotkeyPassthrough"] = "False";
                 _snapshot = _snapshot with { Settings = settings };
+                if (command.Target is "HotkeyInputMethod" or "GlobalHotkeyTrigger")
+                    _profileHotkeys[_snapshot.ProfileName] = (settings["HotkeyInputMethod"], settings["GlobalHotkeyTrigger"]);
                 if (command.Target == "ProfileAccentColor") _profileAccents[_snapshot.ProfileName] = command.Value;
                 break;
             case "preview-size-limits":
@@ -191,12 +198,16 @@ internal sealed class SmokeBackend : IWorkspaceBackend, IWorkspacePortraitProvid
                 break;
             case "profile-switch":
                 string profileName = _snapshot.Profiles.Single(profile => profile.Id == command.Target).Name;
+                var hotkeys = _profileHotkeys.GetValueOrDefault(profileName, (Method: "Global", Trigger: "KeyDown"));
                 _snapshot = _snapshot with
                 {
                     ProfileName = profileName,
                     Settings = new Dictionary<string, string>(_snapshot.Settings)
                     {
-                        ["ProfileAccentColor"] = _profileAccents[profileName]
+                        ["ProfileAccentColor"] = _profileAccents[profileName],
+                        ["HotkeyInputMethod"] = hotkeys.Method,
+                        ["GlobalHotkeyTrigger"] = hotkeys.Trigger,
+                        ["DiagnosticHotkeyPassthrough"] = hotkeys.Method == "Windows" ? "False" : _snapshot.Settings["DiagnosticHotkeyPassthrough"]
                     }
                 };
                 break;

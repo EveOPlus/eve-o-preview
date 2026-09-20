@@ -24,6 +24,8 @@ namespace EveOPreview.Configuration
     public interface IThumbnailConfiguration
     {
         string UiAccentColor { get; set; }
+        bool UseWindowsHotkeys { get; set; }
+        bool GlobalHotkeysOnRelease { get; set; }
 
         bool IsThumbnailIndividuallyDisabled(string currentClient);
 

@@ -134,7 +134,7 @@ public sealed class CombatOverlayNativeTests(ITestOutputHelper output)
                 return Stub.Default(method.ReturnType);
             });
             var manager = (IThumbnailManager)Activator.CreateInstance(assembly.GetType("EveOPreview.Services.ThumbnailManager")!,
-                mediator, config, Stub.Create<IProcessMonitor>(), windows, Stub.Create<IThumbnailViewFactory>(), keyboard,
+                mediator, config, Stub.Create<IProcessMonitor>(), windows, Stub.Create<IThumbnailViewFactory>(), Stub.Create<IHotkeyService>(),
                 Stub.Create<IHookService>(), Stub.Create<IGlobalEvents>(), logger, logs, preferences);
             using var client = new Form { Text = "Simulated client", ClientSize = new(320, 180) }; client.Show(); client.Activate(); Application.DoEvents();
             SetActiveWindow(client.Handle); nint foreground = GetForegroundWindow();

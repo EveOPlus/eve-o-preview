@@ -46,6 +46,21 @@ The project uses xUnit v3 and the Visual Studio test adapter. It covers the foll
 - Three legacy-profile cases cover missing, malformed and expired keys,
   preserved feature settings, and removal of obsolete licensing fields on save.
 - Two FPS cases verify that enabling and disabling respect the user's setting.
+- Hotkey checks cover allocation-free unmatched key matching, held modifiers,
+  repeat/release behavior, immediate bounded UI dispatch, profile preference
+  persistence, native registration conflicts, full profile/mode replacement,
+  and capture success/cancellation/timeout/disposal. Settings checks cover profile
+  method/trigger persistence, switching, cloning, migration from earlier global
+  choices, awaited commits, immediate rebinding, session-only diagnostic passthrough,
+  and disabling it when selecting Windows hotkeys. Thumbnail mouse checks in
+  both input modes cover clicks and modifiers, overlay/title routes, hover zoom,
+  menu commands, move/resize subscriptions and cleanup, including mode changes
+  and hotkey capture during movement. Real input and focus timing remain in the
+  opt-in [live rendering harness](../Preview.RenderingSmoke/README.md#live-hotkey-input-latency).
+- Hotkey localization checks cover all 18 catalogs, hidden diagnostic text,
+  capture/status messages and registration error format arguments. Backend checks
+  verify that registration errors follow the current language while preserving
+  raw shortcut names and Legacy's English display.
 - One resource check verifies that no licensing key is embedded.
 - One UI case checks FPS, audio and CPU-affinity control availability.
 - CPU placement cases cover physical-core/SMT grouping, Intel hybrid and homogeneous
@@ -72,7 +87,9 @@ image, while failed updates replace it only after populating the replacement.
 The UI and thumbnail cases automatically launch an STA worker on a private
 Windows desktop that is never displayed. Each case gets fresh windows and state.
 The worker uses production forms and the thumbnail manager, with a stubbed image
-renderer. It does not launch EVE, install hooks, or alter the user's windows.
+renderer. The dedicated hotkey workers install and remove keyboard hooks and
+Windows hotkey registrations on their private desktops; they do not inject
+desktop input. The workers do not launch EVE or alter the user's windows.
 Worker failures and timeouts fail their corresponding xUnit case.
 
 Focus checks explicitly activate the simulated client on the worker thread and
