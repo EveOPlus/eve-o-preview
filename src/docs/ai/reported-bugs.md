@@ -1,8 +1,8 @@
 # Defect investigation status
 
-Status reviewed against current source and test coverage on 2026-09-13 for 10.1.0.15. The twelve original BUG candidates and the Windows shutdown defect are tracked below. **Fixed** means the identified code defect is corrected; any remaining live-validation limits stay in the evidence column. **Partial** means concrete fixes exist but the original reported symptom remains unresolved. Historical native results below are not new validation of this release.
+The original BUG candidates, Windows shutdown defect and thumbnail resize persistence defect are tracked below. **Fixed** means the identified code defect is corrected; any remaining live-validation limits stay in the evidence column. **Partial** means concrete fixes exist but the original reported symptom remains unresolved. Historical native results below are not new validation of the current checkout.
 
-**Completed: 11 tracked fixes. Still open: BUG-003 (intermittent preview disappearance) and BUG-005 (browser stutter / long-session performance).**
+**Completed: 12 tracked fixes. Still open: BUG-003 (intermittent preview disappearance) and BUG-005 (browser stutter / long-session performance). Progressive thumbnail shrinking across successive launches remains an unconfirmed symptom separate from the fixed resize persistence defect in BUG-014.**
 
 | ID | Status | Finding and change | Evidence / remaining work |
 | --- | --- | --- | --- |
@@ -19,6 +19,7 @@ Status reviewed against current source and test coverage on 2026-09-13 for 10.1.
 | BUG-011 | **Fixed** | RefreshHotkeys publishes HotkeysChanged and replaces the service's complete binding snapshot after group create/delete/replacement/edit. Windows mode unregisters the previous snapshot before registering the replacement. | Production refresh/profile/preference routing and native registration/capture lifecycle are covered by the focused suite. |
 | BUG-012 | **Fixed** | Factory reads the current configuration when creating a view; new views explicitly receive the active font. | Existing/new previews after profile/font changes covered in settings integration. |
 | BUG-013 | **Fixed** | Windows shutdown/restart/sign-out accepts the session query before tray, busy or draft guards. Confirmed session end performs one bounded native cleanup/save; diagnostic drain/disposal is also bounded. | [WindowsShutdownTests](../../tests/Eve-O-Preview.Tests/Checks/WindowsShutdownTests.cs): eight isolated window-message cases cover tray on/off, cancellation, busy/draft states, stalled cleanup and overlapping Exit. [LoggingResponsivenessTests](../../tests/Eve-O-Preview.Tests/Checks/LoggingResponsivenessTests.cs) covers blocked writes/disposal. Actual machine shutdown with live EVE clients remains untested. |
+| BUG-014 | **Fixed (resize persistence)** | `MainFormPresenter.UpdateThumbnailSize` synchronizes the configuration size with the resized previews and settings view. Normal exit now saves the new dimensions without applying unrelated workspace edits or writing on every mouse move. | `SettingsIntegrationTests` covers the production notification handler, current Avalonia workspace, both resize directions, suppressed feedback and actual exit-save/profile-reload persistence. The focused settings/profile/live-thumbnail/mouse/workspace suite passed 57/57. Installation and live EVE restart validation have not run. Progressive shrink across successive launches and mixed-DPI behavior remain unconfirmed; frame removal did not shrink the image in the isolated 96-DPI checks. |
 
 ## Additional completed fixes
 

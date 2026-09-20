@@ -1,4 +1,8 @@
 using System;
+using Avalonia;
+using Size = System.Drawing.Size;
+using Point = System.Drawing.Point;
+using Application = System.Windows.Forms.Application;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -37,6 +41,7 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
 
     [Theory]
     [InlineData("controls")]
+    [InlineData("resize-persistence")]
     [InlineData("live-settings")]
     [InlineData("resources")]
     [InlineData("shutdown")]
@@ -45,12 +50,65 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
 
     internal static void RunScenario(string scenario)
     {
-        if (scenario == "controls") CheckControls();
+        if (scenario == "resize-persistence") CheckResizePersistence();
+        else if (scenario == "controls") CheckControls();
         else if (scenario == "live-settings") CheckLiveSettings();
         else if (scenario == "resources") CheckResources();
         else if (scenario == "shutdown") CheckShutdown();
         else if (scenario == "focus-window") CheckWindowFocus();
         else throw new ArgumentException(scenario);
+    }
+
+    private static void CheckResizePersistence()
+    {
+        AppBuilder.Configure<EveOPreview.UI.WorkspaceApp>().UsePlatformDetect().WithInterFont().SetupWithoutStarting();
+        using var logger = new LoggerConfiguration().CreateLogger();
+        using var context = new ApplicationContext();
+        var config = NewConfig();
+        var root = Path.Combine(Path.GetTempPath(), "eveo-resize-" + Guid.NewGuid().ToString("N"));
+        int published = 0, savesRequested = 0;
+        var mediator = Stub.Create<IMediator>((method, args) =>
+        {
+            if (method.Name == "Publish") published++;
+            if (args.Length > 0 && args[0]?.GetType().Name == "SaveConfiguration") savesRequested++;
+            return args.Length > 0 && args[0] is GetCurrentProfileLocation
+                ? Task.FromResult(new ProfileLocation { FriendlyName = "Default" }) : Stub.Default(method.ReturnType);
+        });
+        try
+        {
+            var profiles = (ProfileManager)Activator.CreateInstance(typeof(ProfileManager), BindingFlags.Instance | BindingFlags.NonPublic,
+                null, new object[] { logger, mediator, root }, null);
+            var storage = (IConfigurationStorage)Activator.CreateInstance(App.GetType("EveOPreview.Configuration.Implementation.ConfigurationStorage"),
+                Stub.Create<IAppConfig>(), config, mediator, profiles, logger, Stub.Create<IGlobalEvents>(), null);
+            var preferences = new ApplicationPreferences(Path.Combine(root, "settings.json"), logger);
+            using var form = new WorkspaceForm(context, logger, mediator, storage, config, profiles, preferences,
+                Stub.Create<EveOPreview.UI.IWorkspacePortraitProvider>((_, _) => Task.FromResult<byte[]>(null)));
+            config.ThumbnailSize = new Size(384, 216);
+            config.ShowThumbnailFrames = false;
+            storage.Save();
+            var presenter = new MainFormPresenter(Stub.Create<IApplicationController>(), form, mediator, config, storage,
+                Stub.Create<IGlobalEvents>(), profiles, logger);
+            presenter.HandleSelectedProfileChangedNotification(new SelectedProfileChangedNotification(null));
+            // A resize must not apply other pending settings or write on every mouse move.
+            form.ShowThumbnailFrames = true;
+            published = savesRequested = 0;
+            var handler = Activator.CreateInstance(App.GetType("EveOPreview.Mediator.Handlers.Thumbnails.ThumbnailActiveSizeUpdatedHandler"), presenter, logger);
+            foreach (var size in new[] { new Size(420, 240), new Size(350, 200), new Size(540, 303) })
+            {
+                var notification = Activator.CreateInstance(App.GetType("EveOPreview.Mediator.Messages.ThumbnailActiveSizeUpdated"), size);
+                ((Task)Call(handler, "Handle", notification, CancellationToken.None)).GetAwaiter().GetResult();
+                Assert.Equal(size, form.ThumbnailSize);
+                Assert.Equal(size, config.ThumbnailSize);
+                Assert.False(config.ShowThumbnailFrames);
+            }
+            Assert.Equal(0, published);
+            Assert.Equal(0, savesRequested);
+            ((Task)Call(presenter, "SaveOnExitAsync")).GetAwaiter().GetResult();
+            Assert.True(storage.Load());
+            Assert.Equal(new Size(540, 303), config.ThumbnailSize);
+            Assert.False(config.ShowThumbnailFrames);
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
     }
 
     private static void CheckWindowFocus()

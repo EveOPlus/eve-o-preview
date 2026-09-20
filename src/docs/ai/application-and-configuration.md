@@ -235,7 +235,7 @@ Messages live under [Mediator/Messages](../../Eve-O-Preview/Mediator/Messages); 
 | `ResetAllCpuAffinity` | Handler resets the cache's known processes |
 | `ThumbnailListUpdated` | Handler adds/removes presenter descriptions and main-form list entries |
 | `ThumbnailConfiguredSizeUpdated` | Handler -> manager `UpdateThumbnailsSize` |
-| `ThumbnailActiveSizeUpdated` | Handler -> presenter `UpdateThumbnailSize` |
+| `ThumbnailActiveSizeUpdated` | Handler -> presenter `UpdateThumbnailSize`: synchronize view and configuration size under feedback suppression; normal saves persist it without committing unrelated workspace edits |
 | `ThumbnailFrameSettingsUpdated` | Handler -> manager `UpdateThumbnailFrames` |
 | `ThumbnailFontTitleSettingsUpdated` | `ThumbnailTitleFontSettingsUpdatedHandler` -> manager `UpdateThumbnailTitleFont` |
 | `ThumbnailLocationUpdated` | Handler saves title/active-client-relative location, then sends `SaveConfiguration` |

@@ -458,6 +458,9 @@ namespace EveOPreview.Presenters
         public void UpdateThumbnailSize(Size size)
         {
             _logger.Verbose("MainFormPresenter.UpdateThumbnailSize: Setting size to {Width}x{Height}", size.Width, size.Height);
+            // Native resizing already updates all previews. Keep the persisted model
+            // in sync without committing unrelated workspace edits or replaying resize.
+            this._configuration.ThumbnailSize = size;
             this._suppressSizeNotifications = true;
             this.View.ThumbnailSize = size;
             this._suppressSizeNotifications = false;
