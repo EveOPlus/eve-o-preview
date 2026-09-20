@@ -1,4 +1,6 @@
 {
+  "Thanks to {0} for assistance with translations. New automated translations may be added over time.": "Çevirilere yardımcı olduğu için {0} adlı katkı sağlayıcıya teşekkürler. Zaman içinde yeni otomatik çeviriler eklenebilir.",
+  "This language is automatically translated. Some wording may be inaccurate or unnatural.": "Bu dil otomatik olarak çevrilmiştir. Bazı ifadeler hatalı veya doğal olmayan biçimde çevrilmiş olabilir.",
   "Log language": "Günlük dili",
   "Automatic (per file)": "Otomatik (dosya başına)",
   "Applies to new entries; stored history is unchanged.": "Yeni kayıtlara uygulanır; kayıtlı geçmiş değişmez.",

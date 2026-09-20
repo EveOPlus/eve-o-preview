@@ -37,11 +37,21 @@ public sealed partial class WorkspaceView
             if (selector.SelectedItem is WorkspaceLocalization.Language language && language.Code != _snapshot.UiLanguage)
                 await Run(new("language", Value: language.Code));
         };
+        var resolvedLanguage = WorkspaceLocalization.Languages.Single(x => x.Code == _localization.Code);
+        var translationNotice = RawText(resolvedLanguage.Code == "en"
+            ? ""
+            : resolvedLanguage.TranslationContributors is { } contributors
+                ? F($"Thanks to {contributors} for assistance with translations. New automated translations may be added over time.")
+                : L("This language is automatically translated. Some wording may be inaccurate or unnatural."), 12, _theme.Muted);
+        translationNotice.Name = "ui-language-credit";
+        translationNotice.IsVisible = resolvedLanguage.Code != "en";
+        translationNotice.FlowDirection = FlowDirection;
         _page.Children.Add(Card(new StackPanel { Spacing = 9, Children =
         {
             Text("Language", 16, _theme.Text, true),
             Text("Choose the language for Light and Dark. Applies immediately to every profile; your unapplied edits are kept.", 12, _theme.Muted),
-            selector
+            selector,
+            translationNotice
         } }));
     }
 }

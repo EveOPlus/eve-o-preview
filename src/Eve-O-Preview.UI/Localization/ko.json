@@ -1,4 +1,6 @@
 {
+  "Thanks to {0} for assistance with translations. New automated translations may be added over time.": "번역을 도와주신 {0} 님께 감사드립니다. 향후 자동 번역된 문구가 추가될 수 있습니다.",
+  "This language is automatically translated. Some wording may be inaccurate or unnatural.": "이 언어는 자동 번역되었습니다. 일부 표현이 부정확하거나 부자연스러울 수 있습니다.",
   "Log language": "로그 언어",
   "Automatic (per file)": "자동 (파일별)",
   "Applies to new entries; stored history is unchanged.": "새 항목에 적용됩니다. 저장된 기록은 변경되지 않습니다.",

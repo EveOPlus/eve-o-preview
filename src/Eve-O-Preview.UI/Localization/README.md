@@ -5,6 +5,15 @@ to every profile and survives restart. Automatic follows the Windows UI language
 unsupported languages fall back to English. Legacy retains its English interface
 and does not expose the language selector.
 
+The language card shows a localized credit for the resolved language, including
+when Automatic is selected. English shows no translation notice.
+Simplified Chinese thanks Rangeen (冉吉) for translation assistance and notes that
+new automated translations may be added over time. Other translated languages are
+identified as automated, with a brief notice that wording may be inaccurate or
+unnatural. Contributor names are display metadata in
+`WorkspaceLocalization.Languages` (`TranslationContributors`); keep names literal
+and add confirmed contributors there as further languages receive assistance.
+
 Bundled languages: English, Arabic, German, Spanish, French, Hindi, Indonesian,
 Italian, Japanese, Korean, Dutch, Polish, Brazilian Portuguese, Russian, Turkish,
 Ukrainian, Simplified Chinese and Traditional Chinese. Regional variants use their
@@ -15,7 +24,10 @@ The catalogs are embedded UTF-8 JSON and work offline. No translation service,
 language model or new runtime package is needed. The catalogs have had a source-
 context review across all bundled languages, including settings, status messages,
 combat statistics and overlay choices. Native-speaker proofreading is still
-needed for fluency and specialized game terminology; catalog and rendering checks
+needed across the catalogs for fluency and specialized game terminology. Simplified
+Chinese incorporates community-supplied wording; Traditional Chinese adapts its
+contextual corrections using Traditional Chinese UI terminology. The
+[Chinese guide](CHINESE.md) guides future Chinese additions. Catalog and rendering checks
 do not establish linguistic correctness.
 
 Augments uses these catalogs for navigation, settings, choice display templates,
@@ -100,6 +112,12 @@ For ship-defence terminology, the localized EVE support pages provide examples i
 [French](https://support.eveonline.com/hc/fr/articles/208289385-Structures-Upwell-%C3%89tats-de-vuln%C3%A9rabilit%C3%A9),
 [German](https://support.eveonline.com/hc/de/articles/209985225-Upwell-Strukturen-FAQ)
 and [Japanese](https://support.eveonline.com/hc/ja/articles/11158425410716-%E3%82%B6%E3%83%AB%E3%82%B6%E3%82%AF).
+
+## Chinese translations
+
+When adding, reviewing or updating Chinese translations (`zh-Hans` or `zh-Hant`),
+read [the Chinese translation guide](CHINESE.md) for community wording examples
+and contextual clues. This language-specific guide does not apply to other languages.
 
 ## Runtime boundaries
 

@@ -1,4 +1,6 @@
 {
+  "Thanks to {0} for assistance with translations. New automated translations may be added over time.": "अनुवाद में सहायता के लिए {0} का धन्यवाद। समय के साथ नए स्वचालित अनुवाद जोड़े जा सकते हैं।",
+  "This language is automatically translated. Some wording may be inaccurate or unnatural.": "इस भाषा का अनुवाद स्वचालित रूप से किया गया है। कुछ शब्द या वाक्य गलत या अस्वाभाविक हो सकते हैं।",
   "Log language": "लॉग की भाषा",
   "Automatic (per file)": "स्वचालित (प्रति फ़ाइल)",
   "Applies to new entries; stored history is unchanged.": "नई प्रविष्टियों पर लागू होता है; सहेजा गया इतिहास नहीं बदलता।",

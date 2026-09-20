@@ -45,6 +45,16 @@ internal static partial class Program
             var localizer = new WorkspaceLocalization(language.Code);
             Require(view.FlowDirection == (localizer.RightToLeft ? FlowDirection.RightToLeft : FlowDirection.LeftToRight), "Incorrect language direction.");
             Require(view.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == localizer.Get("Language")), "Language heading was not translated.");
+            string expectedCredit = language.Code switch
+            {
+                "en" => "",
+                "zh-Hans" => localizer.Format($"Thanks to {"Rangeen (冉吉)"} for assistance with translations. New automated translations may be added over time."),
+                _ => localizer.Get("This language is automatically translated. Some wording may be inaccurate or unnatural.")
+            };
+            var credit = FindControl<TextBlock>(view, "ui-language-credit");
+            Require(credit.Text == expectedCredit && credit.IsVisible == (language.Code != "en") && credit.TextWrapping == TextWrapping.Wrap,
+                "Language credit must identify contributors or automated translations and wrap at narrow widths.");
+            Require(credit.FlowDirection == view.FlowDirection, "Translation credit must follow the language direction.");
             window.Width = 784; window.Height = 581; Flush();
             Capture(window, Path.Combine(output, "language-" + language.Code + "-appearance.png")); renders++;
             window.Width = 1180; window.Height = 820; Flush();
@@ -55,7 +65,7 @@ internal static partial class Program
             view.Navigate("Overview"); Flush();
             FindControl<TextBox>(view, "search-settings").Text = localizer.Get("Preview opacity"); Flush();
             Require(view.GetVisualDescendants().OfType<Control>().Any(c => c.Name == "setting-ThumbnailOpacity"), "Localized setting search failed for " + language.Code);
-            if (language.Code is "de" or "ar" or "ja" or "hi")
+            if (language.Code is "de" or "ar" or "ja" or "hi" or "zh-Hans" or "zh-Hant")
             {
                 window.Width = 784; window.Height = 581; Flush();
                 foreach (var page in ModernPages)
@@ -67,9 +77,23 @@ internal static partial class Program
         }
         backend.ExecuteAsync(new("profile-switch", "default")).GetAwaiter().GetResult(); Flush();
         Require(backend.Read().UiLanguage == "zh-Hant", "Profile switching changed global language.");
+        view.Navigate("Appearance"); Flush();
+        var automaticPicker = FindControl<ComboBox>(view, "ui-language");
+        automaticPicker.SelectedItem = automaticPicker.ItemsSource!.Cast<WorkspaceLocalization.Language>().Single(x => x.Code == "auto"); Flush();
+        var automatic = new WorkspaceLocalization("auto");
+        var automaticNotice = FindControl<TextBlock>(view, "ui-language-credit");
+        string automaticCredit = automaticNotice.Text!;
+        Require(automaticNotice.IsVisible == (automatic.Code != "en"), "Automatic English must hide the translation notice.");
+        Require(backend.Read().UiLanguage == "auto" && automaticCredit == (automatic.Code switch
+        {
+            "en" => "",
+            "zh-Hans" => automatic.Format($"Thanks to {"Rangeen (冉吉)"} for assistance with translations. New automated translations may be added over time."),
+            _ => automatic.Get("This language is automatically translated. Some wording may be inaccurate or unnatural.")
+        }), "Automatic language must show the resolved language's translation credit.");
         backend.ExecuteAsync(new("theme", Value: "Legacy")).GetAwaiter().GetResult(); Flush();
         view.Navigate("Appearance"); Flush();
         Require(!view.GetVisualDescendants().Any(c => c.Name == "ui-language"), "Legacy must not gain a language control.");
+        Require(!view.GetVisualDescendants().Any(c => c.Name == "ui-language-credit"), "Legacy must not gain a translation notice.");
         Require(view.FlowDirection == FlowDirection.LeftToRight, "Legacy direction must remain unchanged.");
         Console.WriteLine("PASS: all 18 languages; translated search; raw names; draft retention; global preference; RTL preview geometry; Legacy isolation.");
         return renders;

@@ -6,7 +6,7 @@ namespace EveOPreview.UI;
 /// <summary>Offline UI catalogs; independent of data parsing and platform culture.</summary>
 public sealed class WorkspaceLocalization
 {
-    public sealed record Language(string Code, string NativeName);
+    public sealed record Language(string Code, string NativeName, string? TranslationContributors = null);
     public static IReadOnlyList<Language> Languages { get; } = Array.AsReadOnly(new[]
     {
         new Language("en", "English"), new Language("ar", "العربية"),
@@ -17,7 +17,7 @@ public sealed class WorkspaceLocalization
         new Language("nl", "Nederlands"), new Language("pl", "Polski"),
         new Language("pt-BR", "Português (Brasil)"), new Language("ru", "Русский"),
         new Language("tr", "Türkçe"), new Language("uk", "Українська"),
-        new Language("zh-Hans", "简体中文"), new Language("zh-Hant", "繁體中文")
+        new Language("zh-Hans", "简体中文", "Rangeen (冉吉)"), new Language("zh-Hant", "繁體中文")
     });
 
     private static readonly Lazy<IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>>> Catalogs = new(() =>

@@ -1,4 +1,6 @@
 {
+  "Thanks to {0} for assistance with translations. New automated translations may be added over time.": "Дякуємо {0} за допомогу з перекладами. З часом можуть додаватися нові автоматичні переклади.",
+  "This language is automatically translated. Some wording may be inaccurate or unnatural.": "Цю мову перекладено автоматично. Деякі формулювання можуть бути неточними або неприродними.",
   "Log language": "Мова журналів",
   "Automatic (per file)": "Автоматично (для кожного файлу)",
   "Applies to new entries; stored history is unchanged.": "Застосовується до нових записів; збережена історія не змінюється.",

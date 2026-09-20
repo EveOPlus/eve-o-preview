@@ -23,6 +23,18 @@ Use a Windows x64 system supported by .NET 10. EVE-O Preview requires Windows; L
 
 **Already using EVE-O?** Back up your [profiles and global settings](#profiles-backups-and-updates), exit the old copy completely, then extract the new release. Use **Appearance → Legacy** for the familiar compact layout.
 
+### (Optional) Trust the EVE-O Preview root certificate
+
+Trust the EVE-O Preview root certificate to establish trust in its signing certificate. This may help with false positives and Microsoft Defender or SmartScreen warnings.
+
+Press **Windows+R**, type `powershell`, and press Enter. Paste the following command and accept the administrator prompt:
+
+```powershell
+Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command', '$ErrorActionPreference = ''Stop''; $certPath = Join-Path $env:TEMP ''EveoPreviewRootCA.crt''; try { Invoke-WebRequest -UseBasicParsing -Uri ''https://github.com/EveOPlus/eve-o-preview/releases/download/10.0.0.4/EveoPreviewRootCA.crt'' -OutFile $certPath; Import-Certificate -FilePath $certPath -CertStoreLocation ''Cert:\LocalMachine\Root'' } finally { Remove-Item -LiteralPath $certPath -ErrorAction SilentlyContinue }'
+```
+
+This downloads the project's public root certificate and adds it to the computer's **Trusted Root Certification Authorities** store, to trust the EVE-O Preview certificate authority. The temporary download is removed afterward. See Microsoft's [Import-Certificate documentation](https://learn.microsoft.com/en-us/powershell/module/pki/import-certificate) for details about the certificate store.
+
 ## Find what you need
 
 | I want to… | Go to… |

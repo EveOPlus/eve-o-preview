@@ -93,7 +93,7 @@ localized settings search, retained font drafts and unchanged character names.
 They also check global selection across profile switches, right-to-left layout
 with unchanged preview geometry, and the absence of a language selector in Legacy.
 `language-*.png` includes every language's Appearance page and compact German,
-Arabic, Hindi and Japanese workspace pages. Catalog and native host tests remain
+Arabic, Hindi, Japanese, Simplified Chinese and Traditional Chinese workspace pages. Catalog and native host tests remain
 separate; these renders do not establish native-speaker translation quality.
 
 Augments checks cover Simple/Advanced themes, shared and per-client editing,

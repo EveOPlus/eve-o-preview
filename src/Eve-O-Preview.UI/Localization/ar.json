@@ -1,4 +1,6 @@
 {
+  "Thanks to {0} for assistance with translations. New automated translations may be added over time.": "شكرًا لـ {0} على المساعدة في الترجمة. قد تُضاف ترجمات آلية جديدة بمرور الوقت.",
+  "This language is automatically translated. Some wording may be inaccurate or unnatural.": "هذه اللغة مترجمة آليًا. قد تكون بعض العبارات غير دقيقة أو غير طبيعية.",
   "Log language": "لغة السجلات",
   "Automatic (per file)": "تلقائي (لكل ملف)",
   "Applies to new entries; stored history is unchanged.": "ينطبق على الإدخالات الجديدة؛ لا يتغير السجل المحفوظ.",

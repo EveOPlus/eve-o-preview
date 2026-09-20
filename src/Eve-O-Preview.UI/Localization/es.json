@@ -1,4 +1,6 @@
 {
+  "Thanks to {0} for assistance with translations. New automated translations may be added over time.": "Gracias a {0} por su ayuda con las traducciones. Con el tiempo pueden añadirse nuevas traducciones automáticas.",
+  "This language is automatically translated. Some wording may be inaccurate or unnatural.": "Este idioma se ha traducido automáticamente. Algunas expresiones pueden ser imprecisas o poco naturales.",
   "Log language": "Idioma de los registros",
   "Automatic (per file)": "Automático (por archivo)",
   "Applies to new entries; stored history is unchanged.": "Se aplica a las nuevas entradas; el historial guardado no cambia.",

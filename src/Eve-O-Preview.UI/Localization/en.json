@@ -1,4 +1,6 @@
 {
+  "Thanks to {0} for assistance with translations. New automated translations may be added over time.": "Thanks to {0} for assistance with translations. New automated translations may be added over time.",
+  "This language is automatically translated. Some wording may be inaccurate or unnatural.": "This language is automatically translated. Some wording may be inaccurate or unnatural.",
   "Log language": "Log language",
   "Automatic (per file)": "Automatic (per file)",
   "Applies to new entries; stored history is unchanged.": "Applies to new entries; stored history is unchanged.",

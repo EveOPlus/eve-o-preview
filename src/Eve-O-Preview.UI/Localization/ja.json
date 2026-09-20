@@ -1,4 +1,6 @@
 {
+  "Thanks to {0} for assistance with translations. New automated translations may be added over time.": "翻訳にご協力いただいた {0} さんに感謝します。今後、自動翻訳された文章が追加される場合があります。",
+  "This language is automatically translated. Some wording may be inaccurate or unnatural.": "この言語は自動翻訳されています。一部の表現が不正確または不自然な場合があります。",
   "Log language": "ログの言語",
   "Automatic (per file)": "自動（ファイルごと）",
   "Applies to new entries; stored history is unchanged.": "新しい記録に適用されます。保存済みの履歴は変更されません。",
