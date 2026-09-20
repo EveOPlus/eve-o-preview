@@ -1,7 +1,7 @@
 # Windows preview renderer validation
 
-This opt-in Windows executable exercises production `LiveThumbnailView` and
-`WindowManager` with real DWM thumbnails. It can use its own animated source
+This opt-in Windows executable exercises production Avalonia `LiveThumbnailView`
+and `ThumbnailOverlay` windows with real `WindowManager` DWM thumbnails. It can use its own animated source
 windows or already-running EVE clients. It does not launch the production app,
 save profiles, install Robin, or send gameplay input. The default renderer checks
 use isolated collaborators; the explicit modes below can read production profiles
@@ -24,16 +24,49 @@ live client HWNDs, process IDs, titles, minimized state and foreground HWND:
 ```
 
 The default run creates two animated source windows and two production preview
-windows. Select `legacy`, `native`, or `avalonia`; the latter compares a separate
-transparent Avalonia candidate window above the same production DWM host. It is
-a rendering comparison, not a complete Avalonia input/host implementation.
+windows. Select `legacy`, `native`, or `avalonia`; all production image hosts are
+Avalonia top-levels. `legacy` uses retained raster title/stat assets in an Avalonia
+overlay and `native` retains the DirectComposition overlay. `avalonia` selects the
+portable candidate renderer above the same production DWM host. That candidate
+is a renderer comparison, separate from the production native/compatibility paths.
 Native fallback to Legacy fails the run so fallback cannot masquerade as a
 successful native benchmark.
+WinForms remains only in synthetic source/input fixtures; both message loops are
+pumped so production Avalonia layout, input and timers execute normally.
 
 ```powershell
 & .\bin\preview-validation\Preview.RenderingSmoke.exe --renderer native --seconds 15 --capture --output .\bin\preview-results\mock-native
 & .\bin\preview-validation\Preview.RenderingSmoke.exe --renderer avalonia --effects all --seconds 15 --capture --output .\bin\preview-results\mock-avalonia-alerts
 ```
+
+`--host-proof` is a short controlled compositor regression using an owned solid
+source and black backdrop. It verifies exact DWM image pixels, 50% whole-window
+opacity, premultiplied tint alpha, all four active borders and opaque title glyphs
+above full-intensity `DamageTint`, nonactivation, pointer-transparent overlay
+styles, and retained HWND/DWM relationships after hide/show. It saves only the
+owned preview rectangle and writes `host-proof.json`. Unlike the short alert
+animation, full-window `DamageTint` is not clipped inside the border, so this
+regression catches native sibling-order errors. These functional checks run
+outside performance sampling and do not establish equivalent old/new appearance
+for the previously incorrect tint/frame order.
+The same proof selects Compatibility graphics and compares source, tint and title
+pixels through the actual compositor, including intermediate title color without
+alpha loss. Its source-lifetime phase uses controlled discovery snapshots with the
+production manager: a real source minimizes/restores, exits, and reconnects under
+the same title with a new HWND and distinct pixels. Removed hosts must close and
+all native registrations must balance on disposal. Only owned source windows are
+changed; the fixture does not claim to validate EVE process discovery itself.
+
+```powershell
+& .\bin\preview-validation\Preview.RenderingSmoke.exe --host-proof --output .\bin\preview-results\native-host
+```
+
+`--mixed-dpi` exercises real production preview transitions across the currently
+configured monitors. It records native client/outer rectangles and render scale,
+checks frame changes, saved physical dimensions, hover restoration and retained
+native relationships. It changes only owned test windows and does not change
+Windows display scaling. Distinct monitor scales are required for a mixed-DPI
+claim; synthetic scale tests cover a different boundary.
 
 `--live` uses the existing EVE HWNDs instead. Obtain authorization before live
 validation. `--restore-sources` temporarily restores originally minimized sources
@@ -130,6 +163,12 @@ confirm the configured color; persistent DWM registrations must remain intact.
 Without a user gesture, Windows may reject background foreground requests; the
 recorded activation result must be consulted rather than assuming they succeeded.
 The short proof does not measure end-to-end switch latency.
+
+Add `--mouse-checks` to `--active-highlight` to exercise real image/title clicks,
+hover zoom, Avalonia context-menu actions, right-hold dragging, free resize and
+Shift aspect-preserving resize through the production global pointer service.
+The same guarded checks work with the default synthetic sources or an explicitly
+authorized `--live --count 2` subset. Cursor, geometry and foreground are restored.
 
 `--renderer native --rapid-switch` also runs that proof, then 200 production
 `CycleNextClient` calls paced at 20 per second. It records entry to and return from

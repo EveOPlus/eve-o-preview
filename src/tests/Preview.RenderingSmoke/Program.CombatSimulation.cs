@@ -10,7 +10,7 @@ using EveOPreview.Services.Logs;
 using EveOPreview.UI;
 using EveOPreview.UI.Previews;
 using EveOPreview.View;
-using Gma.System.MouseKeyHook;
+using EveOPreview.Input;
 using MediatR;
 using Serilog;
 

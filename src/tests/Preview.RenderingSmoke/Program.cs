@@ -8,7 +8,7 @@ using EveOPreview.Services;
 using EveOPreview.Services.Implementation;
 using EveOPreview.Services.Interface;
 using EveOPreview.View;
-using Gma.System.MouseKeyHook;
+using EveOPreview.Input;
 using MediatR;
 using Serilog;
 using Avalonia;
@@ -33,8 +33,10 @@ internal static partial class Program
             Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            AppBuilder.Configure<WorkspaceApp>().UsePlatformDetect().WithInterFont().SetupWithoutStarting();
+            if (args.Contains("--host-proof")) return ValidateNativeHost(options.Output);
+            if (args.Contains("--mixed-dpi")) return ValidateMixedDpi(options.Output);
             if (args.Contains("--diagnostic-input")) return ValidateDiagnosticInput(options.Output);
-            if (options.Renderer == "avalonia") AppBuilder.Configure<WorkspaceApp>().UsePlatformDetect().SetupWithoutStarting();
             var liveSources = Native.FindClients();
             if (args.Contains("--input-latency")) return ValidateInputLatency(args, liveSources, options.Output);
             if (args.Contains("--production-hotkeys")) return ValidateProductionHotkeys(args, liveSources, options.Output);
@@ -46,6 +48,7 @@ internal static partial class Program
 
             Directory.CreateDirectory(options.Output);
             using var logger = new LoggerConfiguration().MinimumLevel.Warning().CreateLogger();
+            using var pointerInput = args.Contains("--mouse-checks") ? new WindowsGlobalPointerInput(logger) : null;
             var sources = new List<Client>();
             var mockWindows = new List<MockClient>();
             var views = new List<ThumbnailView>();
@@ -103,7 +106,7 @@ internal static partial class Program
                 {
                     var source = sources[i % sources.Count];
                     var view = (ThumbnailView)Activator.CreateInstance(typeof(ThumbnailView).Assembly.GetType("EveOPreview.View.LiveThumbnailView")!,
-                        renderer, config, NoOp.Create<IThumbnailManager>(), NoOp.Create<IMediator>(), NoOp.Create<IKeyboardMouseEvents>(), logger)!;
+                        renderer, config, NoOp.Create<IThumbnailManager>(), NoOp.Create<IMediator>(), pointerInput ?? (IGlobalPointerInput)NoOp.Create<IGlobalPointerInput>(), logger)!;
                     view.SetOverlayRenderer(options.Renderer == "native" ? OverlayRendererKind.NativeComposition : OverlayRendererKind.Legacy);
                     view.Id = new IntPtr(source.Handle);
                     view.Title = source.Title;
@@ -171,7 +174,7 @@ internal static partial class Program
                 int alerts = 0;
                 while (timer.Elapsed.TotalSeconds < options.Seconds)
                 {
-                    Application.DoEvents();
+                    PumpEvents();
                     if (options.Effects is "one" or "all" && alertTimer.Elapsed.TotalSeconds >= 2)
                     {
                         ShowAlerts(views, portableOverlays, options.Effects);
@@ -229,7 +232,7 @@ internal static partial class Program
                 object? zoomCheck = options.ZoomFactor > 1 ? ExerciseZoom(views[0], portableOverlays, currentProcess, options.ZoomFactor) : null;
                 object? staggeredCheck = null;
                 ActiveHighlightResult? activeHighlightCheck = options.ActiveHighlight || options.RapidSwitch
-                    ? CaptureActiveHighlight(views, portableOverlays, renderer, config, logger, options.Output, initialForeground, options.RapidSwitch) : null;
+                    ? CaptureActiveHighlight(views, portableOverlays, renderer, config, logger, options.Output, initialForeground, options.RapidSwitch, args.Contains("--mouse-checks")) : null;
                 Pump(TimeSpan.FromMilliseconds(250));
                 if (options.Capture)
                 {
@@ -280,12 +283,12 @@ internal static partial class Program
             }
             finally
             {
-                if (OwnsForeground(views, portableOverlays) && initialForeground != 0) Native.SetForegroundWindow(new IntPtr(initialForeground));
+                if (initialForeground != 0 && Native.GetForegroundWindow().ToInt64() != initialForeground) Native.SetForegroundWindow(new IntPtr(initialForeground));
                 foreach (var window in portableOverlays.Values) window.Close();
                 foreach (var view in views) { view.Close(); view.Dispose(); }
                 foreach (var mock in mockWindows) { mock.Close(); mock.Dispose(); }
                 foreach (var source in restoredSources) Native.ShowWindow(new IntPtr(source.Handle), 7); // SW_SHOWMINNOACTIVE: return only originally minimized clients to that state.
-                Application.DoEvents();
+                PumpEvents();
                 if (restoredSources.Any(source => !Native.IsIconic(new IntPtr(source.Handle)))) throw new InvalidOperationException("An originally minimized source did not return to minimized state.");
             }
         }
@@ -342,14 +345,14 @@ internal static partial class Program
             Native.ClickMouse();
             var startup = Stopwatch.StartNew();
             while (Native.GetForegroundWindow().ToInt64() != sources[0].Handle && startup.ElapsedMilliseconds < 1000)
-            { Application.DoEvents(); Native.WaitForMessages(1); }
+            { PumpEvents(); Native.WaitForMessages(1); }
             if (Native.GetForegroundWindow().ToInt64() != sources[0].Handle) throw new InvalidOperationException("The initial production preview click did not activate its source.");
             Pump(TimeSpan.FromMilliseconds(100));
             var clock = Stopwatch.StartNew();
             double nextInput = 0, previousInput = 0;
             for (int i = 0; i < 200; i++)
             {
-                while (clock.Elapsed.TotalMilliseconds < nextInput) { Application.DoEvents(); sampler.Wait(); }
+                while (clock.Elapsed.TotalMilliseconds < nextInput) { PumpEvents(); sampler.Wait(); }
                 VerifyInput();
                 int index = (i + 1) % 2;
                 double sentAt = clock.Elapsed.TotalMilliseconds;
@@ -359,7 +362,7 @@ internal static partial class Program
                 var input = Stopwatch.StartNew();
                 Native.PressF16();
                 while (Native.GetForegroundWindow().ToInt64() != sources[index].Handle && input.Elapsed.TotalMilliseconds < 50)
-                { Application.DoEvents(); sampler.Wait(); }
+                { PumpEvents(); sampler.Wait(); }
                 double elapsed = input.Elapsed.TotalMilliseconds;
                 long foreground = Native.GetForegroundWindow().ToInt64();
                 bool focused = foreground == sources[index].Handle;
@@ -384,7 +387,7 @@ internal static partial class Program
                 bool correct;
                 do
                 {
-                    Application.DoEvents();
+                    PumpEvents();
                     graphics.CopyFromScreen(origin, Point.Empty, pixels.Size);
                     correct = Pixel(index) == Color.Lime.ToArgb() && Pixel(1 - index) != Color.Lime.ToArgb();
                 } while (!correct && input.ElapsedMilliseconds < 250);
@@ -451,7 +454,7 @@ internal static partial class Program
         return views.Any(view => hwnd == view.Handle || hwnd == Overlay(view).Handle)
             || portableOverlays.Values.Any(window => hwnd == window.TryGetPlatformHandle()?.Handle);
     }
-    private static Form Overlay(ThumbnailView view) => (Form)typeof(ThumbnailView).GetField("_overlay", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(view)!;
+    private static ThumbnailOverlay Overlay(ThumbnailView view) => (ThumbnailOverlay)typeof(ThumbnailView).GetField("_overlay", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(view)!;
     private static object[] ReadGraphics(IEnumerable<ThumbnailView> views, Dictionary<ThumbnailView, AvaloniaPreviewOverlayWindow> portableOverlays) => views.Select(view =>
     {
         if (portableOverlays.TryGetValue(view, out var window)) return (object)new { Backend = "avalonia", window.Renderer.SceneRenderCount, window.Renderer.SceneUpdateCount };
@@ -528,9 +531,9 @@ internal static partial class Program
         return new { FirstDurationSeconds = 2, FirstShakePixels = 0, SecondStartedSeconds = secondStarted, SecondDurationSeconds = 1.8, SecondShakePixels = 0, FirstUnchangedWhenStartingSecond = true, Phases = phases };
     }
     private sealed record ActiveHighlightResult(bool Passed, IReadOnlyList<object> Stages, IReadOnlyList<object> ActivationRequests,
-        int RegistrationsBefore, int RegistrationsAfter, object? RapidSwitching);
+        int RegistrationsBefore, int RegistrationsAfter, object? RapidSwitching, object? MouseChecks);
     private static ActiveHighlightResult CaptureActiveHighlight(IReadOnlyList<ThumbnailView> views, Dictionary<ThumbnailView, AvaloniaPreviewOverlayWindow> portableOverlays,
-        CountingWindowManager windowManager, IThumbnailConfiguration config, ILogger logger, string output, long initialForeground, bool rapidSwitch)
+        CountingWindowManager windowManager, IThumbnailConfiguration config, ILogger logger, string output, long initialForeground, bool rapidSwitch, bool mouseChecks)
     {
         if (views.Count != 2 || views[0].Id == views[1].Id) throw new InvalidOperationException("Active highlight validation requires two distinct source clients.");
         config.EnableActiveClientHighlight = true;
@@ -547,7 +550,8 @@ internal static partial class Program
         foreach (var view in views) known.Add(view.Id, view);
         var selection = manager.GetType().GetMethod("SetActive")!;
         var clickedHandler = manager.GetType().GetMethod("ThumbnailActivated", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        foreach (var view in views) view.ThumbnailActivated = hwnd => clickedHandler.Invoke(manager, [hwnd]);
+        Action? enteringActivation = null;
+        foreach (var view in views) view.ThumbnailActivated = hwnd => { enteringActivation?.Invoke(); clickedHandler.Invoke(manager, [hwnd]); };
         NativeCompositionOverlayRenderer GraphicsFor(ThumbnailView view) => (NativeCompositionOverlayRenderer)typeof(ThumbnailOverlay)
             .GetField("_renderer", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(Overlay(view))!;
         bool Highlighted(ThumbnailView view) => (bool)typeof(ThumbnailView).GetField("_isHighlightEnabled", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(view)!;
@@ -565,12 +569,20 @@ internal static partial class Program
         }
         void Select(int index)
         {
-            long commitsBefore = views.Sum(view => GraphicsFor(view).CommitCount);
-            int updatesBefore = windowManager.Updates;
+            long commitsBefore = 0;
+            int updatesBefore = 0;
+            string? activationOrderFailure = null;
+            // Establish the boundary when the production click callback actually
+            // starts. Pointer travel and its message pump may complete unrelated
+            // pending resize/layout work before that callback on another process.
+            enteringActivation = () => { commitsBefore = views.Sum(view => GraphicsFor(view).CommitCount); updatesBefore = windowManager.Updates; };
             windowManager.BeforeActivation = hwnd =>
             {
                 if (manager.GetActiveClient()?.Id != hwnd || views.Sum(view => GraphicsFor(view).CommitCount) != commitsBefore || windowManager.Updates != updatesBefore)
-                    throw new InvalidOperationException("Graphics maintenance preceded the source focus request.");
+                {
+                    activationOrderFailure = $"Graphics maintenance preceded the source focus request: selected={manager.GetActiveClient()?.Id}, requested={hwnd}, commits={commitsBefore}->{views.Sum(view => GraphicsFor(view).CommitCount)}, updates={updatesBefore}->{windowManager.Updates}.";
+                    throw new InvalidOperationException(activationOrderFailure);
+                }
             };
             bool clicked = false;
             long clickTarget = 0;
@@ -581,24 +593,26 @@ internal static partial class Program
                 var point = views[index].PointToScreen(new Point(views[index].ClientSize.Width / 2, views[index].ClientSize.Height / 2));
                 Native.SetCursorPos(point.X, point.Y);
                 Pump(TimeSpan.FromMilliseconds(30));
-                var hit = Native.WindowFromPoint(point);
+                Native.GetCursorPos(out var actualPointer);
+                var hit = Native.WindowFromPoint(actualPointer);
                 var root = Native.GetAncestor(hit, 2);
                 if ((root == views[index].Handle || root == Overlay(views[index]).Handle) &&
                     Native.GetAsyncKeyState(0x10) >= 0 && Native.GetAsyncKeyState(0x11) >= 0 && Native.GetAsyncKeyState(0x12) >= 0)
                 {
                     // Verify again immediately before input. Never click a source
                     // game window or another application's window.
-                    if (Native.WindowFromPoint(point) != hit) throw new InvalidOperationException("Preview click target changed before input.");
+                    Native.GetCursorPos(out var verifiedPointer);
+                    if (verifiedPointer != actualPointer || Native.WindowFromPoint(verifiedPointer) != hit) throw new InvalidOperationException("Preview click target changed before input.");
                     clickTarget = hit.ToInt64();
                     Native.ClickMouse();
                     clicked = true;
                 }
             }
-            if (!clicked) selection.Invoke(manager, [new KeyValuePair<IntPtr, IThumbnailView>(views[index].Id, views[index])]);
+            if (!clicked) { enteringActivation(); selection.Invoke(manager, [new KeyValuePair<IntPtr, IThumbnailView>(views[index].Id, views[index])]); }
             var activationWait = Stopwatch.StartNew();
             while ((Native.GetForegroundWindow() != views[index].Id || manager.GetActiveClient()?.Id != views[index].Id) && activationWait.Elapsed.TotalSeconds < 2) Pump(TimeSpan.FromMilliseconds(25));
             if (!Highlighted(views[index]) || Highlighted(views[1 - index]))
-                throw new InvalidOperationException("The selection frame was not submitted immediately after focus.");
+                throw new InvalidOperationException(activationOrderFailure ?? $"Selection frame was not submitted after activation: source={index}, clicked={clicked}, selected={manager.GetActiveClient()?.Id}, requested={views[index].Id}, foreground={Native.GetForegroundWindow()}, highlighted={Highlighted(views[index])}, previous={Highlighted(views[1 - index])}.");
             passed &= Native.GetForegroundWindow() == views[index].Id;
             activationRequests.Add(new { RequestedSource = views[index].Id.ToInt64(), ActualForeground = Native.GetForegroundWindow().ToInt64(),
                 SourceBecameForeground = Native.GetForegroundWindow() == views[index].Id, WaitMilliseconds = activationWait.Elapsed.TotalMilliseconds,
@@ -640,8 +654,11 @@ internal static partial class Program
                     BaselineArgb = unchecked((uint)baseline.ToArgb()), DuringFlashArgb = unchecked((uint)during.ToArgb()), ExpiredArgb = unchecked((uint)expired.ToArgb()) });
             }
             object? rapid = rapidSwitch ? MeasureRapidSwitching() : null;
+            enteringActivation = null;
+            windowManager.BeforeActivation = null;
+            object? mouse = mouseChecks ? ValidateThumbnailMouse(views, manager, config) : null;
             passed &= windowManager.Registrations == registrations;
-            return new(passed, stages, activationRequests, registrations, windowManager.Registrations, rapid);
+            return new(passed, stages, activationRequests, registrations, windowManager.Registrations, rapid, mouse);
         }
         finally
         {
@@ -675,7 +692,7 @@ internal static partial class Program
             var run = Stopwatch.StartNew();
             for (int i = 0; i < 200; i++)
             {
-                while (run.Elapsed.TotalMilliseconds < i * 50) { Application.DoEvents(); Native.WaitForMessages(1); }
+                while (run.Elapsed.TotalMilliseconds < i * 50) { PumpEvents(); Native.WaitForMessages(1); }
                 int index = i % 2;
                 long commitsBefore = views.Sum(view => GraphicsFor(view).CommitCount);
                 int requests = 0;
@@ -693,7 +710,7 @@ internal static partial class Program
                 outlineSubmitted.Add(submitted);
                 bool selected = manager.GetActiveClient()?.Id == views[index].Id && GraphicsFor(views[index]).ActiveBorder != null && GraphicsFor(views[1 - index]).ActiveBorder == null;
                 while (Native.GetForegroundWindow() != views[index].Id && input.ElapsedMilliseconds < 250)
-                { Application.DoEvents(); Native.WaitForMessages(1); }
+                { PumpEvents(); Native.WaitForMessages(1); }
                 double observed = input.Elapsed.TotalMilliseconds;
                 foregroundObserved.Add(observed);
                 bool focused = Native.GetForegroundWindow() == views[index].Id;
@@ -726,7 +743,7 @@ internal static partial class Program
                     var input = Stopwatch.StartNew();
                     bool foregroundAccepted = Native.SetForegroundWindow(views[index].Id);
                     while (manager.GetActiveClient()?.Id != views[index].Id && input.ElapsedMilliseconds < 500)
-                    { Application.DoEvents(); Native.WaitForMessages(1); }
+                    { PumpEvents(); Native.WaitForMessages(1); }
                     external.Add(input.Elapsed.TotalMilliseconds);
                     var point = views[index].PointToScreen(new Point(views[index].ClientSize.Width / 2, 0));
                     var other = views[1 - index].PointToScreen(new Point(views[1 - index].ClientSize.Width / 2, 0));
@@ -734,7 +751,7 @@ internal static partial class Program
                     bool pixelsCorrect;
                     do
                     {
-                        Application.DoEvents();
+                        PumpEvents();
                         pixelReader.CopyFromScreen(sampleOrigin, Point.Empty, pixels.Size);
                         pixelsCorrect = Pixel(index) == argb && Pixel(1 - index) != argb;
                     } while (!pixelsCorrect && input.ElapsedMilliseconds < 500);
@@ -791,12 +808,17 @@ internal static partial class Program
         view.RestoreAndBringToFront();
         if (portableOverlays.TryGetValue(view, out var window)) Native.SetWindowPos(window.TryGetPlatformHandle()!.Handle, new IntPtr(-1), 0, 0, 0, 0, 0x53);
         Native.DwmFlush();
-        var bounds = view.RectangleToScreen(view.ClientRectangle);
+        var bounds = new Rectangle(view.PointToScreen(Point.Empty), view.ClientSize);
         using var bitmap = new Bitmap(bounds.Width, bounds.Height);
         using (var graphics = Graphics.FromImage(bitmap)) graphics.CopyFromScreen(bounds.Location, Point.Empty, bounds.Size);
         bitmap.Save(path, System.Drawing.Imaging.ImageFormat.Png);
     }
-    private static void Pump(TimeSpan duration) { var timer = Stopwatch.StartNew(); while (timer.Elapsed < duration) { Application.DoEvents(); Thread.Sleep(10); } }
+    private static void PumpEvents()
+    {
+        Application.DoEvents(); // WinForms is retained only for synthetic source/input fixtures.
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+    }
+    private static void Pump(TimeSpan duration) { var timer = Stopwatch.StartNew(); while (timer.Elapsed < duration) { PumpEvents(); Thread.Sleep(10); } }
     private static double Percentile(List<double> values, double percentile) => values.Count == 0 ? 0 : values.Order().ElementAt(Math.Clamp((int)Math.Ceiling(values.Count * percentile) - 1, 0, values.Count - 1));
     private static List<object> ReadExternal(IEnumerable<Client> clients)
     {
@@ -821,6 +843,8 @@ internal sealed record Options(bool List, bool Live, bool Capture, bool RestoreS
         if (effects is not ("none" or "one" or "all" or "staggered")) throw new ArgumentException("--effects must be none, one, all or staggered.");
         if (renderer == "legacy" && effects != "none") throw new ArgumentException("Legacy does not support rich overlays; benchmark effects with native or avalonia.");
         if ((args.Contains("--active-highlight") || args.Contains("--rapid-switch")) && renderer != "native") throw new ArgumentException("Highlight/switch validation requires --renderer native.");
+        if (args.Contains("--mouse-checks") && !args.Contains("--input-latency") && !args.Contains("--active-highlight") && !args.Contains("--rapid-switch"))
+            throw new ArgumentException("--mouse-checks requires --active-highlight, --rapid-switch or --input-latency.");
         if (args.Contains("--wake-existing") && (!args.Contains("--live") || !args.Contains("--rapid-switch"))) throw new ArgumentException("--wake-existing requires --live --rapid-switch and already-running Robin endpoints.");
         return new(args.Contains("--list"), args.Contains("--live"), args.Contains("--capture"), args.Contains("--restore-sources"), Math.Clamp(int.Parse(Value("--count", "2")), 1, 24),
             Math.Clamp(int.Parse(Value("--width", "384")), 160, 1024), Math.Clamp(int.Parse(Value("--height", "216")), 90, 768),
@@ -983,8 +1007,16 @@ internal static class Native
     [StructLayout(LayoutKind.Sequential)] private struct KeyboardInput { public ushort Key, Scan; public uint Flags, Time; public UIntPtr Extra; }
     [StructLayout(LayoutKind.Explicit, Size = 40)] private struct Input { [FieldOffset(0)] public uint Type; [FieldOffset(8)] public MouseInput Mouse; [FieldOffset(8)] public KeyboardInput Keyboard; }
     [DllImport("user32.dll", SetLastError = true)] private static extern uint SendInput(uint count, Input[] input, int size);
+    public static Func<Point, bool>? MouseDownGuard;
+    private static void VerifyMouseDown()
+    {
+        if (MouseDownGuard is null) return;
+        GetCursorPos(out var point);
+        if (!MouseDownGuard(point)) throw new InvalidOperationException($"Actual cursor {point} is outside the owned preview/menu; no mouse button was sent.");
+    }
     public static void ClickMouse()
     {
+        VerifyMouseDown();
         Input[] input = [new() { Type = 0, Mouse = new() { Flags = 2 } }, new() { Type = 0, Mouse = new() { Flags = 4 } }];
         if (SendInput(2, input, Marshal.SizeOf<Input>()) != 2) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Could not send the verified own-preview click.");
     }
@@ -1001,6 +1033,7 @@ internal static class Native
     }
     public static void MouseTransition(bool right, bool down)
     {
+        if (down) VerifyMouseDown();
         Input[] input = [new() { Type = 0, Mouse = new() { Flags = right ? down ? 8u : 16u : down ? 2u : 4u } }];
         if (SendInput(1, input, Marshal.SizeOf<Input>()) != 1)
             throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Could not send the guarded thumbnail mouse transition.");

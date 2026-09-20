@@ -1,5 +1,11 @@
 using System.Diagnostics;
 using System.Reflection;
+using Avalonia;
+using Avalonia.Controls;
+using ContextMenu = Avalonia.Controls.ContextMenu;
+using MenuItem = Avalonia.Controls.MenuItem;
+using Point = System.Drawing.Point;
+using Size = System.Drawing.Size;
 using EveOPreview.Configuration;
 using EveOPreview.Services;
 using EveOPreview.View;
@@ -40,9 +46,10 @@ internal static partial class Program
             Away(); view.RestoreAndBringToFront();
             var point = view.PointToScreen(new(view.ClientSize.Width / 2, title ? 10 : view.ClientSize.Height * 3 / 4));
             Native.SetCursorPos(point.X, point.Y); Pump(TimeSpan.FromMilliseconds(80));
-            var root = Native.GetAncestor(Native.WindowFromPoint(point), 2);
+            Native.GetCursorPos(out var actualPointer);
+            var root = Native.GetAncestor(Native.WindowFromPoint(actualPointer), 2);
             if (root != view.Handle && root != Overlay(view).Handle)
-                throw new InvalidOperationException("The intended thumbnail is occluded; no mouse button was sent.");
+                throw new InvalidOperationException($"The intended thumbnail is occluded or the source constrained the cursor: requested={point}, actual={actualPointer}, root={root}; no mouse button was sent.");
         }
         void Focused(ThumbnailView view, string check)
         {
@@ -50,17 +57,25 @@ internal static partial class Program
             while (Native.GetForegroundWindow() != view.Id && deadline.ElapsedMilliseconds < 1000) Pump(TimeSpan.FromMilliseconds(2));
             Require(Native.GetForegroundWindow() == view.Id, check);
         }
-        ContextMenuStrip Menu(ThumbnailView view) => (ContextMenuStrip)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(view)!;
+        ContextMenu Menu(ThumbnailView view) => (ContextMenu)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(view)!;
+        var previousGuard = Native.MouseDownGuard;
+        Native.MouseDownGuard = point =>
+        {
+            var root = Native.GetAncestor(Native.WindowFromPoint(point), 2);
+            return views.Any(view => root == view.Handle || root == Overlay(view).Handle ||
+                (Menu(view).IsOpen && root == TopLevel.GetTopLevel(Menu(view))?.TryGetPlatformHandle()?.Handle));
+        };
         string MouseMode(ThumbnailView view) => typeof(ThumbnailView).GetField("_customMouseModeActive", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(view)!.ToString()!;
         void SelectMenu(ThumbnailView view, string name)
         {
             Target(view); Native.MouseTransition(true, true); Native.MouseTransition(true, false); Pump(TimeSpan.FromMilliseconds(100));
             var menu = Menu(view);
-            if (!menu.Visible) throw new InvalidOperationException("Thumbnail context menu did not open.");
-            var item = menu.Items[name] ?? throw new InvalidOperationException("Missing menu item " + name);
-            var point = menu.PointToScreen(new(item.Bounds.Left + item.Bounds.Width / 2, item.Bounds.Top + item.Bounds.Height / 2));
+            if (!menu.IsOpen) throw new InvalidOperationException("Thumbnail context menu did not open.");
+            var item = menu.Items.OfType<MenuItem>().SingleOrDefault(item => item.Name == name) ?? throw new InvalidOperationException("Missing menu item " + name);
+            var pixel = item.PointToScreen(new Avalonia.Point(item.Bounds.Width / 2, item.Bounds.Height / 2));
+            var point = new System.Drawing.Point(pixel.X, pixel.Y);
             Native.SetCursorPos(point.X, point.Y); Pump(TimeSpan.FromMilliseconds(30));
-            if (Native.GetAncestor(Native.WindowFromPoint(point), 2) != menu.Handle)
+            if (Native.GetAncestor(Native.WindowFromPoint(point), 2) != TopLevel.GetTopLevel(item)?.TryGetPlatformHandle()?.Handle)
                 throw new InvalidOperationException("The thumbnail menu is occluded; no click was sent.");
             Native.ClickMouse(); Pump(TimeSpan.FromMilliseconds(50));
         }
@@ -73,14 +88,15 @@ internal static partial class Program
             Away(); Size baseSize = view.Size;
             config.ThumbnailZoomEnabled = true;
             Target(view);
-            Require(view.Width > baseSize.Width, "mouse enter applies hover zoom");
+            Native.GetCursorPos(out var hoverPointer);
+            Require(view.Size.Width > baseSize.Width, $"mouse enter applies hover zoom (before {baseSize}, after {view.Size}, pointer {hoverPointer}, host {view.Bounds}, managerHover={managerType.GetField("_isHoverEffectActive", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(manager)}, pointerOver={view.IsPointerOver}, interacting={view.IsInteracting})");
             Away(); Require(view.Size == baseSize, "mouse leave restores hover zoom");
             config.ThumbnailZoomEnabled = false;
             Target(view); Native.MouseTransition(true, true); Native.MouseTransition(true, false); Pump(TimeSpan.FromMilliseconds(100));
-            Require(Menu(view).Visible, "right-click opens the context menu");
+            Require(Menu(view).IsOpen, "right-click opens the context menu");
             Menu(view).Close(); Pump(TimeSpan.FromMilliseconds(50));
 
-            // Exercise the existing 350 ms hold timer and REAL MouseKeyHook movement/release subscriptions.
+            // Exercise the existing 350 ms hold timer and real native global pointer movement/release subscriptions.
             Target(view); Point before = view.Location;
             Native.MouseTransition(true, true); Pump(TimeSpan.FromMilliseconds(450));
             Require(MouseMode(view) == "Move", "right-button hold starts dragging");
@@ -108,10 +124,10 @@ internal static partial class Program
             beforeResize = view.Size;
             Native.KeyTransition(0xA0, true);
             Pump(TimeSpan.FromMilliseconds(40));
-            var modifiers = Control.ModifierKeys;
+            var modifiers = System.Windows.Forms.Control.ModifierKeys;
             bool asyncShift = (Native.GetAsyncKeyState(0x10) & 0x8000) != 0;
             Native.GetCursorPos(out resize); Native.MoveMouseTo(resize.X + 40, resize.Y + 3); Pump(TimeSpan.FromMilliseconds(80));
-            Require(Math.Abs((double)view.Width / view.Height - (double)beforeResize.Width / beforeResize.Height) < .02,
+            Require(Math.Abs((double)view.Size.Width / view.Size.Height - (double)beforeResize.Width / beforeResize.Height) < .02,
                 $"Shift-resize preserves aspect ratio (before {beforeResize}, after {view.Size}, modifiers {modifiers}, async Shift {asyncShift})");
             Native.KeyTransition(0xA0, false); Native.MouseTransition(false, true); Native.MouseTransition(false, false); Pump(TimeSpan.FromMilliseconds(50));
             Require(MouseMode(view) == "Disabled", "shift-resize releases its global mouse subscriptions");
@@ -119,6 +135,7 @@ internal static partial class Program
         }
         finally
         {
+            Native.MouseDownGuard = previousGuard;
             Native.MouseTransition(true, false); Native.MouseTransition(false, false); Native.KeyTransition(0xA0, false);
             foreach (var view in views) Menu(view).Close();
             Away(); config.ThumbnailZoomEnabled = zoom;

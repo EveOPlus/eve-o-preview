@@ -11,7 +11,7 @@ using EveOPreview.Services.Implementation;
 using EveOPreview.Services.Interface;
 using EveOPreview.View;
 using EveOPreview.View.Rendering;
-using Gma.System.MouseKeyHook;
+using EveOPreview.Input;
 using MediatR;
 using Serilog;
 
@@ -52,7 +52,7 @@ internal static partial class Program
         config.FpsLimiterSettings.IsEnabled = robin.All(r => r.Version != null);
         var windows = new CountingWindowManager(new WindowManager(hook, logger)) { AllowSourceActivation = true };
         using var input = new WindowsHotkeyService(logger);
-        using var mouseEvents = Hook.GlobalEvents();
+        using var mouseEvents = new WindowsGlobalPointerInput(logger);
         var preferences = new ApplicationPreferences(Path.Combine(output, "input-test.settings.json"), logger);
         config.UseWindowsHotkeys = args.Contains("--windows-hotkeys");
         var manager = (IThumbnailManager)Activator.CreateInstance(typeof(ThumbnailView).Assembly.GetType("EveOPreview.Services.ThumbnailManager")!,
@@ -115,13 +115,13 @@ internal static partial class Program
                 long sent = Stopwatch.GetTimestamp(); go.Set();
                 ushort key = forward ? (ushort)0x7F : (ushort)0x80;
                 Native.KeyTransition(key, true); Native.KeyTransition(key, false);
-                while (!observer.IsCompleted) { Application.DoEvents(); wait.Wait(); }
+                while (!observer.IsCompleted) { PumpEvents(); wait.Wait(); }
                 var measured = observer.GetAwaiter().GetResult();
                 double? Ms(long timestamp) => timestamp == 0 ? null : Stopwatch.GetElapsedTime(sent, timestamp).TotalMilliseconds;
                 samples.Add(new(i, forward, expected.ToInt64(), Ms(Volatile.Read(ref requested)), Ms(Volatile.Read(ref returned)), Ms(measured.foreground), Ms(measured.accepted)));
                 if (measured.foreground == 0 || requested == 0) break;
                 // No catch-up bursts: a 50 ms minimum gap between input events.
-                while (Stopwatch.GetElapsedTime(sent).TotalMilliseconds < 50) { Application.DoEvents(); wait.Wait(); }
+                while (Stopwatch.GetElapsedTime(sent).TotalMilliseconds < 50) { PumpEvents(); wait.Wait(); }
             }
             Native.KeyTransition(0xA2, false); ctrlDown = false;
             unmatchedInputDuringUiStallMs = MeasureUnmatchedInputDuringUiStall();
