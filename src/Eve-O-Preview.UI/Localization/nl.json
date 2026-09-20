@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "Het activeringsmoment is instelbaar bij Globale invoer.",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "Windows kon deze sneltoetsen niet registreren (ze zijn mogelijk gereserveerd of in gebruik): {0}",
   "Windows hotkeys": "Windows-sneltoetsen",
-  "Windows hotkeys enabled.": "Windows-sneltoetsen ingeschakeld."
+  "Windows hotkeys enabled.": "Windows-sneltoetsen ingeschakeld.",
+  "Open profiles folder": "Profielmap openen"
 }

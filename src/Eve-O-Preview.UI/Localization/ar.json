@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "يمكن ضبط توقيت التنفيذ مع «الإدخال العام».",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "تعذر على Windows تسجيل هذه الاختصارات (قد تكون محجوزة أو قيد الاستخدام): {0}",
   "Windows hotkeys": "اختصارات Windows",
-  "Windows hotkeys enabled.": "تم تشغيل اختصارات Windows."
+  "Windows hotkeys enabled.": "تم تشغيل اختصارات Windows.",
+  "Open profiles folder": "فتح مجلد ملفات التعريف"
 }

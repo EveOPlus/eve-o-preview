@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "El momento de activación se puede ajustar con Entrada global.",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "Windows no pudo registrar estos atajos (pueden estar reservados o en uso): {0}",
   "Windows hotkeys": "Atajos de Windows",
-  "Windows hotkeys enabled.": "Atajos de Windows activados."
+  "Windows hotkeys enabled.": "Atajos de Windows activados.",
+  "Open profiles folder": "Abrir carpeta de perfiles"
 }

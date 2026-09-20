@@ -199,6 +199,7 @@ public sealed partial class WorkspaceView
         delete.IsEnabled = current?.IsDefault != true;
         actions.Children.Add(delete);
         manage.Children.Add(actions);
+        manage.Children.Add(CommandButton("Open profiles folder", new("profile-open-folder"), "open-profiles-folder"));
         identity.Children.Add(manage);
         _page.Children.Add(Text("PROFILE IDENTITY", 10, _theme.Accent, true));
         var swatches = new WrapPanel { Orientation = Orientation.Horizontal };

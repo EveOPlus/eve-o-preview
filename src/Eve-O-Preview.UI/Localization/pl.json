@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "Moment wywołania można ustawić przy wybraniu Globalnego wejścia.",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "System Windows nie mógł zarejestrować tych skrótów (mogą być zarezerwowane lub używane): {0}",
   "Windows hotkeys": "Skróty Windows",
-  "Windows hotkeys enabled.": "Skróty Windows włączone."
+  "Windows hotkeys enabled.": "Skróty Windows włączone.",
+  "Open profiles folder": "Otwórz folder profili"
 }

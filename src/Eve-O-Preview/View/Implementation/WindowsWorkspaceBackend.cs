@@ -204,6 +204,9 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
                     await _mediator.Send(new ChangeSelectedProfile(profile));
                     if (_storage.CurrentProfile?.FullPath != profile.FullPath) return CommandResult.Error("The profile could not be loaded. Your current profile is still active.");
                     break;
+                case "profile-open-folder":
+                    Process.Start(new ProcessStartInfo(_profiles.ProfileRootDirectory) { UseShellExecute = true });
+                    break;
                 case "profile-clone":
                     int count = _profiles.ProfileLocations.Count;
                     await _mediator.Send(new CloneCurrentProfile());

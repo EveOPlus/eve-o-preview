@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "Der Auslösezeitpunkt ist bei Globaler Eingabe verfügbar.",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "Windows konnte diese Tastenkürzel nicht registrieren (sie sind möglicherweise reserviert oder bereits belegt): {0}",
   "Windows hotkeys": "Windows-Tastenkürzel",
-  "Windows hotkeys enabled.": "Windows-Tastenkürzel aktiviert."
+  "Windows hotkeys enabled.": "Windows-Tastenkürzel aktiviert.",
+  "Open profiles folder": "Profilordner öffnen"
 }

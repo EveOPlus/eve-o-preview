@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "Le moment du déclenchement est réglable avec Saisie globale.",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "Windows n'a pas pu enregistrer ces raccourcis (ils sont peut-être réservés ou déjà utilisés) : {0}",
   "Windows hotkeys": "Raccourcis Windows",
-  "Windows hotkeys enabled.": "Raccourcis Windows activés."
+  "Windows hotkeys enabled.": "Raccourcis Windows activés.",
+  "Open profiles folder": "Ouvrir le dossier des profils"
 }

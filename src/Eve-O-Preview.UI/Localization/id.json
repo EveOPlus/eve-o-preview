@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "Waktu pemicu dapat diatur dengan Input global.",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "Windows tidak dapat mendaftarkan pintasan ini (mungkin dicadangkan atau sedang digunakan): {0}",
   "Windows hotkeys": "Pintasan Windows",
-  "Windows hotkeys enabled.": "Pintasan Windows diaktifkan."
+  "Windows hotkeys enabled.": "Pintasan Windows diaktifkan.",
+  "Open profiles folder": "Buka folder profil"
 }

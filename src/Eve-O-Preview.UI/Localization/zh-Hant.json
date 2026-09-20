@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "「全域輸入」支援設定觸發時機。",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "Windows 無法註冊以下快捷鍵（可能已被保留或正在使用）：{0}",
   "Windows hotkeys": "Windows 快捷鍵",
-  "Windows hotkeys enabled.": "已啟用 Windows 快捷鍵。"
+  "Windows hotkeys enabled.": "已啟用 Windows 快捷鍵。",
+  "Open profiles folder": "開啟設定檔資料夾"
 }

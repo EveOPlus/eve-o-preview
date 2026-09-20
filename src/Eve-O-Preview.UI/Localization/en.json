@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "Trigger timing is available with Global input.",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "Windows could not register these shortcuts (they may be reserved or in use): {0}",
   "Windows hotkeys": "Windows hotkeys",
-  "Windows hotkeys enabled.": "Windows hotkeys enabled."
+  "Windows hotkeys enabled.": "Windows hotkeys enabled.",
+  "Open profiles folder": "Open profiles folder"
 }

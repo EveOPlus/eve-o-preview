@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "शॉर्टकट चलाने का समय वैश्विक इनपुट के साथ चुना जा सकता है।",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "Windows इन शॉर्टकट को पंजीकृत नहीं कर सका (ये आरक्षित या पहले से उपयोग में हो सकते हैं): {0}",
   "Windows hotkeys": "Windows शॉर्टकट",
-  "Windows hotkeys enabled.": "Windows शॉर्टकट चालू हैं।"
+  "Windows hotkeys enabled.": "Windows शॉर्टकट चालू हैं।",
+  "Open profiles folder": "प्रोफ़ाइल फ़ोल्डर खोलें"
 }

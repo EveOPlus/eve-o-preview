@@ -197,6 +197,7 @@ public sealed partial class WorkspaceView
         var showGlobalShortcuts = "hide all show all minimize all minimise all global hotkey keyboard shortcuts ToggleHideAllActiveHotkey MinimizeAllClientsHotkey".Contains(_query, StringComparison.OrdinalIgnoreCase);
         var featureMatches = routes.Where(r => r.Item2.Contains(_query, StringComparison.OrdinalIgnoreCase) || _localization.Contains(L(r.Item2), _query)
             || r.Item1 == "Appearance" && _localization.Contains(L("Language") + " language", _query)
+            || r.Item1 == "Profiles" && !_theme.Legacy && _localization.Contains(L("Open profiles folder") + " open profiles folder directory location saved files", _query)
             || r.Item1 == "ClientSettings" && "PriorityClients PerClientActiveClientHighlightColor priority border minimization exceptions offline".Contains(_query, StringComparison.OrdinalIgnoreCase)).ToArray();
         var queryWords = _query.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
         var sectionMatches = _modules.Where(_ => !_theme.Legacy).SelectMany(module => module.SearchTargets.Select(target => (module, target)))

@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "Tetikleme zamanı Genel giriş ile ayarlanabilir.",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "Windows bu kısayolları kaydedemedi (ayrılmış veya kullanımda olabilirler): {0}",
   "Windows hotkeys": "Windows kısayolları",
-  "Windows hotkeys enabled.": "Windows kısayolları etkin."
+  "Windows hotkeys enabled.": "Windows kısayolları etkin.",
+  "Open profiles folder": "Profil klasörünü aç"
 }

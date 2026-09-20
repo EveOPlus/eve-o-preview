@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "Момент спрацювання налаштовується в режимі «Глобальне введення».",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "Windows не вдалося зареєструвати ці сполучення (вони можуть бути зарезервовані або вже використовуються): {0}",
   "Windows hotkeys": "Гарячі клавіші Windows",
-  "Windows hotkeys enabled.": "Гарячі клавіші Windows ввімкнено."
+  "Windows hotkeys enabled.": "Гарячі клавіші Windows ввімкнено.",
+  "Open profiles folder": "Відкрити папку профілів"
 }

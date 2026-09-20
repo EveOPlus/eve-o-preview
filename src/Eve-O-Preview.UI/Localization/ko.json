@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "실행 시점은 전역 입력에서 설정할 수 있습니다.",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "Windows에서 다음 단축키를 등록할 수 없습니다(예약되었거나 사용 중일 수 있음): {0}",
   "Windows hotkeys": "Windows 단축키",
-  "Windows hotkeys enabled.": "Windows 단축키를 켰습니다."
+  "Windows hotkeys enabled.": "Windows 단축키를 켰습니다.",
+  "Open profiles folder": "프로필 폴더 열기"
 }

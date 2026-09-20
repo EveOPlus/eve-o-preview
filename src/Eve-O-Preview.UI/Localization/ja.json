@@ -1005,5 +1005,6 @@
   "Trigger timing is available with Global input.": "実行タイミングは「グローバル入力」で設定できます。",
   "Windows could not register these shortcuts (they may be reserved or in use): {0}": "Windows に次のショートカットを登録できませんでした（予約済み、または使用中の可能性があります）：{0}",
   "Windows hotkeys": "Windows ホットキー",
-  "Windows hotkeys enabled.": "Windows ホットキーを有効にしました。"
+  "Windows hotkeys enabled.": "Windows ホットキーを有効にしました。",
+  "Open profiles folder": "プロファイルのフォルダーを開く"
 }
