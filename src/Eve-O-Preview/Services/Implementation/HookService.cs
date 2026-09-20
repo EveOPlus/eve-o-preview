@@ -177,7 +177,8 @@ public class HookService : IHookService
         using var process = Process.GetProcessById(info.ProcessId);
         if (process.HasExited || process.MainWindowHandle != info.MainWindowHandle)
             throw new InvalidOperationException("The target client changed before injection.");
-        string source = Path.Combine(AppContext.BaseDirectory, "Eve-O-Preview.Robin.dll");
+        // Match ProfileManager: single-file extraction can redirect AppContext.BaseDirectory into Temp.
+        string source = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), "Eve-O-Preview.Robin.dll");
         if (!File.Exists(source)) throw new FileNotFoundException("Publish the native Robin DLL beside the host executable.", source);
         // Loaded modules outlive the host. Load a versioned copy so installation files remain replaceable.
         string hash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(source)));
