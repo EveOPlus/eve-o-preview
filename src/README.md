@@ -36,7 +36,7 @@ There are also local instructions for the [main app](Eve-O-Preview/AGENTS.md), [
 
 ```mermaid
 flowchart TD
-    P[Program: STA startup and Autofac] --> M[MainFormPresenter / WorkspaceForm]
+    P[Program: Avalonia desktop lifetime and Autofac] --> M[MainFormPresenter / WorkspaceWindow]
     M --> UI[Avalonia WorkspaceView]
     UI --> B[IWorkspaceBackend / Windows adapter]
     B --> M
@@ -57,7 +57,7 @@ flowchart TD
     P --> S[DebuggerSidecar: host crash diagnostics]
 ```
 
-The main process owns desktop UI, persisted settings, discovery, and switching decisions. [Eve-O-Preview.UI](Eve-O-Preview.UI/Eve-O-Preview.UI.csproj) targets plain `net10.0` and communicates through snapshots and commands without WinForms or native handle types. The Windows host still owns tray/window lifetime, DWM previews, global hotkeys and native integration. Linux support requires a future host/backend; the portable UI alone does not supply those OS services. Robin runs inside each target process and affects its rendering/audio. A pipe reply proves communication, not that every native hook is healthy. The sidecar debugs the preview host, not the injected game processes.
+The main process owns desktop UI, persisted settings, discovery, and switching decisions. Avalonia owns desktop lifetime, settings, tray, dialogs, thumbnail windows and overlay hosts. [Eve-O-Preview.UI](Eve-O-Preview.UI/Eve-O-Preview.UI.csproj) targets plain `net10.0` and communicates through snapshots and commands without native handle types. Windows adapters preserve DWM images, DirectComposition graphics, nonactivation, global input and native integration. Linux support requires future capture/input/window adapters. Robin runs inside each target process and affects its rendering/audio. A pipe reply proves communication, not that every native hook is healthy. The sidecar debugs the preview host, not the injected game processes. See the [migration inventory and acceptance report](docs/ai/avalonia-migration.md) for current verification and remaining gates.
 
 ## Find a feature quickly
 
@@ -94,7 +94,7 @@ rg -n 'SaveApplicationSettings|ChangeSelectedProfile|JsonProperty' Eve-O-Preview
 | Mechanism | Why it matters | Detailed evidence |
 | --- | --- | --- |
 | Persistent DWM thumbnail registration | The compositor provides live content; a discovery tick is not a captured frame | [Rendering/lifetime](docs/ai/windows-and-thumbnails.md) |
-| Dirty MRU z-order and nonactivating native restore | Keeps overlapping previews ordered without repeatedly showing/recreating WinForms windows | [Z-order and focus](docs/ai/windows-and-thumbnails.md) |
+| Dirty MRU z-order and nonactivating native restore | Keeps overlapping previews ordered without repeatedly showing/recreating Avalonia windows | [Z-order and focus](docs/ai/windows-and-thumbnails.md) |
 | Predicted next-client preparation | Cycling couples CPU assignment and Robin FPS state to the next likely focus target | [Cycling](docs/ai/windows-and-thumbnails.md), [native focus](docs/ai/robin.md) |
 | Shared DXGI vtable patch and precise waiting | Hooks Present/Present1 in the target; frame pacing uses a high-resolution wait and final spin | [DXHook and PrecisionSleep](docs/ai/robin.md) |
 | Guard-page/audio breakpoint interception | Selectively stops event playback after the call returns, using fixed bounded lookup data and exact native context layout | [AudioMuteSystem](docs/ai/robin.md) |

@@ -13,7 +13,7 @@ Keep an eye on your EVE characters and switch between them with a click or a hot
 ## Start here
 
 1. Download the application ZIP from [Releases](https://github.com/EveOPlus/eve-o-preview/releases/latest), rather than the source-code archive. Extract the **whole archive** into a folder of your choice. Keep its companion files together.
-2. Install the **.NET 10 Desktop Runtime for Windows x64** from [Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) if it is not already installed. The current application uses .NET 10, not .NET Framework 4.8. You do not need the developer SDK to run it.
+2. Install the **.NET 10 Runtime for Windows x64** from [Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) if it is not already installed. The current application uses .NET 10. The developer SDK and Windows Desktop Runtime are not required.
 3. Set each EVE client's display mode to **Fixed Window** or **Window Mode**. Exclusive fullscreen is not supported by the previews.
 4. Run `EVE-O Preview.exe` and log in your characters. Either application can start first. If the settings window does not appear, double-click EVE-O's icon in the Windows system tray, including the hidden-icons area.
 5. Click a character's preview to switch to that client. Right-click a preview and choose **Move** or **Resize** to arrange it.
@@ -65,6 +65,7 @@ These gestures apply to the preview under your mouse.
 | Minimize every EVE client | Right-click → **Minimize all** |
 | Return to the last non-EVE application | Ctrl+Shift+click a preview |
 | Move a preview | Right-click → **Move**, then click to finish; holding the right mouse button also starts moving |
+| Bypass snapping while moving | Hold Shift; move farther from a snapped edge to break away |
 | Resize a preview | Right-click → **Resize**, then click to finish |
 | Keep its proportions while resizing | Hold Shift during the resize |
 | Temporarily skip a character when cycling | Right-click → the skip-cycling option; select it again to re-enable |
@@ -195,7 +196,7 @@ In **Previews & layout → Advanced**, you can configure:
 
 | Setting | What it does |
 | --- | --- |
-| Snap previews together | Align previews while arranging them |
+| Snap previews together | Align nearby preview edges during movement, with visible guides; hold Shift to bypass |
 | Delay before hiding | Wait before hiding previews outside EVE; enter seconds, rounded up to the next client check |
 | Resize limits | Set minimum and maximum width and height together; the current preview size adjusts to fit |
 | Client check interval | Check for clients and update preview properties every 300–1000 ms; this does **not** control game FPS or the live preview frame rate |

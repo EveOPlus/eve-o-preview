@@ -179,7 +179,7 @@ flowchart LR
 
 - `Program.CreateApplicationContainerBuilder` registers the single
   `CombatLogService` and `IWorkspaceCombatLogs`. The Windows backend forwards the
-  capability and `WorkspaceForm` registers `CombatLogView.CreateModule`.
+  capability and `WorkspaceWindow` registers `CombatLogView.CreateModule`.
 - `EveLogDirectory` owns automatic folder selection. `CombatLogService` owns
   watchers, a bounded/coalesced wake channel and one worker; UI callbacks never
   open EVE files or SQLite. Settings live in `ApplicationPreferences.CombatLogs`.

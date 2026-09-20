@@ -10,7 +10,7 @@ worker output in the test results, so there is no console window to copy from.
 From `src`:
 
 ```powershell
-dotnet test tests/Eve-O-Preview.Tests/Eve-O-Preview.Tests.csproj
+dotnet test tests/Eve-O-Preview.Tests/Eve-O-Preview.Tests.csproj -- xUnit.ParallelizeTestCollections=false
 ```
 
 To run just the hidden-thumbnail recovery case:
@@ -77,7 +77,7 @@ The project uses xUnit v3 and the Visual Studio test adapter. It covers the foll
   recovery after external hiding/demotion or minimizing, Hide All, individual
   and active-client hiding, focus-loss hiding, and the Always on top setting.
   Immediate-activation cases verify that reordering precedes client activation
-  and image capture, applies the border before activation without a UI continuation, preserves focus,
+  and image capture, submits the border immediately after the native focus request without a UI continuation, preserves focus,
   and respects hiding settings without waiting for a refresh tick.
 
 Live-thumbnail cases also exercise the production live view with a simulated
@@ -86,7 +86,7 @@ image, while failed updates replace it only after populating the replacement.
 
 The UI and thumbnail cases automatically launch an STA worker on a private
 Windows desktop that is never displayed. Each case gets fresh windows and state.
-The worker uses production forms and the thumbnail manager, with a stubbed image
+The worker initializes the actual Avalonia platform and uses production windows and the thumbnail manager, with a stubbed image
 renderer. The dedicated hotkey workers install and remove keyboard hooks and
 Windows hotkey registrations on their private desktops; they do not inject
 desktop input. The workers do not launch EVE or alter the user's windows.
@@ -111,15 +111,15 @@ The defect-investigation additions exercise full profile load/edit/save/rename/c
 workflows, live settings propagation and current factory configuration, production
 hotkey subscriptions with pending affinity and immediate borders/focus, and process/GDI/affinity lifetime
 in isolated workers. Pipe tests cover both old/new audio protocols and response
-timeouts. These additions established a baseline of 50 cases after theory expansion.
+timeouts. The current complete suite and migration evidence are recorded in [the migration report](../../docs/ai/avalonia-migration.md).
 
-The modern workspace additions bring the suite to 86 expanded cases. They cover
+The workspace cases cover
 global preference persistence and portable/fallback locations, preservation of
 future global settings, theme validation, actual profile-file accent round trips,
 backend input validation, awaited saves before FPS/audio application, retry after
 a failed save, individual visibility while Hide All is active, and cycling edits
 that retain full titles and extra shortcuts. A private desktop case initializes
-the production WinForms/Avalonia host, changes themes and pages, and exercises
+the production Avalonia desktop host, changes themes and pages, and exercises
 hide/show and disposal without starting the presenter or native services. It
 also establishes a nonzero active simulated client before refreshing an
 inactive workspace, verifies native active/foreground handles remain unchanged,
@@ -136,9 +136,8 @@ modern window size after switching themes.
 
 The PNG captures and original control metrics are written beside the test
 executable in `original-ui`, `title-preview`, and `native-ui`. Title pixel
-comparisons invoke the actual `OutlinedLabel` instance in `ThumbnailOverlay`;
-`DrawToBitmap` omits that layered window's label, so it is unsuitable as a title
-reference capture. The highlight reference uses production `ThumbnailView`
+comparisons invoke the shared production scene rasterizer and compare with the
+original `OutlinedLabel` isolated under `LegacyReference`. The highlight reference uses production `ThumbnailView`
 insets with a solid image fixture. These checks do not capture a live EVE client.
 
 The separate [portable visual smoke executable](../Eve-O-Preview.UI.Smoke/README.md)
@@ -168,3 +167,11 @@ manual testing on monitors with genuinely different scaling.
 Actual NativeAOT injection and DXGI/synthetic-audio checks are an optional separate
 [Robin.NativeSmoke](../Robin.NativeSmoke/README.md) run. They do not run implicitly
 from Test Explorer and have their own native toolchain/GPU prerequisites.
+
+Migration checks also exercise realtime snap/Shift/breakaway, synthetic DPI
+transitions, both actual image hosts, dependency removal and bounded pointer
+dispatch. Original Forms and their designers/resources remain only under
+`LegacyReference` for historical parity. Shipping dependencies are independently
+checked by `DesktopDependencyTests`. Private-desktop shutdown cases exercise both
+the workspace and Avalonia hidden dispatcher HWND; actual shutdown and physical
+mixed-DPI interaction remain separate acceptance gates.

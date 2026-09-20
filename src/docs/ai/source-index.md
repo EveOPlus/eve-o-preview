@@ -20,7 +20,7 @@ Local AI artifacts belong in ignored `bin/`, `.ai-work/`, `.ai-output/`, `docs/u
 
 Use [the entry guide](../../README.md) to route by feature; use this page when a file is unfamiliar. Namespaces and filenames are not always identical, and some tracked files are intentionally excluded from compilation.
 
-## Repository root (3)
+## Repository root
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
@@ -28,14 +28,14 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [LICENSE](../../../LICENSE) | GPL v3 text; byte-identical to the packaged application license. | [build-and-test](build-and-test.md) |
 | [README.md](../../../README.md) | User-facing feature/install/release documentation; contains older runtime claims. | [build-and-test](build-and-test.md) |
 
-## Assets (2)
+## Assets
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
 | [assets/PartnerBadge.png](../../../assets/PartnerBadge.png) | Binary partner artwork; metadata only. | [build-and-test](build-and-test.md) |
 | [assets/stuff.zip](../../../assets/stuff.zip) | Opaque archive; outer inventory contains stuff.7z. Inner content not audited. | [build-and-test](build-and-test.md) |
 
-## Release tooling (12)
+## Release tooling
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
@@ -52,13 +52,13 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [build/Themes/Github/Theme.css](../../../build/Themes/Github/Theme.css) | PDF styling; contains embedded binary WOFF font data. | [build-and-test](build-and-test.md) |
 | [build/Themes/Github/Theme.html](../../../build/Themes/Github/Theme.html) | PDF HTML template. | [build-and-test](build-and-test.md) |
 
-## Source solution (1)
+## Source solution
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
 | [src/EVE-O-Preview.sln](../../../src/EVE-O-Preview.sln) | Full solution including app, Robin, Mock, tests, and release tooling. | [build-and-test](build-and-test.md) |
 
-## Manual Mock application (12)
+## Manual Mock application
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
@@ -75,7 +75,7 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [src/Eve-O-Mock/Properties/Settings.settings](../../../src/Eve-O-Mock/Properties/Settings.settings) | Designer settings schema/defaults. | [build-and-test](build-and-test.md) |
 | [src/Eve-O-Mock/packages.config](../../../src/Eve-O-Mock/packages.config) | Legacy exact package versions; restore into src/packages. | [build-and-test](build-and-test.md) |
 
-## Robin injected library (10)
+## Robin injected library
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
@@ -90,7 +90,7 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [src/Eve-O-Preview.Robin/PrecisionSleep.cs](../../../src/Eve-O-Preview.Robin/PrecisionSleep.cs) | High-resolution waitable timer and relative 100 ns due times. | [robin](robin.md) |
 | [src/Eve-O-Preview.Robin/WinEventHook.cs](../../../src/Eve-O-Preview.Robin/WinEventHook.cs) | Background foreground-event thread and Windows message pump. | [robin](robin.md) |
 
-## Main application entry and packaging (14)
+## Main application entry and packaging
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
@@ -109,7 +109,7 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [src/Eve-O-Preview/app.manifest](../../../src/Eve-O-Preview/app.manifest) | asInvoker, uiAccess=false, DPI declarations and historical OS comments. | [build-and-test](build-and-test.md) |
 | [src/Eve-O-Preview/icon.ico](../../../src/Eve-O-Preview/icon.ico) | Binary application icon; metadata only. | [build-and-test](build-and-test.md) |
 
-## Main application: ApplicationBase (9)
+## Main application: ApplicationBase
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
@@ -123,7 +123,7 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [src/Eve-O-Preview/ApplicationBase/Presenter.cs](../../../src/Eve-O-Preview/ApplicationBase/Presenter.cs) | Presenter/controller/view abstraction or application infrastructure. | [application-and-configuration](application-and-configuration.md) |
 | [src/Eve-O-Preview/ApplicationBase/PresenterGeneric.cs](../../../src/Eve-O-Preview/ApplicationBase/PresenterGeneric.cs) | Presenter/controller/view abstraction or application infrastructure. | [application-and-configuration](application-and-configuration.md) |
 
-## Main application: Configuration (15)
+## Main application: Configuration
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
@@ -143,13 +143,13 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [src/Eve-O-Preview/Configuration/Interface/ZoomAnchor.cs](../../../src/Eve-O-Preview/Configuration/Interface/ZoomAnchor.cs) | Persisted enum order paired with ViewZoomAnchor. | [application-and-configuration](application-and-configuration.md) |
 | [src/Eve-O-Preview/Configuration/Model/ProfileLocation.cs](../../../src/Eve-O-Preview/Configuration/Model/ProfileLocation.cs) | Friendly name, directory and full JSON path. | [application-and-configuration](application-and-configuration.md) |
 
-## Main application: Excpetions (1)
+## Main application: Excpetions
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
 | [src/Eve-O-Preview/Excpetions/HotkeyAlreadyExistsException.cs](../../../src/Eve-O-Preview/Excpetions/HotkeyAlreadyExistsException.cs) | Duplicate-key diagnostic carrying both locations; existing folder spelling. | [application-and-configuration](application-and-configuration.md) |
 
-## Main application: Helper (3)
+## Main application: Helper
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
@@ -158,7 +158,7 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [src/Eve-O-Preview/Helper/AsyncLogSink.cs](../../../src/Eve-O-Preview/Helper/AsyncLogSink.cs) | Bounded background diagnostic writer, overflow reporting and shutdown drain. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/Helper/ProcessHelpers.cs](../../../src/Eve-O-Preview/Helper/ProcessHelpers.cs) | Open/close raw kernel handles and construct ProcessInfo. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 
-## Main application: Mediator (55)
+## Main application: Mediator
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
@@ -218,7 +218,7 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [src/Eve-O-Preview/Mediator/Messages/Thumbnails/ThumbnailToggleHideAll.cs](../../../src/Eve-O-Preview/Mediator/Messages/Thumbnails/ThumbnailToggleHideAll.cs) | Request/notification payload; follow its type through the routing map. | [application-and-configuration](application-and-configuration.md) |
 | [src/Eve-O-Preview/Mediator/Messages/Thumbnails/ThumbnailToggleHideAllChangedNotification.cs](../../../src/Eve-O-Preview/Mediator/Messages/Thumbnails/ThumbnailToggleHideAllChangedNotification.cs) | Request/notification payload; follow its type through the routing map. | [application-and-configuration](application-and-configuration.md) |
 
-## Main application: Presenters (4)
+## Main application: Presenters
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
@@ -227,14 +227,14 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [src/Eve-O-Preview/Presenters/Interface/IMainFormPresenter.cs](../../../src/Eve-O-Preview/Presenters/Interface/IMainFormPresenter.cs) | Thumbnail list/size presenter contract. | [application-and-configuration](application-and-configuration.md) |
 | [src/Eve-O-Preview/Presenters/Interface/ViewCloseRequest.cs](../../../src/Eve-O-Preview/Presenters/Interface/ViewCloseRequest.cs) | Mutable allow/cancel close decision. | [application-and-configuration](application-and-configuration.md) |
 
-## Main application: Properties (2)
+## Main application: Properties
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
 | [src/Eve-O-Preview/Properties/Resources.Designer.cs](../../../src/Eve-O-Preview/Properties/Resources.Designer.cs) | Generated resource/settings accessors and defaults. | [application-and-configuration](application-and-configuration.md) |
 | [src/Eve-O-Preview/Properties/Resources.resx](../../../src/Eve-O-Preview/Properties/Resources.resx) | Resource schema/designer metadata; binary payloads are not C# logic. | [application-and-configuration](application-and-configuration.md) |
 
-## Main application: Services (28)
+## Main application: Services
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
@@ -272,30 +272,26 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [src/Eve-O-Preview/Services/Interop/User32NativeMethods.cs](../../../src/Eve-O-Preview/Services/Interop/User32NativeMethods.cs) | Host native import, flags or structure layout; preserve ABI/caller contract. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/Services/Interop/WINDOWPLACEMENT.cs](../../../src/Eve-O-Preview/Services/Interop/WINDOWPLACEMENT.cs) | Host native import, flags or structure layout; preserve ABI/caller contract. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 
-## Main application: View (27)
+## Main application: Native input and lifetime
+
+| Source | Responsibility |
+| --- | --- |
+| [ShortcutKeys.cs](../../Eve-O-Preview/Input/ShortcutKeys.cs), [ShortcutText.cs](../../Eve-O-Preview/Input/ShortcutText.cs) | Platform-neutral numeric shortcut values and legacy serialized-name compatibility |
+| [IGlobalPointerInput.cs](../../Eve-O-Preview/Input/IGlobalPointerInput.cs) | Physical screen-pixel movement/release contract |
+| [WindowsGlobalPointerInput.cs](../../Eve-O-Preview/Input/WindowsGlobalPointerInput.cs), [PointerDispatchQueue.cs](../../Eve-O-Preview/Input/PointerDispatchQueue.cs) | Dedicated native hook thread, bounded/coalesced UI dispatch and subscription lifetime |
+| [WindowsMessageWindow.cs](../../Eve-O-Preview/Input/WindowsMessageWindow.cs) | Framework-free message-only HWND and owner-thread pump |
+| [WindowsSessionLifetime.cs](../../Eve-O-Preview/ApplicationBase/WindowsSessionLifetime.cs) | Query/cancel/confirmed session handling for workspace and Avalonia dispatcher HWND |
+| [DesktopValidation.cs](../../Eve-O-Preview/ApplicationBase/DesktopValidation.cs) | Isolated actual-desktop-loop validation of themes, SQLite and live/static native hosts |
+
+## Main application: View
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
-| [src/Eve-O-Preview/View/CustomControl/DarkGoldRenderer.cs](../../../src/Eve-O-Preview/View/CustomControl/DarkGoldRenderer.cs) | Standalone renderer/color table; distinguish nested namesakes. | [application-and-configuration](application-and-configuration.md) |
-| [src/Eve-O-Preview/View/CustomControl/DarkModeContextMenuStrip.cs](../../../src/Eve-O-Preview/View/CustomControl/DarkModeContextMenuStrip.cs) | Dark menu plus nested renderer/color table. | [application-and-configuration](application-and-configuration.md) |
-| [src/Eve-O-Preview/View/CustomControl/OutlinedLabel.cs](../../../src/Eve-O-Preview/View/CustomControl/OutlinedLabel.cs) | Compatibility label layout/input; delegates glyphs and markers to the shared title/DPS rasterizer. | [preview-rendering](preview-rendering.md) |
-| [src/Eve-O-Preview/View/Implementation/ClientNameInputBox.Designer.cs](../../../src/Eve-O-Preview/View/Implementation/ClientNameInputBox.Designer.cs) | Controls plus interface inheritance and selection properties. | [application-and-configuration](application-and-configuration.md) |
-| [src/Eve-O-Preview/View/Implementation/ClientNameInputBox.cs](../../../src/Eve-O-Preview/View/Implementation/ClientNameInputBox.cs) | Known/manual client selection dialog behavior. | [application-and-configuration](application-and-configuration.md) |
-| [src/Eve-O-Preview/View/Implementation/ClientNameInputBox.resx](../../../src/Eve-O-Preview/View/Implementation/ClientNameInputBox.resx) | Resource schema/designer metadata; binary payloads are not C# logic. | [application-and-configuration](application-and-configuration.md) |
 | [src/Eve-O-Preview/View/Implementation/LiveThumbnailView.cs](../../../src/Eve-O-Preview/View/Implementation/LiveThumbnailView.cs) | Persistent DWM maintenance and replacement-before-unregister recovery. | [windows-and-thumbnails](windows-and-thumbnails.md) |
-| [src/Eve-O-Preview/View/Implementation/LiveThumbnailView.resx](../../../src/Eve-O-Preview/View/Implementation/LiveThumbnailView.resx) | Resource schema/designer metadata; binary payloads are not C# logic. | [windows-and-thumbnails](windows-and-thumbnails.md) |
-| [src/Eve-O-Preview/View/Implementation/MainForm.Designer.cs](../../../src/Eve-O-Preview/View/Implementation/MainForm.Designer.cs) | Main form layout, defaults and event wiring; FPS Go is a focus target. | [application-and-configuration](application-and-configuration.md) |
-| [src/Eve-O-Preview/View/Implementation/MainForm.cs](../../../src/Eve-O-Preview/View/Implementation/MainForm.cs) | View properties, controls, settings commits, validation, tray and profile UI. | [application-and-configuration](application-and-configuration.md) |
-| [src/Eve-O-Preview/View/Implementation/MainForm.resx](../../../src/Eve-O-Preview/View/Implementation/MainForm.resx) | Designer metadata, hints/strings, embedded icon payloads. | [application-and-configuration](application-and-configuration.md) |
-| [src/Eve-O-Preview/View/Implementation/StaticThumbnailImage.cs](../../../src/Eve-O-Preview/View/Implementation/StaticThumbnailImage.cs) | PictureBox returning HTTRANSPARENT for form input. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/View/Implementation/StaticThumbnailView.cs](../../../src/Eve-O-Preview/View/Implementation/StaticThumbnailView.cs) | Forced bitmap capture, image replacement/disposal, geometry. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/View/Implementation/ThumbnailDescription.cs](../../../src/Eve-O-Preview/View/Implementation/ThumbnailDescription.cs) | Full title and mutable disabled state for UI lists. | [windows-and-thumbnails](windows-and-thumbnails.md) |
-| [src/Eve-O-Preview/View/Implementation/ThumbnailOverlay.Designer.cs](../../../src/Eve-O-Preview/View/Implementation/ThumbnailOverlay.Designer.cs) | Overlay label/image control layout and wiring. | [windows-and-thumbnails](windows-and-thumbnails.md) |
-| [src/Eve-O-Preview/View/Implementation/ThumbnailOverlay.cs](../../../src/Eve-O-Preview/View/Implementation/ThumbnailOverlay.cs) | Owned transparent label form and click forwarding. | [windows-and-thumbnails](windows-and-thumbnails.md) |
-| [src/Eve-O-Preview/View/Implementation/ThumbnailOverlay.resx](../../../src/Eve-O-Preview/View/Implementation/ThumbnailOverlay.resx) | Resource schema/designer metadata; binary payloads are not C# logic. | [windows-and-thumbnails](windows-and-thumbnails.md) |
-| [src/Eve-O-Preview/View/Implementation/ThumbnailView.Designer.cs](../../../src/Eve-O-Preview/View/Implementation/ThumbnailView.Designer.cs) | Move/resize context menu, tooltip and 350 ms right-click timer. | [windows-and-thumbnails](windows-and-thumbnails.md) |
-| [src/Eve-O-Preview/View/Implementation/ThumbnailView.cs](../../../src/Eve-O-Preview/View/Implementation/ThumbnailView.cs) | Base preview geometry, native restore, highlight, zoom and mouse modes. | [windows-and-thumbnails](windows-and-thumbnails.md) |
-| [src/Eve-O-Preview/View/Implementation/ThumbnailView.resx](../../../src/Eve-O-Preview/View/Implementation/ThumbnailView.resx) | Resource schema/designer metadata; binary payloads are not C# logic. | [windows-and-thumbnails](windows-and-thumbnails.md) |
+| [src/Eve-O-Preview/View/Implementation/ThumbnailOverlay.cs](../../../src/Eve-O-Preview/View/Implementation/ThumbnailOverlay.cs) | Owned nonactivating Avalonia window hosting native or compatibility graphics. | [windows-and-thumbnails](windows-and-thumbnails.md) |
+| [src/Eve-O-Preview/View/Implementation/ThumbnailView.cs](../../../src/Eve-O-Preview/View/Implementation/ThumbnailView.cs) | Avalonia preview host, physical-pixel geometry, native restore, highlight, zoom, menus and pointer gestures. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/View/Implementation/ThumbnailViewFactory.cs](../../../src/Eve-O-Preview/View/Implementation/ThumbnailViewFactory.cs) | Per-view creation with cached compatibility/font settings. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/View/Interface/IClientNameInputBoxView.cs](../../../src/Eve-O-Preview/View/Interface/IClientNameInputBoxView.cs) | View callback/property contract; implemented by production controls. | [application-and-configuration](application-and-configuration.md) |
 | [src/Eve-O-Preview/View/Interface/IMainFormView.cs](../../../src/Eve-O-Preview/View/Interface/IMainFormView.cs) | View callback/property contract; implemented by production controls. | [application-and-configuration](application-and-configuration.md) |
@@ -304,7 +300,15 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [src/Eve-O-Preview/View/Interface/IThumbnailViewFactory.cs](../../../src/Eve-O-Preview/View/Interface/IThumbnailViewFactory.cs) | View callback/property contract; implemented by production controls. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/View/Interface/ViewZoomAnchor.cs](../../../src/Eve-O-Preview/View/Interface/ViewZoomAnchor.cs) | View enum order paired with persisted ZoomAnchor. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 
-## Automated tests (10)
+## Automated tests
+
+Original Forms, designers/resources, menu renderers and OutlinedLabel live only in
+[LegacyReference](../../tests/Eve-O-Preview.Tests/LegacyReference). They are historical
+comparison fixtures and are never included in the shipping application. The
+[dependency checks](../../tests/Eve-O-Preview.Tests/Checks/DesktopDependencyTests.cs)
+audit assembly, deps and runtime references. [Snap checks](../../tests/Eve-O-Preview.Tests/Checks/ThumbnailSnapTests.cs)
+and [pointer queue checks](../../tests/Eve-O-Preview.Tests/Checks/PointerDispatchTests.cs)
+cover the portable interaction contracts.
 
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
@@ -372,13 +376,13 @@ The [UI review](ui-review.md) describes control-preservation requirements; the [
 | [src/tests/Eve-O-Preview.Tests/Checks/CharacterPortraitCacheTests.cs](../../tests/Eve-O-Preview.Tests/Checks/CharacterPortraitCacheTests.cs) | Cache download/restart, stale refresh and invalid-response integration checks |
 | [src/Eve-O-Preview.UI/WorkspaceModules.cs](../../Eve-O-Preview.UI/WorkspaceModules.cs) | Optional modern feature registration and reserved character/DPS IDs, hidden until real modules are registered |
 | [src/Eve-O-Preview.UI/AGENTS.md](../../Eve-O-Preview.UI/AGENTS.md) | Portable UI extension, theme and validation instructions |
-| [src/Eve-O-Preview/View/Implementation/WorkspaceForm.cs](../../Eve-O-Preview/View/Implementation/WorkspaceForm.cs) | Windows settings lifetime/tray form and embedded Avalonia control host; implements the existing presenter view contract |
-| [src/Eve-O-Preview/View/CustomControl/WorkspaceAvaloniaHost.cs](../../Eve-O-Preview/View/CustomControl/WorkspaceAvaloniaHost.cs) | Synchronizes child render scale and logical bounds after monitor DPI changes without replacing HWNDs/content |
+| [WorkspaceDialogs.cs](../../Eve-O-Preview/View/Implementation/WorkspaceDialogs.cs) | Owned asynchronous Avalonia font/color/client/message dialogs |
+| [src/Eve-O-Preview/View/Implementation/WorkspaceWindow.cs](../../Eve-O-Preview/View/Implementation/WorkspaceWindow.cs) | Avalonia desktop workspace/tray window; implements the existing presenter view contract |
 | [src/Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.cs) | Explicit validated setting bindings, full-title client state, profiles/cycling/hotkeys and existing mediator/native command routing |
 | [src/Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.AdvancedSettings.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.AdvancedSettings.cs) | Atomic resize bounds, per-character overrides, persistence rollback and runtime notification |
 | [src/Eve-O-Preview/Mediator/Messages/Thumbnails/ThumbnailRuntimeSettingsUpdated.cs](../../Eve-O-Preview/Mediator/Messages/Thumbnails/ThumbnailRuntimeSettingsUpdated.cs) | Advanced profile settings runtime refresh notification |
 | [src/Eve-O-Preview/Mediator/Handlers/Thumbnails/ThumbnailRuntimeSettingsUpdatedHandler.cs](../../Eve-O-Preview/Mediator/Handlers/Thumbnails/ThumbnailRuntimeSettingsUpdatedHandler.cs) | Applies persisted preview settings to the current thumbnail manager |
-| [src/Eve-O-Preview/View/Implementation/WindowsWorkspacePreviewRenderer.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspacePreviewRenderer.cs) | Actual production OutlinedLabel rasterization for draft previews and native highlight geometry |
+| [src/Eve-O-Preview/View/Implementation/WindowsWorkspacePreviewRenderer.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspacePreviewRenderer.cs) | Shared production scene rasterization for draft previews and native highlight geometry |
 | [src/Eve-O-Preview/View/Implementation/WindowsWorkspacePreviewCapture.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspacePreviewCapture.cs) | One-shot client background through the existing process cache and compatibility capture path, without activation or live-preview changes |
 | [src/Eve-O-Preview/View/Interface/IAsyncSettingsView.cs](../../Eve-O-Preview/View/Interface/IAsyncSettingsView.cs) | Optional awaited settings/size commit route for reliable command feedback |
 | [src/Eve-O-Preview/Configuration/Implementation/ApplicationPreferences.cs](../../Eve-O-Preview/Configuration/Implementation/ApplicationPreferences.cs) | Generic global settings JSON beside the resolved Profiles directory or in AppData; retains future fields while persisting the application theme |
@@ -391,7 +395,7 @@ The [UI review](ui-review.md) describes control-preservation requirements; the [
 | [src/tests/Eve-O-Preview.UI.Smoke/README.md](../../tests/Eve-O-Preview.UI.Smoke/README.md) | UI smoke commands, image output and validation boundaries |
 | [src/tests/Eve-O-Preview.Tests/Checks/WorkspacePreferencesTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspacePreferencesTests.cs) | Global preference validation/path/unknown-field persistence and profile accent checks |
 | [src/tests/Eve-O-Preview.Tests/Checks/WorkspaceBackendTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspaceBackendTests.cs) | Production adapter settings and await-before-native routing, profile/hotkey identity and failed-save retry |
-| [src/tests/Eve-O-Preview.Tests/Checks/WorkspaceHostTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspaceHostTests.cs) | Private-desktop Windows/Avalonia embedding, native foreground preservation during refresh and cancel/discard close lifecycle |
+| [src/tests/Eve-O-Preview.Tests/Checks/WorkspaceHostTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspaceHostTests.cs) | Real Avalonia workspace, native foreground preservation, dialogs, DPI and cancel/discard close lifecycle |
 | [src/tests/Eve-O-Preview.Tests/Checks/WorkspaceCompositionTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WorkspaceCompositionTests.cs) | Production Autofac workspace graph with real configuration and an isolated profile root |
 | [build/Tasks/ValidateWorkspace.cs](../../../build/Tasks/ValidateWorkspace.cs) | Published single-file startup/rendering check before Cake signing and packaging |
 | [src/tests/Eve-O-Preview.Tests/Checks/LegacyBaselineTests.cs](../../tests/Eve-O-Preview.Tests/Checks/LegacyBaselineTests.cs) | Original MainForm tab screenshots and measured control geometry on a private desktop |
@@ -414,11 +418,16 @@ The [UI review](ui-review.md) describes control-preservation requirements; the [
 
 ## Preview rendering
 
+The [migration report](avalonia-migration.md) records current architecture and acceptance gates.
+
 | Source | Responsibility |
 | --- | --- |
 | [Eve-O-Preview.Preview](../../Eve-O-Preview.Preview/Eve-O-Preview.Preview.csproj), [instructions](../../Eve-O-Preview.Preview/AGENTS.md) | Portable contracts with no graphics toolkit or Windows dependencies |
 | [OverlayContract.cs](../../Eve-O-Preview.Preview/OverlayContract.cs) | Shared title/stat scenes, finite alerts, renderer capability/lifetime contract |
 | [PreviewContract.cs](../../Eve-O-Preview.Preview/PreviewContract.cs) | Native-or-captured image presentation lifetime; opaque client identity |
+| [WindowsPreviewWindowAdapter.cs](../../Eve-O-Preview/View/Rendering/WindowsPreviewWindowAdapter.cs) | Native nonactivation, owned-overlay z-order and physical client/outer geometry boundary |
+| [WindowsBitmap.cs](../../Eve-O-Preview/View/Rendering/WindowsBitmap.cs), [CompatibilityOverlayRenderer.cs](../../Eve-O-Preview/View/Rendering/CompatibilityOverlayRenderer.cs) | Windows bitmap bridge and compatibility scene presentation through Avalonia |
+| [ThumbnailSnapSession.cs](../../Eve-O-Preview.Preview/ThumbnailSnapSession.cs), [ThumbnailSnapGuideWindow.cs](../../Eve-O-Preview/View/Implementation/ThumbnailSnapGuideWindow.cs) | Portable realtime snap/hysteresis and nonactivating visual guides |
 | [WindowsDwmPreviewBackend.cs](../../Eve-O-Preview/View/Rendering/WindowsDwmPreviewBackend.cs) | Persistent DWM image relationship and recovery |
 | [WindowsStaticPreviewBackend.cs](../../Eve-O-Preview/View/Rendering/WindowsStaticPreviewBackend.cs) | Compatibility image/control ownership and last-valid-frame retention |
 | [NativeCompositionOverlayRenderer.cs](../../Eve-O-Preview/View/Rendering/NativeCompositionOverlayRenderer.cs) | Shared hardware device, retained graphics assets and compositor animations |
@@ -432,6 +441,8 @@ The [UI review](ui-review.md) describes control-preservation requirements; the [
 | [WindowsShutdownTests.cs](../../tests/Eve-O-Preview.Tests/Checks/WindowsShutdownTests.cs) | Isolated Windows session query/cancellation/confirmation, busy/draft/tray handling and bounded cleanup |
 | [Portable smoke project](../../tests/Eve-O-Preview.Preview.Smoke/Eve-O-Preview.Preview.Smoke.csproj), [runner](../../tests/Eve-O-Preview.Preview.Smoke/Program.cs), [instructions](../../tests/Eve-O-Preview.Preview.Smoke/README.md) | Headless visual/style/finite-animation verification |
 | [Windows rendering project](../../tests/Preview.RenderingSmoke/Preview.RenderingSmoke.csproj), [runner](../../tests/Preview.RenderingSmoke/Program.cs), [matrix](../../tests/Preview.RenderingSmoke/run-matrix.ps1), [GPU counters](../../tests/Preview.RenderingSmoke/collect-gpu.ps1), [instructions](../../tests/Preview.RenderingSmoke/README.md) | Opt-in mock/live DWM renderer measurements, external PDH sampling and scoped images |
+| [Program.NativeHost.cs](../../tests/Preview.RenderingSmoke/Program.NativeHost.cs), [Program.NativeLifetime.cs](../../tests/Preview.RenderingSmoke/Program.NativeLifetime.cs) | Actual compositor image/opacity/tint/title/frame proof across native and compatibility graphics, plus owned source minimize/exit/reconnect |
+| [Program.MixedDpi.cs](../../tests/Preview.RenderingSmoke/Program.MixedDpi.cs) | Real monitor transitions, client/outer pixel measurements, hover restoration and saved-geometry/recreated-host checks |
 | [Preview rendering guide](preview-rendering.md), [technology review](preview-rendering-review.md) | Implemented architecture, platform boundaries and validation evidence |
 
 ## Augments, log parsing and static data
