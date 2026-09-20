@@ -77,8 +77,10 @@ internal static unsafe class NativeCompositionInterop
     internal static void SetOpacity(nint effect, float opacity) => SetFloat(effect, 4, opacity);
     private static void SetFloat(nint value, int slot, float argument) =>
         Check(((delegate* unmanaged[Stdcall]<nint, float, int>)Table(value)[slot])(value, argument));
+    // With no reference visual, FALSE appends above siblings; TRUE inserts below.
+    // Scene construction runs back to front: tint, alerts, text, selection frame.
     internal static void AddVisual(nint parent, nint child) =>
-        Check(((delegate* unmanaged[Stdcall]<nint, nint, int, nint, int>)Table(parent)[16])(parent, child, 1, 0));
+        Check(((delegate* unmanaged[Stdcall]<nint, nint, int, nint, int>)Table(parent)[16])(parent, child, 0, 0));
     internal static void SetClip(nint visual, int width, int height)
     {
         var rect = new RectF(0, 0, width, height);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 //Eve-O Preview Plus is a program designed to deliver quality of life tooling. Primarily but not limited to enabling rapid window foreground and focus changes for the online game Eve Online.
@@ -19,7 +19,7 @@ using System.Linq;
 
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
+using Keys = EveOPreview.Input.ShortcutKeys;
 using Newtonsoft.Json;
 
 namespace EveOPreview.Configuration.Implementation

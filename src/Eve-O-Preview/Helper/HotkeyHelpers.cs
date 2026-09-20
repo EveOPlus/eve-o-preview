@@ -15,7 +15,8 @@
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using System;
-using System.Windows.Forms;
+using EveOPreview.Input;
+using Keys = EveOPreview.Input.ShortcutKeys;
 using Serilog;
 
 namespace EveOPreview.Helper
@@ -31,8 +32,7 @@ namespace EveOPreview.Helper
 
             try
             {
-                object rawValue = (new KeysConverter()).ConvertFromInvariantString(stringKey);
-                return rawValue != null ? (Keys)rawValue : Keys.None;
+                return ShortcutText.Parse(stringKey);
             }
             catch (Exception ex)
             {

@@ -18,7 +18,7 @@ using System;
 using System.Drawing;
 using EveOPreview.Configuration;
 using EveOPreview.Services;
-using Gma.System.MouseKeyHook;
+using EveOPreview.Input;
 using MediatR;
 using Serilog;
 using EveOPreview.Preview;
@@ -37,7 +37,7 @@ namespace EveOPreview.View
         private readonly ILogger _logger;
         #endregion
 
-        public LiveThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager, IMediator mediator, IKeyboardMouseEvents kbmEvents, ILogger logger)
+        public LiveThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager, IMediator mediator, IGlobalPointerInput kbmEvents, ILogger logger)
             : base(windowManager, config, thumbnailManager, mediator, kbmEvents)
         {
             _logger = logger;

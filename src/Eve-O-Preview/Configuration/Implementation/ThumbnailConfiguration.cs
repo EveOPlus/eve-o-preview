@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using System.Drawing;
-using System.Windows.Forms;
+using Keys = EveOPreview.Input.ShortcutKeys;
 using Newtonsoft.Json;
 
 namespace EveOPreview.Configuration.Implementation

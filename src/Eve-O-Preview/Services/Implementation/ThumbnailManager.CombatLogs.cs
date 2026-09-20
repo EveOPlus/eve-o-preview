@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Threading;
+using Avalonia.Threading;
 using EveOPreview.Configuration.Implementation;
 using EveOPreview.Preview;
 using EveOPreview.Services.Logs;
@@ -28,13 +28,13 @@ sealed partial class ThumbnailManager
 
     private void InitializeCombatLogs(CombatLogService logs, ApplicationPreferences preferences)
     {
-        _combatLogs = logs; _logPreferences = preferences; _logDispatcher = Dispatcher.CurrentDispatcher;
+        _combatLogs = logs; _logPreferences = preferences; _logDispatcher = Dispatcher.UIThread;
         if (logs is not null)
         {
             logs.LogsChanged += QueueCombatOverlays; logs.CombatEvent += ReceiveCombatEvent; logs.SimulationRequested += SimulateCombatEvent;
             logs.CurrentSystems.Changed += QueueCombatOverlays;
             logs.SimulationEnded += RestoreRealCombat;
-            _combatExpiry = new DispatcherTimer(DispatcherPriority.Background, _logDispatcher);
+            _combatExpiry = new DispatcherTimer(DispatcherPriority.Background);
             _combatExpiry.Tick += (_, _) =>
             {
                 _combatExpiry.Stop();
@@ -47,12 +47,12 @@ sealed partial class ThumbnailManager
 
     private void QueueCombatOverlays()
     {
-        if (_stopped || _logDispatcher.HasShutdownStarted || Interlocked.Exchange(ref _logRefreshQueued, 1) != 0) return;
-        _logDispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+        if (_stopped || Interlocked.Exchange(ref _logRefreshQueued, 1) != 0) return;
+        _logDispatcher.Post(() =>
         {
             Interlocked.Exchange(ref _logRefreshQueued, 0);
             if (!_stopped) ApplyCombatOverlays();
-        }));
+        }, DispatcherPriority.Background);
     }
 
     private void ApplyCombatOverlays()

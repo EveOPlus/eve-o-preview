@@ -64,15 +64,18 @@ namespace EveOPreview.Mediator.Handlers.Services
             try
             {
                 _logger.Information("StartStopServiceHandler: Stopping thumbnail manager service");
-                this._manager.Stop();
-
                 // Timers and WinEvent hooks stop on their owning UI thread.
-                // Session-end lock/IPC work runs off-thread so the presenter can
-                // enforce a bounded wait without pumping UI continuations.
+                // Input-thread waits and client lock/IPC work must begin off-thread
+                // before the presenter starts its bounded session-end wait. Start
+                // both independently: stalled input must not prevent client reset.
+                var stop = _manager.StopAsync(message.IsSessionEnding);
                 if (message.IsSessionEnding)
-                    await Task.Run(ResetClientsAsync).ConfigureAwait(false);
+                    await Task.WhenAll(stop, Task.Run(ResetClientsAsync)).ConfigureAwait(false);
                 else
+                {
+                    await stop.ConfigureAwait(false);
                     await ResetClientsAsync().ConfigureAwait(false);
+                }
             }
             catch (Exception exception)
             {

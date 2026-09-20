@@ -18,13 +18,13 @@ using EveOPreview.Configuration.Implementation;
 using EveOPreview.Services;
 using System;
 using System.Drawing;
-using System.Windows.Forms;
 
 namespace EveOPreview.View
 {
     public interface IThumbnailView : IView
     {
         bool IsContextMenuOpen { get; }
+        bool IsInteracting => false;
         IntPtr Id { get; set; }
         string Title { get; set; }
         FontSettings TitleFontSettings { get; set; }

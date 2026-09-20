@@ -28,8 +28,7 @@ using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Windows.Threading;
+using Avalonia.Threading;
 
 namespace EveOPreview.Services
 {
@@ -265,7 +264,7 @@ namespace EveOPreview.Services
             _foregroundRefreshPending = true;
             // Send priority uses foreground dispatcher processing. WPF treats Input
             // priority as background processing, which can starve under continuous input.
-            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Send, new Action(ReconcileForegroundWindow));
+            Dispatcher.UIThread.Post(ReconcileForegroundWindow, DispatcherPriority.Send);
         }
 
         private void ReconcileForegroundWindow()
@@ -368,6 +367,7 @@ namespace EveOPreview.Services
 
         public void Start()
         {
+            _stopTask = null;
             _stopped = false;
             _combatLogs?.Start();
             if (_foregroundObserver == null)
@@ -384,8 +384,15 @@ namespace EveOPreview.Services
             _logger.Verbose("ThumbnailManager.Start: Service started successfully");
         }
 
-        public void Stop()
+        private Task _stopTask;
+
+        public void Stop() => _ = StopAsync(sessionEnding: false);
+
+        public Task StopAsync(bool sessionEnding)
         {
+            // Dispose can follow a timed-out Windows session callback. Do not issue
+            // a second unregister or wait again for its already-running input work.
+            if (_stopTask is not null) return _stopTask;
             _logger.Verbose("ThumbnailManager.Stop: Stopping thumbnail manager");
             this._thumbnailUpdateTimer.Stop();
             _stopped = true;
@@ -393,8 +400,12 @@ namespace EveOPreview.Services
             ApplyCombatOverlays();
             _foregroundObserver?.Dispose();
             _foregroundObserver = null;
+            if (sessionEnding)
+                return _stopTask = Task.Run(UnregisterExistingHotkeys);
+
             UnregisterExistingHotkeys();
             _logger.Verbose("ThumbnailManager.Stop: Service stopped");
+            return _stopTask = Task.CompletedTask;
         }
 
         public void Dispose()
@@ -624,16 +635,15 @@ namespace EveOPreview.Services
 
             this.DisableViewEvents();
 
-            // Snap thumbnail
-            // No need to update Thumbnails while one of them is highlighted
-            if ((!this._isHoverEffectActive) && this.TryDequeueLocationChange(out var locationChange))
+            // Geometry is resolved during the drag. Persist only after interaction ends;
+            // a discovery tick must never pull a moving preview back to stored geometry.
+            bool isInteracting = this._thumbnailViews.Values.Any(view => view.IsInteracting);
+            if (!this._isHoverEffectActive && !isInteracting && this.TryDequeueLocationChange(out var locationChange))
             {
                 _logger.Verbose("ThumbnailManager.RefreshThumbnails: Processing dequeued location change for {Title}", locationChange.Title);
                 
                 if ((locationChange.ActiveClient == this._activeClient.Title) && this._thumbnailViews.TryGetValue(locationChange.Handle, out var view))
                 {
-                    this.SnapThumbnailView(view);
-
                     this.RaiseThumbnailLocationUpdatedNotification(view.Title);
                 }
                 else
@@ -674,7 +684,7 @@ namespace EveOPreview.Services
                 }
 
                 // No need to update Thumbnails while one of them is highlighted
-                if (!this._isHoverEffectActive)
+                if (!this._isHoverEffectActive && !view.IsInteracting)
                 {
                     // Do not even move thumbnails with default caption
                     if (this.IsManageableThumbnail(view))
@@ -1023,88 +1033,6 @@ namespace EveOPreview.Services
             this.EnableViewEvents();
         }
 
-        private void SnapThumbnailView(IThumbnailView view)
-        {
-            if (!this._configuration.EnableThumbnailSnap)
-            {
-                _logger.Verbose("ThumbnailManager.SnapThumbnailView: Thumbnail snap disabled, skipping");
-                return;
-            }
-
-            if (this._configuration.ShowThumbnailFrames)
-            {
-                _logger.Verbose("ThumbnailManager.SnapThumbnailView: Frames enabled, cannot snap borderless thumbnails");
-                return;
-            }
-
-            _logger.Verbose("ThumbnailManager.SnapThumbnailView: Snapping thumbnail {Title} to nearby thumbnails", view.Title);
-            
-            int width = this._configuration.ThumbnailSize.Width;
-            int height = this._configuration.ThumbnailSize.Height;
-
-            int baseX = view.ThumbnailLocation.X;
-            int baseY = view.ThumbnailLocation.Y;
-
-            Point[] viewPoints = { new Point(baseX, baseY), new Point(baseX + width, baseY), new Point(baseX, baseY + height), new Point(baseX + width, baseY + height) };
-
-            int thresholdX = Math.Max(20, width / 10);
-            int thresholdY = Math.Max(20, height / 10);
-
-            foreach (var entry in this._thumbnailViews)
-            {
-                IThumbnailView testView = entry.Value;
-
-                if (view.Id == testView.Id)
-                {
-                    continue;
-                }
-
-                int testX = testView.ThumbnailLocation.X;
-                int testY = testView.ThumbnailLocation.Y;
-
-                Point[] testPoints = { new Point(testX, testY), new Point(testX + width, testY), new Point(testX, testY + height), new Point(testX + width, testY + height) };
-
-                var delta = ThumbnailManager.TestViewPoints(viewPoints, testPoints, thresholdX, thresholdY);
-
-                if ((delta.X == 0) && (delta.Y == 0))
-                {
-                    continue;
-                }
-
-                _logger.Verbose("ThumbnailManager.SnapThumbnailView: Snapped {Title} to {Target} with delta ({DeltaX},{DeltaY})", 
-                    view.Title, testView.Title, delta.X, delta.Y);
-                
-                view.ThumbnailLocation = new Point(view.ThumbnailLocation.X + delta.X, view.ThumbnailLocation.Y + delta.Y);
-                this._configuration.SetThumbnailLocation(view.Title, this._activeClient.Title, view.ThumbnailLocation);
-                break;
-            }
-        }
-
-        private static (int X, int Y) TestViewPoints(Point[] viewPoints, Point[] testPoints, int thresholdX, int thresholdY)
-        {
-            // Point combinations that we need to check
-            // No need to check all 4x4 combinations
-            (int ViewOffset, int TestOffset)[] testOffsets =
-                                {   ( 0, 3 ), ( 0, 2 ), ( 1, 2 ),
-                                    ( 0, 1 ), ( 0, 0 ), ( 1, 0 ),
-                                    ( 2, 1 ), ( 2, 0 ), ( 3, 0 )};
-
-            foreach (var testOffset in testOffsets)
-            {
-                Point viewPoint = viewPoints[testOffset.ViewOffset];
-                Point testPoint = testPoints[testOffset.TestOffset];
-
-                int deltaX = testPoint.X - viewPoint.X;
-                int deltaY = testPoint.Y - viewPoint.Y;
-
-                if ((Math.Abs(deltaX) <= thresholdX) && (Math.Abs(deltaY) <= thresholdY))
-                {
-                    return (deltaX, deltaY);
-                }
-            }
-
-            return (0, 0);
-        }
 
         private void ApplyClientLayout(IntPtr clientHandle, string clientTitle)
         {

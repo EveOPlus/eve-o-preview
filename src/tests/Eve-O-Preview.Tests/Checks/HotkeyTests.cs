@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Keys = EveOPreview.Input.ShortcutKeys;
 using EveOPreview.Configuration.Implementation;
 using EveOPreview.Services;
 using EveOPreview.Services.Implementation;
@@ -19,6 +20,23 @@ namespace EveOPreview.Tests.Checks;
 
 public sealed class HotkeyTests(ITestOutputHelper output)
 {
+    [Fact]
+    public void EveryLegacyVirtualKeyAndModifierChordRetainsItsNumericMeaning()
+    {
+        var converter = new KeysConverter();
+        foreach (var key in Enum.GetValues<System.Windows.Forms.Keys>().Distinct().Where(key => (int)key is >= 0 and <= 255))
+        foreach (int modifiers in new[] { 0, 0x10000, 0x20000, 0x40000, 0x30000, 0x50000, 0x60000, 0x70000 })
+        {
+            var chord = key | (System.Windows.Forms.Keys)modifiers;
+            string persisted = converter.ConvertToInvariantString(chord);
+            Assert.Equal((int)chord, (int)EveOPreview.Input.ShortcutText.Parse(persisted));
+            var value = (Keys)(int)chord;
+            Assert.Equal(value, EveOPreview.Input.ShortcutText.Parse(EveOPreview.Input.ShortcutText.Format(value)));
+        }
+        foreach (string name in Enum.GetNames<System.Windows.Forms.Keys>())
+            Assert.Equal((int)Enum.Parse<System.Windows.Forms.Keys>(name), (int)Enum.Parse<Keys>(name));
+    }
+
     [Fact]
     public void HeldModifiersRepeatAndEarlyModifierReleasePreserveCycles()
     {
@@ -169,7 +187,7 @@ public sealed class HotkeyTests(ITestOutputHelper output)
                 var capture = service.CaptureAsync(TimeSpan.FromSeconds(5), CancellationToken.None);
                 Available(firstKey, true);
                 Input(() => { matcher.Process(0xA2, true); matcher.Process(escape ? 0x1B : (int)firstKey, true); matcher.Process(escape ? 0x1B : (int)firstKey, false); });
-                Assert.Equal(escape ? null : new KeysConverter().ConvertToInvariantString(Keys.Control | (Keys)firstKey), capture.GetAwaiter().GetResult());
+                Assert.Equal(escape ? null : new KeysConverter().ConvertToInvariantString((System.Windows.Forms.Keys)(int)(Keys.Control | (Keys)firstKey)), capture.GetAwaiter().GetResult());
                 Available(firstKey, false);
                 Assert.Equal(0, actions);
             }

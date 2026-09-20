@@ -8,7 +8,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
-using Avalonia.Win32.Interoperability;
+using Avalonia.Controls.ApplicationLifetimes;
 using EveOPreview.Configuration;
 using EveOPreview.Configuration.Implementation;
 using EveOPreview.Configuration.Interface;
@@ -19,8 +19,7 @@ using EveOPreview.View;
 using MediatR;
 using Serilog;
 using Xunit;
-using Application = System.Windows.Forms.Application;
-using ApplicationContext = System.Windows.Forms.ApplicationContext;
+
 using Form = System.Windows.Forms.Form;
 
 namespace EveOPreview.Tests.Checks;
@@ -37,9 +36,9 @@ public sealed class WorkspaceHostTests(ITestOutputHelper output)
 
     internal static void CheckHost(bool checkDpi = false)
     {
-        AppBuilder.Configure<WorkspaceApp>().UsePlatformDetect().WithInterFont().SetupWithoutStarting();
+        TestAvalonia.Initialize();
         using var logger = new LoggerConfiguration().CreateLogger();
-        using var context = new ApplicationContext();
+        using var context = new ClassicDesktopStyleApplicationLifetime();
         string preferencesPath = Path.Combine(Path.GetTempPath(), "EveOPreviewHost-" + Guid.NewGuid().ToString("N") + ".json");
         try
         {
@@ -49,30 +48,28 @@ public sealed class WorkspaceHostTests(ITestOutputHelper output)
             var storage = Stub.Create<IConfigurationStorage>((method, _) => method.Name == "get_CurrentProfile" ? location : Stub.Default(method.ReturnType));
             var profiles = Stub.Create<IProfileManager>((method, _) => method.Name == "get_ProfileLocations" ? new List<ProfileLocation> { location } : Stub.Default(method.ReturnType));
             var preferences = new ApplicationPreferences(preferencesPath, logger);
-            using var form = new WorkspaceForm(context, logger, Stub.Create<IMediator>(), storage, configuration, profiles, preferences,
+            using var form = new WorkspaceWindow(context, logger, Stub.Create<IMediator>(), storage, configuration, profiles, preferences,
                 Stub.Create<IWorkspacePortraitProvider>((_, _) => Task.FromResult<byte[]>(null)));
             Assert.True(form.MinimizeToTray);
             form.MinimizeToTray = false; // Exercise the explicit full-close path below.
             form.FormCloseRequested = request => request.Allow = true;
             form.CommitSettingsAsync = () => Task.CompletedTask;
             form.CommitSizeAsync = () => Task.CompletedTask;
-            ((Form)form).Show(); // Do not call the production message-loop entry point.
+            form.Show();
             Pump();
-            Assert.NotEqual(IntPtr.Zero, form.Handle);
+            Assert.NotEqual(IntPtr.Zero, form.TryGetPlatformHandle()!.Handle);
             CaptureWindow(form, "dark-startup");
-            var host = Assert.IsAssignableFrom<WinFormsAvaloniaControlHost>(Assert.Single(form.Controls.Cast<System.Windows.Forms.Control>()));
-            Assert.True(host.IsHandleCreated && host.Visible);
-            var workspace = Assert.IsType<WorkspaceView>(host.Content);
+            var workspace = form.Workspace;
             if (checkDpi)
             {
-                CheckDpiChanges(form, host, workspace, preferences);
+                CheckDpiChanges(form, workspace, preferences);
                 return;
             }
             Assert.True(workspace.Bounds.Width > 700 && workspace.Bounds.Height > 500,
-                "The production Avalonia child must receive the host client bounds.");
+                "The production workspace must receive its window client bounds.");
             var versionLabel = Assert.Single(workspace.GetVisualDescendants().OfType<TextBlock>(), control => control.Name == "application-version");
             Assert.Equal("EVE-O Preview", versionLabel.Text);
-            string version = typeof(WorkspaceForm).Assembly.GetName().Version!.ToString();
+            string version = typeof(WorkspaceWindow).Assembly.GetName().Version!.ToString();
             form.SetVersionInfo(version); // Presenter supplies metadata after the shell is constructed.
             Pump();
             Assert.Equal("EVE-O Preview  \u00b7  " + version, versionLabel.Text);
@@ -85,6 +82,7 @@ public sealed class WorkspaceHostTests(ITestOutputHelper output)
                 Pump();
                 Assert.Equal(theme, form.Backend.Read().Theme);
                 CaptureWindow(form, theme.ToLowerInvariant());
+                CheckDialogs(form, theme);
                 preferences.SetThumbnailMenuOrder(ThumbnailMenuActions.Normalize(["skip-cycling"]));
                 Pump();
                 Assert.Equal("skip-cycling", EveOPreview.View.CustomControl.NativeMenuTheme.ThumbnailMenuOrder[0]);
@@ -95,12 +93,12 @@ public sealed class WorkspaceHostTests(ITestOutputHelper output)
                 preferences.SetThumbnailMenuTheme(ThumbnailMenuThemes.FollowApp);
                 workspace.Navigate("FpsAudio");
                 Pump();
-                Assert.True(host.Visible);
+                Assert.True(form.IsVisible);
                 if (theme == "Legacy")
                 {
-                    Assert.Equal(new System.Drawing.Size(460, 417), form.ClientSize);
+                    Assert.Equal(new Avalonia.Size(460, 417), form.ClientSize);
                     Assert.Equal(460, workspace.Bounds.Width);
-                    Assert.False(form.MaximizeBox || form.MinimizeBox);
+                    Assert.False(form.CanMaximize || form.CanMinimize);
                 }
                 else Assert.True(workspace.Bounds.Width > 700);
                 workspace.Navigate("About");
@@ -121,7 +119,7 @@ public sealed class WorkspaceHostTests(ITestOutputHelper output)
                 Click(workspace, "close-cycle-order"); Pump();
                 Assert.Equal(originalState, form.WindowState);
                 Assert.Equal(originalBounds, form.Bounds);
-                if (theme == "Legacy") Assert.False(form.MaximizeBox || form.MinimizeBox);
+                if (theme == "Legacy") Assert.False(form.CanMaximize || form.CanMinimize);
             }
             Assert.True(form.Backend.ExecuteAsync(new WorkspaceCommand("theme", Value: "Dark")).GetAwaiter().GetResult().Success);
             Pump();
@@ -131,13 +129,13 @@ public sealed class WorkspaceHostTests(ITestOutputHelper output)
             Pump();
             form.Hide();
             Pump();
-            Assert.False(form.Visible);
-            ((Form)form).Show();
+            Assert.False(form.IsVisible);
+            form.Show();
             Pump();
-            Assert.True(form.Visible && host.Visible);
+            Assert.True(form.IsVisible && workspace.IsEffectivelyVisible);
 
             form.Activate();
-            host.Focus();
+            workspace.Focus();
             var editor = workspace.GetVisualDescendants().OfType<TextBox>().Single(control => control.Name == "setting-FpsFocused");
             Assert.True(editor.Focus(), "The workspace editor must actually receive focus before the inactive-refresh regression check.");
             Pump();
@@ -160,7 +158,7 @@ public sealed class WorkspaceHostTests(ITestOutputHelper output)
             }
 
             form.Activate();
-            host.Focus();
+            workspace.Focus();
             editor = workspace.GetVisualDescendants().OfType<TextBox>().Single(control => control.Name == "setting-FpsFocused");
             editor.Text = "165";
             Pump();
@@ -177,7 +175,7 @@ public sealed class WorkspaceHostTests(ITestOutputHelper output)
             Pump();
             Click(workspace, "accept-confirmation");
             Assert.True(form.IsDisposed);
-            Console.WriteLine("PASS: real WinForms/Avalonia host on a private desktop; themes, navigation, hide/show, nonactivating refresh, draft close cancel/discard and disposal.");
+            Console.WriteLine("PASS: real Avalonia host on a private desktop; themes, navigation, hide/show, nonactivating refresh, draft close cancel/discard and disposal.");
         }
         finally { if (File.Exists(preferencesPath)) File.Delete(preferencesPath); }
     }
@@ -190,106 +188,137 @@ public sealed class WorkspaceHostTests(ITestOutputHelper output)
         Pump();
     }
 
-    private static void CheckDpiChanges(WorkspaceForm form, WinFormsAvaloniaControlHost host,
-        WorkspaceView workspace, ApplicationPreferences preferences)
+    private static void CheckDialogs(WorkspaceWindow owner, string theme)
     {
-        var root = TopLevel.GetTopLevel(workspace)!;
-        var window = form.Handle;
-        var child = root.TryGetPlatformHandle()!.Handle;
-        workspace.Navigate("FpsAudio");
+        var originalFont = owner.TitleFontSettings;
+        float originalSize = originalFont.Size;
+        var fontCommand = owner.Backend.ExecuteAsync(new WorkspaceCommand("font-picker"));
         Pump();
-        var editor = workspace.GetVisualDescendants().OfType<TextBox>().Single(control => control.Name == "setting-FpsFocused");
-        editor.Text = "137";
-        Assert.True(editor.Focus());
+        var font = Assert.Single(owner.OwnedWindows);
+        Assert.IsType<Window>(font);
+        Assert.Equal(owner.ActualThemeVariant, font.ActualThemeVariant);
+        font.GetVisualDescendants().OfType<NumericUpDown>().Single(x => x.Name == "dialog-font-size").Value = 27.5m;
+        CaptureDialog(font, "font-" + theme);
+        font.GetVisualDescendants().OfType<Button>().Single(x => x.IsCancel).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        TestAvalonia.PumpUntil(() => fontCommand.IsCompleted);
+        Assert.True(fontCommand.GetAwaiter().GetResult().WasCancelled);
+        Assert.Same(originalFont, owner.TitleFontSettings);
+        Assert.Equal(originalSize, owner.TitleFontSettings.Size);
 
-        foreach (var screen in System.Windows.Forms.Screen.AllScreens)
+        fontCommand = owner.Backend.ExecuteAsync(new WorkspaceCommand("font-picker")); Pump();
+        font = Assert.Single(owner.OwnedWindows);
+        font.GetVisualDescendants().OfType<NumericUpDown>().Single(x => x.Name == "dialog-font-size").Value = 16.5m;
+        font.GetVisualDescendants().OfType<Button>().Single(x => x.IsDefault).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        TestAvalonia.PumpUntil(() => fontCommand.IsCompleted);
+        Assert.True(fontCommand.GetAwaiter().GetResult().Success);
+        Assert.Equal(16.5f, owner.TitleFontSettings.Size);
+        owner.TitleFontSettings.Size = originalSize;
+
+        var initialColor = owner.ActiveClientHighlightColor;
+        var colorCommand = owner.Backend.ExecuteAsync(new WorkspaceCommand("color-picker", Target: "ActiveClientHighlightColor")); Pump();
+        var color = Assert.Single(owner.OwnedWindows);
+        color.GetVisualDescendants().OfType<ColorView>().Single(x => x.Name == "dialog-color").Color = Avalonia.Media.Colors.Cyan;
+        CaptureDialog(color, "color-" + theme);
+        color.Close(); TestAvalonia.PumpUntil(() => colorCommand.IsCompleted);
+        Assert.Equal(initialColor, owner.ActiveClientHighlightColor);
+        Assert.True(colorCommand.GetAwaiter().GetResult().WasCancelled);
+    }
+
+    private static void CaptureDialog(Window dialog, string name)
+    {
+        Pump();
+        var size = PixelSize.FromSize(dialog.ClientSize, dialog.RenderScaling);
+        using var bitmap = new Avalonia.Media.Imaging.RenderTargetBitmap(size, new Vector(96 * dialog.RenderScaling, 96 * dialog.RenderScaling));
+        bitmap.Render(dialog);
+        bitmap.Save(Path.Combine(AppContext.BaseDirectory, "workspace-dialog-" + name.ToLowerInvariant() + ".png"));
+    }
+
+    private static void CheckDpiChanges(WorkspaceWindow form, WorkspaceView workspace, ApplicationPreferences preferences)
+    {
+        var window = form.TryGetPlatformHandle()!.Handle;
+        workspace.Navigate("FpsAudio"); Pump();
+        var editor = workspace.GetVisualDescendants().OfType<TextBox>().Single(control => control.Name == "setting-FpsFocused");
+        editor.Text = "137"; Assert.True(editor.Focus());
+        foreach (var screen in form.Screens.All)
         {
-            form.Location = new System.Drawing.Point(screen.WorkingArea.Left + 40, screen.WorkingArea.Top + 40);
-            Pump();
-            Assert.Equal(form.DeviceDpi / 96.0, root.RenderScaling);
-            Console.WriteLine($"Native monitor {screen.DeviceName}: DPI {form.DeviceDpi}, render scale {root.RenderScaling}.");
+            form.Position = new PixelPoint(screen.WorkingArea.X + 40, screen.WorkingArea.Y + 40); Pump();
+            Console.WriteLine($"Native monitor {screen.DisplayName}: render scale {form.RenderScaling}.");
         }
         ChangeDpi(form, 96);
-
         foreach (int dpi in new[] { 120, 144, 192, 96, 144, 96 })
         {
             ChangeDpi(form, dpi);
-            Assert.Equal(dpi / 96.0, root.RenderScaling);
-            Assert.InRange(Math.Abs(workspace.Bounds.Width - host.ClientSize.Width / root.RenderScaling), 0, 1);
-            Assert.InRange(Math.Abs(workspace.Bounds.Height - host.ClientSize.Height / root.RenderScaling), 0, 1);
-            Assert.Equal(window, form.Handle);
-            Assert.Equal(child, root.TryGetPlatformHandle()!.Handle);
-            Assert.Same(workspace, host.Content);
-            Assert.Equal("137", editor.Text);
-            Assert.True(editor.IsFocused);
+            Assert.Equal(dpi / 96.0, form.RenderScaling);
+            Assert.InRange(Math.Abs(workspace.Bounds.Width - form.ClientSize.Width), 0, 1);
+            Assert.InRange(Math.Abs(workspace.Bounds.Height - form.ClientSize.Height), 0, 1);
+            Assert.Equal(window, form.TryGetPlatformHandle()!.Handle);
+            Assert.Same(workspace, form.Content);
+            Assert.Equal("137", editor.Text); Assert.True(editor.IsFocused);
         }
-
-        workspace.Navigate("Previews");
-        Pump();
+        workspace.Navigate("Previews"); Pump();
         var image = workspace.GetVisualDescendants().OfType<Image>().Single(control => control.Name == "title-preview-image");
         var bitmap = Assert.IsType<Avalonia.Media.Imaging.Bitmap>(image.Source);
         foreach (int dpi in new[] { 144, 192, 96 })
         {
             ChangeDpi(form, dpi);
-            Assert.Same(bitmap, image.Source); // Reuse the client still and rendered title.
-            Assert.InRange(Math.Abs(image.Width * root.RenderScaling - bitmap.PixelSize.Width), 0, 0.01);
-            Assert.InRange(Math.Abs(image.Height * root.RenderScaling - bitmap.PixelSize.Height), 0, 0.01);
+            Assert.Same(bitmap, image.Source);
+            Assert.InRange(Math.Abs(image.Width * form.RenderScaling - bitmap.PixelSize.Width), 0, 0.01);
+            Assert.InRange(Math.Abs(image.Height * form.RenderScaling - bitmap.PixelSize.Height), 0, 0.01);
         }
-
         var modernSize = form.ClientSize;
-        preferences.SetTheme("Legacy");
-        Pump();
+        preferences.SetTheme("Legacy"); Pump();
         foreach (int dpi in new[] { 144, 192, 96, 120 })
         {
             ChangeDpi(form, dpi);
-            Assert.Equal(dpi / 96.0, root.RenderScaling);
-            Assert.Equal((int)Math.Round(460 * dpi / 96.0), form.ClientSize.Width);
-            Assert.Equal((int)Math.Round(417 * dpi / 96.0), form.ClientSize.Height);
-            // Synthetic DPI messages cannot change the OS nonclient metrics; check
-            // logical layout against the actual child's pixel bounds, as above.
-            Assert.InRange(Math.Abs(workspace.Bounds.Width - host.ClientSize.Width / root.RenderScaling), 0, 1);
-            Assert.InRange(Math.Abs(workspace.Bounds.Height - host.ClientSize.Height / root.RenderScaling), 0, 1);
+            Assert.Equal(dpi / 96.0, form.RenderScaling);
+            Assert.InRange(Math.Abs(form.ClientSize.Width - 460), 0, 1);
+            Assert.InRange(Math.Abs(form.ClientSize.Height - 417), 0, 1);
         }
-        preferences.SetTheme("Dark");
-        Pump();
-        Assert.InRange(Math.Abs(form.ClientSize.Width - modernSize.Width * 1.25), 0, 1);
-        Assert.InRange(Math.Abs(form.ClientSize.Height - modernSize.Height * 1.25), 0, 1);
+        preferences.SetTheme("Dark"); Pump();
+        Assert.InRange(Math.Abs(form.ClientSize.Width - modernSize.Width), 0, 1);
+        Assert.InRange(Math.Abs(form.ClientSize.Height - modernSize.Height), 0, 1);
         ChangeDpi(form, 96);
         Assert.InRange(Math.Abs(form.ClientSize.Width - modernSize.Width), 0, 2);
-        Console.WriteLine("Synthetic 100/125/150/200% DPI transitions retained the embedded window, layout, focus and draft; Legacy restores modern size at the current DPI.");
+        Console.WriteLine("Synthetic 100/125/150/200% DPI transitions retain native window, layout, focus and draft; modern size stays in logical units across Legacy.");
     }
 
-    private static void ChangeDpi(Form form, int dpi)
+    private static void ChangeDpi(WorkspaceWindow form, int dpi)
     {
-        // Exercise the production WM_DPICHANGED path without changing anyone's display settings.
-        // This does not emulate Windows' monitor selection or nonclient metrics.
-        double factor = dpi / (double)form.DeviceDpi;
-        var bounds = form.Bounds;
-        var suggested = new DpiRectangle { Left = bounds.Left, Top = bounds.Top,
-            Right = bounds.Left + (int)Math.Round(bounds.Width * factor),
-            Bottom = bounds.Top + (int)Math.Round(bounds.Height * factor) };
-        SendMessage(form.Handle, 0x02E0, new IntPtr(dpi | (dpi << 16)), ref suggested);
-        Pump();
-        var host = (WinFormsAvaloniaControlHost)form.Controls[0];
-        var root = TopLevel.GetTopLevel(host.Content)!;
-        Console.WriteLine($"DPI {dpi}: form {form.ClientSize}, minimum {form.MinimumSize}, host {host.ClientSize}, root {root.ClientSize}, workspace {host.Content.Bounds}, scale {root.RenderScaling}");
-        Assert.Equal(dpi, form.DeviceDpi);
+        // Synthetic messages do not emulate Windows monitor selection/nonclient metrics.
+        var handle = form.TryGetPlatformHandle()!.Handle;
+        GetWindowRect(handle, out var outer);
+        GetClientRect(handle, out var client);
+        var width = (int)Math.Round(form.ClientSize.Width * dpi / 96.0);
+        var height = (int)Math.Round(form.ClientSize.Height * dpi / 96.0);
+        var suggested = new DpiRectangle { Left = outer.Left, Top = outer.Top,
+            Right = outer.Left + width + (outer.Right - outer.Left - client.Right),
+            Bottom = outer.Top + height + (outer.Bottom - outer.Top - client.Bottom) };
+        SendMessage(handle, 0x02E0, new IntPtr(dpi | (dpi << 16)), ref suggested); Pump();
+        GetWindowRect(handle, out outer); GetClientRect(handle, out client);
+        Console.WriteLine($"DPI {dpi}: requested outer {suggested}, actual outer {outer}, client pixels {client}, logical {form.ClientSize}, scale {form.RenderScaling}");
+        Assert.Equal(dpi / 96.0, form.RenderScaling);
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct DpiRectangle { public int Left, Top, Right, Bottom; }
-
+    private struct DpiRectangle
+    {
+        public int Left, Top, Right, Bottom;
+        public override readonly string ToString() => $"({Left},{Top}) {Right - Left}x{Bottom - Top}";
+    }
     [DllImport("user32.dll", EntryPoint = "SendMessageW")]
     private static extern IntPtr SendMessage(IntPtr window, int message, IntPtr parameter, ref DpiRectangle rectangle);
+    [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr window, out DpiRectangle rectangle);
+    [DllImport("user32.dll")] private static extern bool GetClientRect(IntPtr window, out DpiRectangle rectangle);
 
-    private static void CaptureWindow(WorkspaceForm form, string name)
+    private static void CaptureWindow(WorkspaceWindow form, string name)
     {
         // Window-only visual evidence includes the native caption; never capture the desktop.
-        using var bitmap = new System.Drawing.Bitmap(form.Width, form.Height);
+        GetWindowRect(form.TryGetPlatformHandle()!.Handle, out var outer);
+        using var bitmap = new System.Drawing.Bitmap(outer.Right - outer.Left, outer.Bottom - outer.Top);
         using (var graphics = System.Drawing.Graphics.FromImage(bitmap))
         {
             var dc = graphics.GetHdc();
-            try { Assert.True(PrintWindow(form.Handle, dc, 2), "The workspace must render its own window for visual review."); }
+            try { Assert.True(PrintWindow(form.TryGetPlatformHandle()!.Handle, dc, 2), "The workspace must render its own window for visual review."); }
             finally { graphics.ReleaseHdc(dc); }
         }
         bitmap.Save(Path.Combine(AppContext.BaseDirectory, "workspace-chrome-" + name + ".png"));
@@ -297,7 +326,7 @@ public sealed class WorkspaceHostTests(ITestOutputHelper output)
         {
             var expected = System.Drawing.ColorTranslator.FromHtml(WorkspaceTheme.Get(form.Backend.Read().Theme).Sidebar);
             // Sample empty caption space, away from the title text and native caption buttons.
-            Assert.Equal(expected.ToArgb(), bitmap.GetPixel(bitmap.Width / 2, (int)Math.Round(10 * form.DeviceDpi / 96.0)).ToArgb());
+            Assert.Equal(expected.ToArgb(), bitmap.GetPixel(bitmap.Width / 2, (int)Math.Round(10 * form.RenderScaling)).ToArgb());
         }
     }
 
@@ -309,8 +338,7 @@ public sealed class WorkspaceHostTests(ITestOutputHelper output)
     {
         for (int i = 0; i < 4; i++)
         {
-            Application.DoEvents();
-            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+            TestAvalonia.Pump();
         }
     }
 }

@@ -17,6 +17,7 @@
 using EveOPreview.View;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace EveOPreview.Services
 {
@@ -24,6 +25,9 @@ namespace EveOPreview.Services
     {
         void Start();
         void Stop();
+        // UI work stops before this returns. Confirmed session shutdown may finish
+        // native input cleanup asynchronously within the presenter's wait budget.
+        Task StopAsync(bool sessionEnding) { Stop(); return Task.CompletedTask; }
 
         void UpdateThumbnailsSize();
         void ApplyRuntimeSettings();

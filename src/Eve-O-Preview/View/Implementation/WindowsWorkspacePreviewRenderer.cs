@@ -6,9 +6,7 @@ using System.Drawing.Text;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Windows.Forms;
 using EveOPreview.UI;
-using EveOPreview.View.CustomControl;
 using EveOPreview.Preview;
 using EveOPreview.View.Rendering;
 
@@ -85,7 +83,6 @@ public sealed class WindowsWorkspacePreviewRenderer : IWorkspacePreviewRenderer
                 using var font = new Font(Value("TitleFontName", "Arial"), (float)Number("TitleFontSize", "14.25", 1, 200), style);
                 if (!font.FontFamily.Name.Equals(Value("TitleFontName", "Arial"), StringComparison.OrdinalIgnoreCase))
                     throw new ArgumentException("Choose an installed font to preview it.");
-                if (native || Enabled("ShowCurrentSolarSystem", false))
                 {
                     OverlaySceneRasterizer.Draw(graphics, new OverlayScene
                     {
@@ -108,26 +105,6 @@ public sealed class WindowsWorkspacePreviewRenderer : IWorkspacePreviewRenderer
                         MarkerColor = unchecked((uint)ColorValue("CycleSkipIndicatorColor", "#FF0000").ToArgb())
                     }, new PreviewSize(width, height));
                 }
-                else
-                {
-                    using var label = new PreviewLabel
-                    {
-                        AutoSize = true,
-                        Font = font,
-                        Text = request.Title.Replace("EVE - ", ""),
-                        ForeColor = ColorValue("TitleFontForeColor", "#FFA500"),
-                        OutlineColor = ColorValue("TitleFontOutlineColor", "#000000"),
-                        OutlineWidth = (float)Number("TitleFontOutlineWidth", "3", 0, 20)
-                    };
-                    label.SetTitleVisible(Enabled("ShowThumbnailOverlays", true));
-                    label.SetCycleSkipIndicator(request.CycleSkipped, Value("CycleSkipIndicatorStyle", "Circle with slash"), ColorValue("CycleSkipIndicatorColor", "#FF0000"));
-                    label.Size = label.GetPreferredSize(Size.Empty);
-                    int left = (int)Number("TitleFontOffsetLeft", "10", -10000, 10000);
-                    int top = (int)Number("TitleFontOffsetTop", "5", -10000, 10000);
-                    graphics.TranslateTransform(left, top);
-                    graphics.SetClip(label.ClientRectangle, System.Drawing.Drawing2D.CombineMode.Intersect);
-                    label.PaintTitle(graphics);
-                }
             }
             if (overlayBorder > 0)
             {
@@ -145,8 +122,4 @@ public sealed class WindowsWorkspacePreviewRenderer : IWorkspacePreviewRenderer
         return new(stream.ToArray(), width, height);
     }
 
-    private sealed class PreviewLabel : OutlinedLabel
-    {
-        public void PaintTitle(Graphics graphics) => base.OnPaint(new PaintEventArgs(graphics, ClientRectangle));
-    }
 }

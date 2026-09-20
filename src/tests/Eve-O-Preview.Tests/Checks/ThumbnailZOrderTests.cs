@@ -6,11 +6,18 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
+using Avalonia;
+using Point = System.Drawing.Point;
+using Size = System.Drawing.Size;
 using EveOPreview.Configuration;
 using EveOPreview.Services;
 using EveOPreview.Services.Interface;
 using EveOPreview.View;
-using Gma.System.MouseKeyHook;
+using EveOPreview.Input;
+using ContextMenu = Avalonia.Controls.ContextMenu;
+using MenuItem = Avalonia.Controls.MenuItem;
+using Separator = Avalonia.Controls.Separator;
+using Avalonia.VisualTree;
 using MediatR;
 using Serilog;
 using EveOPreview.Tests.Infrastructure;
@@ -61,7 +68,7 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
             }
             return Stub.Default(method.ReturnType);
         });
-        var keyboard = Stub.Create<IKeyboardMouseEvents>();
+        var keyboard = Stub.Create<IGlobalPointerInput>();
         var sentMessages = new List<object>();
         var mediator = Stub.Create<IMediator>((method, args) =>
         {
@@ -143,29 +150,29 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
                     config.ThumbnailZoomFactor = 2;
                     config.ThumbnailOpacity = .6;
                     a.Location = new Point(200, 200);
-                    var hoverMenu = (ContextMenuStrip)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(a);
+                    var hoverMenu = (ContextMenu)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(a);
                     var baseBounds = a.Bounds;
                     typeof(ThumbnailView).GetMethod("MouseEnter_Handler", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(a, [a, EventArgs.Empty]);
                     var hoverBounds = a.Bounds;
                     Check(hoverBounds.Size != baseBounds.Size && a.Opacity == 1, "fixture must enter a zoomed, opaque preview");
                     typeof(ThumbnailView).GetMethod("MouseDownEventHandler", BindingFlags.NonPublic | BindingFlags.Instance)
-                        .Invoke(a, [new MouseEventArgs(MouseButtons.Right, 1, 100, 60, 0), Keys.None]);
+                        .Invoke(a, [new GlobalPointerEventArgs(PointerButtons.Right, PointerButtons.Right, new Point(100, 60), ShortcutKeys.None), ShortcutKeys.None]);
                     typeof(ThumbnailView).GetMethod("MouseLeave_Handler", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(a, [a, EventArgs.Empty]);
-                    for (int tick = 0; tick < 5; tick++) { Application.DoEvents(); Refresh(); Thread.Sleep(100); }
-                    Check(hoverMenu.Visible, "first-open menu must survive hover leave and refresh ticks");
+                    for (int tick = 0; tick < 5; tick++) { TestAvalonia.Pump(); Refresh(); Thread.Sleep(100); }
+                    Check(hoverMenu.IsOpen, "first-open menu must survive hover leave and refresh ticks");
                     Check(a.Bounds == hoverBounds && a.Opacity == 1, "entering the menu must retain hover geometry and opacity");
                     config.HideThumbnailsOnLostFocus = true;
-                    foreground = hoverMenu.Handle;
+                    foreground = AvaloniaMenuTest.Handle(hoverMenu);
                     Refresh();
-                    Check(a.IsActive && hoverMenu.Visible, "the open menu must count as part of its thumbnail for focus-based hiding");
-                    Check(views.All(v => IsAbove(hoverMenu.Handle, v.Overlay.Handle)), "refresh must not raise thumbnail overlays above the open menu");
-                    hoverMenu.Close(); Application.DoEvents();
+                    Check(a.IsActive && hoverMenu.IsOpen, "the open menu must count as part of its thumbnail for focus-based hiding");
+                    Check(views.All(v => IsAbove(AvaloniaMenuTest.Handle(hoverMenu), v.Overlay.Handle)), "refresh must not raise thumbnail overlays above the open menu");
+                    hoverMenu.Close(); TestAvalonia.Pump();
                     Check(a.Bounds == baseBounds && Math.Abs(a.Opacity - .6) < .01, "dismissing the menu must release the deferred hover effect");
-                    hoverMenu.Show(a, new Point(70, 50)); a.Hide(); Application.DoEvents();
-                    Check(!hoverMenu.Visible && !a.IsContextMenuOpen, "hiding a thumbnail must close its menu and release menu state");
+                    AvaloniaMenuTest.Open(hoverMenu, a); a.Hide(); TestAvalonia.Pump();
+                    Check(!hoverMenu.IsOpen && !a.IsContextMenuOpen, "hiding a thumbnail must close its menu and release menu state");
                     break;
                 case "ThumbnailMenuOrdering":
-                    var quickMenu = (ContextMenuStrip)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(a);
+                    var quickMenu = (ContextMenu)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(a);
                     a.Location = new Point(Screen.PrimaryScreen.WorkingArea.Left + 200, Screen.PrimaryScreen.WorkingArea.Top + 200);
                     foreach (var theme in new[] { "Light", "Dark", "Legacy" })
                     {
@@ -181,21 +188,20 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
                                 var clickPosition = new Point(100, 60);
                                 var screenPosition = a.PointToScreen(clickPosition);
                                 typeof(ThumbnailView).GetMethod("MouseDownEventHandler", BindingFlags.NonPublic | BindingFlags.Instance)
-                                    .Invoke(a, [new MouseEventArgs(MouseButtons.Right, 1, clickPosition.X, clickPosition.Y, 0), Keys.None]);
-                                Application.DoEvents();
-                                var menuPosition = quickMenu.PointToClient(screenPosition);
-                                Check(quickMenu.Visible, "first right-click opens the thumbnail menu");
-                                Check(quickMenu.Items[0].Name == firstItem, "the configured action must be first in every theme");
-                                Check(quickMenu.GetItemAt(menuPosition)?.Name == firstItem, "the configured action must be under the original pointer position");
-                                Check(quickMenu.Items.OfType<ToolStripMenuItem>().Count() == 5, "reordering must retain all five actions");
-                                Check(quickMenu.Items.OfType<ToolStripSeparator>().Count() == (skipFirst ? 0 : 2), "only explicitly configured dividers may appear");
+                                    .Invoke(a, [new GlobalPointerEventArgs(PointerButtons.Right, PointerButtons.Right, clickPosition, ShortcutKeys.None), ShortcutKeys.None]);
+                                TestAvalonia.Pump();
+                                Check(quickMenu.IsOpen, "first right-click opens the thumbnail menu");
+                                Check(((Avalonia.Controls.Control)quickMenu.Items[0]).Name == firstItem, "the configured action must be first in every theme");
+                                var hitItem = AvaloniaMenuTest.AtScreen(quickMenu, screenPosition);
+                                var firstControl = (Avalonia.Controls.Control)quickMenu.Items[0];
+                                Check(hitItem?.Name == firstItem, $"the configured action must be under the original pointer position (expected {firstItem}, hit {hitItem?.Name ?? "none"}, pointer {screenPosition}, scale {a.RenderScaling}, popup {quickMenu.PointToScreen(default)}, first {firstControl.PointToScreen(default)} size {firstControl.Bounds.Size})");
+                                Check(quickMenu.Items.OfType<MenuItem>().Count() == 5, "reordering must retain all five actions");
+                                Check(quickMenu.Items.OfType<Separator>().Count() == (skipFirst ? 0 : 2), "only explicitly configured dividers may appear");
                                 if (!skipFirst)
-                                    Check(quickMenu.Items[2].Name == "divider:minimize" && quickMenu.Items[4].Name == "divider:skip", "default dividers must follow Minimize All and Skip");
-                                if (skipFirst) Check(quickMenu.Items[0].Text.StartsWith(resuming ? "Resume" : "Skip"), "the first action must describe its current skip state");
+                                    Check(((Avalonia.Controls.Control)quickMenu.Items[2]).Name == "divider:minimize" && ((Avalonia.Controls.Control)quickMenu.Items[4]).Name == "divider:skip", "default dividers must follow Minimize All and Skip");
+                                if (skipFirst) Check(((MenuItem)quickMenu.Items[0]).Header.ToString().StartsWith(resuming ? "Resume" : "Skip"), "the first action must describe its current skip state");
                                 int sentBefore = sentMessages.Count;
-                                var secondClick = new MouseEventArgs(MouseButtons.Right, 1, menuPosition.X, menuPosition.Y, 0);
-                                typeof(ToolStrip).GetMethod("OnMouseDown", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(quickMenu, [secondClick]);
-                                typeof(ToolStrip).GetMethod("OnMouseUp", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(quickMenu, [secondClick]);
+                                AvaloniaMenuTest.RightClick(quickMenu, screenPosition);
                                 Check(sentMessages.Count == sentBefore + 1 && sentMessages.Last().GetType().Name == (skipFirst ? "SetClientCycleSkipped" : "MinimizeClient"),
                                     "the second right-click must issue only the configured action");
                                 Check(config.IsClientCycleSkipped(a.Title) == (skipFirst && !resuming), "skip-first must toggle while minimize leaves cycling unchanged");
@@ -209,44 +215,47 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
                     foreach (var palette in EveOPreview.UI.ThumbnailMenuThemes.All)
                     {
                         EveOPreview.View.CustomControl.NativeMenuTheme.ThumbnailTheme = palette.Id;
-                        quickMenu.Show(a, new Point(70, 50)); Application.DoEvents();
-                        Check(quickMenu.Items[1].Name == placedDivider && quickMenu.Items.OfType<ToolStripSeparator>().Count() == 1,
+                        AvaloniaMenuTest.Open(quickMenu, a); TestAvalonia.Pump();
+                        Check(((Avalonia.Controls.Control)quickMenu.Items[1]).Name == placedDivider && quickMenu.Items.OfType<Separator>().Count() == 1,
                             "theme changes must preserve explicit divider placement");
                         if (!SystemInformation.HighContrast)
                         {
-                            Check(quickMenu.BackColor == ColorTranslator.FromHtml(palette.Background) && quickMenu.ForeColor == ColorTranslator.FromHtml(palette.Foreground),
+                            Check(((Avalonia.Media.ISolidColorBrush)quickMenu.Background).Color == Avalonia.Media.Color.Parse(palette.Background) && ((Avalonia.Media.ISolidColorBrush)quickMenu.Foreground).Color == Avalonia.Media.Color.Parse(palette.Foreground),
                                 "native menu uses the selected " + palette.Name + " palette");
-                            using var bitmap = new Bitmap(quickMenu.Width, quickMenu.Height);
-                            quickMenu.DrawToBitmap(bitmap, new Rectangle(Point.Empty, bitmap.Size));
                             string directory = System.IO.Path.Combine(AppContext.BaseDirectory, "native-menu-themes");
                             System.IO.Directory.CreateDirectory(directory);
-                            bitmap.Save(System.IO.Path.Combine(directory, palette.Id + ".png"));
+                            AvaloniaMenuTest.Capture(quickMenu, System.IO.Path.Combine(directory, palette.Id + ".png"));
                         }
                         quickMenu.Close();
                     }
+                    AvaloniaMenuTest.Open(quickMenu, a);
+                    VerifyHighContrastMenu(quickMenu);
+                    quickMenu.Close();
                     a.Refresh(false);
-                    foreach (Control source in a.Overlay.Controls)
+                    foreach (var local in new[] { new Point(4, 4), new Point(35, 27), new Point(100, 60) })
                     {
-                        if (source.Name == "OverlayLabel") source.Location = new Point(31, 23);
-                        var local = new Point(4, 4);
-                        var clicked = source.PointToScreen(local);
-                        typeof(Control).GetMethod("OnMouseUp", BindingFlags.NonPublic | BindingFlags.Instance)
-                            .Invoke(source, [new MouseEventArgs(MouseButtons.Right, 1, local.X, local.Y, 0)]);
-                        Application.DoEvents();
-                        Check(quickMenu.GetItemAt(quickMenu.PointToClient(clicked))?.Name == "menuCycleSkip",
-                            "right-clicking " + source.Name + " must place the first action under the original pointer");
+                        var clicked = a.Overlay.PointToScreen(local);
+                        var packed = (IntPtr)((clicked.Y << 16) | (clicked.X & 0xffff));
+                        Check(AvaloniaMenuTest.SendMessage(a.Overlay.Handle, 0x0084, IntPtr.Zero, packed) == (IntPtr)(-1),
+                            "title/image overlay is input-transparent at its actual native coordinates");
+                        typeof(ThumbnailView).GetMethod("MouseDownEventHandler", BindingFlags.NonPublic | BindingFlags.Instance)
+                            .Invoke(a, [new GlobalPointerEventArgs(PointerButtons.Right, PointerButtons.Right, a.PointToClient(clicked), ShortcutKeys.None), ShortcutKeys.None]);
+                        TestAvalonia.Pump();
+                        Check(AvaloniaMenuTest.AtScreen(quickMenu, clicked)?.Name == "menuCycleSkip",
+                            "right-clicking through the overlay places the first action under the original pointer");
                         quickMenu.Close();
                     }
                     break;
                 case "CycleSkipping":
                     var order = new SortedDictionary<int, string> { [3] = a.Title, [8] = b.Title, [20] = "EVE - Offline", [50] = c.Title };
                     var otherOrder = new SortedDictionary<int, string> { [1] = c.Title, [2] = b.Title, [3] = a.Title };
-                    var menu = (ContextMenuStrip)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(b);
-                    var skipItem = (ToolStripMenuItem)menu.Items["menuCycleSkip"];
-                    skipItem.PerformClick();
+                    var menu = (ContextMenu)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(b);
+                    var skipItem = menu.Items.OfType<MenuItem>().Single(item => item.Name == "menuCycleSkip");
+                    skipItem.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
                     Check(config.IsClientCycleSkipped(b.Title), "thumbnail context menu skips the character");
-                    typeof(ContextMenuStrip).GetMethod("OnOpening", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(menu, [new System.ComponentModel.CancelEventArgs()]);
-                    Check(skipItem.Text == "Resume cycling this character", "context menu reflects global skip state");
+                    AvaloniaMenuTest.Open(menu, b);
+                    Check(skipItem.Header?.ToString() == "Resume cycling this character", "context menu reflects global skip state");
+                    menu.Close();
                     string Next(bool forward, string title, SortedDictionary<int, string> sequence) => (string)manager.GetType()
                         .GetMethod("FindNextClientInCycleGroup", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(manager, [forward, title, sequence]);
                     Check(Next(true, a.Title, order) == c.Title, "forward skips disabled and offline members");
@@ -264,7 +273,7 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
                     Check(Next(true, b.Title, order) == null, "all-skipped order has no destination");
                     manager.GetType().GetMethod("CycleNextClient").Invoke(manager, [true, order]);
                     Check(manager.GetActiveClient().Id == b.Id, "all skipped leaves the active client unchanged");
-                    skipItem.PerformClick();
+                    skipItem.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
                     Check(!config.IsClientCycleSkipped(b.Title), "thumbnail menu resumes the character");
                     Check(Next(true, a.Title, order) == b.Title && Next(true, b.Title, order) == b.Title, "one eligible character wraps safely");
                     Check(order.Count == 4, "temporary skips never remove saved order entries");
@@ -424,6 +433,45 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
         Check(expected.Zip(expected.Skip(1), IsAbove).All(result => result),
             "preview/overlay stack: " + string.Join(", ", topToBottom.Select(v => v.Title)));
     }
+    private static void VerifyHighContrastMenu(ContextMenu menu)
+    {
+        var colors = new Dictionary<int, Avalonia.Media.Color>
+        {
+            [5] = Avalonia.Media.Colors.Black, [8] = Avalonia.Media.Colors.White,
+            [13] = Avalonia.Media.Colors.Navy, [14] = Avalonia.Media.Colors.Yellow,
+            [17] = Avalonia.Media.Colors.Silver
+        };
+        var item = menu.Items.OfType<MenuItem>().First();
+        var separator = menu.Items.OfType<Separator>().First();
+        var layout = item.GetVisualDescendants().OfType<Avalonia.Controls.Border>().Single(x => x.Name == "PART_LayoutRoot");
+        var header = item.GetVisualDescendants().OfType<Avalonia.Controls.Presenters.ContentPresenter>().Single(x => x.Name == "PART_HeaderPresenter");
+        static Avalonia.Media.Color ColorOf(Avalonia.Media.IBrush brush) => ((Avalonia.Media.ISolidColorBrush)brush).Color;
+        foreach (string theme in new[] { "Light", "Dark", "Legacy" })
+        {
+            EveOPreview.View.CustomControl.NativeMenuTheme.CurrentTheme = theme;
+            EveOPreview.View.CustomControl.NativeMenuTheme.Apply(menu, true, true, index => colors[index]);
+            item.IsSelected = false;
+            TestAvalonia.Pump();
+            Check(ColorOf(menu.Background) == colors[5] && ColorOf(header.Foreground) == colors[8],
+                "high contrast overrides the " + theme + " menu and its actual Fluent text presenter");
+            Check(ColorOf(separator.Background) == colors[8], "the actual Fluent separator consumes the contrast border resource");
+            item.IsSelected = true;
+            TestAvalonia.Pump();
+            Check(ColorOf(layout.Background) == colors[13] && ColorOf(header.Foreground) == colors[14],
+                "the actual selected Fluent menu item uses the system highlight pair");
+            item.IsSelected = false;
+            item.IsEnabled = false;
+            TestAvalonia.Pump();
+            Check(ColorOf(header.Foreground) == colors[17], "disabled Fluent menu text uses the system gray color");
+            item.IsEnabled = true;
+        }
+        EveOPreview.View.CustomControl.NativeMenuTheme.Apply(menu, true, false, _ => throw new Exception("Normal themes must not read contrast colors."));
+        TestAvalonia.Pump();
+        var palette = EveOPreview.UI.ThumbnailMenuThemes.Resolve(EveOPreview.View.CustomControl.NativeMenuTheme.ThumbnailTheme, "Legacy");
+        Check(ColorOf(menu.Background) == Avalonia.Media.Color.Parse(palette.Background) && ColorOf(header.Foreground) == Avalonia.Media.Color.Parse(palette.Foreground),
+            "leaving high contrast restores the selected menu palette without stale template colors");
+    }
+
     private static void Check(bool condition, string message)
     {
         Assert.True(condition, message);
@@ -435,9 +483,9 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
 
 internal sealed class Preview : ThumbnailView
 {
-    public Preview(IThumbnailConfiguration config, IWindowManager wm, IKeyboardMouseEvents keyboard, IMediator mediator = null)
+    public Preview(IThumbnailConfiguration config, IWindowManager wm, IGlobalPointerInput keyboard, IMediator mediator = null)
         : base(wm, config, null, mediator, keyboard) { }
-    public Form Overlay => (Form)typeof(ThumbnailView).GetField("_overlay", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(this);
+    public ThumbnailOverlay Overlay => (ThumbnailOverlay)typeof(ThumbnailView).GetField("_overlay", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(this);
     public Action<bool> Refreshing;
     protected override void RefreshThumbnail(bool forceRefresh) => Refreshing?.Invoke(forceRefresh);
     protected override void ResizeThumbnail(int width, int height, int top, int right, int bottom, int left) { }

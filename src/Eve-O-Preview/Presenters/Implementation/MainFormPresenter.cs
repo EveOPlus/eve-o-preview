@@ -97,8 +97,6 @@ namespace EveOPreview.Presenters
             this.View.DocumentationLinkActivated = this.OpenDocumentationLink;
             this.View.ApplicationExitRequested = this.ExitApplication;
             this.View.WindowsSessionEnding = this.EndWindowsSession;
-            this.View.GetClientNameFromInput = this.GetClientDescriptionFromInputBox;
-            this.View.CaptureNewHotkey = this.SendCaptureNewHotkeyRequest;
             this.View.FpsLimiterChanged = this.TriggerSetFpsLimiter;
             this.View.FpsLimiterEnabledChanged = this.TriggerSetFpsLimiterEnabled;
             this.View.AudioSettingsChanged = this.TriggerSetAudioSettings;
@@ -169,14 +167,6 @@ namespace EveOPreview.Presenters
             this.View.UpdateProfileList(notification.NewProfileLocations);
         }
 
-        private CaptureNewHotkeyResponse SendCaptureNewHotkeyRequest(string currentKey)
-        {
-            _logger.Verbose("MainFormPresenter.SendCaptureNewHotkeyRequest: Capturing hotkey. Current: {CurrentKey}", currentKey);
-            var response = _mediator.Send(new CaptureNewHotkey(currentKey, 10000)).ConfigureAwait(false).GetAwaiter().GetResult();
-            _logger.Verbose("MainFormPresenter.SendCaptureNewHotkeyRequest: Hotkey capture result: Valid={IsValid}, Captured={KeyString}", response.IsValid, response.KeyString);
-            return response;
-        }
-
         private void Activate()
         {
             _logger.Verbose("MainFormPresenter.Activate: Activating main form");
@@ -219,7 +209,7 @@ namespace EveOPreview.Presenters
                 _shutdownInProgress = true;
                 try
                 {
-                    // Cancel this close, let the FormClosing callback return, and keep
+                    // Cancel this close, let the Closing callback return, and keep
                     // pumping UI continuations while MediatR/native cleanup completes.
                     await Task.Yield();
                     if (_windowsSessionEnding) return;
@@ -248,7 +238,7 @@ namespace EveOPreview.Presenters
             _windowsSessionEnding = true;
             _shutdownCompleted = true;
             _shutdownInProgress = true;
-            // FormClosed means WM_ENDSESSION was confirmed. Windows may terminate
+            // The session callback means WM_ENDSESSION was confirmed. Windows may terminate
             // us when it returns: don't defer work to the UI pump or call Close.
             try
             {
@@ -466,21 +456,6 @@ namespace EveOPreview.Presenters
             this._suppressSizeNotifications = false;
         }
 
-        public string GetClientDescriptionFromInputBox()
-        {
-            _logger.Verbose("MainFormPresenter.GetClientDescriptionFromInputBox: Opening client selection dialog");
-            using var input = new ClientNameInputBox();
-            lock (_descriptionsCache)
-            {
-                input.LoadKnownClients(_descriptionsCache.Keys.ToList());
-            }
-
-            input.ShowDialog();
-
-            _logger.Verbose("MainFormPresenter.GetClientDescriptionFromInputBox: User selected {SelectedClient}", input.SelectedClientName ?? "(cancelled)");
-            return input.SelectedClientName;
-        }
-
         private void OpenDocumentationLink()
         {
             _logger.Verbose("MainFormPresenter.OpenDocumentationLink: Opening project documentation");
@@ -491,7 +466,9 @@ namespace EveOPreview.Presenters
 
         private string GetApplicationVersion()
         {
-            var version = System.Windows.Forms.Application.ProductVersion;
+            var version = typeof(MainFormPresenter).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+                .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion
+                ?? typeof(MainFormPresenter).Assembly.GetName().Version?.ToString() ?? "";
             _logger.Verbose("MainFormPresenter.GetApplicationVersion: {Version}", version);
             return version;
         }

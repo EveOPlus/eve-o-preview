@@ -18,7 +18,7 @@ using EveOPreview.Tests.Infrastructure;
 using EveOPreview.UI;
 using EveOPreview.View;
 using EveOPreview.View.Rendering;
-using Gma.System.MouseKeyHook;
+using EveOPreview.Input;
 using MediatR;
 using Serilog;
 using Xunit;
@@ -116,12 +116,12 @@ public sealed class CombatOverlayNativeTests(ITestOutputHelper output)
         preferences.SetCombatLogs(new() { FlashAnimation = DamageFlashAnimation.Blink, DefaultOverlay = new() { EventDurationSeconds = 1, Repairs = true } });
         var logs = new CombatLogService(preferences, null, logger, Path.Combine(root, "logs.db"), new(), () => DateTimeOffset.UtcNow);
         CommandResult Simulate(CombatSimulation request)
-        { var result = logs.SimulateLogEventAsync(request).GetAwaiter().GetResult(); Application.DoEvents(); return result; }
+        { var result = logs.SimulateLogEventAsync(request).GetAwaiter().GetResult(); TestAvalonia.Pump(); return result; }
         try
         {
             var assembly = typeof(ThumbnailView).Assembly;
             var config = (IThumbnailConfiguration)Activator.CreateInstance(assembly.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration")!);
-            var mediator = Stub.Create<IMediator>(); var keyboard = Stub.Create<IKeyboardMouseEvents>();
+            var mediator = Stub.Create<IMediator>(); var keyboard = Stub.Create<IGlobalPointerInput>();
             int registrations = 0, updates = 0;
             var windows = Stub.Create<IWindowManager>((method, args) =>
             {
@@ -136,7 +136,7 @@ public sealed class CombatOverlayNativeTests(ITestOutputHelper output)
             var manager = (IThumbnailManager)Activator.CreateInstance(assembly.GetType("EveOPreview.Services.ThumbnailManager")!,
                 mediator, config, Stub.Create<IProcessMonitor>(), windows, Stub.Create<IThumbnailViewFactory>(), Stub.Create<IHotkeyService>(),
                 Stub.Create<IHookService>(), Stub.Create<IGlobalEvents>(), logger, logs, preferences);
-            using var client = new Form { Text = "Simulated client", ClientSize = new(320, 180) }; client.Show(); client.Activate(); Application.DoEvents();
+            using var client = new Form { Text = "Simulated client", ClientSize = new(320, 180) }; client.Show(); client.Activate(); TestAvalonia.Pump();
             SetActiveWindow(client.Handle); nint foreground = GetForegroundWindow();
             using var view = (ThumbnailView)Activator.CreateInstance(assembly.GetType("EveOPreview.View.LiveThumbnailView")!, windows, config, manager, mediator, keyboard, logger);
             try
@@ -144,7 +144,7 @@ public sealed class CombatOverlayNativeTests(ITestOutputHelper output)
                 view.Id = 101; view.Title = "EVE - Simulation Pilot"; view.ThumbnailSize = new(384, 216); view.IsOverlayEnabled = true;
                 view.SetOverlayRenderer(OverlayRendererKind.NativeComposition);
                 var known = (Dictionary<nint, IThumbnailView>)manager.GetType().GetField("_thumbnailViews", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(manager)!;
-                known.Add(view.Id, view); view.Show(); view.SetTopMost(true); Application.DoEvents(); SetActiveWindow(client.Handle);
+                known.Add(view.Id, view); view.Show(); view.SetTopMost(true); TestAvalonia.Pump(); SetActiveWindow(client.Handle);
                 var overlay = (ThumbnailOverlay)typeof(ThumbnailView).GetField("_overlay", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(view)!;
                 OverlayScene Scene() => (OverlayScene)typeof(ThumbnailOverlay).GetProperty("Scene", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(overlay)!;
                 var renderer = (NativeCompositionOverlayRenderer)typeof(ThumbnailOverlay).GetField("_renderer", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(overlay)!;
@@ -156,7 +156,7 @@ public sealed class CombatOverlayNativeTests(ITestOutputHelper output)
                     // Service completion precedes its queued UI notification. Pump
                     // until the retained scene arrives, including under full-suite load.
                     var delivered = DateTimeOffset.UtcNow.AddSeconds(1);
-                    while (Scene().Stats.Count < 2 && DateTimeOffset.UtcNow < delivered) { Thread.Sleep(5); Application.DoEvents(); }
+                    while (Scene().Stats.Count < 2 && DateTimeOffset.UtcNow < delivered) { Thread.Sleep(5); TestAvalonia.Pump(); }
                     Assert.True(Scene().Stats.Count >= 2, "Incoming event did not reach the retained thumbnail scene.");
                     WaitForName(true);
                     var alpha = Scene().Stats[0].Suffix;
@@ -172,7 +172,7 @@ public sealed class CombatOverlayNativeTests(ITestOutputHelper output)
                     var deadline = DateTimeOffset.UtcNow.AddSeconds(1);
                     while (DateTimeOffset.UtcNow < deadline)
                     {
-                        Thread.Sleep(10); Application.DoEvents();
+                        Thread.Sleep(10); TestAvalonia.Pump();
                         if ((Scene().TitleColor is not null) == highlighted) return;
                     }
                     Assert.Fail("The native name must blink without another damage event.");
@@ -213,7 +213,7 @@ public sealed class CombatOverlayNativeTests(ITestOutputHelper output)
                 long uploads = renderer.SurfaceUploadCount, commits = renderer.CommitCount;
                 var same = Scene(); view.SetOverlayStats(same.Stats.ToArray(), same.StatsStyle);
                 Assert.Equal(uploads, renderer.SurfaceUploadCount); Assert.Equal(commits, renderer.CommitCount);
-                Thread.Sleep(1150); Application.DoEvents();
+                Thread.Sleep(1150); TestAvalonia.Pump();
                 Assert.Empty(Scene().Stats);
                 Assert.Null(Scene().TitleColor);
                 Assert.Equal(initialRegistrations, registrations); Assert.Equal(initialUpdates, updates);
@@ -222,7 +222,7 @@ public sealed class CombatOverlayNativeTests(ITestOutputHelper output)
                 using var second = (ThumbnailView)Activator.CreateInstance(assembly.GetType("EveOPreview.View.LiveThumbnailView")!, windows, config, manager, mediator, keyboard, logger);
                 second.Id = 102; second.Title = "EVE - Second Pilot"; second.ThumbnailSize = new(384, 216); second.IsOverlayEnabled = true;
                 second.SetOverlayRenderer(OverlayRendererKind.NativeComposition); known.Add(second.Id, second); second.Show(); second.SetTopMost(true);
-                Application.DoEvents(); SetActiveWindow(client.Handle);
+                TestAvalonia.Pump(); SetActiveWindow(client.Handle);
                 var secondOverlay = (ThumbnailOverlay)typeof(ThumbnailView).GetField("_overlay", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(second)!;
                 OverlayScene SecondScene() => (OverlayScene)typeof(ThumbnailOverlay).GetProperty("Scene", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(secondOverlay)!;
                 logs.CurrentSystems.Observe("Simulation Pilot", "Jita", DateTimeOffset.UtcNow);
@@ -234,51 +234,58 @@ public sealed class CombatOverlayNativeTests(ITestOutputHelper output)
                 Assert.Equal("Jita", Scene().Subtitle); Assert.Equal("Amarr", SecondScene().Subtitle);
                 Assert.True(Scene().SubtitleY > Scene().Font.OffsetY);
                 int firstEntryCount = logs.ReadLogs().RecentEntries.Count;
-                for (int i = 0; i < 20; i++) { Thread.Sleep(100); Application.DoEvents(); }
+                for (int i = 0; i < 20; i++) { Thread.Sleep(100); TestAvalonia.Pump(); }
                 Assert.True(logs.ReadLogs().RecentEntries.Count > firstEntryCount);
                 Assert.NotEmpty(logs.ReadLogs().RecentEntries); // Overview consumes the same temporary stream.
                 // Live and simulated notifications use identical production presentation.
                 typeof(CombatLogService).GetMethod("NotifyCombat", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(logs,
                     [new CombatOverlayEvent(new(DateTimeOffset.UtcNow, "Simulation Pilot", "combat", "", DamageDirection.Incoming, 777))]);
-                Application.DoEvents(); Assert.Equal("α 777", Scene().Stats[0].Suffix.Text);
+                TestAvalonia.Pump(); Assert.Equal("α 777", Scene().Stats[0].Suffix.Text);
                 // An outgoing notification must retain the independent incoming hit.
                 typeof(CombatLogService).GetMethod("NotifyCombat", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(logs,
                     [new CombatOverlayEvent(new(DateTimeOffset.UtcNow, "Simulation Pilot", "combat", "", DamageDirection.Outgoing, 888))]);
-                Application.DoEvents(); Assert.Equal("α 777", Scene().Stats[0].Suffix.Text); Assert.Equal("α 888", Scene().Stats[1].Suffix.Text);
+                TestAvalonia.Pump(); Assert.Equal("α 777", Scene().Stats[0].Suffix.Text); Assert.Equal("α 888", Scene().Stats[1].Suffix.Text);
                 Assert.True(Simulate(new("", DamageDirection.Incoming, 1, CombatDamageType.Unknown, WeaponPlatform.Unknown) { Stop = true }).Success);
                 Assert.Empty(Scene().Stats); Assert.Empty(SecondScene().Stats);
                 Assert.Empty(logs.ReadLogs().RecentEntries);
                 Assert.Equal("Jita", Scene().Subtitle); Assert.Equal("Jita", logs.CurrentSystems.GetSystem("Simulation Pilot"));
                 Assert.False(File.Exists(Path.Combine(root, "logs.db"))); // Simulation never starts storage while logs are disabled.
                 Assert.Equal(client.Handle, GetActiveWindow()); Assert.Equal(foreground, GetForegroundWindow());
-                preferences.SetTheme("Legacy"); Application.DoEvents();
+                preferences.SetTheme("Legacy"); TestAvalonia.Pump();
                 Assert.Equal("", Scene().Subtitle);
                 Assert.False(Simulate(new(view.Title, DamageDirection.Incoming, 1, CombatDamageType.EM, WeaponPlatform.Rocket)).Success);
-                using var compatibility = new ThumbnailOverlay(client, (_, _) => { }, OverlayRendererKind.Legacy)
-                    { Bounds = new Rectangle(25, 35, 384, 216) };
-                compatibility.Show(); Application.DoEvents(); SetActiveWindow(client.Handle);
+                using var compatibility = new ThumbnailOverlay(null, OverlayRendererKind.Legacy)
+                    { Location = new Point(25, 35), ClientSize = new Size(384, 216) };
+                compatibility.SetOverlayLabel("Compatibility title");
+                compatibility.Show(); TestAvalonia.Pump(); SetActiveWindow(client.Handle);
                 compatibility.SetDamageFlash(0xFFFF2233, null, .5);
                 compatibility.SetOverlayFont(new FontSettings { ForeColor = Color.White });
-                var compatibilityLabel = (Control)typeof(ThumbnailOverlay)
-                    .GetField("OverlayLabel", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(compatibility)!;
-                Assert.Equal(unchecked((int)OverlayColors.Blend(0xFFFFFFFF, 0xFFFF2233, .5)), compatibilityLabel.ForeColor.ToArgb());
+                var compatibilityRenderer = Assert.IsType<CompatibilityOverlayRenderer>(compatibility.Content);
+                var titleImages = compatibilityRenderer.Children.OfType<Avalonia.Controls.Image>().ToArray();
+                Assert.Equal(OverlayColors.Blend(0xFFFFFFFF, 0xFFFF2233, .5), compatibility.Scene.EffectiveTitleColor);
+                Assert.Equal(1, titleImages[0].Opacity);
+                Assert.NotNull(titleImages[0].Source);
                 compatibility.SetDamageFlash(null, null);
-                Assert.Equal(Color.White.ToArgb(), compatibilityLabel.ForeColor.ToArgb());
-                compatibility.SetDamageFlash(0xFFFF2233, 0x50FF2233); Application.DoEvents();
-                var wash = Assert.Single(compatibility.OwnedForms);
-                nint washHandle = wash.Handle;
-                Assert.Equal(compatibility.Bounds, wash.Bounds);
-                Assert.InRange(wash.Opacity, .30, .32);
+                Assert.Equal(unchecked((uint)Color.White.ToArgb()), compatibility.Scene.EffectiveTitleColor);
+                Assert.Equal(1, titleImages[0].Opacity);
+                compatibility.SetDamageFlash(0xFFFF2233, 0x50FF2233); TestAvalonia.Pump();
+                var wash = Assert.Single(compatibilityRenderer.Children.OfType<Avalonia.Controls.Border>());
+                nint overlayHandle = compatibility.Handle;
+                Assert.Equal(384 / compatibility.RenderScaling, wash.Width);
+                Assert.Equal(216 / compatibility.RenderScaling, wash.Height);
+                Assert.Equal((byte)0x50, ((Avalonia.Media.SolidColorBrush)wash.Background!).Color.A);
                 Assert.Equal(client.Handle, GetActiveWindow()); Assert.Equal(foreground, GetForegroundWindow());
-                compatibility.SetDamageFlash(null, null); Application.DoEvents();
-                Assert.Equal(0, wash.Opacity);
+                compatibility.SetDamageFlash(null, null); TestAvalonia.Pump();
+                Assert.Null(wash.Background);
                 compatibility.Location = new Point(45, 55);
-                compatibility.SetDamageFlash(null, 0x50FF2233); Application.DoEvents();
-                Assert.Equal(washHandle, wash.Handle); Assert.Equal(compatibility.Bounds, wash.Bounds);
-                compatibility.Hide(); Application.DoEvents(); Assert.Equal(0, wash.Opacity);
-                compatibility.Show(); Application.DoEvents(); Assert.InRange(wash.Opacity, .30, .32);
+                compatibility.SetDamageFlash(null, 0x50FF2233); TestAvalonia.Pump();
+                Assert.Equal(overlayHandle, compatibility.Handle);
+                Assert.Same(wash, Assert.Single(compatibilityRenderer.Children.OfType<Avalonia.Controls.Border>()));
+                compatibility.Hide(); TestAvalonia.Pump(); Assert.False(compatibilityRenderer.IsVisible);
+                compatibility.Show(); TestAvalonia.Pump(); Assert.True(compatibilityRenderer.IsVisible);
+                Assert.Equal((byte)0x50, ((Avalonia.Media.SolidColorBrush)wash.Background!).Color.A);
                 Assert.Equal(client.Handle, GetActiveWindow()); Assert.Equal(foreground, GetForegroundWindow());
-                compatibility.Dispose(); Assert.True(wash.IsDisposed);
+                compatibility.Dispose(); Assert.All(titleImages, image => Assert.Null(image.Source));
             }
             finally { ((IDisposable)manager).Dispose(); }
         }

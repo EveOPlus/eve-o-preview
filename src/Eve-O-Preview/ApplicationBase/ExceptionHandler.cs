@@ -17,7 +17,9 @@
 using System;
 using System.IO;
 using System.Threading;
-using System.Windows.Forms;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Threading;
+using EveOPreview.View;
 using EveOPreview.Helper;
 using Serilog;
 
@@ -32,25 +34,30 @@ namespace EveOPreview
     {
         private const string EXCEPTION_MESSAGE = "EVE-O Preview has encountered a problem and needs to close. Additional information has been saved in the log file.";
 
-        public void SetupExceptionHandlers()
+        public void SetupClrExceptionHandler()
         {
-            
 #if DEBUG
-            if (System.Diagnostics.Debugger.IsAttached)
-            {
-                return;
-            }
+            if (System.Diagnostics.Debugger.IsAttached) return;
 #endif
-            
-            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
-            Application.ThreadException += delegate (Object sender, ThreadExceptionEventArgs e)
-            {
-                this.ExceptionEventHandler(e.Exception);
-            };
+            AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+                ExceptionEventHandler(e.ExceptionObject as Exception);
+        }
 
-            AppDomain.CurrentDomain.UnhandledException += delegate (Object sender, UnhandledExceptionEventArgs e)
+        public void SetupDispatcherExceptionHandler()
+        {
+#if DEBUG
+            if (System.Diagnostics.Debugger.IsAttached) return;
+#endif
+            Dispatcher.UIThread.UnhandledException += async (_, e) =>
             {
-                this.ExceptionEventHandler(e.ExceptionObject as Exception);
+                e.Handled = true;
+                Log.Logger.WithCallerInfo().Error(e.Exception, EXCEPTION_MESSAGE);
+                try
+                {
+                    var owner = (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+                    await WorkspaceDialogs.ShowError(owner, EXCEPTION_MESSAGE);
+                }
+                finally { FlushAndExit(); }
             };
         }
 
@@ -60,7 +67,8 @@ namespace EveOPreview
             {
                 Log.Logger.WithCallerInfo().Error(exception, EXCEPTION_MESSAGE);
 
-                MessageBox.Show(ExceptionHandler.EXCEPTION_MESSAGE, @"EVE-O Preview", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Fatal CLR exceptions cannot safely wait for a GUI dispatcher. The log
+                // remains available even when the UI thread or framework is unavailable.
             }
             catch
             {
@@ -68,7 +76,15 @@ namespace EveOPreview
                 // Still we actually don't care anymore - anyway the application has been cashed
             }
 
-            System.Environment.Exit(1);
+            FlushAndExit();
+        }
+
+        private static void FlushAndExit()
+        {
+            // AsyncLogSink has a bounded drain. Preserve fatal startup evidence even
+            // when Avalonia never initialized and no dispatcher can show a dialog.
+            try { Log.CloseAndFlush(); } catch { }
+            Environment.Exit(1);
         }
     }
 }

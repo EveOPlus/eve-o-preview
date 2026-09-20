@@ -6,7 +6,7 @@ using EveOPreview.Configuration;
 using EveOPreview.Services;
 using EveOPreview.Tests.Infrastructure;
 using EveOPreview.View;
-using Gma.System.MouseKeyHook;
+using EveOPreview.Input;
 using MediatR;
 using Serilog;
 using Xunit;
@@ -58,7 +58,7 @@ public sealed class LiveThumbnailTests(ITestOutputHelper output)
         });
         using var view = (ThumbnailView)Activator.CreateInstance(assembly.GetType("EveOPreview.View.LiveThumbnailView"),
             windowManager, config, Stub.Create<IThumbnailManager>(), Stub.Create<IMediator>(),
-            Stub.Create<IKeyboardMouseEvents>(), logger);
+            Stub.Create<IGlobalPointerInput>(), logger);
         view.Id = new IntPtr(101);
         view.Title = "EVE - Live image test";
         view.ThumbnailSize = new Size(320, 180);

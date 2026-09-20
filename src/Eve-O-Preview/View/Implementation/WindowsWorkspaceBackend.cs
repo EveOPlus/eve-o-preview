@@ -270,17 +270,13 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
     private async Task<CommandResult> PickFont()
     {
         var current = _view.TitleFontSettings;
-        using var font = new Font(current.Name, current.Size, current.Style);
-        using var dialog = new System.Windows.Forms.FontDialog
-        {
-            Font = font, FontMustExist = true, MinSize = 1, MaxSize = 200,
-            ShowEffects = true, ShowColor = false
-        };
-        if (dialog.ShowDialog(_view as System.Windows.Forms.IWin32Window) != System.Windows.Forms.DialogResult.OK)
+        if (_view is not Avalonia.Controls.Window owner) return CommandResult.Error("The workspace window is unavailable.");
+        var selected = await WorkspaceDialogs.PickFont(owner, current, FontFamilies);
+        if (selected is null)
             return CommandResult.Cancelled("Font selection cancelled");
-        current.Name = dialog.Font.FontFamily.Name;
-        current.Size = dialog.Font.Size;
-        current.Style = dialog.Font.Style;
+        current.Name = selected.Name;
+        current.Size = selected.Size;
+        current.Style = selected.Style;
         _view.TitleFontSettings = current;
         await Commit();
         return CommandResult.Ok("Title font saved");
@@ -291,14 +287,11 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         if (key is not ("ActiveClientHighlightColor" or "TitleFontForeColor" or "TitleFontOutlineColor" or "ProfileAccentColor"))
             return CommandResult.Error("Choose a title, highlight or profile color.");
         string current = Format(_settings[key].Read());
-        using var dialog = new System.Windows.Forms.ColorDialog
-        {
-            Color = string.IsNullOrEmpty(current) ? Color.CornflowerBlue : ParseColor(current),
-            FullOpen = true, AnyColor = true
-        };
-        if (dialog.ShowDialog(_view as System.Windows.Forms.IWin32Window) != System.Windows.Forms.DialogResult.OK)
+        if (_view is not Avalonia.Controls.Window owner) return CommandResult.Error("The workspace window is unavailable.");
+        var selected = await WorkspaceDialogs.PickColor(owner, string.IsNullOrEmpty(current) ? Color.CornflowerBlue : ParseColor(current));
+        if (selected is null)
             return CommandResult.Cancelled("Color selection cancelled");
-        return await ApplySetting(key, Format(dialog.Color));
+        return await ApplySetting(key, Format(selected.Value));
     }
     private Task Commit() => _commits.CommitSettingsAsync?.Invoke() ?? throw new InvalidOperationException("The settings presenter is not ready.");
 
@@ -463,7 +456,7 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
             await Task.Yield();
             var captured = await _mediator.Send(new CaptureNewHotkey(current ?? "", 10000));
             if (!captured.IsValid) return CommandResult.Error(captured.ErrorMessage ?? "No shortcut was captured.");
-            if (captured.KeysCaptured == System.Windows.Forms.Keys.None) return CommandResult.Ok("Recording cancelled; shortcut unchanged");
+            if (captured.KeysCaptured == EveOPreview.Input.ShortcutKeys.None) return CommandResult.Ok("Recording cancelled; shortcut unchanged");
             replacement = captured.KeyString ?? "";
         }
         set(replacement);

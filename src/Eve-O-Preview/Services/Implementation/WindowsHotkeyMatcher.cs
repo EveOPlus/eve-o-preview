@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Windows.Forms;
+using Keys = EveOPreview.Input.ShortcutKeys;
 
 namespace EveOPreview.Services.Implementation;
 

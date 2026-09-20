@@ -17,7 +17,7 @@
 using EveOPreview.Configuration.Implementation;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Windows.Forms;
+using Keys = EveOPreview.Input.ShortcutKeys;
 
 namespace EveOPreview.Configuration
 {

@@ -19,7 +19,7 @@ using EveOPreview.Configuration;
 using EveOPreview.Services;
 using EveOPreview.Preview;
 using EveOPreview.View.Rendering;
-using Gma.System.MouseKeyHook;
+using EveOPreview.Input;
 using MediatR;
 using Serilog;
 
@@ -30,12 +30,12 @@ namespace EveOPreview.View
         private readonly IPreviewSession _thumbnail;
 
         public StaticThumbnailView(IWindowManager windowManager, IThumbnailConfiguration config, IThumbnailManager thumbnailManager,
-            IMediator mediator, IKeyboardMouseEvents kbmEvents, ILogger logger)
+            IMediator mediator, IGlobalPointerInput kbmEvents, ILogger logger)
             : base(windowManager, config, thumbnailManager, mediator, kbmEvents)
         {
             // The adapter resolves the current source when it captures, including the
             // initial factory assignment that occurs after this constructor.
-            var backend = new WindowsStaticPreviewBackend(windowManager, this, _ => Id);
+            var backend = new WindowsStaticPreviewBackend(windowManager, ImageSurface, _ => Id);
             _thumbnail = backend.CreateSession(default);
             _thumbnail.SetBounds(new PreviewRect(0, 0, ClientSize.Width, ClientSize.Height));
         }

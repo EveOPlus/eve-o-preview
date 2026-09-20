@@ -111,6 +111,13 @@ public static class WorkspacePickers
         return picker;
     }
 
+    public static ColorView ExpandedColor(Color initial, string name, string accessibleName)
+    {
+        var picker = Configure(new ColorView { Name = name, Color = initial, HorizontalAlignment = HorizontalAlignment.Stretch });
+        AutomationProperties.SetName(picker, accessibleName);
+        return picker;
+    }
+
     public static void ShowColor(Control anchor, Color initial, Action<Color> changed)
     {
         var view = Configure(new ColorView { Name = "workspace-color-popup", Color = initial });

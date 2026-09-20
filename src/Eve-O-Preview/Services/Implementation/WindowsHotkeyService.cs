@@ -6,8 +6,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Windows.Threading;
+using Avalonia.Threading;
+using EveOPreview.Input;
+using Keys = EveOPreview.Input.ShortcutKeys;
 using Serilog;
 
 namespace EveOPreview.Services.Implementation;
@@ -28,7 +29,7 @@ public sealed class WindowsHotkeyService : IHotkeyService
     private readonly Thread _thread;
     private readonly TaskCompletionSource _ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly HookProc _hookCallback; // Root delegate for the entire native hook lifetime.
-    private InputWindow _window;
+    private WindowsMessageWindow _window;
     private IntPtr _hook;
     private Dictionary<Keys, HotkeyBinding> _bindings = new();
     private readonly Dictionary<int, HotkeyBinding> _registered = new();
@@ -67,9 +68,9 @@ public sealed class WindowsHotkeyService : IHotkeyService
 
     private static Action<Action> UiPost(DispatcherPriority priority)
     {
-        var dispatcher = Dispatcher.CurrentDispatcher;
+        var dispatcher = Dispatcher.UIThread;
         // Send priority is processed under continuous input. This is BeginInvoke, never Invoke.
-        return action => dispatcher.BeginInvoke(priority, action);
+        return action => dispatcher.Post(action, priority);
     }
 
     public void Replace(IReadOnlyList<HotkeyBinding> bindings, HotkeyMode mode, bool diagnosticPassthrough = false)
@@ -77,13 +78,12 @@ public sealed class WindowsHotkeyService : IHotkeyService
         ObjectDisposedException.ThrowIf(_disposed, this);
         var parsed = new Dictionary<Keys, HotkeyBinding>();
         var invalid = new List<string>();
-        var converter = new KeysConverter();
         foreach (var binding in bindings)
         {
             if (string.IsNullOrWhiteSpace(binding.Shortcut)) continue;
             try
             {
-                var key = (Keys)converter.ConvertFromInvariantString(binding.Shortcut);
+                var key = ShortcutText.Parse(binding.Shortcut);
                 if (key == Keys.None) continue;
                 int code = (int)(key & Keys.KeyCode);
                 if (code == 0 || code > 255 || code is 0x10 or 0x11 or 0x12 or 0x5B or 0x5C or >= 0xA0 and <= 0xA5)
@@ -125,7 +125,7 @@ public sealed class WindowsHotkeyService : IHotkeyService
         try
         {
             var key = await completion.Task.WaitAsync(timeout, cancellationToken).ConfigureAwait(false);
-            return (key & Keys.KeyCode) == Keys.Escape ? null : new KeysConverter().ConvertToInvariantString(key);
+            return (key & Keys.KeyCode) == Keys.Escape ? null : ShortcutText.Format(key);
         }
         finally
         {
@@ -248,9 +248,9 @@ public sealed class WindowsHotkeyService : IHotkeyService
         try
         {
             if (!SetThreadDesktop(desktop)) throw new Win32Exception(Marshal.GetLastWin32Error());
-            _window = new InputWindow(this);
+            _window = new WindowsMessageWindow(ProcessMessage);
             _ready.TrySetResult();
-            Application.Run();
+            WindowsMessageWindow.Run();
         }
         catch (Exception ex) { _ready.TrySetException(ex); _logger.Error(ex, "Keyboard input thread failed"); }
         finally
@@ -259,7 +259,7 @@ public sealed class WindowsHotkeyService : IHotkeyService
             {
                 try { RemoveNative(); }
                 catch (Exception ex) { _logger.Error(ex, "Keyboard cleanup failed"); }
-                _window.DestroyHandle();
+                _window.Dispose();
             }
         }
     }
@@ -296,40 +296,27 @@ public sealed class WindowsHotkeyService : IHotkeyService
             _capture?.TrySetCanceled();
             _capture = null;
             try { RemoveNative(); }
-            finally { Application.ExitThread(); }
+            finally { WindowsMessageWindow.ExitThread(); }
         }, ignoreDisposed: true);
         _thread.Join(TimeSpan.FromSeconds(2));
     }
 
-    private sealed class InputWindow : NativeWindow
+    private bool ProcessMessage(uint message, IntPtr wParam, IntPtr lParam)
     {
-        private readonly WindowsHotkeyService _owner;
-        public InputWindow(WindowsHotkeyService owner)
+        if (message == CommandMessage)
         {
-            _owner = owner;
-            CreateHandle(new CreateParams { Parent = (IntPtr)(-3), Caption = "EVE-O input" });
+            while (_commands.TryDequeue(out var action)) action();
+            return true;
         }
-        protected override void WndProc(ref Message message)
+        if (message == HotkeyMessage)
         {
-            if (message.Msg == CommandMessage)
-            {
-                while (_owner._commands.TryDequeue(out var action)) action();
-                return;
-            }
-            if (message.Msg == HotkeyMessage)
-            {
-                if (_owner._capture == null && _owner._registered.TryGetValue(message.WParam.ToInt32(), out var binding))
-                    _owner._dispatch.Enqueue(binding.Execute);
-                return;
-            }
-            if (message.Msg == PassedInputMessage)
-            {
-                _owner._passedInputPosted = false;
-                while (_owner._passedActions.TryDequeue(out var action)) _owner._passedDispatch.Enqueue(action);
-                return;
-            }
-            base.WndProc(ref message);
+            if (_capture == null && _registered.TryGetValue(wParam.ToInt32(), out var binding)) _dispatch.Enqueue(binding.Execute);
+            return true;
         }
+        if (message != PassedInputMessage) return false;
+        _passedInputPosted = false;
+        while (_passedActions.TryDequeue(out var action)) _passedDispatch.Enqueue(action);
+        return true;
     }
 
     private delegate IntPtr HookProc(int code, IntPtr message, IntPtr data);

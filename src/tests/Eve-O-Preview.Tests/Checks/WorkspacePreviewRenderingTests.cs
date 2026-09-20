@@ -17,7 +17,7 @@ using EveOPreview.Tests.Infrastructure;
 using EveOPreview.UI;
 using EveOPreview.View;
 using EveOPreview.View.CustomControl;
-using Gma.System.MouseKeyHook;
+using EveOPreview.Input;
 using Xunit;
 
 namespace EveOPreview.Tests.Checks;
@@ -141,13 +141,13 @@ public sealed class WorkspacePreviewRenderingTests(ITestOutputHelper output)
                 StartPosition = FormStartPosition.Manual, Location = new Point(100, 100), ClientSize = new Size(640, 400)
             };
             client.Controls.Add(new Panel { BackColor = Color.LimeGreen, Location = new Point(20, 25), Size = new Size(140, 80) });
-            client.Show(); client.Refresh(); Application.DoEvents();
+            client.Show(); client.Refresh(); TestAvalonia.Pump();
             using var cover = new Form
             {
                 Text = "Other application", BackColor = Color.Magenta, FormBorderStyle = FormBorderStyle.None,
                 StartPosition = FormStartPosition.Manual, Bounds = client.Bounds, TopMost = true
             };
-            cover.Show(); cover.Refresh(); cover.Activate(); Application.DoEvents();
+            cover.Show(); cover.Refresh(); cover.Activate(); TestAvalonia.Pump();
             var active = EveOPreview.Tests.Infrastructure.Native.GetActiveWindow();
             Assert.Equal(cover.Handle, active);
             using var captured = windows.GetStaticThumbnail(client.Handle);
@@ -167,7 +167,7 @@ public sealed class WorkspacePreviewRenderingTests(ITestOutputHelper output)
                 Assert.Null(captured);
             }
             Assert.Equal(active, EveOPreview.Tests.Infrastructure.Native.GetActiveWindow());
-            client.WindowState = FormWindowState.Minimized; Application.DoEvents();
+            client.WindowState = FormWindowState.Minimized; TestAvalonia.Pump();
             Assert.Null(windows.GetStaticThumbnail(client.Handle));
             var closedHandle = client.Handle;
             client.Close();
@@ -204,23 +204,43 @@ public sealed class WorkspacePreviewRenderingTests(ITestOutputHelper output)
             new FontSettings { Name = "Arial", Size = 24, Style = FontStyle.Italic, ForeColor = Color.Cyan, OutlineColor = Color.Magenta, OutlineWidth = 2.5f, PositionOffsetFromLeft = 120, PositionOffsetFromTop = 40 },
             new FontSettings { Name = "Consolas", Size = 19, Style = FontStyle.Bold, ForeColor = Color.Yellow, OutlineColor = Color.Blue, OutlineWidth = 1, PositionOffsetFromLeft = -8, PositionOffsetFromTop = -3 }
         };
-        using var owner = new Form();
+        using var owner = new ThumbnailOverlay(null);
         owner.Show();
+        // Both blocks share an anchor. Hiding/re-sizing the title must move the
+        // retained stats immediately, even when their own text has not changed.
+        using (var compatibility = new EveOPreview.View.Rendering.CompatibilityOverlayRenderer())
+        {
+            compatibility.Resize(new(384, 216));
+            var scene = new EveOPreview.Preview.OverlayScene
+            {
+                Title = "Visible title", TitlePosition = EveOPreview.Preview.OverlayPosition.TopLeft,
+                Stats = [new("IN", "100", 0xFFFFFFFF)],
+                StatsStyle = new() { Position = EveOPreview.Preview.OverlayPosition.TopLeft }
+            };
+            compatibility.SetScene(scene);
+            var stats = compatibility.Children.OfType<Avalonia.Controls.Image>().Last();
+            double withTitle = Avalonia.Controls.Canvas.GetTop(stats);
+            compatibility.SetScene(scene with { ShowTitle = false });
+            Assert.True(Avalonia.Controls.Canvas.GetTop(stats) < withTitle, "Hiding a same-anchor title must immediately move retained statistics upward.");
+            compatibility.SetScene(scene with { Subtitle = "Jita", SubtitleFontSize = 12 });
+            double shortSubtitle = Avalonia.Controls.Canvas.GetTop(stats);
+            compatibility.SetScene(scene with { Subtitle = "Jita", SubtitleFontSize = 30 });
+            Assert.True(Avalonia.Controls.Canvas.GetTop(stats) > shortSubtitle, "Increasing subtitle height must immediately move retained statistics downward.");
+        }
         foreach (var settings in fonts)
         {
             string name = settings.Name.Replace(" ", "-") + "-" + settings.Size.ToString(CultureInfo.InvariantCulture);
-            using var overlay = new ThumbnailOverlay(owner, (_, _) => { })
+            using var overlay = new ThumbnailOverlay(owner)
             {
-                ClientSize = new Size(384, 216), BackColor = Background
+                ClientSize = new Size(384, 216), Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.FromUInt32(unchecked((uint)Background.ToArgb())))
             };
             overlay.SetOverlayLabel("Aura Asuna");
             overlay.SetOverlayFont(settings);
             overlay.Show();
-            Application.DoEvents();
+            TestAvalonia.Pump();
             using var expected = new Bitmap(384, 216, PixelFormat.Format32bppArgb);
-            // DrawToBitmap omits the label of this layered transparency-key window.
-            // Paint the actual production instance using its native, autosized bounds.
-            var label = (OutlinedLabel)overlay.Controls.Find("OverlayLabel", true).Single();
+            // Preserve the former WinForms label only as an independent reference.
+            using var label = ReferenceLabel(settings);
             using (var graphics = Graphics.FromImage(expected))
             {
                 graphics.Clear(Background);
@@ -235,6 +255,9 @@ public sealed class WorkspacePreviewRenderingTests(ITestOutputHelper output)
             expected.Save(Path.Combine(outputDirectory, "native-" + name + ".png"));
             actual.Save(Path.Combine(outputDirectory, "sample-" + name + ".png"));
             AssertPixelsEqual(expected, actual, "Actual ThumbnailOverlay title " + name);
+            using var hosted = RenderControl(overlay, 384, 216);
+            hosted.Save(Path.Combine(outputDirectory, "avalonia-" + name + ".png"));
+            AssertRasterClose(actual, hosted, "Avalonia compatibility host " + name);
             Assert.True(Pixels(actual).Where((_, index) => index % 4 == 0).Distinct().Count() > 1,
                 "The comparison must contain actual rendered title pixels.");
         }
@@ -242,13 +265,16 @@ public sealed class WorkspacePreviewRenderingTests(ITestOutputHelper output)
         foreach (var marker in new[] { ("Circle with slash", true), ("Pause", true), ("Cross", false) })
         {
             var font = fonts[1];
-            using var overlay = new ThumbnailOverlay(owner, (_, _) => { }) { ClientSize = new Size(384, 216), BackColor = Background };
+            using var overlay = new ThumbnailOverlay(owner) { ClientSize = new Size(384, 216),
+                Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.FromUInt32(unchecked((uint)Background.ToArgb()))) };
             overlay.SetOverlayLabel("Aura Asuna"); overlay.SetOverlayFont(font);
             overlay.EnableOverlayLabel(marker.Item2);
             overlay.SetCycleSkipIndicator(true, marker.Item1, Color.Red);
-            overlay.Show(); Application.DoEvents();
-            var label = (OutlinedLabel)overlay.Controls.Find("OverlayLabel", true).Single();
-            Assert.True(label.Visible, "A skipped marker remains visible with character titles disabled.");
+            overlay.Show(); TestAvalonia.Pump();
+            using var label = ReferenceLabel(font);
+            label.SetTitleVisible(marker.Item2); label.SetCycleSkipIndicator(true, marker.Item1, Color.Red);
+            label.Size = label.GetPreferredSize(Size.Empty);
+            Assert.True(overlay.Scene.CycleSkipped, "A skipped marker remains visible with character titles disabled.");
             using var expected = new Bitmap(384, 216, PixelFormat.Format32bppArgb);
             using (var graphics = Graphics.FromImage(expected))
             {
@@ -264,10 +290,12 @@ public sealed class WorkspacePreviewRenderingTests(ITestOutputHelper output)
             using var encoded = new MemoryStream(renderer.RenderPreview(new(settings, "EVE - Aura Asuna", CycleSkipped: true)).Png);
             using var actual = new Bitmap(encoded);
             AssertPixelsEqual(expected, actual, "Skipped marker " + marker.Item1);
+            using var hosted = RenderControl(overlay, 384, 216);
+            AssertRasterClose(actual, hosted, "Avalonia skip marker " + marker.Item1);
             Assert.True(Enumerable.Range(0, actual.Width).Any(x => Enumerable.Range(0, actual.Height).Any(y => actual.GetPixel(x, y).ToArgb() == Color.Red.ToArgb())), "The red marker must actually be rendered.");
             actual.Save(Path.Combine(outputDirectory, "skip-" + marker.Item1.Replace(" ", "-") + ".png"));
             overlay.SetCycleSkipIndicator(false, marker.Item1, Color.Red);
-            if (!marker.Item2) Assert.False(label.Visible);
+            if (!marker.Item2) Assert.False(overlay.Scene.ShowTitle || overlay.Scene.CycleSkipped);
         }
 
         var config = (IThumbnailConfiguration)Activator.CreateInstance(typeof(ThumbnailView).Assembly
@@ -281,9 +309,8 @@ public sealed class WorkspacePreviewRenderingTests(ITestOutputHelper output)
         {
             highlighted.SetHighlight(true, thickness);
             highlighted.RefreshAppearance();
-            Application.DoEvents();
-            using var expected = new Bitmap(384, 216, PixelFormat.Format32bppArgb);
-            highlighted.DrawToBitmap(expected, new Rectangle(Point.Empty, expected.Size));
+            TestAvalonia.Pump();
+            using var expected = RenderControl(highlighted, 384, 216);
             var request = Settings(fonts[0]);
             request["ShowThumbnailOverlays"] = "false";
             request["EnableActiveClientHighlight"] = "true";
@@ -297,6 +324,40 @@ public sealed class WorkspacePreviewRenderingTests(ITestOutputHelper output)
         }
         Console.WriteLine("PASS: exact bitmap equality with actual native ThumbnailOverlay across 4 fonts/styles/colors/outlines/offsets, and actual ThumbnailView highlight geometry at 1/3/6px.");
         Console.WriteLine("Native/sample image pairs: " + outputDirectory);
+    }
+
+    private static OutlinedLabel ReferenceLabel(FontSettings settings)
+    {
+        var label = new OutlinedLabel
+        {
+            AutoSize = true, Text = "Aura Asuna", Font = new Font(settings.Name, settings.Size, settings.Style),
+            ForeColor = settings.ForeColor, OutlineColor = settings.OutlineColor, OutlineWidth = settings.OutlineWidth,
+            Location = new Point(settings.PositionOffsetFromLeft, settings.PositionOffsetFromTop)
+        };
+        label.Size = label.GetPreferredSize(Size.Empty);
+        return label;
+    }
+
+    private static Bitmap RenderControl(Avalonia.Controls.TopLevel control, int width, int height)
+    {
+        control.UpdateLayout(); TestAvalonia.Pump();
+        using var rendered = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(width, height),
+            new Avalonia.Vector(96 * control.RenderScaling, 96 * control.RenderScaling));
+        rendered.Render(control);
+        using var stream = new MemoryStream(); rendered.Save(stream); stream.Position = 0;
+        using var encoded = new Bitmap(stream);
+        return new Bitmap(encoded);
+    }
+
+    private static void AssertRasterClose(Bitmap expected, Bitmap actual, string context)
+    {
+        // GDI+ and Skia round source-over premultiplied alpha independently by at
+        // most one channel level. Geometry, colours and all opaque pixels stay exact.
+        Assert.Equal(expected.Size, actual.Size);
+        var original = Pixels(expected); var displayed = Pixels(actual);
+        for (int index = 0; index < original.Length; index++)
+            Assert.True(Math.Abs(original[index] - displayed[index]) <= 1,
+                $"{context}: channel {index} differs ({original[index]} versus {displayed[index]}).");
     }
 
     private static Dictionary<string, string> Settings(FontSettings font) => new()
@@ -334,15 +395,20 @@ public sealed class WorkspacePreviewRenderingTests(ITestOutputHelper output)
 
     private sealed class HighlightPreview : ThumbnailView
     {
-        private readonly Panel _image = new() { BackColor = Background };
+        private readonly Avalonia.Controls.Border _image = new()
+        { Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.FromUInt32(unchecked((uint)WorkspacePreviewRenderingTests.Background.ToArgb()))) };
         public HighlightPreview(IThumbnailConfiguration config)
-            : base(Stub.Create<IWindowManager>(), config, null, null, Stub.Create<IKeyboardMouseEvents>())
+            : base(Stub.Create<IWindowManager>(), config, null, null, Stub.Create<IGlobalPointerInput>())
         {
-            Controls.Add(_image);
-            _image.BringToFront();
+            ImageSurface.Children.Add(_image);
         }
         protected override void RefreshThumbnail(bool forceRefresh) { }
-        protected override void ResizeThumbnail(int width, int height, int top, int right, int bottom, int left) =>
-            _image.Bounds = new Rectangle(left, top, width - left - right, height - top - bottom);
+        protected override void ResizeThumbnail(int width, int height, int top, int right, int bottom, int left)
+        {
+            Avalonia.Controls.Canvas.SetLeft(_image, left / RenderScaling);
+            Avalonia.Controls.Canvas.SetTop(_image, top / RenderScaling);
+            _image.Width = (width - left - right) / RenderScaling;
+            _image.Height = (height - top - bottom) / RenderScaling;
+        }
     }
 }

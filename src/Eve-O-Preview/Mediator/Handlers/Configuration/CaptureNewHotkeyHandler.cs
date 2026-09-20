@@ -26,7 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
+using Keys = EveOPreview.Input.ShortcutKeys;
 
 namespace EveOPreview.Mediator.Handlers.Configuration
 {

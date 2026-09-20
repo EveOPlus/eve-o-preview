@@ -25,7 +25,7 @@ using EveOPreview.Services.Interface;
 using EveOPreview.Services.Interop;
 using EveOPreview.Tests.Infrastructure;
 using EveOPreview.View;
-using Gma.System.MouseKeyHook;
+using EveOPreview.Input;
 using MediatR;
 using Serilog;
 using Xunit;
@@ -34,7 +34,7 @@ namespace EveOPreview.Tests.Checks;
 
 public sealed class SettingsIntegrationTests(ITestOutputHelper output)
 {
-    private static readonly Assembly App = typeof(MainForm).Assembly;
+    private static readonly Assembly App = typeof(ThumbnailView).Assembly;
     private static IThumbnailConfiguration NewConfig() => (IThumbnailConfiguration)Activator.CreateInstance(App.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
     private static object Call(object target, string name, params object[] args) => target.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).Invoke(target, args);
     private static T Control<T>(MainForm form, string name) where T : System.Windows.Forms.Control => (T)form.Controls.Find(name, true).Single();
@@ -61,7 +61,7 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
 
     private static void CheckResizePersistence()
     {
-        AppBuilder.Configure<EveOPreview.UI.WorkspaceApp>().UsePlatformDetect().WithInterFont().SetupWithoutStarting();
+        TestAvalonia.Initialize();
         using var logger = new LoggerConfiguration().CreateLogger();
         using var context = new ApplicationContext();
         var config = NewConfig();
@@ -81,7 +81,7 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
             var storage = (IConfigurationStorage)Activator.CreateInstance(App.GetType("EveOPreview.Configuration.Implementation.ConfigurationStorage"),
                 Stub.Create<IAppConfig>(), config, mediator, profiles, logger, Stub.Create<IGlobalEvents>(), null);
             var preferences = new ApplicationPreferences(Path.Combine(root, "settings.json"), logger);
-            using var form = new WorkspaceForm(context, logger, mediator, storage, config, profiles, preferences,
+            using var form = new WorkspaceWindow(Stub.Create<Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime>(), logger, mediator, storage, config, profiles, preferences,
                 Stub.Create<EveOPreview.UI.IWorkspacePortraitProvider>((_, _) => Task.FromResult<byte[]>(null)));
             config.ThumbnailSize = new Size(384, 216);
             config.ShowThumbnailFrames = false;
@@ -117,16 +117,20 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         using var previous = new Form();
         using var target = new FocusProbeForm();
         previous.Show(); target.Show();
+        TestAvalonia.Pump();
         Native.SetActiveWindow(previous.Handle);
         Assert.Equal(previous.Handle, Native.GetActiveWindow());
-        bool wakeSent = false, activated = false;
+        bool wakeSent = false, activated = false, activatedBeforeWake = false;
         int responsivenessProbes = 0;
         target.Observe = message =>
         {
             if (message.Msg == 0) responsivenessProbes++;
             if (message.Msg == 6 && (message.WParam.ToInt64() & 0xffff) != 0)
             {
-                Assert.True(wakeSent, "Wake must precede target activation messages");
+                // Assertions must stay outside the native callback. WinForms catches
+                // callback exceptions and can show an invisible modal error dialog
+                // on this private desktop instead of reporting the test failure.
+                activatedBeforeWake |= !wakeSent;
                 activated = true;
             }
         };
@@ -135,10 +139,17 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
             if (method.Name == "TellEveClientFocusIsComingAsync") wakeSent = true;
             return Stub.Default(method.ReturnType);
         });
-        new WindowManager(hooks, logger).ActivateWindow(target.Handle);
-        Assert.True(activated);
-        Assert.Equal(target.Handle, Native.GetActiveWindow());
-        Assert.Equal(0, responsivenessProbes); // A 1 FPS client must never fail a pre-focus WM_NULL gate.
+        Console.WriteLine("Focus probe: activating synthetic target after installing wake observer.");
+        try
+        {
+            new WindowManager(hooks, logger).ActivateWindow(target.Handle);
+            Console.WriteLine("Focus probe: native activation returned.");
+            Assert.True(activated);
+            Assert.False(activatedBeforeWake, "Wake must precede target activation messages");
+            Assert.Equal(target.Handle, Native.GetActiveWindow());
+            Assert.Equal(0, responsivenessProbes); // A 1 FPS client must never fail a pre-focus WM_NULL gate.
+        }
+        finally { target.Observe = null; }
     }
 
     private sealed class FocusProbeForm : Form
@@ -242,7 +253,7 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         var config = NewConfig();
         config.EnableAutomaticCpuAffinity = false;
         var events = new GlobalEvents();
-        var keyboard = Stub.Create<IKeyboardMouseEvents>();
+        var keyboard = Stub.Create<IGlobalPointerInput>();
         var bindings = new List<HotkeyBinding>();
         HotkeyMode registeredMode = HotkeyMode.Global;
         bool registeredPassthrough = false;
@@ -325,7 +336,7 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         {
             Assert.True(registrations > 0, "The factory switch must preserve an actual initialized DWM session.");
             int registrationsBefore = registrations, unregistrationsBefore = unregistrations;
-            var handles = originalViews.ToDictionary(pair => pair.Key, pair => ((Form)pair.Value).Handle);
+            var handles = originalViews.ToDictionary(pair => pair.Key, pair => ((ThumbnailView)pair.Value).Handle);
             var sessions = originalViews.ToDictionary(pair => pair.Key, pair => pair.Value.GetType()
                 .GetField("_thumbnail", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(pair.Value));
             foreach (string renderer in new[] { "NativeComposition", "Legacy" })
@@ -360,7 +371,7 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         Add(103);
         Call(manager, "UpdateThumbnailsList");
         Assert.Equal(24, manager.GetClientByPointer(new IntPtr(103)).TitleFontSettings.Size);
-        Assert.Equal(TimeSpan.FromMilliseconds(750), ((System.Windows.Threading.DispatcherTimer)manager.GetType()
+        Assert.Equal(TimeSpan.FromMilliseconds(750), ((Avalonia.Threading.DispatcherTimer)manager.GetType()
             .GetField("_thumbnailUpdateTimer", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(manager)).Interval);
 
         config.ThumbnailRefreshPeriod = 600;
@@ -371,10 +382,10 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         foreach (var view in originalViews.Values)
         {
             Assert.Same(view, manager.GetClientByPointer(view.Id));
-            Assert.Equal(config.ThumbnailMinimumSize, ((Form)view).MinimumSize);
-            Assert.Equal(config.ThumbnailMaximumSize, ((Form)view).MaximumSize);
+            Assert.Equal(config.ThumbnailMinimumSize, ((ThumbnailView)view).MinimumSize);
+            Assert.Equal(config.ThumbnailMaximumSize, ((ThumbnailView)view).MaximumSize);
         }
-        Assert.Equal(TimeSpan.FromMilliseconds(600), ((System.Windows.Threading.DispatcherTimer)manager.GetType()
+        Assert.Equal(TimeSpan.FromMilliseconds(600), ((Avalonia.Threading.DispatcherTimer)manager.GetType()
             .GetField("_thumbnailUpdateTimer", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(manager)).Interval);
 
         var refresh = (IRequestHandler<RefreshHotkeys>)Activator.CreateInstance(App.GetType("EveOPreview.Mediator.Handlers.Configuration.RefreshHotkeysHandler"), config, logger, events);
@@ -437,7 +448,7 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         config.EnableCompatibilityMode = true;
         runtimeSettings.Handle(new ThumbnailRuntimeSettingsUpdated(), CancellationToken.None).GetAwaiter().GetResult();
         Assert.All(manager.GetAllKnownClients().Values, view => Assert.Equal("StaticThumbnailView", view.GetType().Name));
-        Assert.All(originalViews.Values, view => Assert.True(((Form)view).IsDisposed));
+        Assert.All(originalViews.Values, view => Assert.True(((ThumbnailView)view).IsDisposed));
         config.EnableCompatibilityMode = false;
         events.PublishCurrentProfileChanged(new SelectedProfileChangedNotification(null));
         Assert.All(manager.GetAllKnownClients().Values, view => Assert.Equal("LiveThumbnailView", view.GetType().Name));

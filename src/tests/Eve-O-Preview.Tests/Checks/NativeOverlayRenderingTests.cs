@@ -14,7 +14,7 @@ using EveOPreview.UI;
 using EveOPreview.Configuration;
 using EveOPreview.Services;
 using EveOPreview.Services.Interface;
-using Gma.System.MouseKeyHook;
+using EveOPreview.Input;
 using MediatR;
 using Serilog;
 using System.Threading;
@@ -173,7 +173,7 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
     internal static void RunScenario(string scenario)
     {
         using var client = new Form { Text = "EVE - Native overlay simulated client", ClientSize = new Size(320, 180) };
-        client.Show(); client.Activate(); Application.DoEvents();
+        client.Show(); client.Activate(); TestAvalonia.Pump();
         Native.SetActiveWindow(client.Handle);
         Assert.Equal(client.Handle, Native.GetActiveWindow());
         nint foreground = Native.GetForegroundWindow();
@@ -189,12 +189,12 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
         }
         if (scenario == "initialization")
         {
-            using var overlay = new OccupiedCompositionOverlay(client) { ClientSize = new Size(320, 180) };
+            using var overlay = new OccupiedCompositionOverlay() { ClientSize = new Size(320, 180) };
             overlay.SetOverlayLabel("Fallback title"); overlay.Show();
             Assert.Equal(OverlayRendererKind.Legacy, overlay.RendererKind);
             int style = Native.GetWindowLong(overlay.Handle, -20);
-            Assert.Equal(0, style & 0x00200000);
-            Assert.NotEqual(0, style & 0x00080000);
+            Assert.NotEqual(0, style & 0x08000000);
+            Assert.IsType<CompatibilityOverlayRenderer>(overlay.Content);
             Assert.True(Native.IsWindowVisible(overlay.Handle));
             Assert.Equal(client.Handle, Native.GetActiveWindow());
             Assert.Equal(foreground, Native.GetForegroundWindow());
@@ -268,7 +268,7 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
                 Assert.Equal(uploads, renderer.SurfaceUploadCount);
             }
             long commits = renderer.CommitCount;
-            Thread.Sleep(150); Application.DoEvents();
+            Thread.Sleep(150); TestAvalonia.Pump();
             Assert.Equal(commits, renderer.CommitCount);
             Assert.Equal(new PreviewRect(0, 0, 320, 180), renderer.AlertClipBounds);
             renderer.ClearAlerts();
@@ -301,7 +301,7 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
 
     private static void CheckProductionHost(Form client, nint foreground)
     {
-        using var overlay = new ThumbnailOverlay(client, (_, _) => { }, OverlayRendererKind.NativeComposition)
+        using var overlay = new ThumbnailOverlay(null, OverlayRendererKind.NativeComposition)
         { ClientSize = new Size(320, 180), Location = client.Location };
         overlay.SetOverlayLabel("Configured native title");
         overlay.SetOverlayFont(new FontSettings { Name = "Consolas", Size = 19, Style = FontStyle.Bold,
@@ -320,19 +320,20 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
         Assert.Equal(client.Handle, Native.GetActiveWindow());
         Assert.Equal(foreground, Native.GetForegroundWindow());
         overlay.Hide(); overlay.Show();
+        nint originalHandle = overlay.Handle;
         typeof(ThumbnailOverlay).GetMethod("UseCompatibilityRenderer", BindingFlags.Instance | BindingFlags.NonPublic)!
             .Invoke(overlay, [new COMException("Simulated graphics-device removal", unchecked((int)0x887A0005))]);
         Assert.Equal(OverlayRendererKind.Legacy, overlay.RendererKind);
-        Assert.Equal(OverlayCapabilities.Title | OverlayCapabilities.CycleMarker, overlay.GraphicsCapabilities);
+        Assert.Equal(OverlayCapabilities.Title | OverlayCapabilities.CycleMarker | OverlayCapabilities.Stats, overlay.GraphicsCapabilities);
         styles = Native.GetWindowLong(overlay.Handle, -20);
-        Assert.Equal(0, styles & 0x00200000);
-        Assert.NotEqual(0, styles & 0x00080000);
-        var label = Assert.IsAssignableFrom<Control>(typeof(ThumbnailOverlay)
-            .GetField("OverlayLabel", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(overlay));
-        Assert.True(label.Visible);
-        Assert.Equal("Configured native title", label.Text);
-        Assert.Equal(19, label.Font.Size);
-        Assert.Equal(new Point(17, 13), label.Location);
+        Assert.NotEqual(0, styles & 0x08000000);
+        Assert.Equal(originalHandle, overlay.Handle);
+        var compatibility = Assert.IsType<CompatibilityOverlayRenderer>(overlay.Content);
+        Assert.True(compatibility.IsVisible);
+        Assert.Equal("Configured native title", overlay.Scene.Title);
+        Assert.Equal(19, overlay.Scene.Font.Size);
+        Assert.Equal((17, 13), (overlay.Scene.Font.OffsetX, overlay.Scene.Font.OffsetY));
+        Assert.Contains(compatibility.Children.OfType<Avalonia.Controls.Image>(), image => image.Source != null);
         Assert.Equal(0.7, overlay.Opacity);
         Assert.Equal(client.Handle, Native.GetActiveWindow());
         Assert.Equal(foreground, Native.GetForegroundWindow());
@@ -340,8 +341,8 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
 
     private static void CheckDeviceMaintenance(Form client, nint foreground)
     {
-        using var first = new ThumbnailOverlay(client, (_, _) => { }, OverlayRendererKind.NativeComposition);
-        using var second = new ThumbnailOverlay(client, (_, _) => { }, OverlayRendererKind.NativeComposition);
+        using var first = new ThumbnailOverlay(null, OverlayRendererKind.NativeComposition);
+        using var second = new ThumbnailOverlay(null, OverlayRendererKind.NativeComposition);
         first.SetOverlayLabel("First independent title"); second.SetOverlayLabel("Second independent title");
         first.Show(); second.Show();
         var firstRenderer = Renderer(first);
@@ -365,7 +366,7 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
         Assert.Equal(OverlayRendererKind.Legacy, first.RendererKind);
         Assert.Equal(OverlayRendererKind.NativeComposition, second.RendererKind);
 
-        using var replacement = new ThumbnailOverlay(client, (_, _) => { }, OverlayRendererKind.NativeComposition);
+        using var replacement = new ThumbnailOverlay(null, OverlayRendererKind.NativeComposition);
         replacement.Show();
         var freshDevice = Device(Renderer(replacement));
         Assert.NotSame(shared, freshDevice);
@@ -374,7 +375,7 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
         Assert.Equal(2, probeCalls); // Cached removal reaches every old owner immediately.
         Assert.Equal(OverlayRendererKind.Legacy, second.RendererKind);
 
-        using var subsequent = new ThumbnailOverlay(client, (_, _) => { }, OverlayRendererKind.NativeComposition);
+        using var subsequent = new ThumbnailOverlay(null, OverlayRendererKind.NativeComposition);
         subsequent.Show();
         Assert.Same(freshDevice, Device(Renderer(subsequent))); // Old disposal cannot clear the replacement cache.
         Assert.Equal(client.Handle, Native.GetActiveWindow());
@@ -403,7 +404,7 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
         config.EnableThumbnailSnap = false;
         config.MinimizeInactiveClients = false;
         using var logger = new LoggerConfiguration().CreateLogger();
-        var keyboard = Stub.Create<IKeyboardMouseEvents>();
+        var keyboard = Stub.Create<IGlobalPointerInput>();
         var mediator = Stub.Create<IMediator>();
         int registrations = 0, unregistrations = 0, activationRequests = 0, imageUpdates = 0;
         var imageBounds = new Dictionary<nint, Rectangle>();
@@ -460,7 +461,7 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
             Select(second); // Border must change while the first preview's alert is still active.
             Assert.Equal(effectCommits + 1, firstGraphics.CommitCount); // Only the fixed clip changes; the animation continues.
             Assert.Equal(effectUploads, firstGraphics.SurfaceUploadCount);
-            Thread.Sleep(200); Application.DoEvents(); // Let the finite native effect expire without an application frame loop.
+            Thread.Sleep(200); TestAvalonia.Pump(); // Let the finite native effect expire without an application frame loop.
             CheckSelection(second);
             Assert.Equal(effectCommits + 1, firstGraphics.CommitCount);
             long stableUploads = firstGraphics.SurfaceUploadCount + secondGraphics.SurfaceUploadCount;
@@ -477,7 +478,7 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
             second.ShowAlert(new PreviewAlert(DurationSeconds: 0.05, Intensity: 1, ShakePixels: 24));
             var fixedClip = secondGraphics.AlertClipBounds;
             secondGraphics.WaitForPendingCommit();
-            Thread.Sleep(75); Application.DoEvents();
+            Thread.Sleep(75); TestAvalonia.Pump();
             Assert.Equal(fixedClip, secondGraphics.AlertClipBounds);
             CheckSelection(second);
             Assert.Equal(204, activationRequests);
@@ -485,7 +486,7 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
             // after the manager has finished activation.
             second.ThumbnailActivated = _ => Select(second);
             typeof(ThumbnailView).GetMethod("MouseDownEventHandler", BindingFlags.Instance | BindingFlags.NonPublic)!
-                .Invoke(second, [new MouseEventArgs(MouseButtons.Left, 1, 40, 40, 0), Keys.None]);
+                .Invoke(second, [new GlobalPointerEventArgs(PointerButtons.Left, PointerButtons.None, new Point(40, 40), ShortcutKeys.None), ShortcutKeys.None]);
             CheckSelection(second);
             Assert.Equal(2, registrations);
             Assert.Equal(0, unregistrations);
@@ -493,11 +494,11 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
             var foregroundChanged = manager.GetType().GetMethod("ForegroundWindowChanged", BindingFlags.Instance | BindingFlags.NonPublic)!;
             observedForeground = first.Id;
             foregroundChanged.Invoke(manager, [first.Id]);
-            Application.DoEvents();
+            TestAvalonia.Pump();
             CheckSelection(first); // External focus is reflected without discovery/refresh or reactivation.
             foregroundChanged.Invoke(manager, [second.Id]); // Queued stale notification cannot roll selection back.
             foregroundChanged.Invoke(manager, [(nint)999]); // Unrelated application retains last selected client.
-            Application.DoEvents();
+            TestAvalonia.Pump();
             CheckSelection(first);
             Assert.Equal(requestsBeforeNotification, activationRequests);
             Assert.Equal(updatesBeforeNotification, imageUpdates);
@@ -594,20 +595,13 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
         protected override void OnPaintBackground(PaintEventArgs e) { }
     }
 
-    private sealed class OccupiedCompositionOverlay(Form owner)
-        : ThumbnailOverlay(owner, (_, _) => { }, OverlayRendererKind.NativeComposition)
+    private sealed class OccupiedCompositionOverlay()
+        : ThumbnailOverlay(null, OverlayRendererKind.NativeComposition)
     {
-        private NativeCompositionOverlayRenderer _occupied;
-        protected override void OnHandleCreated(EventArgs e)
+        protected override IOverlayRenderer CreateNativeRenderer(IntPtr handle)
         {
-            if (RendererKind == OverlayRendererKind.NativeComposition)
-                _occupied = new NativeCompositionOverlayRenderer(Handle);
-            base.OnHandleCreated(e);
-        }
-        protected override void OnHandleDestroyed(EventArgs e)
-        {
-            _occupied?.Dispose(); _occupied = null;
-            base.OnHandleDestroyed(e);
+            using var occupied = new NativeCompositionOverlayRenderer(handle);
+            return base.CreateNativeRenderer(handle);
         }
     }
 }

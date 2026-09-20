@@ -23,7 +23,7 @@ namespace EveOPreview.Tests.Checks;
 
 public sealed class ProfileWorkflowTests
 {
-    private static readonly Assembly App = typeof(MainForm).Assembly;
+    private static readonly Assembly App = typeof(ThumbnailView).Assembly;
 
     [Fact]
     public async Task HotkeyMethodAndTriggerSwitchSaveAndCloneWithEachProfile()

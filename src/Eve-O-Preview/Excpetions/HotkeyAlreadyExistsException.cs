@@ -14,9 +14,8 @@
 //You should have received a copy of the GNU General Public License
 //along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using Gma.System.MouseKeyHook.HotKeys;
 using System;
-using System.Windows.Forms;
+using Keys = EveOPreview.Input.ShortcutKeys;
 
 namespace EveOPreview.Excpetions
 {

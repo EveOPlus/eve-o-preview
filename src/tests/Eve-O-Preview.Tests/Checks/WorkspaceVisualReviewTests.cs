@@ -39,7 +39,7 @@ public sealed class WorkspaceVisualReviewTests(ITestOutputHelper output)
     {
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
-        AppBuilder.Configure<WorkspaceApp>().UsePlatformDetect().WithInterFont().SetupWithoutStarting();
+        TestAvalonia.Initialize();
         using var logger = new LoggerConfiguration().CreateLogger();
         using var context = new System.Windows.Forms.ApplicationContext();
         string path = Path.Combine(Path.GetTempPath(), "EveOPreviewNativeVisual-" + Guid.NewGuid().ToString("N") + ".json");
@@ -61,7 +61,7 @@ public sealed class WorkspaceVisualReviewTests(ITestOutputHelper output)
                 Assert.Equal("EVE - Aura Asuna", args[0]);
                 return pendingStill.Task;
             });
-            using var form = new WorkspaceForm(context, logger, Stub.Create<IMediator>(), storage, config, profiles, new ApplicationPreferences(path, logger),
+            using var form = new WorkspaceWindow(Stub.Create<Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime>(), logger, Stub.Create<IMediator>(), storage, config, profiles, new ApplicationPreferences(path, logger),
                 Stub.Create<IWorkspacePortraitProvider>((_, _) => Task.FromResult<byte[]>(null)), capture);
             form.FormCloseRequested = request => request.Allow = true;
             form.CommitSettingsAsync = () => Task.CompletedTask;
@@ -83,9 +83,9 @@ public sealed class WorkspaceVisualReviewTests(ITestOutputHelper output)
             form.ToggleHideAllActiveHotkey = "Control + Alt + H";
             form.MinimizeAllClientsHotkey = "Control + Alt + M";
             form.SetVersionInfo("10.0.0.12");
-            ((Form)form).Show();
+            form.Show();
             Pump();
-            var workspace = Assert.IsType<WorkspaceView>(((Avalonia.Win32.Interoperability.WinFormsAvaloniaControlHost)form.Controls[0]).Content);
+            var workspace = form.Workspace;
 
             var groups = form.CycleGroups;
             form.CycleGroups = [];
@@ -136,14 +136,14 @@ public sealed class WorkspaceVisualReviewTests(ITestOutputHelper output)
             foreach (string theme in new[] { "Light", "Dark" })
             {
                 SetTheme(form, theme);
-                form.ClientSize = new Size(1180, 800);
+                form.Width = 1180; form.Height = 800;
                 workspace.NavigatePreviewTab("Titles");
                 Pump();
                 WaitUntil(() => Find<Border>(workspace, "title-preview").GetVisualDescendants().OfType<Image>().Any(image => image.Source is not null),
                     "The native preview image did not become available.");
                 AssertSampleControls(workspace);
                 Capture(workspace, Path.Combine(outputDirectory, theme.ToLowerInvariant() + "-title-editor.png"));
-                form.ClientSize = new Size(784, 581);
+                form.Width = 784; form.Height = 581;
                 Pump();
                 AssertSampleControls(workspace);
                 Capture(workspace, Path.Combine(outputDirectory, theme.ToLowerInvariant() + "-title-editor-minimum.png"));
@@ -203,7 +203,7 @@ public sealed class WorkspaceVisualReviewTests(ITestOutputHelper output)
             Assert.Equal(15, form.TitleFontSettings.PositionOffsetFromTop);
             Assert.Equal(6, config.ActiveClientHighlightThickness);
             Assert.Equal(1, captures); // Reflow, themes, draft rendering and Apply all reuse the one still.
-            form.ClientSize = new Size(1180, 800); Pump();
+            form.Width = 1180; form.Height = 800; Pump();
             Click(workspace, "preview-refresh-image"); Pump();
             Assert.Equal(2, captures);
             Console.WriteLine("PASS: native Legacy9tabs plus modern title editor captures; real preview pixels follow draft font/colors/highlight; editor scroll keeps preview pinned atminimum; grouped apply retains all edits.");
@@ -277,7 +277,7 @@ public sealed class WorkspaceVisualReviewTests(ITestOutputHelper output)
         Assert.Equal(value, numeric.Value);
     }
     private static void Click(WorkspaceView workspace, string name) { Find<Button>(workspace, name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Pump(); }
-    private static void SetTheme(WorkspaceForm form, string theme) { Assert.True(form.Backend.ExecuteAsync(new WorkspaceCommand("theme", Value: theme)).GetAwaiter().GetResult().Success); Pump(); }
+    private static void SetTheme(WorkspaceWindow form, string theme) { Assert.True(form.Backend.ExecuteAsync(new WorkspaceCommand("theme", Value: theme)).GetAwaiter().GetResult().Success); Pump(); }
     private static void Capture(WorkspaceView workspace, string path)
     {
         using var bitmap = new RenderTargetBitmap(new PixelSize((int)workspace.Bounds.Width, (int)workspace.Bounds.Height), new Vector(96, 96));
