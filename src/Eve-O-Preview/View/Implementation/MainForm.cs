@@ -662,12 +662,17 @@ namespace EveOPreview.View
             this.FormMinimized?.Invoke();
         }
 
-        private void RefreshCycleGroups()
+        private void RefreshCycleGroups(CycleGroup groupToSelect = null)
         {
             _logger.Verbose("MainForm: RefreshCycleGroups - {GroupCount} groups", CycleGroups.Count);
+            groupToSelect ??= SelectedCycleGroup();
             selectCycleGroupComboBox.DataSource = null;
             selectCycleGroupComboBox.DataSource = CycleGroups;
             selectCycleGroupComboBox.DisplayMember = "Description";
+            if (groupToSelect != null && CycleGroups.Contains(groupToSelect))
+            {
+                selectCycleGroupComboBox.SelectedItem = groupToSelect;
+            }
             selectCycleGroupComboBox.Update();
             RefreshSelectedCycleGroup();
         }
@@ -860,6 +865,28 @@ namespace EveOPreview.View
         private void cycleGroupDescriptionText_Leave(object sender, EventArgs e)
         {
             _logger.Verbose("MainForm: cycleGroupDescriptionText_Leave");
+            CommitCycleGroupName();
+        }
+
+        private void cycleGroupDescriptionText_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                _logger.Verbose("MainForm: cycleGroupDescriptionText Enter pressed");
+                CommitCycleGroupName();
+                cycleGroupDescriptionText.SelectAll();
+                e.SuppressKeyPress = true;
+            }
+            else if (e.KeyCode == Keys.Escape)
+            {
+                cycleGroupDescriptionText.Text = SelectedCycleGroup()?.Description ?? "";
+                cycleGroupDescriptionText.SelectAll();
+                e.SuppressKeyPress = true;
+            }
+        }
+
+        private void CommitCycleGroupName()
+        {
             var selectedGroup = SelectedCycleGroup();
 
             if (selectedGroup == null)
@@ -867,36 +894,45 @@ namespace EveOPreview.View
                 return;
             }
 
-            int groupsWithSameText = CycleGroups.Count(x => x.Description == cycleGroupDescriptionText.Text);
-            if (groupsWithSameText > 0)
+            string newName = cycleGroupDescriptionText.Text.Trim();
+            if (newName == selectedGroup.Description)
             {
-                // It's either this groups name already or already taken, either way we won't change anything.
                 return;
             }
 
-            _logger.Verbose("MainForm: Renamed cycle group to {NewName}", cycleGroupDescriptionText.Text);
-            selectedGroup.Description = cycleGroupDescriptionText.Text;
+            if (newName.Length == 0 || CycleGroups.Any(x => x != selectedGroup && x.Description == newName))
+            {
+                _logger.Verbose("MainForm: Rejected cycle group name {NewName}", newName);
+                cycleGroupDescriptionText.Text = selectedGroup.Description;
+                return;
+            }
+
+            _logger.Verbose("MainForm: Renamed cycle group to {NewName}", newName);
+            selectedGroup.Description = newName;
 
             this.ApplicationSettingsChanged?.Invoke();
-            RefreshCycleGroups();
+            RefreshCycleGroups(selectedGroup);
         }
 
         private void addNewGroupButton_Click(object sender, EventArgs e)
         {
             _logger.Verbose("MainForm: addNewGroupButton_Click");
-            var newName = "New Cycle Group";
-            var countGroupsWithSameName = CycleGroups.Count(x => x.Description?.StartsWith(newName) == true);
-
-            if (countGroupsWithSameName > 0)
+            const string baseName = "New Cycle Group";
+            string newName = baseName;
+            for (int number = 2; CycleGroups.Any(x => x.Description == newName); number++)
             {
-                newName += $"({countGroupsWithSameName + 1})";
+                newName = $"{baseName} {number}";
             }
 
-            CycleGroups.Add(new CycleGroup { Description = newName });
+            var newGroup = new CycleGroup { Description = newName };
+            CycleGroups.Add(newGroup);
 
             _logger.Verbose("MainForm: Created new cycle group: {GroupName}", newName);
             this.ApplicationSettingsChanged?.Invoke();
-            RefreshCycleGroups();
+            RefreshCycleGroups(newGroup);
+
+            cycleGroupDescriptionText.Focus();
+            cycleGroupDescriptionText.SelectAll();
         }
 
         private void removeGroupButton_Click(object sender, EventArgs e)
@@ -910,10 +946,11 @@ namespace EveOPreview.View
             }
 
             _logger.Verbose("MainForm: Removing cycle group: {GroupName}", selectedGroup.Description);
+            int removedIndex = CycleGroups.IndexOf(selectedGroup);
             CycleGroups.Remove(selectedGroup);
 
             this.ApplicationSettingsChanged?.Invoke();
-            RefreshCycleGroups();
+            RefreshCycleGroups(CycleGroups.Count > 0 ? CycleGroups[Math.Min(removedIndex, CycleGroups.Count - 1)] : null);
         }
 
         private void cycleGroupForwardHotkey1Text_DoubleClick(object sender, EventArgs e)

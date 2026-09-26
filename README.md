@@ -138,8 +138,8 @@ and
 | --- | --- |
 | Select Cycle Group Dropdown | A list of Cycle Groups that have been setup. Select the group you wish to view or edit here first |
 | Select Cycle Group - | Delete the currently selected Cycle Group |
-| Select Cycle Group + | Create a new Cycle Group |
-| Description | A unique identifier / name for the selected Cycle Group |
+| Select Cycle Group + | Create a new Cycle Group. The new group is selected and its name is highlighted, ready to be typed |
+| Group Name | A unique name for the selected Cycle Group. Press Enter (or click elsewhere) to save it, Esc to undo. Empty or duplicate names are not accepted |
 | Forward Hotkey | This is the hotkey used to cycle forward in your order. If you only have a Single client in the group, then set only this value (as there is no backwards for only one). Note: Double click in either of the two spaces provided to set the Primary or Secondary hotkey |
 | Backward Hotkey | This is the hotkey used to cycle backward in your order. Note: Double click in either of the two spaces provided to set the Primary or Secondary hotkey |
 | Clients and Order + | Add one of the active (currently running) Eve Clients into this Cycle Group |
