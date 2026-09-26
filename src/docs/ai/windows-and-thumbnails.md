@@ -83,7 +83,7 @@ This method deliberately does **not** call `Form.Show`, image refresh, or DWM re
 
 ### Z order follows activation history and changes only when needed
 
-`_thumbnailActivationOrder` stores oldest first and newest last. New previews enter at index 0; activation removes/reappends the source HWND. `RestoreThumbnailZOrder` raises intended-visible previews in this order, leaving the most recently activated preview on top among overlapping previews. It runs only when `_refreshThumbnailZOrder` is dirty and `ShowThumbnailsAlwaysOnTop` is enabled. Failed raises dirty the next retry.
+`_thumbnailActivationOrder` stores oldest first and newest last. New previews enter at index 0; activation removes/reappends the source HWND. `RestoreThumbnailZOrder` raises intended-visible previews in this order, leaving the most recently activated preview on top among overlapping previews. It runs only when `_refreshThumbnailZOrder` is dirty and `ShowThumbnailsAlwaysOnTop` is enabled. Failed raises dirty the next retry. While any preview's right-click menu is open (`IThumbnailView.IsContextMenuOpen`) it returns without clearing the dirty flag: the menu is also a topmost window, and raising the previews (for example after the mouse leaves a preview for its menu) would cover it. The deferred reorder runs on the first refresh after the menu closes.
 
 `RaiseActivatedThumbnail` updates the order and raises the selected visible/enabled preview immediately, before client activation, layout work, and timer maintenance. Both `SetActive` and the click activation callback use it. It skips immediate native raising when always-on-top is off, the preview is hidden/disabled, or the active-client-preview-hiding option is enabled.
 

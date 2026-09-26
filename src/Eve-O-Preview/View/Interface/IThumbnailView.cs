@@ -31,6 +31,7 @@ namespace EveOPreview.View
         Point ThumbnailLocation { get; set; }
         Size ThumbnailSize { get; set; }
         bool IsOverlayEnabled { get; set; }
+        bool IsContextMenuOpen { get; }
 
         bool IsKnownHandle(IntPtr handle);
 

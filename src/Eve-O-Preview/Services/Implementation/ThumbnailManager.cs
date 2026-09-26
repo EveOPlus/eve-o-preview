@@ -777,6 +777,11 @@ namespace EveOPreview.Services
                 return;
             }
 
+            if (this._thumbnailViews.Values.Any(thumbnail => thumbnail.IsContextMenuOpen))
+            {
+                return;
+            }
+
             this._refreshThumbnailZOrder = false;
             foreach (IntPtr handle in this._thumbnailActivationOrder)
             {

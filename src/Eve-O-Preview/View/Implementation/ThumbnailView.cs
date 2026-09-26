@@ -311,6 +311,8 @@ namespace EveOPreview.View
             this.FormBorderStyle = style;
         }
 
+        public bool IsContextMenuOpen => this.thumbnailContextMenu.Visible;
+
         public void SetTopMost(bool enableTopmost)
         {
             if (this._isTopMost == enableTopmost)
