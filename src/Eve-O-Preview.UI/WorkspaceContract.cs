@@ -9,6 +9,15 @@ public interface IWorkspaceBackend
     Task<CommandResult> ExecuteAsync(WorkspaceCommand command);
 }
 
+public sealed record PreviewApplication(string ProcessName, string WindowTitle, int ProcessId)
+{
+    public override string ToString() => $"{ProcessName}.exe ({ProcessId}) - {WindowTitle}";
+}
+public interface IWorkspaceApplications
+{
+    Task<IReadOnlyList<PreviewApplication>> GetPreviewApplicationsAsync();
+}
+
 /// <summary>Optional asynchronous access to public character portraits, independent of ESI login.</summary>
 public interface IWorkspacePortraitProvider
 {
@@ -62,7 +71,8 @@ public sealed record WorkspaceSnapshot(
     string ThumbnailMenuTheme = ThumbnailMenuThemes.FollowApp,
     IReadOnlyList<string>? SavedClientTitles = null,
     IReadOnlyList<ClientPreferenceItem>? ClientPreferences = null,
-    string UiLanguage = "auto");
+    string UiLanguage = "auto",
+    IReadOnlyList<string>? PreviewApplications = null);
 
 public sealed record ClientPreferenceItem(string Title, bool Priority, string BorderColor = "");
 
@@ -70,7 +80,7 @@ public sealed record ClientItem(string Title, bool PreviewVisible);
 public sealed record ProfileItem(string Id, string Name, bool IsDefault);
 public sealed record CycleGroupItem(int Id, string Name, IReadOnlyList<string> Clients,
     IReadOnlyList<string> ForwardHotkeys, IReadOnlyList<string> BackwardHotkeys,
-    IReadOnlyList<string>? SkippedClients = null);
+    IReadOnlyList<string>? SkippedClients = null, bool IncludeLoginClients = false);
 
 // Actions: setting (Target=key, Value=value), theme (Value=Light/Dark/Legacy),
 // language (Value=auto or supported culture code): global modern workspace preference,
@@ -81,10 +91,12 @@ public sealed record CycleGroupItem(int Id, string Name, IReadOnlyList<string> C
 // toggle-all, minimize-all, client-visible (Target=full title, Value=true/false),
 // profile-switch (Target=id), profile-clone, profile-rename (Value=name), profile-delete,
 // group-add, group-delete (Target=group id), group-rename (Target=id, Value=name),
+// group-login-clients (Target=group id, Value=true/false),
 // group-client-add/remove/up/down (Target=group id, Value=full title),
 // group-client-move (Target=group id, Value=full title, Position=zero-based destination),
 // client-cycle-skip (Target=full title, Value=true/false): session-only, across all groups,
-// hotkey-capture/clear (Target=ToggleHideAllActiveHotkey/MinimizeAllClientsHotkey
+// application-add/remove (Target=executable process name without extension),
+// hotkey-capture/clear (Target=ToggleHideAllActiveHotkey/MinimizeAllClientsHotkey/CycleLoginClientsHotkey
 // or group:{id}:forward/backward:{slot}), documentation, discord, exit.
 // preview-size-limits (Settings=four size bounds); client-preferences (Target=title,
 // Value=border color or empty to inherit, Settings[Priority]=true/false).

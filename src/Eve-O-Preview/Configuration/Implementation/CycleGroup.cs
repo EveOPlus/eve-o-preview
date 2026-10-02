@@ -29,6 +29,8 @@ namespace EveOPreview.Configuration.Implementation
         [JsonProperty("Description")]
         public string Description { get; set; }
 
+        public bool IncludeLoginClients { get; set; }
+
         [JsonProperty("ForwardHotkeys")]
         public List<string> ForwardHotkeys { get; set; } = new List<string>();
 

@@ -54,6 +54,7 @@ public sealed partial class WorkspaceView
             if (!string.IsNullOrEmpty(warning)) _page.Children.Add(Text(warning, 12, _theme.Accent));
         }
         var shortcuts = new StackPanel { Spacing = 12, Children = { Text("GLOBAL SHORTCUTS", 10, _theme.Accent, true), Text("Use Record, then press a key combination. Escape cancels capture. Clear removes the binding.", 11, _theme.Muted), HotkeyRow("Show / hide all previews", "ToggleHideAllActiveHotkey", _snapshot.Settings.GetValueOrDefault("ToggleHideAllActiveHotkey", "")), HotkeyRow("Minimize all clients", "MinimizeAllClientsHotkey", _snapshot.Settings.GetValueOrDefault("MinimizeAllClientsHotkey", "")) } };
+        if (!_theme.Legacy) shortcuts.Children.Add(HotkeyRow("Cycle login clients", "CycleLoginClientsHotkey", _snapshot.Settings.GetValueOrDefault("CycleLoginClientsHotkey", "")));
         _page.Children.Add(Card(shortcuts));
     }
 
@@ -155,6 +156,14 @@ public sealed partial class WorkspaceView
         settings.Children.Add(offlineRow);
         settings.Children.Add(Text("Offline characters stay in the order and are available when their client returns.", 11, _theme.Muted));
         var shortcuts = new StackPanel { Spacing = 10, Children = { Text("GROUP SHORTCUTS", 10, _theme.Accent, true) } };
+        if (!_theme.Legacy)
+        {
+            var includeLogin = new ToggleSwitch { Name = "group-include-login-clients", Content = L("Include login clients"),
+                IsChecked = group.IncludeLoginClients };
+            ToolTip.SetTip(includeLogin, L("Use cached account links to include login windows in this group's character order."));
+            includeLogin.IsCheckedChanged += async (_, _) => await Run(new("group-login-clients", idText, (includeLogin.IsChecked == true).ToString()));
+            shortcuts.Children.Add(includeLogin);
+        }
         for (var i = 0; i < 2; i++) shortcuts.Children.Add(HotkeyRow("Cycle forward · shortcut " + (i + 1), $"group:{group.Id}:forward:{i}", group.ForwardHotkeys.ElementAtOrDefault(i) ?? ""));
         for (var i = 0; i < 2; i++) shortcuts.Children.Add(HotkeyRow("Cycle backward · shortcut " + (i + 1), $"group:{group.Id}:backward:{i}", group.BackwardHotkeys.ElementAtOrDefault(i) ?? ""));
         if (group.ForwardHotkeys.Count > 2 || group.BackwardHotkeys.Count > 2)

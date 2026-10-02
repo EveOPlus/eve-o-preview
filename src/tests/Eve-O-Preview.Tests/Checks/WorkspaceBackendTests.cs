@@ -524,6 +524,46 @@ public sealed class WorkspaceBackendTests
         Assert.Equal(english, fixture.Backend.Read().Settings["HotkeyRegistrationWarning"]);
     }
 
+    [Fact]
+    public async Task LoginShortcutAndApplicationRemovalUseProfileConfiguration()
+    {
+        using var fixture = new Fixture();
+        fixture.Configuration.CycleLoginClientsHotkey = "Control + Alt + L";
+        fixture.Configuration.PreviewApplications = ["notepad", "calc"];
+        Assert.Equal("Control + Alt + L", fixture.Backend.Read().Settings["CycleLoginClientsHotkey"]);
+        Assert.Equal(new[] { "notepad", "calc" }, fixture.Backend.Read().PreviewApplications);
+        Assert.True((await fixture.Execute("hotkey-clear", "CycleLoginClientsHotkey")).Success);
+        Assert.Empty(fixture.Configuration.CycleLoginClientsHotkey);
+        Assert.Equal(1, fixture.Commits);
+        Assert.True((await fixture.Execute("application-remove", "NOTEPAD")).Success);
+        Assert.Equal(new[] { "calc" }, fixture.Configuration.PreviewApplications);
+        Assert.Contains(fixture.Messages, message => message is SaveConfiguration);
+        fixture.FailSave = true;
+        Assert.False((await fixture.Execute("application-remove", "calc")).Success);
+        Assert.Equal(new[] { "calc" }, fixture.Configuration.PreviewApplications);
+    }
+
+    [Fact]
+    public async Task GroupLoginOptionIsIndependentPersistsAndRollsBackFailedCommits()
+    {
+        using var fixture = new Fixture();
+        fixture.View.CycleGroups.Add(new() { Description = "Fleet" });
+        fixture.View.CycleGroups.Add(new() { Description = "Scouts" });
+        Assert.All(fixture.Backend.Read().CycleGroups, group => Assert.False(group.IncludeLoginClients));
+        Assert.True((await fixture.Execute("group-login-clients", "0", "true")).Success);
+        Assert.True(fixture.Backend.Read().CycleGroups[0].IncludeLoginClients);
+        Assert.False(fixture.Backend.Read().CycleGroups[1].IncludeLoginClients);
+        Assert.Equal(1, fixture.Commits);
+        Assert.False((await fixture.Execute("group-login-clients", "0", "invalid")).Success);
+        fixture.CommitAction = () => throw new IOException("Synthetic save failure");
+        Assert.False((await fixture.Execute("group-login-clients", "0", "false")).Success);
+        Assert.True(fixture.View.CycleGroups[0].IncludeLoginClients);
+        Assert.Contains(fixture.Messages, message => message is RefreshHotkeys);
+        fixture.CommitAction = () => Task.CompletedTask;
+        Assert.True((await fixture.Execute("group-login-clients", "0", "false")).Success);
+        Assert.False(fixture.Backend.Read().CycleGroups[0].IncludeLoginClients);
+    }
+
     private sealed class Fixture : IDisposable
     {
         public readonly string AppearancePath = Path.Combine(Path.GetTempPath(), "EveOPreviewAppearance-" + Guid.NewGuid().ToString("N") + ".json");

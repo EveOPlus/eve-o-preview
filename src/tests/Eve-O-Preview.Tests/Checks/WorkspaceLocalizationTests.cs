@@ -51,7 +51,11 @@ public sealed class WorkspaceLocalizationTests
     [Fact]
     public void HotkeyControlsDiagnosticsAndErrorsHaveTranslationsWithoutChangingShortcutNames()
     {
-        string[] display = ["Hotkeys", "Global input", "Windows hotkeys", "Key down", "Key up",
+        string[] display = ["Include login clients", "Use cached account links to include login windows in this group's character order.", "Choose On or Off for login clients.",
+            "Cycle login clients", "Other applications", "Add application", "Search applications",
+            "No other application windows found.", "Includes all running instances of this application. Selection is saved in this profile.",
+            "Select a running application with a window.", "Application thumbnails enabled", "Application thumbnails removed",
+            "Hotkeys", "Global input", "Windows hotkeys", "Key down", "Key up",
             "Open hotkey settings", "Choose Key down or Key up.", "Trigger timing is available with Global input.",
             "Hotkeys trigger on key release.", "Hotkeys trigger on key press.",
             "Choose On or Off for diagnostic passthrough.", "Diagnostic passthrough requires Global input.",

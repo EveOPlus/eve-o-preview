@@ -182,6 +182,9 @@ namespace EveOPreview.Configuration.Implementation
 
         public string ToggleHideActiveClientsHotkey { get; set; }
         public string MinimizeAllClientsHotkey { get; set; }
+        public string CycleLoginClientsHotkey { get; set; } = "";
+        [JsonProperty(ObjectCreationHandling = ObjectCreationHandling.Replace)]
+        public List<string> PreviewApplications { get; set; } = new();
 
         [JsonIgnore]
         public Keys ToggleHideActiveClientsHotkeyParsed { get; set; }
@@ -346,6 +349,10 @@ namespace EveOPreview.Configuration.Implementation
         /// </summary>
         public void ApplyRestrictions()
         {
+            PreviewApplications = (PreviewApplications ?? new()).Where(name => !string.IsNullOrWhiteSpace(name)
+                && name.Length <= 260 && name.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) < 0
+                && !name.Equals("ExeFile", StringComparison.OrdinalIgnoreCase)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            CycleLoginClientsHotkey ??= "";
             if (string.IsNullOrEmpty(UiAccentColor) || UiAccentColor.Length != 7 || UiAccentColor[0] != '#' ||
                 !uint.TryParse(UiAccentColor.AsSpan(1), System.Globalization.NumberStyles.HexNumber,
                     System.Globalization.CultureInfo.InvariantCulture, out _)) UiAccentColor = "";

@@ -70,7 +70,7 @@ public sealed class PipeLifecycleTests
         var receive = Receive(zeroTargets);
         Assert.True(await hooks.UpdateTargetFpsAsync(handle));
         await receive;
-        var process = Stub.Create<IProcessInfo>((method, args) => method.Name == "get_MainWindowHandle" ? handle : Stub.Default(method.ReturnType));
+        var process = new TestProcessInfo(42, "EVE - Pipe fixture") { MainWindowHandle = handle };
         var shutdown = hooks.StopAsync(new[] { process });
         await Receive(zeroTargets);
         await Receive(new byte[] { 0xA2, 0xC1 });

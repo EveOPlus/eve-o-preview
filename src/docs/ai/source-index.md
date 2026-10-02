@@ -247,7 +247,7 @@ Use [the entry guide](../../README.md) to route by feature; use this page when a
 | [src/Eve-O-Preview/Services/Implementation/GlobalEvents.cs](../../../src/Eve-O-Preview/Services/Implementation/GlobalEvents.cs) | Synchronous profile-event bridge. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/Services/Implementation/HookService.cs](../../../src/Eve-O-Preview/Services/Implementation/HookService.cs) | Host injection, ownership/FPS/focus/audio pipe sender and cached install state. | [robin](robin.md) |
 | [src/Eve-O-Preview/Services/Implementation/ProcessInfo.cs](../../../src/Eve-O-Preview/Services/Implementation/ProcessInfo.cs) | PID, source HWND, title, owned kernel handle record. | [windows-and-thumbnails](windows-and-thumbnails.md) |
-| [src/Eve-O-Preview/Services/Implementation/ProcessMonitor.cs](../../../src/Eve-O-Preview/Services/Implementation/ProcessMonitor.cs) | ExeFile discovery and HWND-keyed added/renamed/removed cache. | [windows-and-thumbnails](windows-and-thumbnails.md) |
+| [src/Eve-O-Preview/Services/Implementation/ProcessMonitor.cs](../../../src/Eve-O-Preview/Services/Implementation/ProcessMonitor.cs) | ExeFile and selected-application discovery, executable classification and HWND/PID lifecycle cache. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [src/Eve-O-Preview/Services/Implementation/ThumbnailManager.cs](../../../src/Eve-O-Preview/Services/Implementation/ThumbnailManager.cs) | Preview policy/lifecycle, MRU, hotkeys, cycling, hover/layout, delayed saves. | [windows-and-thumbnails](windows-and-thumbnails.md) |
 | [IHotkeyService](../../Eve-O-Preview/Services/Interface/IHotkeyService.cs), [WindowsHotkeyService](../../Eve-O-Preview/Services/Implementation/WindowsHotkeyService.cs) | Portable input contract; dedicated Windows keyboard thread, native registrations and capture lifecycle. | [windows-and-thumbnails](windows-and-thumbnails.md#hotkeys-and-cycle-semantics) |
 | [WindowsHotkeyMatcher](../../Eve-O-Preview/Services/Implementation/WindowsHotkeyMatcher.cs), [HotkeyDispatchQueue](../../Eve-O-Preview/Services/Implementation/HotkeyDispatchQueue.cs) | Allocation-free unmatched key matching and bounded, ordered input-to-UI dispatch. | [windows-and-thumbnails](windows-and-thumbnails.md#hotkeys-and-cycle-semantics) |
@@ -310,6 +310,16 @@ audit assembly, deps and runtime references. [Snap checks](../../tests/Eve-O-Pre
 and [pointer queue checks](../../tests/Eve-O-Preview.Tests/Checks/PointerDispatchTests.cs)
 cover the portable interaction contracts.
 
+[LoginApplicationTests](../../tests/Eve-O-Preview.Tests/Checks/LoginApplicationTests.cs)
+covers login ordering, duplicate-title application lifecycles, profile fields,
+shortcut conflicts and EVE-only routing. Its private-desktop lifecycle scenario is
+dispatched by `SettingsIntegrationTests`; [TestProcessInfo](../../tests/Eve-O-Preview.Tests/Infrastructure/TestProcessInfo.cs)
+supplies explicit executable classification for synthetic process fixtures.
+
+[ThumbnailManager.LoginGroups](../../Eve-O-Preview/Services/Implementation/ThumbnailManager.LoginGroups.cs)
+resolves optional cached account links into cycle-group HWND slots while
+preserving character order, skips, wraparound and prediction.
+
 | File | Responsibility / review note | Guide |
 | --- | --- | --- |
 | [src/tests/Eve-O-Preview.Tests/Checks/CustomAudioTests.cs](../../../src/tests/Eve-O-Preview.Tests/Checks/CustomAudioTests.cs) | Parser, production UI/persistence, synthetic host pipe checks. | [build-and-test](build-and-test.md) |
@@ -366,6 +376,7 @@ The [UI review](ui-review.md) describes control-preservation requirements; the [
 | [src/Eve-O-Preview.UI/WorkspaceView.Settings.cs](../../Eve-O-Preview.UI/WorkspaceView.Settings.cs) | Settings editors, validation, explicit Apply, search and preview/font controls |
 | [src/Eve-O-Preview.UI/WorkspaceView.Pages.cs](../../Eve-O-Preview.UI/WorkspaceView.Pages.cs) | Overview, preview/client/performance pages, appearance choices, About and clear planned-feature states |
 | [src/Eve-O-Preview.UI/WorkspaceView.Management.cs](../../Eve-O-Preview.UI/WorkspaceView.Management.cs) | Profile management/accent palette and custom color, cycle membership/order, explicit shortcut recording and clearing |
+| [src/Eve-O-Preview.UI/WorkspaceView.Applications.cs](../../Eve-O-Preview.UI/WorkspaceView.Applications.cs) | Modern application picker and profile selection/removal controls |
 | [src/Eve-O-Preview.UI/WorkspaceView.PreviewEditor.cs](../../Eve-O-Preview.UI/WorkspaceView.PreviewEditor.cs) | Compact preview editing sections, persistent sample, installed fonts, styles, colors and grouped draft application |
 | [src/Eve-O-Preview.UI/WorkspaceView.AdvancedSettings.cs](../../Eve-O-Preview.UI/WorkspaceView.AdvancedSettings.cs) | Advanced preview controls and online/offline per-character color/minimization editors for all themes |
 | [src/Eve-O-Preview.UI/WorkspaceView.Preview.cs](../../Eve-O-Preview.UI/WorkspaceView.Preview.cs) | Platform-rendered title images, explicit fitted scale and portable illustrative fallback |
@@ -380,6 +391,7 @@ The [UI review](ui-review.md) describes control-preservation requirements; the [
 | [src/Eve-O-Preview/View/Implementation/WorkspaceWindow.cs](../../Eve-O-Preview/View/Implementation/WorkspaceWindow.cs) | Avalonia desktop workspace/tray window; implements the existing presenter view contract |
 | [src/Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.cs) | Explicit validated setting bindings, full-title client state, profiles/cycling/hotkeys and existing mediator/native command routing |
 | [src/Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.AdvancedSettings.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.AdvancedSettings.cs) | Atomic resize bounds, per-character overrides, persistence rollback and runtime notification |
+| [src/Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.Applications.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.Applications.cs) | Background windowed-process enumeration and profile application selection persistence |
 | [src/Eve-O-Preview/Mediator/Messages/Thumbnails/ThumbnailRuntimeSettingsUpdated.cs](../../Eve-O-Preview/Mediator/Messages/Thumbnails/ThumbnailRuntimeSettingsUpdated.cs) | Advanced profile settings runtime refresh notification |
 | [src/Eve-O-Preview/Mediator/Handlers/Thumbnails/ThumbnailRuntimeSettingsUpdatedHandler.cs](../../Eve-O-Preview/Mediator/Handlers/Thumbnails/ThumbnailRuntimeSettingsUpdatedHandler.cs) | Applies persisted preview settings to the current thumbnail manager |
 | [src/Eve-O-Preview/View/Implementation/WindowsWorkspacePreviewRenderer.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspacePreviewRenderer.cs) | Shared production scene rasterization for draft previews and native highlight geometry |

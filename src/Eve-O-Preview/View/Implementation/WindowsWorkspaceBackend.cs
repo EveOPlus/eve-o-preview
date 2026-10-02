@@ -19,7 +19,7 @@ using Serilog;
 namespace EveOPreview.View;
 
 /// <summary>Maps portable workspace commands to the existing presenter, profile and native services.</summary>
-public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorkspacePreviewRenderer, IWorkspacePreviewCapture, IWorkspacePortraitProvider, IWorkspaceCharacterProvider, IWorkspaceCombatLogs, IWorkspaceStaticData, IDisposable
+public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorkspaceApplications, IWorkspacePreviewRenderer, IWorkspacePreviewCapture, IWorkspacePortraitProvider, IWorkspaceCharacterProvider, IWorkspaceCombatLogs, IWorkspaceStaticData, IDisposable
 {
     private readonly EveOPreview.Services.Implementation.CharacterIdentityCache _characters;
     public Task<WorkspaceCharacter> GetCharacterAsync(string fullTitle) =>
@@ -113,6 +113,7 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         values["GlobalHotkeyTrigger"] = _configuration.GlobalHotkeysOnRelease ? "KeyUp" : "KeyDown";
         values["HotkeyRegistrationWarning"] = LocalizedHotkeyWarning();
         values["MinimizeAllClientsHotkey"] = _view.MinimizeAllClientsHotkey ?? "";
+        values["CycleLoginClientsHotkey"] = _configuration.CycleLoginClientsHotkey ?? "";
         values["ThumbnailMinimumWidth"] = Format(MinimumThumbnailSize.Width);
         values["ThumbnailMinimumHeight"] = Format(MinimumThumbnailSize.Height);
         values["ThumbnailMaximumWidth"] = Format(MaximumThumbnailSize.Width);
@@ -125,13 +126,14 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
                 x.FriendlyName.Equals("Default", StringComparison.OrdinalIgnoreCase))).ToArray(),
             (_view.CycleGroups ?? []).Select((x, i) => new CycleGroupItem(i, x.Description ?? "",
                 x.ClientsOrder.Values.ToArray(), x.ForwardHotkeys.ToArray(), x.BackwardHotkeys.ToArray(),
-                x.ClientsOrder.Values.Where(_configuration.IsClientCycleSkipped).ToArray())).ToArray(),
+                x.ClientsOrder.Values.Where(_configuration.IsClientCycleSkipped).ToArray(), x.IncludeLoginClients)).ToArray(),
             _preferences.ThumbnailMenuOrder, _preferences.ThumbnailMenuTheme, _configuration.GetKnownClientTitles()?.ToArray(),
             _clients.Keys.Concat(_configuration.GetKnownClientTitles() ?? [])
                 .Concat(_configuration.GetPriorityClientTitles() ?? []).Concat(_configuration.PerClientActiveClientHighlightColor.Keys)
                 .Distinct(StringComparer.Ordinal).OrderBy(title => title, StringComparer.OrdinalIgnoreCase)
                 .Select(title => new ClientPreferenceItem(title, _configuration.IsPriorityClient(title),
-                    _configuration.PerClientActiveClientHighlightColor.TryGetValue(title, out var color) ? Format(color) : "")).ToArray(), _preferences.UiLanguage);
+                    _configuration.PerClientActiveClientHighlightColor.TryGetValue(title, out var color) ? Format(color) : "")).ToArray(), _preferences.UiLanguage,
+            (_configuration.PreviewApplications ?? new()).ToArray());
     }
 
     public async Task<CommandResult> ExecuteAsync(WorkspaceCommand command)
@@ -143,6 +145,7 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         {
             switch (command.Action)
             {
+                case "application-add": case "application-remove": return await EditPreviewApplicationAsync(command);
                 case "setting": return await ApplySetting(command.Target, command.Value);
                 case "preview-size-limits": return await ApplyPreviewSizeLimits(command.Settings);
                 case "client-preferences": return await ApplyClientPreferences(command);
@@ -234,6 +237,19 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
                 case "group-delete":
                     _view.CycleGroups.Remove(GetGroup(command.Target));
                     await Commit(); break;
+                case "group-login-clients":
+                    if (!bool.TryParse(command.Value, out bool includeLoginClients)) return CommandResult.Error("Choose On or Off for login clients.");
+                    var loginGroup = GetGroup(command.Target);
+                    bool previousIncludeLogin = loginGroup.IncludeLoginClients;
+                    loginGroup.IncludeLoginClients = includeLoginClients;
+                    try { await Commit(); }
+                    catch
+                    {
+                        loginGroup.IncludeLoginClients = previousIncludeLogin;
+                        await _mediator.Send(new RefreshHotkeys());
+                        throw;
+                    }
+                    break;
                 case "group-rename":
                     if (string.IsNullOrWhiteSpace(command.Value)) return CommandResult.Error("Enter a name for the cycle group.");
                     var renamedGroup = GetGroup(command.Target);
@@ -436,7 +452,12 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
     {
         string current;
         Action<string> set;
-        if (command.Target is "ToggleHideAllActiveHotkey" or "MinimizeAllClientsHotkey")
+        if (command.Target == "CycleLoginClientsHotkey")
+        {
+            current = _configuration.CycleLoginClientsHotkey;
+            set = value => _configuration.CycleLoginClientsHotkey = value;
+        }
+        else if (command.Target is "ToggleHideAllActiveHotkey" or "MinimizeAllClientsHotkey")
         {
             bool hide = command.Target == "ToggleHideAllActiveHotkey";
             current = hide ? _view.ToggleHideAllActiveHotkey : _view.MinimizeAllClientsHotkey;

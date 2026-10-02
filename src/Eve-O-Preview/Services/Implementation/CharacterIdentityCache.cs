@@ -25,10 +25,69 @@ public sealed class CharacterIdentityCache : IWorkspaceCharacterProvider, IDispo
     private readonly object _gate = new();
     private readonly Dictionary<string, KnownCharacter> _known = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, int> _live = new(StringComparer.OrdinalIgnoreCase);
+    private sealed class ProcessAccount
+    {
+        public IProcessInfo Process;
+        public long? UserId;
+        public DateTimeOffset Retry;
+        public DateTimeOffset CheckedAt;
+        public Task<long?> Pending;
+    }
+    private readonly Dictionary<int, ProcessAccount> _processAccounts = new();
+
+    public long? GetProcessUserId(IProcessInfo process)
+    {
+        lock (_gate) return _processAccounts.TryGetValue(process.ProcessId, out var account)
+            && account.Process.MainWindowHandle == process.MainWindowHandle ? account.UserId : null;
+    }
+
+    public long? GetCachedCharacterUserId(string fullTitle)
+    {
+        var name = CharacterName(fullTitle);
+        lock (_gate) return name is not null && _known.TryGetValue(name, out var character) ? character.EveUserId : null;
+    }
+
+    private Task<long?> ReadProcessAccountAsync(int pid)
+    {
+        lock (_gate)
+        {
+            if (!_processAccounts.TryGetValue(pid, out var account)) return Task.FromResult<long?>(null);
+            if ((account.UserId.HasValue && _now() - account.CheckedAt < Lifetime) || account.Retry > _now()) return Task.FromResult(account.UserId);
+            if (account.Pending is not null) return account.Pending;
+            var process = account.Process;
+            account.Pending = Task.Run(async () =>
+            {
+                long? id = null;
+                bool entered = false;
+                try
+                {
+                    await _accountReads.WaitAsync(_stop.Token).ConfigureAwait(false); entered = true;
+                    id = _readUserId(pid, process.Title);
+                }
+                catch { /* Never retain launch credentials or errors. */ }
+                finally { if (entered) _accountReads.Release(); }
+                bool changed = false, valid = false;
+                lock (_gate)
+                {
+                    if (!_disposed && _processAccounts.GetValueOrDefault(pid) == account)
+                    {
+                        valid = true;
+                        if (id is > 0) { account.UserId = id; account.CheckedAt = _now(); }
+                        account.Retry = account.Process.Title == process.Title ? _now().AddHours(1) : default;
+                        account.Pending = null;
+                        changed = id is > 0 && account.Process.IsLoginClient;
+                    }
+                }
+                if (changed) Changed?.Invoke();
+                return valid ? id : null;
+            });
+            return account.Pending;
+        }
+    }
     private readonly Dictionary<string, DateTimeOffset> _characterRetry = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<(string Name, int Pid), DateTimeOffset> _userRetry = new();
     private readonly ConcurrentDictionary<string, Lazy<Task<WorkspaceCharacter>>> _work = new(StringComparer.OrdinalIgnoreCase);
-    private readonly SemaphoreSlim _requests = new(2), _writes = new(1);
+    private readonly SemaphoreSlim _requests = new(2), _writes = new(1), _accountReads = new(2);
     private readonly CancellationTokenSource _stop = new();
     private readonly HttpClient _client;
     private readonly Func<int, string, long?> _readUserId;
@@ -78,11 +137,25 @@ public sealed class CharacterIdentityCache : IWorkspaceCharacterProvider, IDispo
         lock (_gate)
         {
             _live.Clear();
-            foreach (var process in processes)
+            var eveProcesses = processes.Where(p => p.IsEveClient).ToArray();
+            foreach (var pid in _processAccounts.Keys.Where(pid => !eveProcesses.Any(p => p.ProcessId == pid)).ToArray())
+                _processAccounts.Remove(pid);
+            foreach (var process in eveProcesses)
+            {
+                if (!_processAccounts.TryGetValue(process.ProcessId, out var account)
+                    || account.Process.MainWindowHandle != process.MainWindowHandle)
+                    _processAccounts[process.ProcessId] = account = new ProcessAccount { Process = process };
+                if (account.Process.Title != process.Title && !account.UserId.HasValue) account.Retry = default;
+                account.Process = process;
                 if (CharacterName(process.Title) is { } name) _live[name] = process.ProcessId;
+            }
             foreach (var key in _userRetry.Keys.Where(k => !_live.TryGetValue(k.Name, out var pid) || pid != k.Pid).ToArray()) _userRetry.Remove(key);
         }
-        foreach (var process in processes) _ = GetCharacterAsync(process.Title);
+        foreach (var process in processes.Where(p => p.IsEveClient))
+        {
+            _ = ReadProcessAccountAsync(process.ProcessId);
+            _ = GetCharacterAsync(process.Title);
+        }
     }
 
     public Task<WorkspaceCharacter> GetCharacterAsync(string fullTitle)
@@ -134,7 +207,7 @@ public sealed class CharacterIdentityCache : IWorkspaceCharacterProvider, IDispo
             long? userId = null, characterId = null;
             if (userDue)
             {
-                try { userId = _readUserId(pid, "EVE - " + name); }
+                try { userId = await ReadProcessAccountAsync(pid).ConfigureAwait(false); }
                 catch { /* Never log command-line reader exceptions or their data. */ }
             }
             if (characterDue) characterId = await Lookup(name).ConfigureAwait(false);

@@ -41,7 +41,7 @@ namespace EveOPreview.Mediator.Handlers.Configuration
 
         public async Task Handle(SetFpsLimiter request, CancellationToken cancellationToken)
         {
-            var allKnownClients = _processMonitor.GetAllProcesses();
+            var allKnownClients = _processMonitor.GetAllProcesses().Where(p => p.IsEveClient).ToList();
             _logger.Verbose("SetFpsLimiter: Updating FPS limiter settings for {ClientCount} clients", allKnownClients.Count);
 
             var tasks = allKnownClients.Select(client => _hookService.UpdateTargetFpsAsync(client.MainWindowHandle));

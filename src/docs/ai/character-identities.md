@@ -14,7 +14,20 @@ only the name, character ID, EVE user ID and successful lookup timestamps. The
 same derived fields are saved atomically to `Cache/Characters.json` beside the
 resolved global settings file, independently of gameplay profiles.
 
-Only named `EVE - <name>` windows are accepted; `EVE` login windows are excluded.
+Only named `EVE - <name>` windows create portrait identities. Discovery accepts
+account associations only from classified `ExeFile` processes, including `EVE`
+login windows. A session cache keyed by PID and checked against source HWND keeps
+the numeric account ID across login/character title transitions and drops it on
+process removal. Login entries never become character names or trigger ESI.
+The login-cycle shortcut reads this cache synchronously and falls back to PID
+while an account read is pending or unavailable. Session process keys are not
+written to disk; named character records retain the existing persisted schema.
+
+Opted-in cycle groups join `GetCachedCharacterUserId(fullTitle)` with
+`GetProcessUserId(process)` in memory. This is an account association rather than
+proof of which character the user will select: the saved group order determines
+the slot, and an already named client takes precedence. Unavailable/ambiguous
+process matches are omitted. No ESI call or command-line read occurs during cycling.
 The prefix is removed for public API lookup without changing persisted window
 titles. `POST https://esi.evetech.net/universe/ids` receives a JSON name array, a
 versioned application user agent and `X-Compatibility-Date: 2026-09-07`. Only an
@@ -23,11 +36,11 @@ accepted. Corporation, item and other IDs must never be used as character IDs.
 See the [official ESI operation](https://developers.eveonline.com/api-explorer#/operations/PostUniverseIds).
 
 Discovery passes its process snapshot to the identity cache after releasing its
-lock. HTTP and command-line work runs on background tasks, deduplicated by name
-and limited to two concurrent refreshes. A missing user ID is queried on first
+lock. HTTP work is deduplicated by name and command-line work by process; each
+has a separate two-operation concurrency limit. A missing user ID is queried on first
 discovery. Successful character/account lookups refresh after seven days; an
 hourly maintenance timer also checks known entries. Account refresh requires the
-character to be running. A changed process association invalidates an in-flight
+EVE process to be running. A changed process association invalidates an in-flight
 account result. A new PID can retry a previously unavailable user ID immediately.
 
 Failures retain previous IDs. Missing names retry after twelve hours. Other
@@ -39,7 +52,7 @@ command-line or API reads. A failed disk write leaves the in-memory map usable.
 
 [EveClientUserIdReader](../../Eve-O-Preview/Services/Implementation/EveClientUserIdReader.cs)
 inspects only an already-discovered `ExeFile` PID whose current window title
-matches the requested character. It uses a temporary query-limited process handle
+matches the observed login or character title. It uses a temporary query-limited process handle
 and `NtQueryInformationProcess(ProcessCommandLineInformation)`; it does not modify
 the client, read arbitrary game memory or install a hook.
 

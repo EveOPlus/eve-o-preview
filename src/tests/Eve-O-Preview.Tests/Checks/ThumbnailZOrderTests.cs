@@ -81,12 +81,7 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
         foreach (int id in new[] { 101, 102, 103 })
         {
             int clientId = id;
-            pending.Add(Stub.Create<IProcessInfo>((method, args) => method.Name switch
-            {
-                "get_MainWindowHandle" => new IntPtr(clientId),
-                "get_Title" => "EVE - " + clientId,
-                _ => Stub.Default(method.ReturnType)
-            }));
+            pending.Add(new TestProcessInfo(clientId, "EVE - " + clientId));
         }
         var processMonitor = Stub.Create<IProcessMonitor>((method, args) =>
         {

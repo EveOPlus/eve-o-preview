@@ -260,7 +260,9 @@ Messages live under [Mediator/Messages](../../Eve-O-Preview/Mediator/Messages); 
 | Appearance | `ThumbnailOpacity=0.5`, JSON `ThumbnailsOpacity`; overlays on, frames off; active highlight off, thickness 3 |
 | Zoom | Off, factor 2, NW; enabled property serialized as `EnableThumbnailZoom` |
 | Layout dictionaries | Private `[JsonProperty]` members `PerClientLayout`, `FlatLayout`, `ClientLayout`, `DisableThumbnail`, `PriorityClients` remain part of the JSON contract |
-| Cycle groups | Ordered `SortedDictionary<int,string> ClientsOrder`; forward/backward hotkey string lists; parsed key lists are `[JsonIgnore]` |
+| Cycle groups | Ordered `SortedDictionary<int,string> ClientsOrder`; forward/backward hotkey string lists; parsed key lists are `[JsonIgnore]`. `IncludeLoginClients=false` by default; modern group shortcuts optionally resolve absent members to linked login HWNDs without changing saved title order. |
+| Login cycling | `CycleLoginClientsHotkey`, empty by default; modern Global shortcuts uses shared capture/conflict handling, save and hotkey refresh. Runtime order uses cached process account ID or PID, with PID tie-break. |
+| Application thumbnails | `PreviewApplications`, an empty-by-default list of executable names. Modern Clients selects running windowed applications through `IWorkspaceApplications`; add/remove saves directly with rollback on failure. Discovery follows changes on its next tick and supports all running instances of selected names. |
 | FPS/audio | Shared nested models; desktop FPS disabled with 144/20/45 foreground/background/predicted targets; both audio presets off and custom list empty |
 | CPU affinity | `EnableAutomaticCpuAffinity=true` |
 | Runtime-only state | `IsTemporarilyHidingAllThumbnails` and parsed general hotkeys are `[JsonIgnore]` |

@@ -194,8 +194,11 @@ public sealed partial class WorkspaceView
             && (!_theme.Legacy || s.Page != "Hotkeys" && s.Page != "PreviewGraphics" && s.Key != "ShowCurrentSolarSystem" && !s.Key.StartsWith("SolarSystem", StringComparison.Ordinal))
             && (s.Matches(_query) || _localization.Contains($"{L(s.Label)} {L(s.Description)} {L(PageLabel(s.Page))}", _query))).ToArray();
         var routes = new[] { ("Switching", "Cycle groups, hotkeys and keyboard shortcuts"), ("Clients", "Active clients and preview visibility"), ("ClientSettings", "Character colors & minimization"), ("Profiles", "Profiles, clone, rename, delete and profile accent color"), ("Appearance", "Appearance, themes, Light, Dark and Legacy") };
-        var showGlobalShortcuts = "hide all show all minimize all minimise all global hotkey keyboard shortcuts ToggleHideAllActiveHotkey MinimizeAllClientsHotkey".Contains(_query, StringComparison.OrdinalIgnoreCase);
+        var showGlobalShortcuts = "hide all show all minimize all minimise all global hotkey keyboard shortcuts ToggleHideAllActiveHotkey MinimizeAllClientsHotkey".Contains(_query, StringComparison.OrdinalIgnoreCase)
+            || !_theme.Legacy && _localization.Contains(L("Cycle login clients") + " login logon account username pid CycleLoginClientsHotkey", _query);
+        bool showGroupLogin = !_theme.Legacy && _localization.Contains(L("Include login clients") + " group login logon account character order IncludeLoginClients", _query);
         var featureMatches = routes.Where(r => r.Item2.Contains(_query, StringComparison.OrdinalIgnoreCase) || _localization.Contains(L(r.Item2), _query)
+            || r.Item1 == "Clients" && !_theme.Legacy && _localization.Contains(L("Other applications") + " application process executable non eve thumbnail", _query)
             || r.Item1 == "Appearance" && _localization.Contains(L("Language") + " language", _query)
             || r.Item1 == "Profiles" && !_theme.Legacy && _localization.Contains(L("Open profiles folder") + " open profiles folder directory location saved files", _query)
             || r.Item1 == "ClientSettings" && "PriorityClients PerClientActiveClientHighlightColor priority border minimization exceptions offline".Contains(_query, StringComparison.OrdinalIgnoreCase)).ToArray();
@@ -206,7 +209,7 @@ public sealed partial class WorkspaceView
                 || _localization.Contains(string.Join(" ", x.target.Keywords.Prepend(x.target.Title).Prepend(x.module.Title).Select(L)), word))).ToArray();
         var moduleMatches = _modules.Where(m => !_theme.Legacy && !sectionMatches.Any(x => x.module.Id == m.Id)
             && (_localization.Contains($"{m.Title} {m.Description}", _query) || _localization.Contains($"{L(m.Title)} {L(m.Description)}", _query))).ToArray();
-        Heading("Search results", F($"{matches.Length + featureMatches.Length + sectionMatches.Length + moduleMatches.Length} settings matching “{_query}”. Edit them here; your navigation stays available."));
+        Heading("Search results", F($"{matches.Length + featureMatches.Length + sectionMatches.Length + moduleMatches.Length + (showGroupLogin ? 1 : 0)} settings matching “{_query}”. Edit them here; your navigation stays available."));
         foreach (var group in matches.GroupBy(s => s.Page))
         {
             _page.Children.Add(Text(PageLabel(group.Key), 12, _theme.Accent, true));
@@ -219,12 +222,14 @@ public sealed partial class WorkspaceView
             _page.Children.Add(Card(rows, new Thickness(20, 0)));
         }
         if (showGlobalShortcuts) AddGlobalHotkeys();
+        if (showGroupLogin)
+            _page.Children.Add(ActionButton(L("Include login clients"), () => { _showGlobalShortcuts = false; Navigate("Switching"); }, "search-group-login-clients"));
         foreach (var route in featureMatches) _page.Children.Add(ActionButton(F($"Open {L(route.Item2)}  →"), () => Navigate(route.Item1)));
         foreach (var (module, target) in sectionMatches)
             _page.Children.Add(ActionButton(F($"Open {L(module.Title) + " - " + L(target.Title)}  →"),
                 () => { target.PrepareNavigation(); Navigate(module.Id); }, "search-module-" + module.Id + "-" + target.Id));
         foreach (var module in moduleMatches) _page.Children.Add(ActionButton(F($"Open {module.Title}  →"), () => Navigate(module.Id)));
-        if (matches.Length == 0 && featureMatches.Length == 0 && moduleMatches.Length == 0 && sectionMatches.Length == 0 && !showGlobalShortcuts)
+        if (matches.Length == 0 && featureMatches.Length == 0 && moduleMatches.Length == 0 && sectionMatches.Length == 0 && !showGlobalShortcuts && !showGroupLogin)
             _page.Children.Add(Card(new StackPanel { Spacing = 9, Children = { Text("No matching settings", 18, _theme.Text, true), Text("Try a shorter term such as “opacity”, “FPS”, “hotkey” or “font”.", 13, _theme.Muted), ActionButton("Clear search", () => { _search.Text = L(""); }) } }));
     }
 

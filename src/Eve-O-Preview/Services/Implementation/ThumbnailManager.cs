@@ -19,6 +19,7 @@ using EveOPreview.Configuration.Implementation;
 using EveOPreview.Mediator.Messages;
 using EveOPreview.Mediator.Messages.Process;
 using EveOPreview.Services.Interface;
+using EveOPreview.Services.Implementation;
 using EveOPreview.View;
 using MediatR;
 using Serilog;
@@ -47,6 +48,7 @@ namespace EveOPreview.Services
         #region Private fields
         private readonly IMediator _mediator;
         private readonly IProcessMonitor _processMonitor;
+        private readonly CharacterIdentityCache _identities;
         private readonly IWindowManager _windowManager;
         private readonly IThumbnailConfiguration _configuration;
         private readonly DispatcherTimer _thumbnailUpdateTimer;
@@ -87,10 +89,15 @@ namespace EveOPreview.Services
             : this(mediator, configuration, processMonitor, windowManager, factory, hotkeys, hookService, globalEvents, logger, null, null) { }
 
         public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IHotkeyService hotkeys, IHookService hookService, IGlobalEvents globalEvents, ILogger logger,
-            Logs.CombatLogService combatLogs = null, ApplicationPreferences preferences = null)
+            Logs.CombatLogService combatLogs, ApplicationPreferences preferences)
+            : this(mediator, configuration, processMonitor, windowManager, factory, hotkeys, hookService, globalEvents, logger, combatLogs, preferences, null) { }
+
+        public ThumbnailManager(IMediator mediator, IThumbnailConfiguration configuration, IProcessMonitor processMonitor, IWindowManager windowManager, IThumbnailViewFactory factory, IHotkeyService hotkeys, IHookService hookService, IGlobalEvents globalEvents, ILogger logger,
+            Logs.CombatLogService combatLogs = null, ApplicationPreferences preferences = null, CharacterIdentityCache identities = null)
         {
             this._mediator = mediator;
             this._processMonitor = processMonitor;
+            _identities = identities;
             this._windowManager = windowManager;
             this._configuration = configuration;
             this._thumbnailViewFactory = factory;
@@ -310,6 +317,22 @@ namespace EveOPreview.Services
             _logger.Verbose("ThumbnailManager.CycleNextClient: Cycle completed");
         }
 
+        public void CycleLoginClients()
+        {
+            if (_activationInProgress || _stopped) return;
+            var clients = OrderLoginClients(_processMonitor.GetAllProcesses(), p => _identities?.GetProcessUserId(p))
+                .Where(p => _thumbnailViews.ContainsKey(p.MainWindowHandle)).ToArray();
+            if (clients.Length == 0) return;
+            int current = Array.FindIndex(clients, p => p.MainWindowHandle == _activeClient.Handle);
+            var next = clients[(current + 1) % clients.Length];
+            var predicted = clients[(current + 2) % clients.Length];
+            ActivateClient(_thumbnailViews[next.MainWindowHandle], clients.Length > 1 ? predicted.MainWindowHandle : IntPtr.Zero,
+                _activeClient.Handle, saveLayouts: false);
+        }
+
+        internal static IProcessInfo[] OrderLoginClients(IEnumerable<IProcessInfo> processes, Func<IProcessInfo, long?> userId) =>
+            processes.Where(p => p.IsLoginClient).OrderBy(p => userId(p) ?? p.ProcessId).ThenBy(p => p.ProcessId).ToArray();
+
         private string FindNextClientInCycleGroup(bool isForwards, string findThisTitleFirst, SortedDictionary<int, string> cycleOrder)
         {
             // Keep the active character's position even when it has just been skipped.
@@ -342,15 +365,17 @@ namespace EveOPreview.Services
             {
                 // A stable snapshot survives UI edits until Replace invalidates queued actions.
                 var order = new SortedDictionary<int, string>(group.ClientsOrder);
+                bool includeLoginClients = group.IncludeLoginClients;
                 foreach (var key in group.ForwardHotkeys)
-                    bindings.Add(new(key, () => CycleNextClient(true, order), onRelease));
+                    bindings.Add(new(key, () => CycleGroupClients(true, order, includeLoginClients), onRelease));
                 foreach (var key in group.BackwardHotkeys)
-                    bindings.Add(new(key, () => CycleNextClient(false, order), onRelease));
+                    bindings.Add(new(key, () => CycleGroupClients(false, order, includeLoginClients), onRelease));
             }
             bindings.Add(new(_configuration.ToggleHideActiveClientsHotkey,
                 () => _ = _mediator.Send(new ThumbnailToggleHideAll()), onRelease));
             bindings.Add(new(_configuration.MinimizeAllClientsHotkey,
                 () => _ = _mediator.Send(new MinimizeAllClients()), onRelease));
+            bindings.Add(new(_configuration.CycleLoginClientsHotkey, CycleLoginClients, onRelease));
             _hotkeys.Replace(bindings, _configuration.UseWindowsHotkeys ? HotkeyMode.OperatingSystem : HotkeyMode.Global, _diagnosticHotkeyPassthrough);
         }
 
@@ -476,7 +501,7 @@ namespace EveOPreview.Services
                     viewsAdded.Add(view.Title);
                 }
 
-                _ = _hookService.TryInstallHooksAsync(process);
+                if (process.IsEveClient) _ = _hookService.TryInstallHooksAsync(process);
             }
 
             foreach (IProcessInfo process in updatedProcesses)
@@ -489,12 +514,12 @@ namespace EveOPreview.Services
                     continue;
                 }
 
-                if (process.Title != view.Title)
+                if (process.PreviewTitle != view.Title)
                 {
                     _logger.Verbose("ThumbnailManager.UpdateThumbnailsList: Thumbnail title changed: {OldTitle} -> {NewTitle}", view.Title, process.Title);
                     viewsRemoved.Add(view.Title);
-                    view.Title = process.Title;
-                    if (_activeClient.Handle == process.MainWindowHandle) _activeClient.Title = process.Title;
+                    view.Title = process.PreviewTitle;
+                    if (_activeClient.Handle == process.MainWindowHandle) _activeClient.Title = view.Title;
                     viewsAdded.Add(view.Title);
 
                     this.ApplyClientLayout(view.Id, view.Title);
@@ -512,7 +537,7 @@ namespace EveOPreview.Services
 
         private IThumbnailView AddThumbnail(IProcessInfo process)
         {
-            IThumbnailView view = _thumbnailViewFactory.Create(process.MainWindowHandle, process.Title, _configuration.ThumbnailSize);
+            IThumbnailView view = _thumbnailViewFactory.Create(process.MainWindowHandle, process.PreviewTitle, _configuration.ThumbnailSize);
             view.TitleFontSettings = _configuration.TitleFontSettings;
             view.IsOverlayEnabled = _configuration.ShowThumbnailOverlays;
             view.SetFrames(_configuration.ShowThumbnailFrames);

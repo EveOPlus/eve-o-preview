@@ -41,6 +41,9 @@ This downloads the project's public root certificate and adds it to the computer
 | --- | --- |
 | See my fleet at a glance | **Overview** |
 | Choose which characters have previews | **Clients** |
+| Create thumbnails for other applications | **Clients > Other applications > Add application** (Light/Dark) |
+| Cycle through EVE login screens | **Switching & hotkeys > Global shortcuts > Cycle login clients** (Light/Dark) |
+| Include linked login screens in a character cycle | Select a cycle group, then **Group shortcuts > Include login clients** (Light/Dark) |
 | Change preview size, opacity or hover zoom | **Previews & layout → Size & zoom** |
 | Customize character names, fonts, colors and borders | **Previews & layout → Title & highlight** |
 | Change visibility, window positioning or close-to-tray behavior | **Previews & layout → Window behavior** |
@@ -94,6 +97,14 @@ The **Clients** page saves each character's preview visibility in the active pro
 
 Turning off remembered game window positions or separate preview layouts clears the corresponding saved positions. Clone your profile first if you want to experiment and return to the old arrangement.
 
+### Preview other applications
+
+In Light or Dark, open **Clients > Other applications > Add application**. Click the dropdown to see running applications with a window. You can also type to jump to an application and press Enter to select it. Click **Add** to enable its thumbnails.
+
+All running instances of that executable receive thumbnails, labelled by process name and process ID (PID). The application selection is saved in the active profile. Instance positions and visibility use the current PID, so they do not carry over when an application restarts with a different PID. Use **Remove** to stop its previews.
+
+Applications must have a main window to preview; background-only processes are not listed. EVE clients are discovered automatically. FPS limiting, audio muting, CPU placement and thumbnail augments apply only to EVE clients, identified by their executable (`exefile.exe`).
+
 ## Thumbnail augments
 
 In Light or Dark, open **Augments → Log setup** and enable **Read EVE logs**.
@@ -128,6 +139,20 @@ each character's detailed damage, repair and travel history from a compact row.
 5. Set forward and, optionally, backward hotkeys. Each direction supports an alternate binding. A group containing one character works as a direct switch to that character.
 
 Choose shortcuts that do not conflict with your normal EVE controls. If you want a shortcut to work while holding a modifier, configure that combination too.
+
+### Cycle at the login screen
+
+These options are available in Light and Dark, including when every EVE window is titled "Eve".
+
+**Use a dedicated login shortcut:** open **Switching & hotkeys > Global shortcuts** and record **Cycle login clients**. Each press selects the next EVE login window, ordered by its cached numeric account ID, or its PID when that account ID is unavailable. PID breaks ties. The sequence wraps and automatically excludes clients once their character name appears. This shortcut is unbound until configured.
+
+**Use your existing cycle group:** select a group and enable **Include login clients** under **Group shortcuts**. This is off by default and saved separately for each group. Its existing forward/backward shortcuts use the saved character order, with these rules:
+
+- A login window occupies a character's slot only when the cache links that process and character to the same account. A running named character takes precedence.
+- Each linked login window appears **once per cycle**, even if the group repeats the same character three times or includes three different characters from that account. It uses the first matching unavailable character's position in the saved order, in either direction; that character's Skip setting applies.
+- Missing links or multiple login processes on the same account are omitted from the group. The dedicated login shortcut can still reach those windows using its account/PID order.
+
+Both options switch windows only; they do not choose or log in a character.
 
 ### Temporarily take a character out of the cycle
 

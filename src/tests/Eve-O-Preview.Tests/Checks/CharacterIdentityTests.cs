@@ -177,6 +177,36 @@ public sealed class CharacterIdentityTests
         Assert.Equal(2, fixture.UserReads);
     }
 
+    [Fact]
+    public async Task LoginAccountsAreCachedByProcessWithoutEsiAndSurviveCharacterRenames()
+    {
+        using var fixture = new Fixture();
+        using var cache = fixture.Create();
+        IProcessInfo login = Client("EVE", 42);
+        var changed = NextChange(cache);
+        cache.ObserveProcesses([login, new TestProcessInfo(99, "EVE", "notepad")]);
+        await changed.WaitAsync(TimeSpan.FromSeconds(3), TestContext.Current.CancellationToken);
+        Assert.Equal(12345678L, cache.GetProcessUserId(login));
+        Assert.Equal(1, fixture.UserReads);
+        Assert.Equal(0, fixture.Handler.Requests);
+        Assert.Empty(cache.KnownCharacters);
+        for (int i = 0; i < 20; i++) cache.ObserveProcesses([login]);
+        Assert.Equal(1, fixture.UserReads);
+        cache.ObserveProcesses([Client("EVE - Test Pilot", 42)]);
+        Assert.Equal(12345678L, (await cache.GetCharacterAsync("EVE - Test Pilot")).EveUserId);
+        Assert.Equal(1, fixture.UserReads);
+        cache.ObserveProcesses([login]);
+        Assert.Equal(12345678L, cache.GetProcessUserId(login));
+        cache.ObserveProcesses([]);
+        Assert.Null(cache.GetProcessUserId(login));
+        fixture.UserId = 87654321;
+        changed = NextChange(cache);
+        cache.ObserveProcesses([login]);
+        await changed.WaitAsync(TimeSpan.FromSeconds(3), TestContext.Current.CancellationToken);
+        Assert.Equal(87654321L, cache.GetProcessUserId(login));
+        Assert.Equal(2, fixture.UserReads);
+    }
+
     private static Task NextChange(CharacterIdentityCache cache)
     {
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -184,8 +214,7 @@ public sealed class CharacterIdentityTests
         cache.Changed += Changed;
         return done.Task;
     }
-    private static IProcessInfo Client(string title, int pid) => Stub.Create<IProcessInfo>((method, _) => method.Name switch
-        { "get_Title" => title, "get_ProcessId" => pid, _ => Stub.Default(method.ReturnType) });
+    private static IProcessInfo Client(string title, int pid) => new TestProcessInfo(pid, title);
     private static HttpResponseMessage Ok(string json) => new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
     private sealed class Handler : HttpMessageHandler
     {

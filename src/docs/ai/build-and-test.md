@@ -75,7 +75,7 @@ Read the [test README](../../tests/Eve-O-Preview.Tests/README.md),
 | Thumbnail/input | Nonactivation, immediate focus requests, MRU/z-order recovery, menu order/palettes/second click, live/static views, move/resize/Shift ratio, hover, realtime snap/breakaway, synthetic DPI transitions and retained DWM relationships. |
 | Graphics | Historical glyph reference pixels, border geometry, retained resources, alerts, changed-scene uploads, fallback and injected device-loss recovery. Interactive readback separately verifies compositor order/opacity. |
 | Hotkeys/pointer | Both input modes, exhaustive legacy shortcut numeric/string compatibility, capture cleanup, bounded/coalesced pointer queue and zero-allocation motion ingestion. |
-| Process/CPU/IPC | Enumeration/handle cleanup, CPU-set topology/planning/restoration, prediction, bounded silent/truncated peers, old audio clear/add and atomic replacement protocol. |
+| Process/CPU/IPC | Enumeration/handle cleanup, login account/PID ordering and lifecycle, opt-in group/account matching (order, skips, ambiguity, prediction and login transitions), duplicate-title application identity, EVE-only native/CPU routing, CPU-set topology/planning/restoration, prediction, bounded silent/truncated peers, old audio clear/add and atomic replacement protocol. |
 | Augments | Log reads/rollover/deduplication, SQLite migration/restart, simulation isolation, recorded statistics, damage/repair filters, concurrent repair rates, platform icons, nine overlay positions and row order. |
 | Languages/static data | All eight grammar catalogs, Important Names in English, visible-name lookup, unknown rejection, offline fixtures/import/cancellation and localization catalogs. |
 | Dependencies | Shipping hosts derive from Avalonia Window; no Forms/WPF/MouseKeyHook/embedded-host references in assembly/deps/runtimeconfig. |
@@ -85,6 +85,10 @@ low-FPS Robin wake, audio interception, driver reset, physical mixed-DPI moves o
 input-to-visible EVE latency. The [Robin smoke driver](../../tests/Robin.NativeSmoke/README.md)
 separately publishes/loads AOT; managed allocation measurements are not native
 timing. Defect status and remaining live checks are in [reported bugs](reported-bugs.md).
+
+The native `settings-resources` scenario has intermittently exceeded its ±10
+process-handle delta assertion. Its cause remains unresolved; keep that assertion
+intact and report failures separately from feature and UI-render results.
 
 ## Visual and native checks
 

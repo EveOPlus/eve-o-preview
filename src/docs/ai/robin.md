@@ -10,7 +10,7 @@ Desktop Autofac, MediatR and Serilog do not extend into Robin. Frame and audio e
 
 ## Injection and ownership lifecycle
 
-`HookService.TryInstallHooksAsync` deduplicates in-flight work by PID/HWND, pings first, and skips new injection if neither FPS nor audio is requested. Failure permits retry. Discovery forgets per-client protocol capability state when a client disappears.
+`HookService.TryInstallHooksAsync` rejects non-EVE process records, deduplicates in-flight work by PID/HWND, pings first, and skips new injection if neither FPS nor audio is requested. Injection rechecks the executable name (`ExeFile`) along with HWND before opening the target. FPS/audio handlers, shutdown cleanup and focus/prediction calls filter by EVE process classification; selected external applications only use the shared preview/window path. Failure permits retry. Discovery forgets per-client protocol capability state when a client disappears.
 
 For injection, the host locates the published DLL beside the actual executable using `Path.GetDirectoryName(Environment.ProcessPath)`, matching `ProfileManager`. Do not use `AppContext.BaseDirectory`: full single-file extraction can redirect it into `%TEMP%/.net`, while the separately published Robin DLL remains beside the executable.
 

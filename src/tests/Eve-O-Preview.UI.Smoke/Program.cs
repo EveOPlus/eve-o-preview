@@ -84,6 +84,36 @@ internal static partial class Program
                     string path = Path.Combine(output, $"{theme.ToLowerInvariant()}-{page.ToLowerInvariant()}.png");
                     Capture(window, path);
                     renders++;
+                    if (theme != "Legacy" && page == "Clients")
+                    {
+                        Click(view, "choose-preview-application"); Flush();
+                        var applicationPicker = FindControl<ComboBox>(view, "preview-application-picker");
+                        applicationPicker.BringIntoView(); Flush();
+                        var applicationPoint = applicationPicker.TranslatePoint(new Point(applicationPicker.Bounds.Width / 2, applicationPicker.Bounds.Height / 2), window)!.Value;
+                        window.MouseDown(applicationPoint, MouseButton.Left); window.MouseUp(applicationPoint, MouseButton.Left); Flush();
+                        Require(applicationPicker.IsDropDownOpen && applicationPicker.Items.Count == 2,
+                            "Clicking the application dropdown must show all applications without typing.");
+                        Capture(window, Path.Combine(output, theme.ToLowerInvariant() + "-applications-dropdown.png")); renders++;
+                        window.KeyTextInput("calc"); Flush();
+                        window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None); window.KeyReleaseQwerty(PhysicalKey.Enter, RawInputModifiers.None); Flush();
+                        Require(applicationPicker.SelectedItem is PreviewApplication { ProcessName: "calc" } && !applicationPicker.IsDropDownOpen,
+                            "Typing must find an application and Enter must select it and close the dropdown.");
+                        applicationPicker.SelectedItem = applicationPicker.ItemsSource!.Cast<PreviewApplication>().First(); Flush();
+                        Capture(window, Path.Combine(output, theme.ToLowerInvariant() + "-applications.png")); renders++;
+                        Click(view, "add-preview-application"); Flush();
+                        Require(backend.Read().PreviewApplications!.Contains("notepad"), "Application selection must reach the backend.");
+                        Click(view, "remove-application-notepad"); Flush();
+                        Require(backend.Read().PreviewApplications!.Count == 0, "Application removal must reach the backend.");
+                    }
+                    if (theme != "Legacy" && page == "Switching")
+                    {
+                        var loginToggle = FindControl<ToggleSwitch>(view, "group-include-login-clients");
+                        loginToggle.IsChecked = true; Flush();
+                        Require(backend.Read().CycleGroups[0].IncludeLoginClients, "Group login option must reach the backend.");
+                        Capture(window, Path.Combine(output, theme.ToLowerInvariant() + "-group-login.png")); renders++;
+                        FindControl<ToggleSwitch>(view, "group-include-login-clients").IsChecked = false; Flush();
+                        Require(!backend.Read().CycleGroups[0].IncludeLoginClients, "Group login option must be switchable off.");
+                    }
                     if (page == "About")
                     {
                         Click(view, "open-documentation");
@@ -121,6 +151,12 @@ internal static partial class Program
                     inputMode.SelectedItem = "Windows"; Flush(); Click(view, "apply-HotkeyInputMethod");
                     Require(backend.Commands.Last().Target == "HotkeyInputMethod" && backend.Commands.Last().Value == "Windows", "The native method must use the settings backend.");
                     Capture(window, Path.Combine(output, theme.ToLowerInvariant() + "-hotkey-mode.png"));
+                    Require(FindControl<Button>(view, "record-CycleLoginClientsHotkey").IsVisible, "Login cycling must expose a configurable hotkey.");
+                    var loginShortcutScroll = view.GetVisualDescendants().OfType<ScrollViewer>()
+                        .Where(scroll => scroll.Bounds.Width > 400).OrderByDescending(scroll => scroll.Extent.Height).First();
+                    loginShortcutScroll.ScrollToEnd(); Flush();
+                    Capture(window, Path.Combine(output, theme.ToLowerInvariant() + "-login-shortcut.png"));
+                    renders++;
                     renders += 2;
                     var hotkeySearch = FindControl<TextBox>(view, "search-settings");
                     hotkeySearch.Text = "Windows hotkeys"; Flush();
@@ -128,12 +164,19 @@ internal static partial class Program
                     Require(FindControl<ComboBox>(view, "setting-HotkeyInputMethod").IsVisible, "Search must open the input settings.");
                     inputMode = FindControl<ComboBox>(view, "setting-HotkeyInputMethod");
                     inputMode.SelectedItem = "Global"; Flush(); Click(view, "apply-HotkeyInputMethod");
+                    FindControl<TextBox>(view, "search-settings").Text = "IncludeLoginClients"; Flush();
+                    Click(view, "search-group-login-clients"); Flush();
+                    Require(FindControl<ToggleSwitch>(view, "group-include-login-clients").IsVisible, "Search must open the group login option.");
                     Click(view, "switching-groups"); Flush();
                 }
                 else
                 {
                     view.Navigate("CycleGroups"); Flush();
                     Require(!view.GetVisualDescendants().Any(c => c.Name == "setting-HotkeyInputMethod"), "Legacy must not expose the new input-mode setting.");
+                    Require(!view.GetVisualDescendants().Any(c => c.Name == "record-CycleLoginClientsHotkey"), "Legacy must not gain login-cycling controls.");
+                    Require(!view.GetVisualDescendants().Any(c => c.Name == "group-include-login-clients"), "Legacy must not gain cycle-group login controls.");
+                    view.Navigate("ActiveClients"); Flush();
+                    Require(!view.GetVisualDescendants().Any(c => c.Name == "choose-preview-application"), "Legacy must not gain application selection.");
                 }
             }
             Require(hashes.Distinct().Count() == 3, "The three themes must produce different rendered appearances.");

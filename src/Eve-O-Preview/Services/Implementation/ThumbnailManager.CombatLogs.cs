@@ -110,7 +110,8 @@ sealed partial class ThumbnailManager
             {
                 var character = view.Title?.StartsWith("EVE - ", StringComparison.Ordinal) == true
                     ? snapshot.Characters.FirstOrDefault(x => x.Name.Equals(view.Title[6..], StringComparison.OrdinalIgnoreCase)) : null;
-                ApplyDamageFlash(thumbnail, character, settings, now, available);
+                ApplyDamageFlash(thumbnail, character, settings, now, available
+                    && _processMonitor.LookupCachedProcessByWindowHandle(view.Id)?.IsEveClient == true);
             }
         ScheduleCombatWake();
     }
@@ -133,7 +134,8 @@ sealed partial class ThumbnailManager
             ? snapshot.Characters.FirstOrDefault(x => x.Name.Equals(view.Title[6..], StringComparison.OrdinalIgnoreCase)) : null;
         IReadOnlyList<OverlayStat> stats = [];
         bool receiving = settings.Enabled || _combatLogs.IsSimulating;
-        bool available = !_stopped && _logPreferences?.Theme != "Legacy";
+        bool available = !_stopped && _logPreferences?.Theme != "Legacy"
+            && _processMonitor.LookupCachedProcessByWindowHandle(view.Id)?.IsEveClient == true;
         ApplyDamageFlash(thumbnail, character, settings, DateTimeOffset.UtcNow, available && receiving);
         thumbnail.SetSystemName(available && options.SolarSystem ? _combatLogs.CurrentSystems.GetSystem(view.Title?.StartsWith("EVE - ", StringComparison.Ordinal) == true ? view.Title[6..] : "") ?? "" : "",
             CombatOverlayFormatter.Color(appearance.SystemColor), options.SystemPlacement, options.SystemFontSize);
@@ -187,6 +189,7 @@ sealed partial class ThumbnailManager
         if (simulation.Stop) return _combatLogs.RunSimulationAsync(simulation, []);
         if (_stopped || _logPreferences?.Theme == "Legacy") return Error("Start previews and use a modern theme to simulate.");
         var targets = _thumbnailViews.Values.OfType<ThumbnailView>().Where(x => x.IsActive && x.Visible && !x.IsDisposed
+            && _processMonitor.LookupCachedProcessByWindowHandle(x.Id)?.IsEveClient == true
             && x.Title?.StartsWith("EVE - ", StringComparison.Ordinal) == true && (simulation.AllVisibleThumbnails || x.Title == simulation.FullTitle)).ToArray();
         if (targets.Length == 0) return Error("Show a character's thumbnail before simulating.");
         return _combatLogs.RunSimulationAsync(simulation, targets.Select(x => x.Title).Distinct(StringComparer.Ordinal).ToArray());

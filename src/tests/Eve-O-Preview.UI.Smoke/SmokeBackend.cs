@@ -4,8 +4,10 @@ namespace EveOPreview.UI.Smoke;
 
 // Representative data only; this executable cannot discover clients, inject Robin,
 // write profiles, access credentials, or change native windows.
-internal sealed class SmokeBackend : IWorkspaceBackend, IWorkspacePortraitProvider, IWorkspaceCharacterProvider
+internal sealed class SmokeBackend : IWorkspaceBackend, IWorkspaceApplications, IWorkspacePortraitProvider, IWorkspaceCharacterProvider
 {
+    public Task<IReadOnlyList<PreviewApplication>> GetPreviewApplicationsAsync() =>
+        Task.FromResult<IReadOnlyList<PreviewApplication>>([new("notepad", "Sample document", 123), new("calc", "Calculator", 456)]);
     public Task<WorkspaceCharacter?> CharacterResult { get; set; } = Task.FromResult<WorkspaceCharacter?>(null);
     public Task<WorkspaceCharacter?> GetCharacterAsync(string fullTitle) => CharacterResult;
     private readonly Dictionary<string, HashSet<string>> _skips = new();
@@ -122,6 +124,16 @@ internal sealed class SmokeBackend : IWorkspaceBackend, IWorkspacePortraitProvid
         Commands.Add(command);
         switch (command.Action)
         {
+            case "group-login-clients":
+                _snapshot = _snapshot with { CycleGroups = _snapshot.CycleGroups.Select(group => group.Id.ToString() == command.Target
+                    ? group with { IncludeLoginClients = bool.Parse(command.Value) } : group).ToArray() };
+                break;
+            case "application-add":
+                _snapshot = _snapshot with { PreviewApplications = (_snapshot.PreviewApplications ?? []).Append(command.Target).Distinct().ToArray() };
+                break;
+            case "application-remove":
+                _snapshot = _snapshot with { PreviewApplications = (_snapshot.PreviewApplications ?? []).Where(name => name != command.Target).ToArray() };
+                break;
             case "thumbnail-menu-move":
                 var menuOrder = ThumbnailMenuActions.Normalize(_snapshot.ThumbnailMenuOrder).ToList();
                 if (!ThumbnailMenuActions.CanMove(menuOrder, command.Target, command.Position ?? -1)) return Task.FromResult(CommandResult.Error("Keep actions first and last."));

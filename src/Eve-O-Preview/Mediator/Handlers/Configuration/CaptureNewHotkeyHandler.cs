@@ -93,6 +93,7 @@ namespace EveOPreview.Mediator.Handlers.Configuration
         private Dictionary<Keys, string> FindAllHotkeysInCurrentConfig()
         {
             var hotkeysInConfig = new Dictionary<Keys, string>();
+            AddOrMeaningfulError(hotkeysInConfig, _config.CycleLoginClientsHotkey.ToHotkeys(), "Cycle login clients");
 
             if (_config.ToggleHideActiveClientsHotkeyParsed != Keys.None)
             {

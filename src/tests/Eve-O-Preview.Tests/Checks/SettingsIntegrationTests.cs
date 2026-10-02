@@ -46,6 +46,7 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
     [InlineData("resources")]
     [InlineData("shutdown")]
     [InlineData("focus-window")]
+    [InlineData("login-applications")]
     public Task SettingsAndClientLifecycle(string scenario) => PrivateDesktopRunner.RunAsync("settings-" + scenario, output);
 
     internal static void RunScenario(string scenario)
@@ -56,6 +57,7 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         else if (scenario == "resources") CheckResources();
         else if (scenario == "shutdown") CheckShutdown();
         else if (scenario == "focus-window") CheckWindowFocus();
+        else if (scenario == "login-applications") LoginApplicationTests.CheckLifecycle();
         else throw new ArgumentException(scenario);
     }
 
@@ -142,7 +144,9 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         Console.WriteLine("Focus probe: activating synthetic target after installing wake observer.");
         try
         {
-            new WindowManager(hooks, logger).ActivateWindow(target.Handle);
+            var monitor = Stub.Create<IProcessMonitor>((method, _) => method.Name == "LookupCachedProcessByWindowHandle"
+                ? new TestProcessInfo(42, "EVE - Focus fixture") { MainWindowHandle = target.Handle } : Stub.Default(method.ReturnType));
+            new WindowManager(hooks, logger, monitor).ActivateWindow(target.Handle);
             Console.WriteLine("Focus probe: native activation returned.");
             Assert.True(activated);
             Assert.False(activatedBeforeWake, "Wake must precede target activation messages");
@@ -293,11 +297,7 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
         var pending = new List<IProcessInfo>();
         void Add(int id)
         {
-            var process = Stub.Create<IProcessInfo>((method, args) => method.Name switch
-            {
-                "get_MainWindowHandle" => new IntPtr(id), "get_ProcessId" => id,
-                "get_Title" => "EVE - " + id, _ => Stub.Default(method.ReturnType)
-            });
+            var process = new TestProcessInfo(id, "EVE - " + id);
             processes.Add(process); pending.Add(process);
         }
         Add(101); Add(102);

@@ -84,7 +84,7 @@ namespace EveOPreview.Mediator.Handlers.Services
         }
         private async Task ResetClientsAsync()
         {
-            var processes = _procMonitor.GetAllProcesses();
+            var processes = _procMonitor.GetAllProcesses().Where(p => p.IsEveClient).ToList();
             _logger.Information("Resetting CPU affinity and FPS limiter for {ProcessCount} clients", processes.Count);
             _cpuAffinityService.Stop(processes);
             await _hook.StopAsync(processes).ConfigureAwait(false);

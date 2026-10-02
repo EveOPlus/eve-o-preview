@@ -29,15 +29,19 @@ namespace EveOPreview.Services.Implementation
     {
         private readonly IHookService _hookService;
         private readonly ILogger _logger;
+        private readonly IProcessMonitor _processMonitor;
 
         #region Private constants
         private const int WINDOW_SIZE_THRESHOLD = 300;
         #endregion
         
-        public WindowManager(IHookService hookService, ILogger logger)
+        public WindowManager(IHookService hookService, ILogger logger) : this(hookService, logger, null) { }
+
+        public WindowManager(IHookService hookService, ILogger logger, IProcessMonitor processMonitor)
         {
             _hookService = hookService;
             _logger = logger;
+            _processMonitor = processMonitor;
 
             // Composition is always enabled for Windows 8+
             this.IsCompositionEnabled = 
@@ -85,7 +89,8 @@ namespace EveOPreview.Services.Implementation
             }
             _logger.Verbose("WindowManager.ActivateWindow: Activating window 0x{Handle:X}", handle);
 
-            _ = _hookService.TellEveClientFocusIsComingAsync(handle);
+            if (_processMonitor?.LookupCachedProcessByWindowHandle(handle)?.IsEveClient == true)
+                _ = _hookService.TellEveClientFocusIsComingAsync(handle);
 
             try
             {
@@ -254,7 +259,8 @@ namespace EveOPreview.Services.Implementation
             }
 
             _logger.Verbose("WindowManager.PredictUpcomingClient: Predicting upcoming client 0x{Handle:X}", upcomingHandle);
-            _hookService.TellEveClientFocusIsMaybeComingSoonAsync(upcomingHandle);
+            if (_processMonitor?.LookupCachedProcessByWindowHandle(upcomingHandle)?.IsEveClient == true)
+                _ = _hookService.TellEveClientFocusIsMaybeComingSoonAsync(upcomingHandle);
         }
     }
 }

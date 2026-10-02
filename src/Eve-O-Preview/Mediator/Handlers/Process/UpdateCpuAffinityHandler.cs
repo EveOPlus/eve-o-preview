@@ -21,6 +21,7 @@ using EveOPreview.Services.Interface;
 using MediatR;
 using Serilog;
 using System.Threading;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace EveOPreview.Mediator.Handlers.Process;
@@ -47,11 +48,12 @@ public class UpdateCpuAffinityHandler : IRequestHandler<UpdateCpuAffinity>
         var next = _processMonitor.LookupCachedProcessByWindowHandle(request.NextWindowHandle);
         var prev = _processMonitor.LookupCachedProcessByWindowHandle(request.PrevWindowHandle);
 
-        var allProcesses = _processMonitor.GetAllProcesses();
+        var allProcesses = _processMonitor.GetAllProcesses().Where(p => p.IsEveClient).ToList();
 
         _logger.Verbose("UpdateCpuAffinity lookup complete: Found {ProcessCount} total processes", allProcesses.Count);
 
-        _cpuAffinityService.UpdateAffinity(active, next, prev, allProcesses);
+        _cpuAffinityService.UpdateAffinity(active?.IsEveClient == true ? active : null, next?.IsEveClient == true ? next : null,
+            prev?.IsEveClient == true ? prev : null, allProcesses);
 
         return Task.CompletedTask;
     }

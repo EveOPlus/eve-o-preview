@@ -43,7 +43,7 @@ namespace EveOPreview.Mediator.Handlers.Configuration
 
         public async Task Handle(SetFpsLimiterEnabled request, CancellationToken cancellationToken)
         {
-            var allKnownClients = _processMonitor.GetAllProcesses();
+            var allKnownClients = _processMonitor.GetAllProcesses().Where(p => p.IsEveClient).ToList();
 
             if (_config.FpsLimiterSettings.IsEnabled)
             {

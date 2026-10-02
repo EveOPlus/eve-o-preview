@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using EveOPreview.Helper;
 using Serilog;
+using EveOPreview.Configuration;
 
 namespace EveOPreview.Services.Implementation
 {
@@ -41,8 +42,18 @@ namespace EveOPreview.Services.Implementation
 
         public ProcessMonitor(ILogger logger) : this(logger, () => Process.GetProcessesByName(DEFAULT_PROCESS_NAME)) { }
 
-        public ProcessMonitor(ILogger logger, CharacterIdentityCache identities)
-            : this(logger, () => Process.GetProcessesByName(DEFAULT_PROCESS_NAME)) { _identities = identities; }
+        public ProcessMonitor(ILogger logger, CharacterIdentityCache identities, IThumbnailConfiguration configuration)
+            : this(logger, () => EnumerateSelected(configuration)) { _identities = identities; }
+
+        private static Process[] EnumerateSelected(IThumbnailConfiguration configuration) =>
+            (configuration.PreviewApplications ?? new()).Append(DEFAULT_PROCESS_NAME)
+                .Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)
+                .SelectMany(Process.GetProcessesByName).Where(process =>
+                {
+                    if (process.Id != Environment.ProcessId) return true;
+                    process.Dispose();
+                    return false;
+                }).ToArray();
 
         internal ProcessMonitor(ILogger logger, Func<Process[]> enumerateProcesses)
         {
@@ -55,12 +66,6 @@ namespace EveOPreview.Services.Implementation
             this._currentProcessInfo = new ProcessInfo(IntPtr.Zero, IntPtr.Zero, 0, "");
             
             _logger.Verbose("ProcessMonitor initialized");
-        }
-
-        private bool IsMonitoredProcess(string processName)
-        {
-            // This is a possible extension point
-            return String.Equals(processName, ProcessMonitor.DEFAULT_PROCESS_NAME, StringComparison.OrdinalIgnoreCase);
         }
 
         private IProcessInfo GetCurrentProcessInfo()
@@ -134,7 +139,8 @@ namespace EveOPreview.Services.Implementation
                 }
                 if (cachedProcess == null)
                 {
-                    var processInfo = new ProcessInfo(mainWindowHandle, process.OpenKernelHandle(), process.Id, title);
+                    string name = process.ProcessName;
+                    var processInfo = new ProcessInfo(mainWindowHandle, process.OpenKernelHandle(), process.Id, title, name);
                     ProcessCache.Add(mainWindowHandle, processInfo);
                     addedProcesses.Add(processInfo);
                 }

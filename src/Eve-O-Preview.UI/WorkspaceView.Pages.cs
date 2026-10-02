@@ -58,6 +58,7 @@ public sealed partial class WorkspaceView
     {
         Heading(_theme.Legacy ? "Active Clients" : "Clients", "Choose which characters have a preview. Visibility is saved in this profile.");
         _page.Children.Add(ActionButton("Character colors & minimization", () => Navigate("ClientSettings"), "open-client-settings"));
+        if (!_theme.Legacy && _backend is IWorkspaceApplications) AddApplicationPreviews();
         if (_theme.Legacy) AddGlobalHotkeys();
         if (_snapshot.AllPreviewsHidden)
             _page.Children.Add(Card(new StackPanel { Spacing = 8, Children = { Text("All previews are temporarily hidden", 15, _theme.Text, true), Text("Individual switches below remain saved. Use Show all previews in the header to reveal enabled previews.", 12, _theme.Muted) } }));
