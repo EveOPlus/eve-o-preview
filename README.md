@@ -16,7 +16,7 @@ Keep an eye on your EVE characters and switch between them with a click or a hot
 2. Install the **.NET 10 Runtime for Windows x64** from [Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) if it is not already installed. The current application uses .NET 10. The developer SDK and Windows Desktop Runtime are not required.
 3. Set each EVE client's display mode to **Fixed Window** or **Window Mode**. Exclusive fullscreen is not supported by the previews.
 4. Run `EVE-O Preview.exe` and log in your characters. Either application can start first. If the settings window does not appear, double-click EVE-O's icon in the Windows system tray, including the hidden-icons area.
-5. Click a character's preview to switch to that client. Right-click a preview and choose **Move** or **Resize** to arrange it.
+5. Click a character's preview to switch to that client. Right-click a preview and choose **Move**, **Resize all**, or **Resize > Resize individual** to arrange it.
 6. Open **Previews & layout** to adjust size, titles and highlights. Open **Switching & hotkeys** to set up a character cycle.
 
 Use a Windows x64 system supported by .NET 10. EVE-O Preview requires Windows; Linux and macOS are not supported.
@@ -69,8 +69,11 @@ These gestures apply to the preview under your mouse.
 | Return to the last non-EVE application | Ctrl+Shift+click a preview |
 | Move a preview | Right-click → **Move**, then click to finish; holding the right mouse button also starts moving |
 | Bypass snapping while moving | Hold Shift; move farther from a snapped edge to break away |
-| Resize a preview | Right-click → **Resize**, then click to finish |
-| Keep its proportions while resizing | Hold Shift during the resize |
+| Resize one preview | Right-click > **Resize > Resize individual**, then click to finish |
+| Resize all previews proportionally | Right-click > **Resize all**, then click to finish |
+| Match one preview to its client | Right-click > **Resize > Reset aspect ratio to client** |
+| Maintain proportions for future resizing | Tick **Resize > Maintain aspect ratio** in any preview menu; applies to all previews |
+| Temporarily keep proportions and bypass snapping | Hold Shift during the resize |
 | Temporarily skip a character when cycling | Right-click → the skip-cycling option; select it again to re-enable |
 
 ### Closing the window versus quitting
@@ -186,7 +189,15 @@ In Legacy, the theme selector is at the bottom left. Additional settings, includ
 
 Open **Appearance → Thumbnail right-click menu**. Drag actions and divider rows to reorder them, insert or remove dividers, and choose a menu theme independently of the workspace. Styles include Graphite, Midnight, OLED Black, Nebula, EVE Carbon and the four empire-inspired palettes, as well as Light and Dark.
 
-The default order is Minimize, Minimize all, a divider, Skip cycling, another divider, Move and Resize. **Reset** restores that layout. With Minimize first, a quick double right-click can open the menu and select Minimize. Put Skip cycling first if you prefer that action under the pointer.
+The default modern menu order is Minimize, Minimize all, a divider, Skip cycling, another divider, Move, Resize all and Resize. Both Resize all and the Resize submenu can be reordered at the root. **Reset** restores that layout. With Minimize first, a quick double right-click can open the menu and select Minimize. Put Skip cycling first if you prefer that action under the pointer.
+
+Only one thumbnail menu stays open at a time. Opening another closes the previous menu. Click outside the menu, or click its thumbnail again, to dismiss it. Clicks inside nested menus remain available, including the quick second-right-click action.
+
+In Light and Dark, **Resize > Resize individual** changes only the clicked preview. **Reset aspect ratio to client** also affects only that preview, matching the current client area while keeping its width where size limits allow. Restore a minimized client first if this action is unavailable. **Reset to default size** removes that preview's individual size override.
+
+**Maintain aspect ratio** is shared by all thumbnails and saved in the current profile. It preserves each thumbnail's starting proportions during future individual, window-border and numeric size changes. **Resize all** always scales all previews, including saved sizes for offline clients, by a common factor, retaining their relative sizes and aspect ratios. Scaling stops when any preview reaches a configured size limit. Positions stay fixed. Sizes and the shared checkbox survive normal saves, restart and profile switching; old profiles use the default size with the checkbox off.
+
+Resizing uses **Snap previews together**, including window-border resizing. A ratio lock keeps proportions while snapping; hold Shift to bypass snapping temporarily. Resize all snaps to neighbours' fixed left/top edges because their right/bottom edges also move during scaling. Minimum and maximum dimensions still apply. If a client ratio cannot fit both limits, the nearest permitted dimensions are used. Legacy retains its existing direct Resize action; use Light or Dark for the individual resize submenu.
 
 ## Performance and audio
 

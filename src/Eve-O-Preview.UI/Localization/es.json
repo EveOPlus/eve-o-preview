@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "Ancho predeterminado en píxeles. Los tamaños individuales se escalan proporcionalmente.",
+  "Default height in pixels. Individual sizes scale proportionally.": "Alto predeterminado en píxeles. Los tamaños individuales se escalan proporcionalmente.",
+  "Resize all": "Redimensionar todas",
+  "Resize": "Redimensionar",
   "Include login clients": "Incluir clientes en el inicio de sesión",
   "Use cached account links to include login windows in this group's character order.": "Usar los vínculos de cuenta guardados para incluir las ventanas de inicio de sesión en el orden de personajes del grupo.",
   "Choose On or Off for login clients.": "Elige activar o desactivar los clientes en el inicio de sesión.",

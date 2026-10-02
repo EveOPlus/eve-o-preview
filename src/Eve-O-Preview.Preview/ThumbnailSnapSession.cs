@@ -42,8 +42,25 @@ public sealed class ThumbnailSnapSession
         return new(snapped, Guide(_horizontal, snapped, true), Guide(_vertical, snapped, false));
     }
 
+    public ThumbnailSnapResult Resize(PreviewRect raw, IReadOnlyList<ThumbnailSnapTarget> targets,
+        int acquireDistance, int releaseDistance, bool left, bool right, bool top, bool bottom, bool bypass = false,
+        bool leadingTargetsOnly = false)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(acquireDistance);
+        if (releaseDistance < acquireDistance) throw new ArgumentOutOfRangeException(nameof(releaseDistance));
+        if (bypass) { Reset(); return new(raw, null, null); }
+        _horizontal = left || right ? SelectEdge(raw, targets, true, _horizontal, acquireDistance, releaseDistance, right, leadingTargetsOnly) : null;
+        _vertical = top || bottom ? SelectEdge(raw, targets, false, _vertical, acquireDistance, releaseDistance, bottom, leadingTargetsOnly) : null;
+        int x = left ? _horizontal?.Coordinate ?? raw.X : raw.X;
+        int y = top ? _vertical?.Coordinate ?? raw.Y : raw.Y;
+        int endX = right ? _horizontal?.Coordinate ?? raw.X + raw.Width : raw.X + raw.Width;
+        int endY = bottom ? _vertical?.Coordinate ?? raw.Y + raw.Height : raw.Y + raw.Height;
+        var snapped = new PreviewRect(x, y, endX - x, endY - y);
+        return new(snapped, Guide(_horizontal, snapped, true), Guide(_vertical, snapped, false));
+    }
+
     private static Edge? SelectEdge(PreviewRect raw, IReadOnlyList<ThumbnailSnapTarget> targets,
-        bool horizontal, Edge? retained, int acquire, int release)
+        bool horizontal, Edge? retained, int acquire, int release, bool? movingTrailing = null, bool leadingTargetsOnly = false)
     {
         if (retained is { } previous)
         {
@@ -71,6 +88,8 @@ public sealed class ThumbnailSnapSession
             for (int moving = 0; moving < 2; moving++)
             for (int destination = 0; destination < 2; destination++)
             {
+                if (movingTrailing is { } trailing && (moving != 0) != trailing) continue;
+                if (leadingTargetsOnly && destination != 0) continue;
                 int coordinate = Coordinate(target.Bounds, horizontal, destination != 0);
                 int position = coordinate - (moving != 0 ? Length(raw, horizontal) : 0);
                 long distance = Math.Abs((long)position - Origin(raw, horizontal));

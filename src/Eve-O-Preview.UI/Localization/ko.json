@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "기본 너비(픽셀). 개별 크기는 비율을 유지하며 조절됩니다.",
+  "Default height in pixels. Individual sizes scale proportionally.": "기본 높이(픽셀). 개별 크기는 비율을 유지하며 조절됩니다.",
+  "Resize all": "모두 크기 조절",
+  "Resize": "크기 조절",
   "Include login clients": "로그인 화면 클라이언트 포함",
   "Use cached account links to include login windows in this group's character order.": "캐시된 계정 연결을 사용하여 이 그룹의 캐릭터 순서에 로그인 창을 포함합니다.",
   "Choose On or Off for login clients.": "로그인 화면 클라이언트 포함 여부를 선택하세요.",

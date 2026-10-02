@@ -195,7 +195,7 @@ public sealed class WorkspacePreferencesTests
         {
             File.WriteAllText(path, "{\"Theme\":\"Light\",\"FutureSetting\":42,\"ThumbnailMenuOrder\":[\"skip-cycling\",null,5,\"removed\",\"skip-cycling\",\"resize\"]}");
             var preferences = new ApplicationPreferences(path, logger);
-            var repaired = new[] { "skip-cycling", "resize", "minimize", "minimize-all", "move" };
+            var repaired = new[] { "skip-cycling", "resize", "minimize", "minimize-all", "move", "resize-all" };
             Assert.Equal(repaired, preferences.ThumbnailMenuOrder);
             int changes = 0;
             preferences.Changed += () => changes++;

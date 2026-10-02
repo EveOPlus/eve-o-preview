@@ -186,6 +186,31 @@ public sealed class ThumbnailMouseTests(ITestOutputHelper output)
         neighbour.Show();
         known[view.Id] = view;
         known[neighbour.Id] = neighbour;
+        // Resize snaps its trailing edge without moving the thumbnail origin.
+        view.ClientSize = new(200, 120);
+        Call("resizeThumbnailToolStripMenuItem_Click", null, EventArgs.Empty);
+        Move(4, 0);
+        Assert.Equal(new Point(390, 310), view.Location);
+        Assert.Equal(210, view.ClientSize.Width);
+        Move(-13, 0);
+        Assert.Equal(191, view.ClientSize.Width);
+        Release();
+        config.MaintainThumbnailAspectRatio = true;
+        view.ClientSize = new(200, 120);
+        Call("resizeThumbnailToolStripMenuItem_Click", null, EventArgs.Empty);
+        Move(4, 0);
+        Assert.Equal(new Size(210, 126), view.ClientSize);
+        Release();
+        config.MaintainThumbnailAspectRatio = false;
+        // Reset reads the source's client area, and works independently of other thumbnails.
+        var sourceId = view.Id;
+        view.Id = focusSource.Handle;
+        focusSource.ClientSize = new Size(600, 400);
+        Call("ResetAspectRatio");
+        Assert.Equal(new Size(210, 140), view.ClientSize);
+        Assert.Equal(new Size(200, 120), neighbour.ClientSize);
+        view.Id = sourceId;
+        view.ClientSize = new(200, 120);
         Call("menuReposition_Click", null, EventArgs.Empty);
         Move(4, 0);
         Assert.Equal(400, view.Location.X);
@@ -211,6 +236,23 @@ public sealed class ThumbnailMouseTests(ITestOutputHelper output)
         Assert.Equal(600, proposed.Right);
         SendMessage(view.Handle, 0x0232, IntPtr.Zero, IntPtr.Zero);
         Assert.False(view.IsInteracting);
+
+        // Native framed resizing uses client-area ratios and snaps the outer dragged edge.
+        config.MaintainThumbnailAspectRatio = true;
+        var frameSize = view.Size - view.ClientSize;
+        var resizeStart = view.ClientSize;
+        var resizeOrigin = view.Location;
+        SendMessage(view.Handle, 0x0231, IntPtr.Zero, IntPtr.Zero);
+        var sizing = new NativeRectangle { Left = resizeOrigin.X, Top = resizeOrigin.Y,
+            Right = 596, Bottom = resizeOrigin.Y + view.Size.Height };
+        Assert.Equal(new IntPtr(1), SendMoving(view.Handle, 0x0214, new IntPtr(8), ref sizing));
+        Assert.Equal(600, sizing.Right);
+        Assert.Equal(resizeOrigin.X, sizing.Left);
+        Assert.Equal(resizeOrigin.Y, sizing.Top);
+        Assert.Equal((int)Math.Round((sizing.Right - sizing.Left - frameSize.Width)
+            * (double)resizeStart.Height / resizeStart.Width), sizing.Bottom - sizing.Top - frameSize.Height);
+        SendMessage(view.Handle, 0x0232, IntPtr.Zero, IntPtr.Zero);
+        config.MaintainThumbnailAspectRatio = false;
 
         int userResizeNotifications = 0;
         view.ThumbnailResized = _ => userResizeNotifications++;

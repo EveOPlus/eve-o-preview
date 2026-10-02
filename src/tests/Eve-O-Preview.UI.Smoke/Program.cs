@@ -563,7 +563,7 @@ internal static partial class Program
         Click(view, "menu-divider-remove-" + addedDivider);
         Click(view, "menu-divider-remove-divider:skip");
         Require(!FindControl<Button>(view, "menu-order-down-resize").IsEnabled, "The last item cannot move down.");
-        Require(backend.Read().ThumbnailMenuOrder!.Count == 5, "All actions must remain available.");
+        Require(backend.Read().ThumbnailMenuOrder!.Count == ThumbnailMenuActions.ActionIds.Count, "All actions must remain available.");
         var editor = FindControl<StackPanel>(view, "thumbnail-menu-editor");
         foreach (var button in editor.GetVisualDescendants().OfType<Button>())
         {

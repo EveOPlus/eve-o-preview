@@ -8,6 +8,23 @@ public class ThumbnailSnapTests
     private static readonly ThumbnailSnapTarget[] Neighbours = [new(1, new(300, 100, 200, 100))];
 
     [Fact]
+    public void ResizeSnapsOnlyDraggedEdgesAndKeepsOppositeCornerFixed()
+    {
+        var session = new ThumbnailSnapSession();
+        var snapped = session.Resize(new(100, 100, 194, 95), Neighbours, 8, 16, false, true, false, true);
+        Assert.Equal(new PreviewRect(100, 100, 200, 100), snapped.Bounds);
+        Assert.NotNull(snapped.VerticalGuide);
+        Assert.Equal(200, session.Resize(new(100, 100, 187, 95), Neighbours, 8, 16, false, true, false, true).Bounds.Width);
+        Assert.Equal(183, session.Resize(new(100, 100, 183, 95), Neighbours, 8, 16, false, true, false, true).Bounds.Width);
+        session.Reset();
+        var leading = session.Resize(new(306, 105, 194, 195), Neighbours, 8, 16, true, false, true, false);
+        Assert.Equal(new PreviewRect(300, 100, 200, 200), leading.Bounds);
+        var bypass = session.Resize(new(306, 105, 194, 195), Neighbours, 8, 16, true, false, true, false, true);
+        Assert.Equal(new PreviewRect(306, 105, 194, 195), bypass.Bounds);
+        Assert.Null(bypass.VerticalGuide);
+    }
+
+    [Fact]
     public void DragAcquiresImmediatelyAndRetainsUntilPointerBreakaway()
     {
         var session = new ThumbnailSnapSession();

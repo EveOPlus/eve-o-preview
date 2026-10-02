@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "Ширина по умолчанию в пикселях. Индивидуальные размеры меняются пропорционально.",
+  "Default height in pixels. Individual sizes scale proportionally.": "Высота по умолчанию в пикселях. Индивидуальные размеры меняются пропорционально.",
+  "Resize all": "Изменить размер всех",
+  "Resize": "Изменить размер",
   "Include login clients": "Включать клиенты на экране входа",
   "Use cached account links to include login windows in this group's character order.": "Использовать сохранённые связи с аккаунтами, чтобы включать окна входа в порядок персонажей этой группы.",
   "Choose On or Off for login clients.": "Включите или отключите добавление клиентов на экране входа.",

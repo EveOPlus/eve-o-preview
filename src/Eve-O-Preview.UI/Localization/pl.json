@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "Domyślna szerokość w pikselach. Indywidualne rozmiary są skalowane proporcjonalnie.",
+  "Default height in pixels. Individual sizes scale proportionally.": "Domyślna wysokość w pikselach. Indywidualne rozmiary są skalowane proporcjonalnie.",
+  "Resize all": "Zmień rozmiar wszystkich",
+  "Resize": "Zmień rozmiar",
   "Include login clients": "Uwzględniaj klientów na ekranie logowania",
   "Use cached account links to include login windows in this group's character order.": "Użyj zapisanych powiązań kont, aby uwzględnić okna logowania w kolejności postaci tej grupy.",
   "Choose On or Off for login clients.": "Włącz lub wyłącz uwzględnianie klientów na ekranie logowania.",

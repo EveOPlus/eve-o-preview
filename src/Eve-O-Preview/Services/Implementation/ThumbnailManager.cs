@@ -74,6 +74,7 @@ namespace EveOPreview.Services
 
         private bool _ignoreViewEvents;
         private bool _isHoverEffectActive;
+        private IntPtr _hoveredThumbnailId;
 
         private int _refreshCycleCount;
         private int _hideThumbnailsDelay;
@@ -100,6 +101,7 @@ namespace EveOPreview.Services
             _identities = identities;
             this._windowManager = windowManager;
             this._configuration = configuration;
+            _appliedThumbnailSize = configuration.ThumbnailSize;
             this._thumbnailViewFactory = factory;
             this._hotkeys = hotkeys;
             _hotkeyPreferences = preferences;
@@ -155,7 +157,10 @@ namespace EveOPreview.Services
             _hideThumbnailsDelay = _configuration.HideThumbnailsDelay;
             _enqueuedLocationChangeNotification = (IntPtr.Zero, null, null, Point.Empty, -1);
             _isHoverEffectActive = false;
+            _hoveredThumbnailId = IntPtr.Zero;
             // A renderer change requires new views; ordinary profile changes preserve DWM.
+            foreach (var title in _configuration.PerClientThumbnailSizes.Keys.ToArray())
+                _configuration.PerClientThumbnailSizes[title] = ScaleSize(_configuration.PerClientThumbnailSizes[title], 1);
             if (_compatibilityMode != _configuration.EnableCompatibilityMode)
             {
                 foreach (var view in _thumbnailViews.Values) view.Close();
@@ -170,6 +175,7 @@ namespace EveOPreview.Services
             {
                 foreach (var view in _thumbnailViews.Values)
                 {
+                    view.CancelInteraction();
                     view.ZoomOut();
                     view.SetSizeLimitations(_configuration.ThumbnailMinimumSize, _configuration.ThumbnailMaximumSize);
                     if (!IsManageableThumbnail(view)) view.ThumbnailLocation = _configuration.LoginThumbnailLocation;
@@ -177,7 +183,7 @@ namespace EveOPreview.Services
             }
             finally { _ignoreViewEvents = wasIgnoring; }
             UpdateThumbnailFrames();
-            UpdateThumbnailsSize();
+            ApplyThumbnailSizes();
             UpdateThumbnailTitleFont();
             _refreshThumbnailZOrder = true;
             RefreshThumbnails();
@@ -473,6 +479,9 @@ namespace EveOPreview.Services
                 IThumbnailView view = this._thumbnailViews[process.MainWindowHandle];
 
                 _logger.Verbose("ThumbnailManager.UpdateThumbnailsList: Removing thumbnail view: {Title} (Handle: 0x{Handle:X})", view.Title, view.Id);
+                // Closing a hovered source need not deliver pointer-leave. Release its
+                // hover before detaching callbacks so saved layouts can resume updating.
+                ThumbnailViewLostFocus(view.Id);
                 this._thumbnailViews.Remove(view.Id);
                 this._thumbnailActivationOrder.Remove(view.Id);
                 if (view.Title != ThumbnailManager.DEFAULT_CLIENT_TITLE)
@@ -518,7 +527,10 @@ namespace EveOPreview.Services
                 {
                     _logger.Verbose("ThumbnailManager.UpdateThumbnailsList: Thumbnail title changed: {OldTitle} -> {NewTitle}", view.Title, process.Title);
                     viewsRemoved.Add(view.Title);
+                    view.CancelInteraction();
+                    view.ZoomOut();
                     view.Title = process.PreviewTitle;
+                    view.ThumbnailSize = _configuration.GetThumbnailSize(view.Title);
                     if (_activeClient.Handle == process.MainWindowHandle) _activeClient.Title = view.Title;
                     viewsAdded.Add(view.Title);
 
@@ -537,11 +549,12 @@ namespace EveOPreview.Services
 
         private IThumbnailView AddThumbnail(IProcessInfo process)
         {
-            IThumbnailView view = _thumbnailViewFactory.Create(process.MainWindowHandle, process.PreviewTitle, _configuration.ThumbnailSize);
+            IThumbnailView view = _thumbnailViewFactory.Create(process.MainWindowHandle, process.PreviewTitle, _configuration.GetThumbnailSize(process.PreviewTitle));
             view.TitleFontSettings = _configuration.TitleFontSettings;
             view.IsOverlayEnabled = _configuration.ShowThumbnailOverlays;
             view.SetFrames(_configuration.ShowThumbnailFrames);
             view.SetSizeLimitations(_configuration.ThumbnailMinimumSize, _configuration.ThumbnailMaximumSize);
+            view.ThumbnailSize = _configuration.GetThumbnailSize(view.Title);
             view.SetTopMost(_configuration.ShowThumbnailsAlwaysOnTop);
             view.ThumbnailLocation = IsManageableThumbnail(view)
                 ? _configuration.GetThumbnailLocation(view.Title, _activeClient.Title, view.ThumbnailLocation)
@@ -797,24 +810,68 @@ namespace EveOPreview.Services
             }
         }
 
-        public void UpdateThumbnailsSize()
+        private Size _appliedThumbnailSize;
+        private Size _resizeAllDefault;
+        private Size _resizeAllOrigin;
+        private Dictionary<string, Size> _resizeAllSizes = new();
+
+        public void BeginResizeAll(IntPtr id)
         {
-            _logger.Verbose("ThumbnailManager.UpdateThumbnailsSize: Updating thumbnail size to {Width}x{Height}", this._configuration.ThumbnailSize.Width, this._configuration.ThumbnailSize.Height);
-            this.SetThumbnailsSize(this._configuration.ThumbnailSize);
+            _resizeAllSizes = new(_configuration.PerClientThumbnailSizes);
+            foreach (var view in _thumbnailViews.Values)
+            {
+                view.ZoomOut();
+                _resizeAllSizes[view.Title] = view.ThumbnailSize;
+            }
+            _resizeAllDefault = _configuration.ThumbnailSize;
+            _resizeAllOrigin = _thumbnailViews[id].ThumbnailSize;
         }
 
-        private void SetThumbnailsSize(Size size)
+        public void UpdateThumbnailsSize()
         {
-            _logger.Verbose("ThumbnailManager.SetThumbnailsSize: Setting size for {ThumbnailCount} thumbnails to {Width}x{Height}", this._thumbnailViews.Count, size.Width, size.Height);
-            this.DisableViewEvents();
-
-            foreach (KeyValuePair<IntPtr, IThumbnailView> entry in this._thumbnailViews)
+            Size requested = _configuration.ThumbnailSize;
+            // Workspace dimensions set the default; individual overrides retain their ratios.
+            if (!_appliedThumbnailSize.IsEmpty && _appliedThumbnailSize != _configuration.ThumbnailSize)
             {
-                entry.Value.ThumbnailSize = size;
-                entry.Value.Refresh(false);
+                double scale = _configuration.ThumbnailSize.Width != _appliedThumbnailSize.Width
+                    ? (double)_configuration.ThumbnailSize.Width / _appliedThumbnailSize.Width
+                    : (double)_configuration.ThumbnailSize.Height / _appliedThumbnailSize.Height;
+                if (_configuration.MaintainThumbnailAspectRatio)
+                    _configuration.ThumbnailSize = ScaleSize(_appliedThumbnailSize, scale);
+                foreach (var title in _configuration.PerClientThumbnailSizes.Keys.ToArray())
+                    _configuration.PerClientThumbnailSizes[title] = ScaleSize(_configuration.PerClientThumbnailSizes[title], scale);
             }
+            ApplyThumbnailSizes();
+            if (requested != _configuration.ThumbnailSize)
+                _ = _mediator.Publish(new ThumbnailActiveSizeUpdated(_configuration.ThumbnailSize));
+        }
 
-            this.EnableViewEvents();
+        private Size ScaleSize(Size size, double scale)
+        {
+            var min = _configuration.ThumbnailMinimumSize;
+            var max = _configuration.ThumbnailMaximumSize;
+            double lower = Math.Max((double)min.Width / size.Width, (double)min.Height / size.Height);
+            double upper = Math.Min((double)max.Width / size.Width, (double)max.Height / size.Height);
+            scale = lower <= upper ? Math.Clamp(scale, lower, upper) : upper;
+            return new(Math.Clamp((int)Math.Round(size.Width * scale), min.Width, max.Width),
+                Math.Clamp((int)Math.Round(size.Height * scale), min.Height, max.Height));
+        }
+
+        private void ApplyThumbnailSizes()
+        {
+            bool wasIgnoring = _ignoreViewEvents;
+            _ignoreViewEvents = true;
+            try
+            {
+                foreach (var view in _thumbnailViews.Values)
+                {
+                    view.ZoomOut();
+                    view.ThumbnailSize = _configuration.GetThumbnailSize(view.Title);
+                    view.Refresh(false);
+                }
+                _appliedThumbnailSize = _configuration.ThumbnailSize;
+            }
+            finally { _ignoreViewEvents = wasIgnoring; }
         }
         
         public void UpdateThumbnailFrames()
@@ -881,7 +938,7 @@ namespace EveOPreview.Services
 
         private void ThumbnailViewFocused(IntPtr id)
         {
-            if (this._isHoverEffectActive)
+            if (this._isHoverEffectActive || !_thumbnailViews.TryGetValue(id, out var view))
             {
                 _logger.Verbose("ThumbnailManager.ThumbnailViewFocused: Hover already active, skipping");
                 return;
@@ -889,8 +946,7 @@ namespace EveOPreview.Services
 
             _logger.Verbose("ThumbnailManager.ThumbnailViewFocused: Thumbnail focused (Handle: 0x{Handle:X})", id);
             this._isHoverEffectActive = true;
-
-            IThumbnailView view = this._thumbnailViews[id];
+            _hoveredThumbnailId = id;
 
             view.SetTopMost(true);
             view.SetOpacity(1.0);
@@ -904,24 +960,24 @@ namespace EveOPreview.Services
 
         private void ThumbnailViewLostFocus(IntPtr id)
         {
-            if (!this._isHoverEffectActive)
+            if (!this._isHoverEffectActive || _hoveredThumbnailId != id)
             {
                 _logger.Verbose("ThumbnailManager.ThumbnailViewLostFocus: Hover not active, skipping");
                 return;
             }
 
             _logger.Verbose("ThumbnailManager.ThumbnailViewLostFocus: Thumbnail lost focus (Handle: 0x{Handle:X})", id);
-            IThumbnailView view = this._thumbnailViews[id];
-
-            if (this._configuration.ThumbnailZoomEnabled)
-            {
-                this.ThumbnailZoomOut(view);
-            }
-
-            view.SetOpacity(this._configuration.ThumbnailOpacity);
-
             this._isHoverEffectActive = false;
+            _hoveredThumbnailId = IntPtr.Zero;
             this._refreshThumbnailZOrder = true;
+            if (_thumbnailViews.TryGetValue(id, out var view))
+            {
+                if (this._configuration.ThumbnailZoomEnabled)
+                {
+                    this.ThumbnailZoomOut(view);
+                }
+                view.SetOpacity(this._configuration.ThumbnailOpacity);
+            }
         }
 
         private void ThumbnailActivated(IntPtr id)
@@ -988,11 +1044,30 @@ namespace EveOPreview.Services
             _logger.Verbose("ThumbnailManager.ThumbnailViewResized: Thumbnail resized (Handle: 0x{Handle:X})", id);
             IThumbnailView view = this._thumbnailViews[id];
 
-            this.SetThumbnailsSize(view.ThumbnailSize);
-
-            view.Refresh(false);
-
-            await this._mediator.Publish(new ThumbnailActiveSizeUpdated(view.ThumbnailSize));
+            if (view.IsResizingAll && !_resizeAllOrigin.IsEmpty)
+            {
+                double scale = (double)view.ThumbnailSize.Width / _resizeAllOrigin.Width;
+                // One common factor preserves relative sizes, including at a size limit.
+                double lower = 0, upper = double.MaxValue;
+                foreach (var size in _resizeAllSizes.Values.Append(_resizeAllDefault))
+                {
+                    lower = Math.Max(lower, Math.Max((double)_configuration.ThumbnailMinimumSize.Width / size.Width,
+                        (double)_configuration.ThumbnailMinimumSize.Height / size.Height));
+                    upper = Math.Min(upper, Math.Min((double)_configuration.ThumbnailMaximumSize.Width / size.Width,
+                        (double)_configuration.ThumbnailMaximumSize.Height / size.Height));
+                }
+                scale = lower <= upper ? Math.Clamp(scale, lower, upper) : 1;
+                foreach (var entry in _resizeAllSizes)
+                    _configuration.PerClientThumbnailSizes[entry.Key] = ScaleSize(entry.Value, scale);
+                _configuration.ThumbnailSize = ScaleSize(_resizeAllDefault, scale);
+                ApplyThumbnailSizes();
+                await _mediator.Publish(new ThumbnailActiveSizeUpdated(_configuration.ThumbnailSize));
+            }
+            else
+            {
+                _configuration.PerClientThumbnailSizes[view.Title] = view.ThumbnailSize;
+                view.Refresh(false);
+            }
         }
 
         private void ThumbnailViewMoved(IntPtr id)

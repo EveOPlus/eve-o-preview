@@ -25,6 +25,8 @@ namespace EveOPreview.View
     {
         bool IsContextMenuOpen { get; }
         bool IsInteracting => false;
+        bool IsResizingAll => false;
+        void CancelInteraction() { }
         IntPtr Id { get; set; }
         string Title { get; set; }
         FontSettings TitleFontSettings { get; set; }

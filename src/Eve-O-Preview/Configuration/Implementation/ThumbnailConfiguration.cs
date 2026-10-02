@@ -161,6 +161,11 @@ namespace EveOPreview.Configuration.Implementation
         public int HideThumbnailsDelay { get; set; }
 
         public Size ThumbnailSize { get; set; }
+
+        [JsonProperty(ObjectCreationHandling = ObjectCreationHandling.Replace)]
+        public Dictionary<string, Size> PerClientThumbnailSizes { get; set; } = new();
+
+        public bool MaintainThumbnailAspectRatio { get; set; }
         public Size ThumbnailMaximumSize { get; set; }
         public Size ThumbnailMinimumSize { get; set; }
 
@@ -388,6 +393,16 @@ namespace EveOPreview.Configuration.Implementation
             TitleFontSettings.Style &= FontStyle.Bold | FontStyle.Italic | FontStyle.Underline | FontStyle.Strikeout;
             ThumbnailMinimumSize = new Size(Math.Clamp(ThumbnailMinimumSize.Width, 1, 960), Math.Clamp(ThumbnailMinimumSize.Height, 1, 540));
             ThumbnailMaximumSize = new Size(Math.Clamp(ThumbnailMaximumSize.Width, ThumbnailMinimumSize.Width, 960), Math.Clamp(ThumbnailMaximumSize.Height, ThumbnailMinimumSize.Height, 540));
+            PerClientThumbnailSizes ??= new();
+            foreach (var title in PerClientThumbnailSizes.Keys.ToArray())
+            {
+                var size = PerClientThumbnailSizes[title];
+                if (string.IsNullOrWhiteSpace(title) || size.Width <= 0 || size.Height <= 0)
+                    PerClientThumbnailSizes.Remove(title);
+                else PerClientThumbnailSizes[title] = new Size(
+                    Math.Clamp(size.Width, ThumbnailMinimumSize.Width, ThumbnailMaximumSize.Width),
+                    Math.Clamp(size.Height, ThumbnailMinimumSize.Height, ThumbnailMaximumSize.Height));
+            }
             if (!Enum.IsDefined(ThumbnailZoomAnchor)) ThumbnailZoomAnchor = ZoomAnchor.NW;
             HideThumbnailsDelay = Math.Max(0, HideThumbnailsDelay);
             this.ThumbnailRefreshPeriod = ThumbnailConfiguration.ApplyRestrictions(this.ThumbnailRefreshPeriod, 300, 1000);

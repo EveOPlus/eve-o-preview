@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "Lebar default dalam piksel. Ukuran individual berubah secara proporsional.",
+  "Default height in pixels. Individual sizes scale proportionally.": "Tinggi default dalam piksel. Ukuran individual berubah secara proporsional.",
+  "Resize all": "Ubah ukuran semua",
+  "Resize": "Ubah ukuran",
   "Include login clients": "Sertakan klien di layar masuk",
   "Use cached account links to include login windows in this group's character order.": "Gunakan tautan akun yang tersimpan untuk menyertakan jendela masuk dalam urutan karakter grup ini.",
   "Choose On or Off for login clients.": "Pilih Aktif atau Nonaktif untuk klien di layar masuk.",

@@ -105,10 +105,20 @@ public sealed class SettingsIntegrationTests(ITestOutputHelper output)
             }
             Assert.Equal(0, published);
             Assert.Equal(0, savesRequested);
+            config.PerClientThumbnailSizes["EVE - Individual"] = new Size(420, 280);
+            config.MaintainThumbnailAspectRatio = true;
             ((Task)Call(presenter, "SaveOnExitAsync")).GetAwaiter().GetResult();
+            config.PerClientThumbnailSizes.Clear();
+            config.MaintainThumbnailAspectRatio = false;
             Assert.True(storage.Load());
             Assert.Equal(new Size(540, 303), config.ThumbnailSize);
+            Assert.Equal(new Size(420, 280), config.GetThumbnailSize("EVE - Individual"));
+            Assert.True(config.MaintainThumbnailAspectRatio);
             Assert.False(config.ShowThumbnailFrames);
+            File.WriteAllText(storage.CurrentProfile.FullPath, "{}");
+            Assert.True(storage.Load());
+            Assert.Empty(config.PerClientThumbnailSizes);
+            Assert.False(config.MaintainThumbnailAspectRatio);
         }
         finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
     }

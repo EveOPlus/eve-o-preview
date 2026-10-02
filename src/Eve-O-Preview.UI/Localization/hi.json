@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "पिक्सेल में डिफ़ॉल्ट चौड़ाई। अलग-अलग आकार समान अनुपात में बदलते हैं।",
+  "Default height in pixels. Individual sizes scale proportionally.": "पिक्सेल में डिफ़ॉल्ट ऊँचाई। अलग-अलग आकार समान अनुपात में बदलते हैं।",
+  "Resize all": "सभी का आकार बदलें",
+  "Resize": "आकार बदलें",
   "Include login clients": "लॉगिन स्क्रीन के क्लाइंट शामिल करें",
   "Use cached account links to include login windows in this group's character order.": "इस समूह के कैरेक्टर क्रम में लॉगिन विंडो शामिल करने के लिए कैश में सहेजे गए खाता संबंधों का उपयोग करें।",
   "Choose On or Off for login clients.": "लॉगिन स्क्रीन के क्लाइंट शामिल करने के लिए चालू या बंद चुनें।",

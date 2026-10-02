@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "Piksel cinsinden varsayılan genişlik. Tekil boyutlar orantılı olarak ölçeklenir.",
+  "Default height in pixels. Individual sizes scale proportionally.": "Piksel cinsinden varsayılan yükseklik. Tekil boyutlar orantılı olarak ölçeklenir.",
+  "Resize all": "Tümünü yeniden boyutlandır",
+  "Resize": "Yeniden boyutlandır",
   "Include login clients": "Giriş ekranındaki istemcileri dahil et",
   "Use cached account links to include login windows in this group's character order.": "Giriş pencerelerini bu grubun karakter sırasına dahil etmek için önbellekteki hesap bağlantılarını kullanın.",
   "Choose On or Off for login clients.": "Giriş ekranındaki istemciler için Açık veya Kapalı seçin.",

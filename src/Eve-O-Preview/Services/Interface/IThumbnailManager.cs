@@ -30,6 +30,7 @@ namespace EveOPreview.Services
         Task StopAsync(bool sessionEnding) { Stop(); return Task.CompletedTask; }
 
         void UpdateThumbnailsSize();
+        void BeginResizeAll(IntPtr id);
         void ApplyRuntimeSettings();
         void UpdateThumbnailFrames();
         void UpdateThumbnailTitleFont();

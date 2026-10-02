@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "Standaardbreedte in pixels. Individuele afmetingen worden evenredig geschaald.",
+  "Default height in pixels. Individual sizes scale proportionally.": "Standaardhoogte in pixels. Individuele afmetingen worden evenredig geschaald.",
+  "Resize all": "Alles schalen",
+  "Resize": "Grootte wijzigen",
   "Include login clients": "Aanmeldvensters opnemen",
   "Use cached account links to include login windows in this group's character order.": "Gebruik opgeslagen accountkoppelingen om aanmeldvensters in de personagevolgorde van deze groep op te nemen.",
   "Choose On or Off for login clients.": "Kies Aan of Uit voor aanmeldvensters.",

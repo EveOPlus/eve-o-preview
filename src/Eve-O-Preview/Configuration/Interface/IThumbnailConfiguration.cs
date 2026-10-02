@@ -53,6 +53,9 @@ namespace EveOPreview.Configuration
         int HideThumbnailsDelay { get; set; }
 
         Size ThumbnailSize { get; set; }
+        Dictionary<string, Size> PerClientThumbnailSizes { get; set; }
+        bool MaintainThumbnailAspectRatio { get; set; }
+        Size GetThumbnailSize(string title) => PerClientThumbnailSizes.TryGetValue(title, out var size) ? size : ThumbnailSize;
         Size ThumbnailMinimumSize { get; set; }
         Size ThumbnailMaximumSize { get; set; }
 

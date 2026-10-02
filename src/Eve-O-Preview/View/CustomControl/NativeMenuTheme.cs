@@ -30,6 +30,7 @@ public static class NativeMenuTheme
                 "minimize-all" => "minimizeAllToolStripMenuItem",
                 "skip-cycling" => "menuCycleSkip",
                 "move" => "menuReposition",
+                "resize-all" => "menuResizeAll",
                 "resize" => "resizeThumbnailToolStripMenuItem",
                 _ => ""
             });

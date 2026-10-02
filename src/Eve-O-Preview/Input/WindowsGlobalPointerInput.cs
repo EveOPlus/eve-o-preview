@@ -10,7 +10,7 @@ using Serilog;
 
 namespace EveOPreview.Input;
 
-/// <summary>Installs a mouse-only global hook while a move/resize subscription exists.</summary>
+/// <summary>Installs a mouse-only global hook while a gesture or menu-dismissal subscription exists.</summary>
 public sealed class WindowsGlobalPointerInput : IGlobalPointerInput
 {
     private const int CommandMessage = 0x8000 + 75;

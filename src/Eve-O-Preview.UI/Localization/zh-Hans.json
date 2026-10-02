@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "默认宽度（像素）。各缩略图按比例调整大小。",
+  "Default height in pixels. Individual sizes scale proportionally.": "默认高度（像素）。各缩略图按比例调整大小。",
+  "Resize all": "调整全部大小",
+  "Resize": "调整大小",
   "Include login clients": "包括登录界面的客户端",
   "Use cached account links to include login windows in this group's character order.": "使用缓存的账号关联，将登录窗口纳入此组的角色顺序。",
   "Choose On or Off for login clients.": "请选择开启或关闭登录客户端功能。",

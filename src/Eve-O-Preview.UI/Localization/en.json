@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "Default width in pixels. Individual sizes scale proportionally.",
+  "Default height in pixels. Individual sizes scale proportionally.": "Default height in pixels. Individual sizes scale proportionally.",
+  "Resize all": "Resize all",
+  "Resize": "Resize",
   "Include login clients": "Include login clients",
   "Use cached account links to include login windows in this group's character order.": "Use cached account links to include login windows in this group's character order.",
   "Choose On or Off for login clients.": "Choose On or Off for login clients.",

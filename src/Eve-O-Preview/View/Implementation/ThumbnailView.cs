@@ -48,6 +48,9 @@ namespace EveOPreview.View;
 /// </summary>
 public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
 {
+    // All thumbnail windows share the Avalonia UI thread. Own only the currently
+    // open menu, and release the reference/subscription when it closes.
+    private static ThumbnailView _openMenuOwner;
     private ThumbnailOverlay _overlay;
     private readonly WindowsPreviewWindowAdapter _native;
     private readonly IThumbnailConfiguration _config;
@@ -57,6 +60,11 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
     private readonly DispatcherTimer holdRightClickToMoveTimer;
     private readonly ContextMenu thumbnailContextMenu;
     private readonly MenuItem _skipItem;
+    private readonly MenuItem _aspectLockItem;
+    private readonly MenuItem _resetAspectItem;
+    private readonly MenuItem _resizeMenu;
+    private readonly MenuItem _resizeAllItem;
+    private readonly MenuItem _legacyResizeItem;
     private readonly ThumbnailSnapSession _snap = new();
     private readonly List<ThumbnailSnapTarget> _snapTargets = new();
     private ThumbnailSnapGuideWindow _snapGuides;
@@ -125,16 +133,42 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
         ToolTip.SetTip(_skipItem, "Skip this character in all cycle groups for this session. Its thumbnail stays clickable.");
         thumbnailContextMenu.Items.Add(_skipItem);
         thumbnailContextMenu.Items.Add(CreateMenuItem("menuReposition", "Move", menuReposition_Click));
-        var resize = CreateMenuItem("resizeThumbnailToolStripMenuItem", "Resize", resizeThumbnailToolStripMenuItem_Click);
-        ToolTip.SetTip(resize, "Hold Shift to maintain aspect ratio while resizing");
+        _resizeAllItem = CreateMenuItem("menuResizeAll", "Resize all", (_, _) => BeginResizeAll());
+        _legacyResizeItem = CreateMenuItem("resizeThumbnailToolStripMenuItem", "Resize", (_, _) => BeginResizeAll());
+        thumbnailContextMenu.Items.Add(_resizeAllItem);
+        var resize = _resizeMenu = new MenuItem { Name = "resizeThumbnailToolStripMenuItem", Header = "Resize" };
+        resize.Items.Add(CreateMenuItem("menuResizeIndividual", "Resize individual", resizeThumbnailToolStripMenuItem_Click));
+        _resetAspectItem = CreateMenuItem("menuResetAspectRatio", "Reset aspect ratio to client", (_, _) => ResetAspectRatio());
+        resize.Items.Add(_resetAspectItem);
+        _aspectLockItem = CreateMenuItem("menuLockAspectRatio", "Maintain aspect ratio", (_, _) =>
+            _config.MaintainThumbnailAspectRatio = _aspectLockItem.IsChecked);
+        _aspectLockItem.ToggleType = MenuItemToggleType.CheckBox;
+        resize.Items.Add(_aspectLockItem);
+        resize.Items.Add(CreateMenuItem("menuResetSize", "Reset to default size", (_, _) =>
+        {
+            ZoomOut();
+            ClientSize = _config.ThumbnailSize;
+            _config.PerClientThumbnailSizes.Remove(Title);
+            SaveWindowSizeAndLocation();
+            RefreshAppearance();
+        }));
         thumbnailContextMenu.Items.Add(resize);
         NativeMenuTheme.Track(thumbnailContextMenu, thumbnail: true);
         thumbnailContextMenu.Opening += (_, _) => PrepareContextMenu();
-        thumbnailContextMenu.Opened += (_, _) => PrepareContextMenu();
+        thumbnailContextMenu.Opened += (_, _) =>
+        {
+            if (_openMenuOwner != this) _openMenuOwner?.DismissContextMenu();
+            _openMenuOwner = this;
+            _keyboardMouseEvents.MouseUp -= DismissMenuOnOutsideClick;
+            _keyboardMouseEvents.MouseUp += DismissMenuOnOutsideClick;
+            PrepareContextMenu();
+        };
         thumbnailContextMenu.AddHandler(PointerReleasedEvent, (_, _) => holdRightClickToMoveTimer.Stop(),
             RoutingStrategies.Tunnel, handledEventsToo: true);
         thumbnailContextMenu.Closed += (_, _) =>
         {
+            if (_openMenuOwner == this) _openMenuOwner = null;
+            _keyboardMouseEvents.MouseUp -= DismissMenuOnOutsideClick;
             holdRightClickToMoveTimer.Stop();
             if (_menuHoverExitPending)
             {
@@ -177,6 +211,8 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
     public new bool IsActive { get; set; }
     public bool IsOverlayEnabled { get; set; }
     public bool IsContextMenuOpen => _menuOpening || thumbnailContextMenu.IsOpen;
+    public bool IsResizingAll { get; private set; }
+    private bool AspectLocked => _config.MaintainThumbnailAspectRatio;
     public bool IsInteracting => _nativeInteraction || _customMouseModeActive != MouseMode.Disabled;
     public OverlayCapabilities GraphicsCapabilities => _overlay.GraphicsCapabilities;
     public OverlayRendererKind OverlayRenderer => _overlay.RendererKind;
@@ -199,7 +235,19 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
     }
 
     public Point ThumbnailLocation { get => Location; set => Location = value; }
-    public Size ThumbnailSize { get => ClientSize; set => ClientSize = value; }
+    public Size ThumbnailSize
+    {
+        get => ClientSize;
+        set { ClientSize = value; if (!_isZoomed && !IsInteracting) SaveWindowSizeAndLocation(); }
+    }
+
+    public void CancelInteraction()
+    {
+        ExitCustomMouseMode();
+        _nativeInteraction = false;
+        IsResizingAll = false;
+        ClearSnapGuides();
+    }
     public Point Location
     {
         get => _native.Location;
@@ -327,7 +375,12 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
 
     public bool IsKnownHandle(IntPtr handle) => handle != IntPtr.Zero &&
         (Id == handle || Handle == handle || _overlay.Handle == handle ||
-         (IsContextMenuOpen && TopLevel.GetTopLevel(thumbnailContextMenu)?.TryGetPlatformHandle()?.Handle == handle));
+         (IsContextMenuOpen && (TopLevel.GetTopLevel(thumbnailContextMenu)?.TryGetPlatformHandle()?.Handle == handle
+             || MenuContainsHandle(thumbnailContextMenu.Items.OfType<MenuItem>(), handle))));
+
+    private static bool MenuContainsHandle(IEnumerable<MenuItem> items, IntPtr handle) => items.Any(item =>
+        TopLevel.GetTopLevel(item)?.TryGetPlatformHandle()?.Handle == handle
+        || MenuContainsHandle(item.Items.OfType<MenuItem>(), handle));
 
     public void SetOpacity(double opacity)
     {
@@ -565,7 +618,10 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
                 return IntPtr.Zero;
             case 0x0231: // WM_ENTERSIZEMOVE
                 _nativeInteraction = true;
+                IsResizingAll = false;
                 ZoomOut();
+                _dragClientSize = ClientSize;
+                _thumbnailRatioAtStartOfResize = (double)_dragClientSize.Width / _dragClientSize.Height;
                 _dragPointerOrigin = _keyboardMouseEvents.Position;
                 _dragWindowOrigin = Location;
                 _snap.Reset();
@@ -579,6 +635,15 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
                 var result = Snap(raw, (_keyboardMouseEvents.Modifiers & ShortcutKeys.Shift) != 0);
                 rectangle = new(result.X, result.Y, result.X + result.Width, result.Y + result.Height);
                 Marshal.StructureToPtr(rectangle, lParam, false);
+                handled = true;
+                return new IntPtr(1);
+            case 0x0214 when _nativeInteraction: // WM_SIZING
+                var proposed = Marshal.PtrToStructure<NativeRectangle>(lParam);
+                int edge = wParam.ToInt32();
+                var resized = ResizeBounds(new(proposed.Left, proposed.Top, proposed.Right - proposed.Left, proposed.Bottom - proposed.Top),
+                    edge is 1 or 4 or 7, edge is 2 or 5 or 8, edge is 3 or 4 or 5, edge is 6 or 7 or 8,
+                    (_keyboardMouseEvents.Modifiers & ShortcutKeys.Shift) != 0);
+                Marshal.StructureToPtr(new NativeRectangle(resized.X, resized.Y, resized.X + resized.Width, resized.Y + resized.Height), lParam, false);
                 handled = true;
                 return new IntPtr(1);
             case 0x0232: // WM_EXITSIZEMOVE
@@ -658,6 +723,16 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
     protected virtual void MouseDownEventHandler(GlobalPointerEventArgs args, ShortcutKeys modifierKeys)
     {
         if (IsInteracting) return;
+        // Native nonactivating clicks bypass Avalonia's normal light-dismiss
+        // input route. A click on the owner dismisses; another preview may act
+        // or open its own menu immediately. Clicks on popup actions use their
+        // existing menu handlers, including the quick second right-click.
+        if (_openMenuOwner != null)
+        {
+            bool dismissOnly = _openMenuOwner == this;
+            _openMenuOwner.DismissContextMenu();
+            if (dismissOnly) return;
+        }
         switch (args.Button)
         {
             case PointerButtons.Left when modifierKeys == ShortcutKeys.Control:
@@ -694,10 +769,44 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
 
     private void PrepareContextMenu()
     {
+        bool legacy = NativeMenuTheme.CurrentTheme == "Legacy";
+        thumbnailContextMenu.Items.Remove(legacy ? _resizeMenu : _legacyResizeItem);
+        var resize = legacy ? _legacyResizeItem : _resizeMenu;
+        if (!thumbnailContextMenu.Items.Contains(resize)) thumbnailContextMenu.Items.Add(resize);
+        if (legacy) thumbnailContextMenu.Items.Remove(_resizeAllItem);
+        else if (!thumbnailContextMenu.Items.Contains(_resizeAllItem)) thumbnailContextMenu.Items.Add(_resizeAllItem);
         _skipItem.Header = _config.IsClientCycleSkipped(Title) ? "Resume cycling this character" : "Skip while cycling";
         _skipItem.IsEnabled = !string.IsNullOrWhiteSpace(Title);
+        _aspectLockItem.IsChecked = AspectLocked;
+        _resetAspectItem.IsEnabled = TryGetClientRatio(out _);
         NativeMenuTheme.ApplyThumbnailOrder(thumbnailContextMenu);
     }
+
+    private void DismissContextMenu()
+    {
+        _menuHoverExitPending = true;
+        thumbnailContextMenu.Close();
+    }
+
+    private void DismissMenuOnOutsideClick(object sender, GlobalPointerEventArgs args)
+    {
+        holdRightClickToMoveTimer.Stop();
+        if (!thumbnailContextMenu.IsOpen || PopupContainsPoint(thumbnailContextMenu, args.Location)
+            || SubmenusContainPoint(thumbnailContextMenu.Items.OfType<MenuItem>(), args.Location)) return;
+        DismissContextMenu();
+    }
+
+    private static bool PopupContainsPoint(Control control, Point screen)
+    {
+        var popup = TopLevel.GetTopLevel(control);
+        return popup != null && popup.IsVisible
+            && new Rect(popup.Bounds.Size).Contains(popup.PointToClient(new PixelPoint(screen.X, screen.Y)));
+    }
+
+    private static bool SubmenusContainPoint(IEnumerable<MenuItem> items, Point screen) =>
+        items.Where(item => item.IsSubMenuOpen).Any(item =>
+            item.Items.OfType<MenuItem>().Any(child => PopupContainsPoint(child, screen))
+            || SubmenusContainPoint(item.Items.OfType<MenuItem>(), screen));
 
     private MenuItem CreateMenuItem(string name, string title, EventHandler handler)
     {
@@ -715,6 +824,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
             bool invoke = rightPressedHere && args.InitialPressMouseButton == MouseButton.Right && item.IsEnabled;
             rightPressedHere = false;
             if (!invoke) return;
+            if (item.ToggleType == MenuItemToggleType.CheckBox) item.IsChecked = !item.IsChecked;
             item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
             thumbnailContextMenu.Close();
             args.Handled = true;
@@ -747,6 +857,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
                 : new Point(Math.Max(0, client.Width - 5), Math.Max(0, client.Height - 5));
             _keyboardMouseEvents.Position = PointToScreen(target);
         }
+        IsResizingAll = false;
         _customMouseModeActive = mode;
         _baseMousePosition = _dragPointerOrigin = _keyboardMouseEvents.Position;
         _dragWindowOrigin = Location;
@@ -774,10 +885,12 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
                 ThumbnailMoved?.Invoke(Id);
                 break;
             case MouseMode.Resize:
-                int width = _dragClientSize.Width + dx;
-                int height = shift ? (int)Math.Round(width / _thumbnailRatioAtStartOfResize) : _dragClientSize.Height + dy;
-                ClientSize = new(width, height);
+                var frame = Size - ClientSize;
+                var resized = ResizeBounds(new(_dragWindowOrigin.X, _dragWindowOrigin.Y,
+                    _dragClientSize.Width + dx + frame.Width, _dragClientSize.Height + dy + frame.Height), false, true, false, true, shift);
+                ClientSize = new(resized.Width - frame.Width, resized.Height - frame.Height);
                 ThumbnailResized?.Invoke(Id);
+                if (ClientSize != new Size(resized.Width - frame.Width, resized.Height - frame.Height)) ClearSnapGuides();
                 break;
         }
         RefreshAppearance();
@@ -790,6 +903,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
             _keyboardMouseEvents.MouseMove -= ProcessCustomMouseMode;
             _keyboardMouseEvents.MouseUp -= ExitCustomMouseMode;
             _customMouseModeActive = MouseMode.Disabled;
+            IsResizingAll = false;
             SaveWindowSizeAndLocation();
         }
         _snap.Reset();
@@ -810,7 +924,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
         ProcessCustomMouseMode(_keyboardMouseEvents.Position, _keyboardMouseEvents.Modifiers);
     }
 
-    private PreviewRect Snap(PreviewRect raw, bool shift)
+    private void CollectSnapTargets(bool shift)
     {
         _snapTargets.Clear();
         if (_config.EnableThumbnailSnap && !shift && _thumbnailManager != null)
@@ -823,16 +937,95 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
                 _snapTargets.Add(new(view.Id.ToInt64(), new(location.X, location.Y, size.Width, size.Height)));
             }
         }
+    }
+
+    private PreviewRect Snap(PreviewRect raw, bool shift)
+    {
+        CollectSnapTargets(shift);
         var result = _snap.Move(raw, _snapTargets, (int)Math.Round(8 * RenderScaling), (int)Math.Round(16 * RenderScaling),
             shift || !_config.EnableThumbnailSnap);
+        ShowSnapGuides(result);
+        return result.Bounds;
+    }
+
+    private void ShowSnapGuides(ThumbnailSnapResult result)
+    {
         if (result.VerticalGuide != null || result.HorizontalGuide != null)
         {
             _snapGuides ??= new ThumbnailSnapGuideWindow();
             _snapGuides.UpdateGuides(result.VerticalGuide, result.HorizontalGuide, this);
         }
         else ClearSnapGuides();
-        return result.Bounds;
     }
+    private void BeginResizeAll()
+    {
+        EnterCustomMouseMode(MouseMode.Resize);
+        IsResizingAll = true;
+        _thumbnailManager.BeginResizeAll(Id);
+    }
+
+    private bool TryGetClientRatio(out double ratio)
+    {
+        ratio = 1;
+        if (User32NativeMethods.IsIconic(Id) || !User32NativeMethods.GetClientRect(Id, out var rect)
+            || rect.Right <= rect.Left || rect.Bottom <= rect.Top) return false;
+        ratio = (double)(rect.Right - rect.Left) / (rect.Bottom - rect.Top);
+        return true;
+    }
+
+    private void ResetAspectRatio()
+    {
+        if (!TryGetClientRatio(out double ratio)) return;
+        ZoomOut();
+        ClientSize = RatioSize(ClientSize.Width, ratio);
+        ThumbnailResized?.Invoke(Id);
+        SaveWindowSizeAndLocation();
+        RefreshAppearance();
+    }
+
+    private Size RatioSize(int width, double ratio)
+    {
+        double lower = Math.Max(_minimumSize.Width, _minimumSize.Height * ratio);
+        double upper = Math.Min(_maximumSize.Width > 0 ? _maximumSize.Width : int.MaxValue,
+            _maximumSize.Height > 0 ? _maximumSize.Height * ratio : int.MaxValue);
+        // An impossible ratio within both limits uses the closest permitted rectangle.
+        double fitted = lower <= upper ? Math.Clamp(width, lower, upper) : upper;
+        return ClampSize(new((int)Math.Round(fitted), (int)Math.Round(fitted / ratio)));
+    }
+
+    private PreviewRect ResizeBounds(PreviewRect raw, bool left, bool right, bool top, bool bottom, bool shift)
+    {
+        var frame = Size - ClientSize;
+        bool locked = IsResizingAll || AspectLocked || shift;
+        Size Constrain(int width, int height, bool useHeight) => locked
+            ? RatioSize(useHeight ? (int)Math.Round(height * _thumbnailRatioAtStartOfResize) : width, _thumbnailRatioAtStartOfResize)
+            : ClampSize(new(width, height));
+        PreviewRect Fit(Size client) => new(
+            left ? raw.X + raw.Width - client.Width - frame.Width : raw.X,
+            top ? raw.Y + raw.Height - client.Height - frame.Height : raw.Y,
+            client.Width + frame.Width, client.Height + frame.Height);
+        bool heightDriven = !left && !right || locked && !shift && (top || bottom)
+            && Math.Abs(raw.Height - frame.Height - _dragClientSize.Height)
+                > Math.Abs(raw.Width - frame.Width - _dragClientSize.Width) / _thumbnailRatioAtStartOfResize;
+        var size = Constrain(raw.Width - frame.Width, raw.Height - frame.Height, heightDriven);
+        var bounded = Fit(size);
+        CollectSnapTargets(shift);
+        var result = _snap.Resize(bounded, _snapTargets, (int)Math.Round(8 * RenderScaling), (int)Math.Round(16 * RenderScaling),
+            // During a group resize, neighbours' left/top edges stay fixed while their sizes change.
+            left, right, top, bottom, shift || !_config.EnableThumbnailSnap, leadingTargetsOnly: IsResizingAll);
+        bool useHeight = result.HorizontalGuide != null && (result.VerticalGuide == null
+            || Math.Abs(result.Bounds.Height - bounded.Height) < Math.Abs(result.Bounds.Width - bounded.Width));
+        size = Constrain(result.Bounds.Width - frame.Width, result.Bounds.Height - frame.Height, useHeight);
+        var final = Fit(size);
+        // Ratio/limit constraints take precedence; only display edges actually aligned.
+        var vertical = result.VerticalGuide;
+        var horizontal = result.HorizontalGuide;
+        if (vertical?.Coordinate != (left ? final.X : final.X + final.Width)) vertical = null;
+        if (horizontal?.Coordinate != (top ? final.Y : final.Y + final.Height)) horizontal = null;
+        ShowSnapGuides(new(final, vertical, horizontal));
+        return final;
+    }
+
     private void ClearSnapGuides() { _snapGuides?.Dispose(); _snapGuides = null; }
 
     private void menuMinimize_Click(object sender, EventArgs args) => _ = _mediator.Send(new MinimizeClient(Id));

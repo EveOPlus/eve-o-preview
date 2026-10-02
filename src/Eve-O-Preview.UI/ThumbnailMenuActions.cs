@@ -4,9 +4,9 @@ namespace EveOPreview.UI;
 public static class ThumbnailMenuActions
 {
     public static IReadOnlyList<string> ActionIds { get; } =
-        Array.AsReadOnly(new[] { "minimize", "minimize-all", "skip-cycling", "move", "resize" });
+        Array.AsReadOnly(new[] { "minimize", "minimize-all", "skip-cycling", "move", "resize-all", "resize" });
     public static IReadOnlyList<string> DefaultOrder { get; } =
-        Array.AsReadOnly(new[] { "minimize", "minimize-all", "divider:minimize", "skip-cycling", "divider:skip", "move", "resize" });
+        Array.AsReadOnly(new[] { "minimize", "minimize-all", "divider:minimize", "skip-cycling", "divider:skip", "move", "resize-all", "resize" });
 
     public static bool IsDivider(string? id) => id is "divider:default" or "divider:minimize" or "divider:skip"
         || (id?.StartsWith("divider:", StringComparison.Ordinal) == true && Guid.TryParseExact(id[8..], "N", out _));
@@ -17,7 +17,8 @@ public static class ThumbnailMenuActions
         "minimize-all" => "Minimize all clients",
         "skip-cycling" => "Skip / resume cycling",
         "move" => "Move thumbnail",
-        "resize" => "Resize thumbnail",
+        "resize-all" => "Resize all",
+        "resize" => "Resize",
         _ => IsDivider(id) ? "Divider" : id
     };
 

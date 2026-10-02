@@ -44,6 +44,10 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
     [InlineData("CycleSkipping")]
     [InlineData("ThumbnailMenuOrdering")]
     [InlineData("ThumbnailMenuHover")]
+    [InlineData("ThumbnailResize")]
+    [InlineData("HoveredThumbnailRemoval")]
+    [InlineData("ThumbnailMenuDismissal")]
+    [InlineData("ThumbnailMenuOutsideClick")]
     public Task OverlayWindowBehavior(string scenario) => PrivateDesktopRunner.RunAsync(scenario, output);
 
     internal static void RunScenario(string scenario)
@@ -68,7 +72,16 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
             }
             return Stub.Default(method.ReturnType);
         });
-        var keyboard = Stub.Create<IGlobalPointerInput>();
+        EventHandler<GlobalPointerEventArgs> mouseUp = null;
+        Point pointerPosition = Point.Empty;
+        var keyboard = Stub.Create<IGlobalPointerInput>((method, args) =>
+        {
+            if (method.Name == "add_MouseUp") mouseUp += (EventHandler<GlobalPointerEventArgs>)args[0];
+            if (method.Name == "remove_MouseUp") mouseUp -= (EventHandler<GlobalPointerEventArgs>)args[0];
+            if (method.Name == "get_Position") return pointerPosition;
+            if (method.Name == "set_Position") pointerPosition = (Point)args[0];
+            return Stub.Default(method.ReturnType);
+        });
         var sentMessages = new List<object>();
         var mediator = Stub.Create<IMediator>((method, args) =>
         {
@@ -78,6 +91,7 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
         });
         var mainProcess = Stub.Create<IProcessInfo>();
         var pending = new List<IProcessInfo>();
+        var removed = new List<IProcessInfo>();
         foreach (int id in new[] { 101, 102, 103 })
         {
             int clientId = id;
@@ -91,7 +105,8 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
                 args[0] = pending.ToList();
                 pending.Clear();
                 args[1] = new List<IProcessInfo>();
-                args[2] = new List<IProcessInfo>();
+                args[2] = removed.ToList();
+                removed.Clear();
             }
             return Stub.Default(method.ReturnType);
         });
@@ -140,6 +155,93 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
 
             switch (scenario)
             {
+                case "ThumbnailMenuDismissal":
+                case "ThumbnailMenuOutsideClick":
+                    var menuA = (ContextMenu)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(a);
+                    var menuB = (ContextMenu)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(b);
+                    void ClickPreview(Preview view, PointerButtons button)
+                    {
+                        typeof(ThumbnailView).GetMethod("MouseDownEventHandler", BindingFlags.NonPublic | BindingFlags.Instance)
+                            .Invoke(view, [new GlobalPointerEventArgs(button, button, new Point(20, 20), ShortcutKeys.None), ShortcutKeys.None]);
+                        TestAvalonia.Pump();
+                    }
+                    void ReleaseAt(Avalonia.PixelPoint point)
+                    {
+                        pointerPosition = new Point(point.X, point.Y);
+                        mouseUp?.Invoke(null, new GlobalPointerEventArgs(PointerButtons.Left, PointerButtons.None, pointerPosition, ShortcutKeys.None));
+                        TestAvalonia.Pump();
+                    }
+                    foreach (var menuTheme in new[] { "Light", "Dark", "Legacy" })
+                    {
+                        EveOPreview.View.CustomControl.NativeMenuTheme.CurrentTheme = menuTheme;
+                        AvaloniaMenuTest.Open(menuA, a);
+                        if (scenario == "ThumbnailMenuDismissal")
+                        {
+                            AvaloniaMenuTest.Open(menuB, b);
+                            Check(!menuA.IsOpen && menuB.IsOpen, "opening another thumbnail menu closes the previous menu in " + menuTheme);
+                            ClickPreview(b, PointerButtons.Right);
+                            Check(!menuB.IsOpen, "right-clicking the owning preview dismisses its menu");
+                            Assert.Null(mouseUp);
+                            ClickPreview(a, PointerButtons.Right);
+                            ClickPreview(b, PointerButtons.Left);
+                            Check(!menuA.IsOpen && !menuB.IsOpen, "clicking another preview dismisses the open menu");
+                            AvaloniaMenuTest.Open(menuA, a);
+                            a.Hide(); TestAvalonia.Pump();
+                            Assert.False(menuA.IsOpen);
+                            Assert.Null(mouseUp);
+                            a.Show();
+                        }
+                        else
+                        {
+                            ReleaseAt(menuA.PointToScreen(new Avalonia.Point(10, 10)));
+                            Assert.True(menuA.IsOpen);
+                            if (menuTheme != "Legacy")
+                            {
+                                var nested = menuA.Items.OfType<MenuItem>().Single(item => item.Name == "resizeThumbnailToolStripMenuItem");
+                                nested.IsSubMenuOpen = true; TestAvalonia.Pump();
+                                var nestedItem = nested.Items.OfType<MenuItem>().First();
+                                ReleaseAt(nestedItem.PointToScreen(new Avalonia.Point(10, 10)));
+                                Check(menuA.IsOpen && nested.IsSubMenuOpen, "clicks inside the Resize submenu retain its parent menu");
+                            }
+                            ReleaseAt(new Avalonia.PixelPoint(-20000, -20000));
+                            Check(!menuA.IsOpen && !a.IsContextMenuOpen, "outside click dismisses the entire menu in " + menuTheme);
+                            Assert.Null(mouseUp);
+                        }
+                    }
+                    AvaloniaMenuTest.Open(menuA, a);
+                    a.Close(); TestAvalonia.Pump();
+                    Assert.Null(mouseUp);
+                    AvaloniaMenuTest.Open(menuB, b);
+                    Assert.True(menuB.IsOpen);
+                    menuB.Close(); TestAvalonia.Pump();
+                    Assert.Null(mouseUp);
+                    break;
+                case "HoveredThumbnailRemoval":
+                    config.ThumbnailZoomEnabled = true;
+                    config.ThumbnailZoomFactor = 2;
+                    config.ThumbnailOpacity = .6;
+                    var savedLocation = new Point(300, 250);
+                    config.SetThumbnailLocation(b.Title, null, savedLocation);
+                    a.ThumbnailFocused(a.Id);
+                    b.ThumbnailLocation = new Point(-5000, -5000);
+                    Refresh();
+                    Assert.Equal(new Point(-5000, -5000), b.ThumbnailLocation);
+                    removed.Add(new TestProcessInfo((int)a.Id, a.Title));
+                    Call(manager, "UpdateThumbnailsList");
+                    Refresh();
+                    Assert.Equal(savedLocation, b.ThumbnailLocation);
+                    var unzoomedSize = b.ThumbnailSize;
+                    b.ThumbnailFocused(b.Id);
+                    Assert.NotEqual(unzoomedSize, b.ThumbnailSize);
+                    // Removing an unrelated view must preserve the surviving hover.
+                    removed.Add(new TestProcessInfo((int)c.Id, c.Title));
+                    Call(manager, "UpdateThumbnailsList");
+                    Refresh();
+                    Assert.NotEqual(unzoomedSize, b.ThumbnailSize);
+                    b.ThumbnailLostFocus(b.Id);
+                    Assert.Equal(unzoomedSize, b.ThumbnailSize);
+                    Assert.Equal(.6, b.Opacity, 2);
+                    break;
                 case "ThumbnailMenuHover":
                     config.ThumbnailZoomEnabled = true;
                     config.ThumbnailZoomFactor = 2;
@@ -166,6 +268,55 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
                     AvaloniaMenuTest.Open(hoverMenu, a); a.Hide(); TestAvalonia.Pump();
                     Check(!hoverMenu.IsOpen && !a.IsContextMenuOpen, "hiding a thumbnail must close its menu and release menu state");
                     break;
+                case "ThumbnailResize":
+                    a.ThumbnailSize = new Size(320, 180);
+                    a.ThumbnailResized(a.Id);
+                    b.ThumbnailSize = new Size(400, 300);
+                    b.ThumbnailResized(b.Id);
+                    Assert.Equal(new Size(384, 216), c.ThumbnailSize);
+                    Assert.Equal(new Size(384, 216), config.ThumbnailSize);
+                    Assert.Equal(new Size(320, 180), config.PerClientThumbnailSizes[a.Title]);
+                    config.PerClientThumbnailSizes["EVE - Offline"] = new Size(500, 250);
+                    manager.BeginResizeAll(a.Id);
+                    typeof(ThumbnailView).GetProperty("IsResizingAll").SetValue(a, true);
+                    a.ThumbnailSize = new Size(480, 270);
+                    a.ThumbnailResized(a.Id);
+                    Assert.Equal(new Size(600, 450), b.ThumbnailSize);
+                    Assert.Equal(new Size(576, 324), c.ThumbnailSize);
+                    Assert.Equal(new Size(750, 375), config.PerClientThumbnailSizes["EVE - Offline"]);
+                    Assert.Equal(new Size(576, 324), config.ThumbnailSize);
+                    a.ThumbnailSize = new Size(640, 360);
+                    a.ThumbnailResized(a.Id);
+                    Assert.Equal(new Size(576, 324), a.ThumbnailSize);
+                    Assert.Equal(new Size(720, 540), b.ThumbnailSize);
+                    // Every pointer update scales the original snapshot, avoiding cumulative rounding.
+                    a.ThumbnailSize = new Size(320, 180);
+                    a.ThumbnailResized(a.Id);
+                    Assert.Equal(new Size(400, 300), b.ThumbnailSize);
+                    Assert.Equal(new Size(384, 216), config.ThumbnailSize);
+                    a.CancelInteraction();
+                    b.ZoomIn(ViewZoomAnchor.NW, 2);
+                    b.ZoomOut();
+                    Assert.Equal(new Size(400, 300), b.ThumbnailSize);
+                    config.PerClientThumbnailSizes.Clear();
+                    config.PerClientThumbnailSizes[b.Title] = new Size(420, 280);
+                    manager.ApplyRuntimeSettings();
+                    Assert.False(a.IsResizingAll);
+                    Assert.Equal(config.ThumbnailSize, a.ThumbnailSize);
+                    Assert.Equal(new Size(420, 280), b.ThumbnailSize);
+                    config.ThumbnailSize = new Size(480, 270);
+                    manager.UpdateThumbnailsSize();
+                    Assert.Equal(new Size(525, 350), b.ThumbnailSize);
+                    config.MaintainThumbnailAspectRatio = true;
+                    config.ThumbnailSize = new Size(480, 300);
+                    manager.UpdateThumbnailsSize();
+                    Assert.Equal(new Size(533, 300), config.ThumbnailSize);
+                    Assert.Equal(new Size(583, 389), b.ThumbnailSize);
+                    config.PerClientThumbnailSizes["EVE - Offline"] = new Size(900, 500);
+                    config.ThumbnailMaximumSize = new Size(600, 400);
+                    manager.ApplyRuntimeSettings();
+                    Assert.Equal(new Size(600, 333), config.PerClientThumbnailSizes["EVE - Offline"]);
+                    break;
                 case "ThumbnailMenuOrdering":
                     var quickMenu = (ContextMenu)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(a);
                     a.Location = new Point(Screen.PrimaryScreen.WorkingArea.Left + 200, Screen.PrimaryScreen.WorkingArea.Top + 200);
@@ -190,7 +341,7 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
                                 var hitItem = AvaloniaMenuTest.AtScreen(quickMenu, screenPosition);
                                 var firstControl = (Avalonia.Controls.Control)quickMenu.Items[0];
                                 Check(hitItem?.Name == firstItem, $"the configured action must be under the original pointer position (expected {firstItem}, hit {hitItem?.Name ?? "none"}, pointer {screenPosition}, scale {a.RenderScaling}, popup {quickMenu.PointToScreen(default)}, first {firstControl.PointToScreen(default)} size {firstControl.Bounds.Size})");
-                                Check(quickMenu.Items.OfType<MenuItem>().Count() == 5, "reordering must retain all five actions");
+                                Check(quickMenu.Items.OfType<MenuItem>().Count() == (theme == "Legacy" ? 5 : 6), "reordering must retain every root action for the theme");
                                 Check(quickMenu.Items.OfType<Separator>().Count() == (skipFirst ? 0 : 2), "only explicitly configured dividers may appear");
                                 if (!skipFirst)
                                     Check(((Avalonia.Controls.Control)quickMenu.Items[2]).Name == "divider:minimize" && ((Avalonia.Controls.Control)quickMenu.Items[4]).Name == "divider:skip", "default dividers must follow Minimize All and Skip");
@@ -204,6 +355,38 @@ public sealed class ThumbnailZOrderTests(ITestOutputHelper output)
                             }
                         }
                     }
+                    EveOPreview.View.CustomControl.NativeMenuTheme.CurrentTheme = "Dark";
+                    AvaloniaMenuTest.Open(quickMenu, a);
+                    var resizeMenu = quickMenu.Items.OfType<MenuItem>().Single(item => item.Name == "resizeThumbnailToolStripMenuItem");
+                    Assert.Equal(new[] { "menuResizeIndividual", "menuResetAspectRatio", "menuLockAspectRatio", "menuResetSize" },
+                        resizeMenu.Items.OfType<MenuItem>().Select(item => item.Name));
+                    resizeMenu.IsSubMenuOpen = true;
+                    TestAvalonia.Pump();
+                    var lockItem = resizeMenu.Items.OfType<MenuItem>().Single(item => item.Name == "menuLockAspectRatio");
+                    var submenuHost = Avalonia.Controls.TopLevel.GetTopLevel(lockItem);
+                    Assert.NotNull(submenuHost);
+                    var submenuHandle = submenuHost.TryGetPlatformHandle().Handle;
+                    Assert.True(a.IsKnownHandle(submenuHandle));
+                    var submenuDirectory = System.IO.Path.Combine(AppContext.BaseDirectory, "native-menu-themes");
+                    System.IO.Directory.CreateDirectory(submenuDirectory);
+                    using (var bitmap = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(
+                        (int)Math.Ceiling(submenuHost.Bounds.Width), (int)Math.Ceiling(submenuHost.Bounds.Height))))
+                    {
+                        bitmap.Render(submenuHost);
+                        bitmap.Save(System.IO.Path.Combine(submenuDirectory, "resize-submenu.png"));
+                    }
+                    var lockPoint = submenuHost.PointToClient(lockItem.PointToScreen(new Avalonia.Point(50, 14)));
+                    var lockCoordinates = new IntPtr(((int)lockPoint.Y << 16) | ((int)lockPoint.X & 0xffff));
+                    AvaloniaMenuTest.SendMessage(submenuHandle, 0x0201, new IntPtr(1), lockCoordinates);
+                    AvaloniaMenuTest.SendMessage(submenuHandle, 0x0202, IntPtr.Zero, lockCoordinates);
+                    TestAvalonia.Pump();
+                    Assert.True(config.MaintainThumbnailAspectRatio);
+                    quickMenu.Close();
+                    var otherMenu = (ContextMenu)typeof(ThumbnailView).GetField("thumbnailContextMenu", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(b);
+                    AvaloniaMenuTest.Open(otherMenu, b);
+                    var otherResize = otherMenu.Items.OfType<MenuItem>().Single(item => item.Name == "resizeThumbnailToolStripMenuItem");
+                    Assert.True(otherResize.Items.OfType<MenuItem>().Single(item => item.Name == "menuLockAspectRatio").IsChecked);
+                    otherMenu.Close();
                     var placedDivider = "divider:" + Guid.NewGuid().ToString("N");
                     var customLayout = new[] { "skip-cycling", placedDivider, "minimize", "minimize-all", "move", "resize" };
                     EveOPreview.View.CustomControl.NativeMenuTheme.ThumbnailMenuOrder = customLayout;

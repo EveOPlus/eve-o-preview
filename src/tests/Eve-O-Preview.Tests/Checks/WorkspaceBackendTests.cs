@@ -375,7 +375,7 @@ public sealed class WorkspaceBackendTests
         Assert.Equal("skip-cycling", fixture.Backend.Read().ThumbnailMenuOrder[0]);
         Assert.Equal(fixture.Backend.Read().ThumbnailMenuOrder, new ApplicationPreferences(fixture.AppearancePath, fixture.Logger).ThumbnailMenuOrder);
         string saved = File.ReadAllText(fixture.AppearancePath);
-        foreach (var command in new WorkspaceCommand[] { new("thumbnail-menu-move", "unknown", Position: 0), new("thumbnail-menu-move", "minimize", Position: -1), new("thumbnail-menu-move", "minimize", Position: 7), new("thumbnail-menu-move", "minimize"), new("thumbnail-menu-move", "divider:minimize", Position: 0) })
+        foreach (var command in new WorkspaceCommand[] { new("thumbnail-menu-move", "unknown", Position: 0), new("thumbnail-menu-move", "minimize", Position: -1), new("thumbnail-menu-move", "minimize", Position: ThumbnailMenuActions.DefaultOrder.Count), new("thumbnail-menu-move", "minimize"), new("thumbnail-menu-move", "divider:minimize", Position: 0) })
             Assert.False((await fixture.Backend.ExecuteAsync(command)).Success);
         Assert.Equal(saved, File.ReadAllText(fixture.AppearancePath));
         Assert.True((await fixture.Execute("thumbnail-menu-reset")).Success);

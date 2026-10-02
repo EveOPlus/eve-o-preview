@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "العرض الافتراضي بالبكسل. تتغير الأحجام الفردية بشكل متناسب.",
+  "Default height in pixels. Individual sizes scale proportionally.": "الارتفاع الافتراضي بالبكسل. تتغير الأحجام الفردية بشكل متناسب.",
+  "Resize all": "تغيير حجم الكل",
+  "Resize": "تغيير الحجم",
   "Include login clients": "تضمين العملاء في شاشة تسجيل الدخول",
   "Use cached account links to include login windows in this group's character order.": "استخدم روابط الحسابات المحفوظة في الذاكرة المؤقتة لتضمين نوافذ تسجيل الدخول ضمن ترتيب شخصيات هذه المجموعة.",
   "Choose On or Off for login clients.": "اختر تفعيل أو تعطيل تضمين العملاء في شاشة تسجيل الدخول.",

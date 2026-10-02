@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "既定の幅（ピクセル）。個別のサイズは比率を保って拡大・縮小されます。",
+  "Default height in pixels. Individual sizes scale proportionally.": "既定の高さ（ピクセル）。個別のサイズは比率を保って拡大・縮小されます。",
+  "Resize all": "すべてサイズ変更",
+  "Resize": "サイズ変更",
   "Include login clients": "ログイン画面のクライアントを含める",
   "Use cached account links to include login windows in this group's character order.": "キャッシュされたアカウントの関連付けを使い、このグループのキャラクター順にログイン画面を含めます。",
   "Choose On or Off for login clients.": "ログイン画面のクライアントを含めるかどうかを選択してください。",

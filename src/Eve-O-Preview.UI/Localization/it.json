@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "Larghezza predefinita in pixel. Le dimensioni individuali vengono ridimensionate proporzionalmente.",
+  "Default height in pixels. Individual sizes scale proportionally.": "Altezza predefinita in pixel. Le dimensioni individuali vengono ridimensionate proporzionalmente.",
+  "Resize all": "Ridimensiona tutte",
+  "Resize": "Ridimensiona",
   "Include login clients": "Includi i client nella schermata di accesso",
   "Use cached account links to include login windows in this group's character order.": "Usa i collegamenti agli account memorizzati per includere le finestre di accesso nell’ordine dei personaggi del gruppo.",
   "Choose On or Off for login clients.": "Scegli se includere i client nella schermata di accesso.",

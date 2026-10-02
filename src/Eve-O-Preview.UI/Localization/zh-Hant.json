@@ -1,4 +1,8 @@
 {
+  "Default width in pixels. Individual sizes scale proportionally.": "預設寬度（像素）。各縮圖按比例調整大小。",
+  "Default height in pixels. Individual sizes scale proportionally.": "預設高度（像素）。各縮圖按比例調整大小。",
+  "Resize all": "調整全部大小",
+  "Resize": "調整大小",
   "Include login clients": "包含登入畫面的用戶端",
   "Use cached account links to include login windows in this group's character order.": "使用快取的帳號關聯，將登入視窗納入此群組的角色順序。",
   "Choose On or Off for login clients.": "請選擇開啟或關閉登入用戶端功能。",
