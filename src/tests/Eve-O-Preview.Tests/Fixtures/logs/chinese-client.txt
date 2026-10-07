@@ -1,0 +1,13 @@
+------------------------------------------------------------
+  游戏记录
+  收听者: Sample Observer
+  进程开始: 2026.01.01 00:00:00
+------------------------------------------------------------
+[ 2026.01.01 00:00:04 ] (hint) 正在尝试加入一个频道
+[ 2026.01.01 00:00:04 ] (hint) 正在尝试加入一个频道
+[ 2026.01.01 00:00:15 ] (None) 正在从 <localized hint="Sample Station">示例空间站* 离站进入 <localized hint="Jita">吉他* 恒星系。
+[ 2026.01.01 00:00:30 ] (notify) 正在将<localized hint="Advanced Heavy Assault Missile">高级重型攻击导弹*载入<localized hint="Missile Launcher Heavy Assault">重型攻击导弹发射器*，预计于10秒后完成。
+[ 2026.01.01 00:02:19 ] (notify) 你正处于跃迁状态，其所产生的干扰阻止了你的系统正常运作。
+[ 2026.01.01 00:03:35 ] (notify) <b><localized hint="Bezdnacine">贝兹岩*</b>距离太远，无法锁定。必须在<b>75 km</b>之内。
+[ 2026.01.01 00:04:10 ] (combat) <color=0xff00ffff><b>0</b> <color=0x77ffffff><font size=10>对</font> <b><color=0xffffffff><localized hint="Talassonite II-Grade">塔拉岩（2级）*</b><font size=10><color=0x77ffffff> - <localized hint="Inferno Rage Heavy Assault Missile">炼狱狂乱重型攻击导弹*</localized> - 命中
+[ 2026.01.01 00:04:12 ] (combat) <color=0xff00ffff><b>0</b> <color=0x77ffffff><font size=10>对</font> <b><color=0xffffffff><localized hint="Talassonite II-Grade">塔拉岩（2级）*</b><font size=10><color=0x77ffffff> - <localized hint="Inferno Rage Heavy Assault Missile">炼狱狂乱重型攻击导弹*</localized> - 命中

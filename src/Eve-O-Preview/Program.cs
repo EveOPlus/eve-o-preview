@@ -23,16 +23,19 @@ using EveOPreview.Services;
 using EveOPreview.Services.Implementation;
 using EveOPreview.Services.Interface;
 using EveOPreview.View;
-using Gma.System.MouseKeyHook;
+using EveOPreview.Input;
 using MediatR;
 using Serilog;
 using Serilog.Events;
 using System;
 using System.Linq;
+using System.IO;
 using System.Threading;
-using System.Windows.Forms;
+using Avalonia.Controls.ApplicationLifetimes;
 using Autofac.Extensions.DependencyInjection;
 using MediatR.Extensions.Autofac.DependencyInjection;
+using Avalonia;
+using EveOPreview.UI;
 
 namespace EveOPreview
 {
@@ -46,6 +49,17 @@ namespace EveOPreview
         [STAThread]
         static void Main(params string[] args)
         {
+            if (args.Contains("--validate-desktop"))
+            {
+                Environment.ExitCode = DesktopValidation.Run(args);
+                return;
+            }
+            if (args.Contains("--validate-workspace"))
+            {
+                ValidateWorkspace();
+                return;
+            }
+
             if (args?.Any(x => x == "--attach-debug-sidecar") == true)
             {
                 DebuggerSidecar.RunAsTheSideCar(args);
@@ -53,6 +67,9 @@ namespace EveOPreview
             else
             {
                 SetupLogger(args);
+                using var logLifetime = Log.Logger as IDisposable;
+                ExceptionHandler handler = new ExceptionHandler();
+                handler.SetupClrExceptionHandler();
                 
                 Log.Information("Starting new instance of Eve-O Preview");
                 
@@ -60,6 +77,7 @@ namespace EveOPreview
                 // 'token' variable is used to store reference to the instance Mutex
                 // during the app lifetime
                 Program._singleInstanceMutex = Program.GetInstanceToken();
+                using var instanceToken = _singleInstanceMutex;
 
                 // If it was not possible to acquire the app token then another app instance is already running
                 // Nothing to do here
@@ -70,17 +88,73 @@ namespace EveOPreview
                 }
 
                 
-                ExceptionHandler handler = new ExceptionHandler();
-                handler.SetupExceptionHandlers();
-
-                IApplicationController controller = Program.InitializeApplicationController();
-
-                Program.InitializeWinForms();
+                AppBuilder.Configure<WorkspaceApp>()
+                    .UsePlatformDetect()
+                    .WithInterFont()
+                    .SetupWithClassicDesktopLifetime(args);
+                handler.SetupDispatcherExceptionHandler();
+                var lifetime = (ClassicDesktopStyleApplicationLifetime)Avalonia.Application.Current.ApplicationLifetime;
+                lifetime.ShutdownMode = Avalonia.Controls.ShutdownMode.OnMainWindowClose;
+                using var inputEvents = new WindowsGlobalPointerInput(Log.Logger);
+                using var container = CreateApplicationContainerBuilder(Log.Logger, inputEvents, lifetime).Build();
+                // Resolve the presenter before opening so its settings/close callbacks are installed.
+                container.Resolve<MainFormPresenter>();
+                lifetime.MainWindow = container.Resolve<WorkspaceWindow>();
                 
                 DebuggerSidecar.LaunchTheSideCar();
 
-                controller.Run<MainFormPresenter>();
+                lifetime.Start(args);
             }
+        }
+
+        // Run in the actual executable, so the SDK bundle and Costura resolvers are
+        // exercised too. No user profiles, single-instance mutex, discovery, input
+        // subscriptions, injection, message boxes or debugger sidecar are involved.
+        private static void ValidateWorkspace()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "EveOPreviewStartup-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                Directory.CreateDirectory(root);
+                AppBuilder.Configure<WorkspaceApp>().UsePlatformDetect().WithInterFont().SetupWithoutStarting();
+                using var logger = new LoggerConfiguration().CreateLogger();
+                using var inputEvents = new WindowsGlobalPointerInput(logger);
+                using var context = new ClassicDesktopStyleApplicationLifetime();
+                var builder = CreateApplicationContainerBuilder(logger, inputEvents, context);
+                builder.Register(ctx => new ProfileManager(logger, ctx.Resolve<IMediator>(), Path.Combine(root, "Profiles")))
+                    .As<IProfileManager>().SingleInstance();
+                // Network availability is separate from executable/resource validation.
+                builder.RegisterInstance(new ValidationPortraitProvider()).As<IWorkspacePortraitProvider>();
+                using var container = builder.Build();
+                var form = (WorkspaceWindow)container.Resolve<IMainFormView>();
+                form.ShowActivated = false;
+                form.Show();
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+                if (form.TryGetPlatformHandle()?.Handle == IntPtr.Zero)
+                    throw new InvalidOperationException("The workspace native window was not created.");
+                var workspace = form.Workspace;
+                workspace.Measure(new Avalonia.Size(1180, 800));
+                workspace.Arrange(new Avalonia.Rect(0, 0, 1180, 800));
+                using var bitmap = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize(1180, 800));
+                bitmap.Render(workspace);
+                form.Dispose();
+                Console.WriteLine("Workspace startup validation passed (configuration, native window, UI resources, rendering and disposal).");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex);
+                Environment.ExitCode = 1;
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+            }
+        }
+
+        private sealed class ValidationPortraitProvider : IWorkspacePortraitProvider
+        {
+            public System.Threading.Tasks.Task<byte[]> GetCharacterPortraitAsync(long characterId) =>
+                System.Threading.Tasks.Task.FromResult<byte[]>(null);
         }
 
         private static void SetupLogger(params string[] args)
@@ -88,16 +162,21 @@ namespace EveOPreview
             var isVerbose = args.Contains("--verbose") || args.Contains("-v");
             var minimumLevel = isVerbose ? LogEventLevel.Verbose : LogEventLevel.Information;
 
-            Log.Logger = new LoggerConfiguration()
+            var fileLogger = new LoggerConfiguration()
                 .MinimumLevel.Is(minimumLevel)
-                .Enrich.FromLogContext()
                 .WriteTo.File("logs/EVE-O Preview Log-.txt",
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 7,
                     fileSizeLimitBytes: 10 * 1024 * 1024,
                     rollOnFileSizeLimit: true,
                     restrictedToMinimumLevel: minimumLevel,
-                    outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] {Properties:j} {Message:lj}{NewLine}{Exception}")
+                    outputTemplate: "{Timestamp:HH:mm:ss.fff} [{Level:u3}] {Properties:j} {Message:lj}{NewLine}{Exception}")
+                .CreateLogger();
+
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Is(minimumLevel)
+                .Enrich.FromLogContext()
+                .WriteTo.Sink(new EveOPreview.Helper.AsyncLogSink(fileLogger))
                 .CreateLogger();
 
             Log.Logger.Information("Logger initialized. Application arguments: {Arguments}", string.Join(", ", args ?? Array.Empty<string>()));
@@ -127,22 +206,19 @@ namespace EveOPreview
             }
         }
 
-        private static void InitializeWinForms()
-        {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-        }
-
-        private static IApplicationController InitializeApplicationController()
+        // Keep the production registrations available for isolated startup checks without
+        // installing global hooks or selecting the user's profile directory.
+        internal static ContainerBuilder CreateApplicationContainerBuilder(ILogger logger, IGlobalPointerInput inputEvents, IClassicDesktopStyleApplicationLifetime context)
         {
             var builder = new ContainerBuilder();
             var assembly = typeof(Program).Assembly;
             
-            builder.RegisterInstance(Log.Logger).AsImplementedInterfaces().SingleInstance();
-            builder.RegisterInstance(Hook.GlobalEvents()).AsImplementedInterfaces().SingleInstance();
+            builder.RegisterInstance(logger).AsImplementedInterfaces().SingleInstance();
+            builder.RegisterInstance(inputEvents).AsImplementedInterfaces().SingleInstance();
 
             // Singleton registration is used for services
             // Low-level services
+            builder.RegisterType<WindowsHotkeyService>().As<IHotkeyService>().SingleInstance();
             builder.RegisterType<WindowManager>().As<IWindowManager>().SingleInstance();
             builder.RegisterType<HookService>().As<IHookService>().SingleInstance();
             builder.RegisterType<ProcessMonitor>().As<IProcessMonitor>().SingleInstance();
@@ -168,6 +244,14 @@ namespace EveOPreview
             builder.RegisterType<AppConfig>().As<IAppConfig>().SingleInstance();
             builder.RegisterType<ThumbnailConfiguration>().As<IThumbnailConfiguration>().SingleInstance();
             builder.RegisterType<GlobalEvents>().As<IGlobalEvents>().SingleInstance();
+            builder.RegisterType<ApplicationPreferences>().AsSelf().SingleInstance();
+            builder.RegisterType<CharacterPortraitCache>().AsSelf().As<IWorkspacePortraitProvider>().SingleInstance();
+            builder.RegisterType<EveClientUserIdReader>().AsSelf().SingleInstance();
+            builder.RegisterType<CharacterIdentityCache>().AsSelf().As<IWorkspaceCharacterProvider>().SingleInstance();
+            builder.RegisterType<EveOPreview.Services.Logs.CharacterSystemCache>().SingleInstance();
+            builder.RegisterType<EveOPreview.Services.StaticData.StaticDataService>().AsSelf().As<IWorkspaceStaticData>().SingleInstance();
+            builder.RegisterType<EveOPreview.Services.Logs.CombatLogService>().AsSelf().As<IWorkspaceCombatLogs>().SingleInstance();
+            builder.RegisterType<WindowsWorkspacePreviewCapture>().As<IWorkspacePreviewCapture>().SingleInstance();
 
 
             // Application services
@@ -178,17 +262,14 @@ namespace EveOPreview
             // Views
             builder.RegisterType<StaticThumbnailView>().AsSelf().InstancePerDependency();
             builder.RegisterType<LiveThumbnailView>().AsSelf().InstancePerDependency();
-            builder.RegisterType<MainForm>().As<IMainFormView>().InstancePerDependency();
+            builder.RegisterType<WorkspaceWindow>().AsSelf().As<IMainFormView>().SingleInstance();
             
             // Main presenter and controller
-            builder.RegisterInstance(new ApplicationContext()).AsSelf().SingleInstance();
+            builder.RegisterInstance(context).As<IClassicDesktopStyleApplicationLifetime>().SingleInstance();
             builder.RegisterType<MainFormPresenter>().AsSelf().SingleInstance();
             builder.RegisterType<ApplicationController>().As<IApplicationController>().SingleInstance();
 
-            var container = builder.Build();
-
-            var controller = container.Resolve<IApplicationController>();
-            return controller;
+            return builder;
         }
     }
 }

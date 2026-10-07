@@ -23,7 +23,113 @@ namespace EveOPreview.Tests.Checks;
 
 public sealed class ProfileWorkflowTests
 {
-    private static readonly Assembly App = typeof(MainForm).Assembly;
+    private static readonly Assembly App = typeof(ThumbnailView).Assembly;
+
+    [Fact]
+    public async Task HotkeyMethodAndTriggerSwitchSaveAndCloneWithEachProfile()
+    {
+        using var fixture = new Fixture();
+        var native = fixture.WriteProfile("Native", """{"ConfigVersion":3,"UseWindowsHotkeys":true,"GlobalHotkeysOnRelease":true}""");
+        var global = fixture.WriteProfile("Global", """{"ConfigVersion":3}""");
+        await fixture.Switch(native);
+        Assert.True(fixture.Config.UseWindowsHotkeys);
+        Assert.True(fixture.Config.GlobalHotkeysOnRelease);
+        await fixture.Switch(global);
+        Assert.False(fixture.Config.UseWindowsHotkeys);
+        Assert.False(fixture.Config.GlobalHotkeysOnRelease);
+        fixture.Config.GlobalHotkeysOnRelease = true;
+        fixture.Storage.Save();
+        var saved = JObject.Parse(File.ReadAllText(global.FullPath));
+        Assert.False((bool)saved["UseWindowsHotkeys"]);
+        Assert.True((bool)saved["GlobalHotkeysOnRelease"]);
+        await fixture.Switch(native);
+        Assert.True(fixture.Config.UseWindowsHotkeys);
+        await fixture.Switch(global);
+        Assert.False(fixture.Config.UseWindowsHotkeys);
+        Assert.True(fixture.Config.GlobalHotkeysOnRelease);
+        fixture.Profiles.CloneCurrentProfile();
+        var clone = fixture.Profiles.ProfileLocations.Single(p => p.FriendlyName == "Global (2)");
+        await fixture.Switch(clone);
+        Assert.False(fixture.Config.UseWindowsHotkeys);
+        Assert.True(fixture.Config.GlobalHotkeysOnRelease);
+        fixture.Config.GlobalHotkeysOnRelease = false;
+        fixture.Storage.Save();
+        await fixture.Switch(global);
+        Assert.True(fixture.Config.GlobalHotkeysOnRelease);
+    }
+
+    [Fact]
+    public async Task OldGlobalHotkeyChoicesSeedOnlyMissingProfileFields()
+    {
+        using var fixture = new Fixture("""{"UseWindowsHotkeys":true,"GlobalHotkeysOnRelease":true}""");
+        var old = fixture.WriteProfile("Old", """{"ConfigVersion":3}""");
+        var explicitGlobal = fixture.WriteProfile("Explicit", """{"ConfigVersion":3,"UseWindowsHotkeys":false,"GlobalHotkeysOnRelease":false}""");
+        await fixture.Switch(old);
+        Assert.True(fixture.Config.UseWindowsHotkeys);
+        Assert.True(fixture.Config.GlobalHotkeysOnRelease);
+        fixture.Storage.Save();
+        var migrated = JObject.Parse(File.ReadAllText(old.FullPath));
+        Assert.True((bool)migrated["UseWindowsHotkeys"]);
+        Assert.True((bool)migrated["GlobalHotkeysOnRelease"]);
+        await fixture.Switch(explicitGlobal);
+        Assert.False(fixture.Config.UseWindowsHotkeys);
+        Assert.False(fixture.Config.GlobalHotkeysOnRelease);
+        fixture.Storage.Save();
+        await fixture.Switch(old);
+        Assert.True(fixture.Config.UseWindowsHotkeys);
+        await fixture.Switch(explicitGlobal);
+        Assert.False(fixture.Config.UseWindowsHotkeys);
+        Assert.False(fixture.Config.GlobalHotkeysOnRelease);
+    }
+
+    [Fact]
+    public async Task CycleSkipsArePerProfileAndSessionOnlyWhileMarkerSettingsAreSaved()
+    {
+        using var fixture = new Fixture();
+        var first = fixture.WriteProfile("Combat", """{"ConfigVersion":3}""");
+        var second = fixture.WriteProfile("Other", """{"ConfigVersion":3}""");
+        await fixture.Switch(first);
+        fixture.Config.SetClientCycleSkipped("EVE - Alice", true);
+        fixture.Config.CycleSkipIndicatorStyle = "Pause";
+        fixture.Config.CycleSkipIndicatorColor = System.Drawing.Color.Cyan;
+        fixture.Storage.Save();
+        var saved = JObject.Parse(File.ReadAllText(first.FullPath));
+        Assert.Equal("Pause", (string)saved["CycleSkipIndicatorStyle"]);
+        Assert.DoesNotContain("EVE - Alice", saved.ToString());
+        await fixture.Switch(second);
+        Assert.False(fixture.Config.IsClientCycleSkipped("EVE - Alice"));
+        Assert.Equal("Circle with slash", fixture.Config.CycleSkipIndicatorStyle);
+        Assert.Equal(System.Drawing.Color.Red.ToArgb(), fixture.Config.CycleSkipIndicatorColor.ToArgb());
+        await fixture.Switch(first);
+        Assert.True(fixture.Config.IsClientCycleSkipped("EVE - Alice"));
+        Assert.Equal("Pause", fixture.Config.CycleSkipIndicatorStyle);
+        var reloaded = Newtonsoft.Json.JsonConvert.DeserializeObject(File.ReadAllText(first.FullPath), fixture.Config.GetType()) as IThumbnailConfiguration;
+        Assert.False(reloaded.IsClientCycleSkipped("EVE - Alice"));
+    }
+
+    [Fact]
+    public async Task ProfileAccentRoundTripsInTheExistingProfileFileAndResetsBetweenProfiles()
+    {
+        using var fixture = new Fixture();
+        var colored = fixture.WriteProfile("Colored", """{"ConfigVersion":3,"UiAccentColor":"#6D9FFF","MinimizeToTray":true}""");
+        var original = fixture.WriteProfile("Original", """{"ConfigVersion":3}""");
+        var invalid = fixture.WriteProfile("Invalid color", """{"ConfigVersion":3,"UiAccentColor":"#GGGGGG"}""");
+
+        await fixture.Switch(colored);
+        Assert.Equal("#6D9FFF", fixture.Config.UiAccentColor);
+        fixture.Config.UiAccentColor = "#AABBCC";
+        fixture.Storage.Save();
+        var saved = JObject.Parse(File.ReadAllText(colored.FullPath));
+        Assert.Equal("#AABBCC", (string)saved["UiAccentColor"]);
+        Assert.True((bool)saved["MinimizeToTray"]);
+
+        await fixture.Switch(original);
+        Assert.Equal("", fixture.Config.UiAccentColor);
+        await fixture.Switch(invalid);
+        Assert.Equal("", fixture.Config.UiAccentColor);
+        await fixture.Switch(colored);
+        Assert.Equal("#AABBCC", fixture.Config.UiAccentColor);
+    }
 
     [Fact]
     public async Task SwitchingProfilesResetsOmittedFieldsAndRejectsPartialLoads()
@@ -45,7 +151,7 @@ public sealed class ProfileWorkflowTests
         Assert.Equal(3, fixture.Config.TitleFontSettings.OutlineWidth);
         Assert.True(fixture.Config.IsThumbnailDisabled("EVE - A"));
         await fixture.Switch(second);
-        Assert.False(fixture.Config.MinimizeToTray);
+        Assert.True(fixture.Config.MinimizeToTray);
         Assert.False(fixture.Config.ShowThumbnailFrames);
         Assert.False(fixture.Config.IsThumbnailDisabled("EVE - A"));
         Assert.False(fixture.Config.FpsLimiterSettings.IsEnabled);
@@ -56,10 +162,15 @@ public sealed class ProfileWorkflowTests
         var broken = fixture.WriteProfile("Broken", """{"MinimizeToTray":true,"ThumbnailSize":"invalid"}""");
         await fixture.Switch(broken);
         Assert.Same(second, fixture.Storage.CurrentProfile);
+        Assert.True(fixture.Config.MinimizeToTray);
+        fixture.Storage.Save();
+        Assert.True((bool)JObject.Parse(File.ReadAllText(second.FullPath))["MinimizeToTray"]);
+        Assert.Contains("invalid", File.ReadAllText(broken.FullPath));
+        var explicitOff = fixture.WriteProfile("Tray disabled", """{"MinimizeToTray":false}""");
+        await fixture.Switch(explicitOff);
         Assert.False(fixture.Config.MinimizeToTray);
         fixture.Storage.Save();
-        Assert.False((bool)JObject.Parse(File.ReadAllText(second.FullPath))["MinimizeToTray"]);
-        Assert.Contains("invalid", File.ReadAllText(broken.FullPath));
+        Assert.False((bool)JObject.Parse(File.ReadAllText(explicitOff.FullPath))["MinimizeToTray"]);
         await fixture.Switch(fixture.Profiles.GetDefaultProfileLocation());
         Assert.Equal(144, fixture.Config.FpsLimiterSettings.FpsFocused);
     }
@@ -123,9 +234,12 @@ public sealed class ProfileWorkflowTests
         private readonly Serilog.Core.Logger _logger = new LoggerConfiguration().CreateLogger();
         private readonly ChangeSelectedProfileHandler _switch;
 
-        public Fixture()
+        public Fixture(string legacyPreferences = "{}")
         {
             WriteProfile("Existing", "{}");
+            string preferencesPath = Path.Combine(Root, "global-settings.json");
+            File.WriteAllText(preferencesPath, legacyPreferences);
+            var preferences = new ApplicationPreferences(preferencesPath, _logger);
             var refresh = (IRequestHandler<RefreshHotkeys>)Activator.CreateInstance(App.GetType("EveOPreview.Mediator.Handlers.Configuration.RefreshHotkeysHandler"), Config, _logger, Stub.Create<IGlobalEvents>());
             var mediator = Stub.Create<IMediator>((method, args) =>
             {
@@ -135,7 +249,7 @@ public sealed class ProfileWorkflowTests
                 return Stub.Default(method.ReturnType);
             });
             Profiles = (ProfileManager)Activator.CreateInstance(typeof(ProfileManager), BindingFlags.Instance | BindingFlags.NonPublic, null, new object[] { _logger, mediator, Root }, null);
-            Storage = (IConfigurationStorage)Activator.CreateInstance(App.GetType("EveOPreview.Configuration.Implementation.ConfigurationStorage"), Stub.Create<IAppConfig>(), Config, mediator, Profiles, _logger, Stub.Create<IGlobalEvents>());
+            Storage = (IConfigurationStorage)Activator.CreateInstance(App.GetType("EveOPreview.Configuration.Implementation.ConfigurationStorage"), Stub.Create<IAppConfig>(), Config, mediator, Profiles, _logger, Stub.Create<IGlobalEvents>(), preferences);
             _switch = new ChangeSelectedProfileHandler(Storage, mediator, _logger);
         }
 

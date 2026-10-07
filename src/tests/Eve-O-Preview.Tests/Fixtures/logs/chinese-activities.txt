@@ -1,0 +1,11 @@
+﻿------------------------------------------------------------
+  游戏记录
+  收听者: Sample Observer
+  进程开始: 2026.01.01 00:00:00
+------------------------------------------------------------
+[ 2026.01.01 00:00:00 ] (combat) <localized hint="Punishing Phase-III Legionary">三阶士兵 惩罚者*完全没有打中你
+[ 2026.01.01 00:00:12 ] (combat) <color=0xffcc0000><b>23</b> <color=0x77ffffff><font size=10>来自</font> <b><color=0xffffffff><localized hint="Punishing Phase-III Legionary">三阶士兵 惩罚者*</b><font size=10><color=0x77ffffff> - 轻轻擦过
+[ 2026.01.01 00:00:16 ] (combat) <color=0xff00ffff><b>2</b> <color=0x77ffffff><font size=10>对</font> <b><color=0xffffffff><localized hint="Obstructing Phase-I Swarmer">一阶蜂群 阻碍者*</b><font size=10><color=0x77ffffff> - <localized hint="Civilian Gatling Railgun">民用加特林磁轨炮*</localized> - 穿透
+[ 2026.01.01 00:00:19 ] (combat) 你的<localized hint="Civilian Gatling Railgun">民用加特林磁轨炮*完全没有打中<localized hint="Obstructing Phase-I Swarmer">一阶蜂群 阻碍者* - <localized hint="Civilian Gatling Railgun">民用加特林磁轨炮*</localized>
+[ 2026.01.01 00:03:38 ] (mining) <color=0x77ffffff>你挖掘到<font size=12><color=#ff8dc169>1<color=0x77ffffff><font size=10>单位的<color=0xffffffff><font size=12><localized hint="Bezdnacine">贝兹岩*
+[ 2026.01.01 00:11:31 ] (notify) 由于附近的<localized hint="Caldari Research Station">空间站（加达里2）*的影响，你的隐形状态已解除。

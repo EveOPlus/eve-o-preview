@@ -20,5 +20,6 @@ namespace EveOPreview.Mediator.Messages
 {
     sealed class StopService : IRequest
     {
+        public bool IsSessionEnding { get; init; }
     }
 }

@@ -1,8 +1,14 @@
 # EVE-O Preview: source and AI navigation guide
 
-EVE-O Preview manages multiple EVE client windows: live or captured previews, rapid focus changes and cycling, layouts, FPS limits, CPU affinity, and selective audio muting. This guide is a reusable context entry point for understanding and changing the implementation.
+EVE-O Preview manages multiple EVE client windows: live or captured previews, rapid focus changes and cycling, layouts, FPS limits, CPU affinity, and selective audio muting. The settings workspace is an Avalonia UI with Light, Dark and Legacy themes, hosted by the existing Windows application. This guide is a reusable context entry point for understanding and changing the implementation.
 
-Reviewed against commit `60944b521e3c5b442dd379b5208c53a91ae3a573` on 2026-09-06. The review covers the tracked application, injected library, tests, mock, project metadata, and release tooling. [The source index](docs/ai/source-index.md) records the complete baseline inventory and the treatment of resources and binary assets. This is a source-based navigation guide, not a claim that all native behavior has been exercised or benchmarked.
+For Augments setup, themes, simulation, damage icons and history, see the [Thumbnail augments README](docs/augments/README.md).
+
+**Theme maintenance policy:** Legacy is locked to its existing feature set for legacy use only. Do not add new features, pages or controls to Legacy. Continue fixing bugs, maintaining compatibility and updating its existing features without removing them or disrupting the familiar layout. All new feature work targets modern themes, currently Light and Dark, and users are expected to migrate to a modern theme. Theme selection must briefly tell users that Legacy may lack newer features; this notice should not interrupt switching themes.
+
+**Theme migration:** New and older/unversioned global settings open in Dark, even if an older file selected Legacy. Users may manually select Legacy again; preserve that choice on later launches and profile switches. `ApplicationPreferences` versions the existing global settings file independently of gameplay profiles, retaining unrelated preferences and the established portable/installed storage policy.
+
+This guide covers the application, injected library, tests, mock, project metadata and release tooling. [The source index](docs/ai/source-index.md) groups source paths and resources by subsystem. The guides describe the current implementation and its validation boundaries; they do not establish that all native behavior has been exercised or benchmarked.
 
 ## Use this with an AI assistant
 
@@ -12,13 +18,17 @@ The short `AGENTS.md` files provide discovery and local constraints, while the p
 
 | Guide | What it explains |
 | --- | --- |
-| [Reported bugs and investigation leads](docs/ai/reported-bugs.md) | Twelve tracked findings with evidence, current-version limits, workarounds, source routes and reproduction checks |
-| [Future feature backlog](docs/ai/feature-backlog.md) | Nineteen unimplemented, partial or exploratory ideas with current-code checks and acceptance criteria |
+| [Reported bugs and investigation leads](docs/ai/reported-bugs.md) | Tracked fixed/partial defects, completed checklist, evidence and remaining validation |
+| [Future feature backlog](docs/ai/feature-backlog.md) | Twenty unimplemented, partial or exploratory ideas with current-code checks and acceptance criteria |
 | [Application and configuration](docs/ai/application-and-configuration.md) | Startup/shutdown, Autofac, presenter/UI contracts, every mediator route, shared settings, profiles and migrations |
+| [UI review and preservation map](docs/ai/ui-review.md) | Source UI/UX audit, legacy control parity, theme and profile identity requirements, future DPS/ESI boundaries |
 | [Windows and thumbnails](docs/ai/windows-and-thumbnails.md) | Discovery, DWM/static rendering, overlays, MRU z-order, focus, hotkeys, prediction, CPU affinity, ownership |
+| [Preview rendering](docs/ai/preview-rendering.md) | Portable presentation/graphics contracts, Windows DWM and native composition, compatibility fallback and validation |
+| [Augments: combat logs, alpha, DPS and location](docs/ai/combat-logs.md) | Event-driven shared file reads, automatic/manual folder selection, parsed storage, classification, thumbnail styling and simulation |
+| [Log language and event parsing](docs/ai/log-languages.md) | Automatic/manual log language, overview markup, multilingual combat/travel/decloak/mining/bounty events and SDE names |
 | [Robin and native integration](docs/ai/robin.md) | Injection lifecycle, pipe bytes, DXGI vtable hooks, frame pacing, audio interception, sidecar diagnostics |
 | [Build and test](docs/ai/build-and-test.md) | Project differences, precise Windows commands, native publishing, test coverage and limitations, release side effects |
-| [Source index](docs/ai/source-index.md) | Every tracked baseline path, its role, and the guide to consult |
+| [Source index](docs/ai/source-index.md) | Source paths grouped by subsystem, their roles, and the guides to consult |
 
 There are also local instructions for the [main app](Eve-O-Preview/AGENTS.md), [Robin](Eve-O-Preview.Robin/AGENTS.md), and [tests](tests/AGENTS.md). Read the relevant local file when navigating from a higher directory; do not assume every tool automatically loads instructions in child directories.
 
@@ -26,7 +36,11 @@ There are also local instructions for the [main app](Eve-O-Preview/AGENTS.md), [
 
 ```mermaid
 flowchart TD
-    P[Program: STA startup and Autofac] --> M[MainFormPresenter / MainForm]
+    P[Program: Avalonia desktop lifetime and Autofac] --> M[MainFormPresenter / WorkspaceWindow]
+    M --> UI[Avalonia WorkspaceView]
+    UI --> B[IWorkspaceBackend / Windows adapter]
+    B --> M
+    B --> Q
     M --> Q[MediatR requests and notifications]
     Q --> C[ConfigurationStorage / ProfileManager]
     Q --> T[ThumbnailManager]
@@ -43,7 +57,7 @@ flowchart TD
     P --> S[DebuggerSidecar: host crash diagnostics]
 ```
 
-The main process owns desktop UI, persisted settings, discovery, and switching decisions. Robin runs inside each target process and affects its rendering/audio. A pipe reply proves communication, not that every native hook is healthy. The sidecar debugs the preview host, not the injected game processes.
+The main process owns desktop UI, persisted settings, discovery, and switching decisions. Avalonia owns desktop lifetime, settings, tray, dialogs, thumbnail windows and overlay hosts. [Eve-O-Preview.UI](Eve-O-Preview.UI/Eve-O-Preview.UI.csproj) targets plain `net10.0` and communicates through snapshots and commands without native handle types. Windows adapters preserve DWM images, DirectComposition graphics, nonactivation, global input and native integration. Linux support requires future capture/input/window adapters. Robin runs inside each target process and affects its rendering/audio. A pipe reply proves communication, not that every native hook is healthy. The sidecar debugs the preview host, not the injected game processes. See the [migration inventory and acceptance report](docs/ai/avalonia-migration.md) for current verification and remaining gates.
 
 ## Find a feature quickly
 
@@ -52,8 +66,10 @@ Paths below are relative to `src/`. Search the symbol as well as the filename: n
 | Symptom or task | Start here | Follow through |
 | --- | --- | --- |
 | Startup, second instance, tray exit | `Program.Main`, `GetInstanceToken` | `MainFormPresenter.Activate/Close`, `StartStopServiceHandler` |
-| Setting does not save or reload | `MainForm` callback, `MainFormPresenter.SaveApplicationSettings` | `ThumbnailConfiguration`, `ConfigurationStorage`, corresponding handler |
+| Workspace layout, themes, field labels | `Eve-O-Preview.UI`, `WorkspaceView`, `SettingCatalog` | `WorkspaceContract`, `ApplicationPreferences`, UI review |
+| Setting does not save or reload | `WindowsWorkspaceBackend`, `MainFormPresenter.SaveApplicationSettingsAsync` | `ThumbnailConfiguration`, `ConfigurationStorage`, corresponding handler |
 | Profile switching/migration | `ProfileManager`, `ConfigurationStorage.Load` | `ChangeSelectedProfileHandler`, `SelectedProfileChangedNotificationHandler`, `GlobalEvents` |
+| Individual sizes, selected group move/resize, one-step Undo, aspect lock, resize-all and menu order | `ThumbnailView`, `ThumbnailManager.Selection`, `ThumbnailManager.Undo`, `ThumbnailMenuActions` | Profile `PerClientThumbnailSizes` / `MaintainThumbnailAspectRatio`, [geometry and snapping](docs/ai/windows-and-thumbnails.md) |
 | Missing/duplicate client preview | `ProcessMonitor.GetUpdatedProcesses` | `ThumbnailManager.UpdateThumbnailsList`, `ThumbnailViewFactory` |
 | Stale, black, or flashing preview | `LiveThumbnailView.RefreshThumbnail`, `DwmThumbnail.Update` | `ThumbnailView.Refresh/ResizeThumbnail`, static compatibility path |
 | Overlapping previews reorder/flicker | `ThumbnailManager` MRU and dirty state | `ThumbnailView.RestoreAndBringToFront`, `ThumbnailZOrderTests` |
@@ -79,7 +95,7 @@ rg -n 'SaveApplicationSettings|ChangeSelectedProfile|JsonProperty' Eve-O-Preview
 | Mechanism | Why it matters | Detailed evidence |
 | --- | --- | --- |
 | Persistent DWM thumbnail registration | The compositor provides live content; a discovery tick is not a captured frame | [Rendering/lifetime](docs/ai/windows-and-thumbnails.md) |
-| Dirty MRU z-order and nonactivating native restore | Keeps overlapping previews ordered without repeatedly showing/recreating WinForms windows | [Z-order and focus](docs/ai/windows-and-thumbnails.md) |
+| Dirty MRU z-order and nonactivating native restore | Keeps overlapping previews ordered without repeatedly showing/recreating Avalonia windows | [Z-order and focus](docs/ai/windows-and-thumbnails.md) |
 | Predicted next-client preparation | Cycling couples CPU assignment and Robin FPS state to the next likely focus target | [Cycling](docs/ai/windows-and-thumbnails.md), [native focus](docs/ai/robin.md) |
 | Shared DXGI vtable patch and precise waiting | Hooks Present/Present1 in the target; frame pacing uses a high-resolution wait and final spin | [DXHook and PrecisionSleep](docs/ai/robin.md) |
 | Guard-page/audio breakpoint interception | Selectively stops event playback after the call returns, using fixed bounded lookup data and exact native context layout | [AudioMuteSystem](docs/ai/robin.md) |
@@ -140,4 +156,4 @@ Do not treat the guides' investigation notes as proven runtime bugs.
 
 Add explanations close to an unusual implementation when its reason would otherwise be lost; use the existing symbol and link it from the guide. Directory `AGENTS.md` files already provide local guidance without adding repetitive AI tags to every source file. Avoid duplicating the entire guide into multiple assistant-specific files.
 
-When changing code, update the relevant route, invariant, protocol table, or validation note in the same change. Refresh the source index when paths are added/moved. Preserve the distinction between intentional behavior, historical rationale, observed risks, and behavior proven by tests. Read the build guide before running release tooling; for this documentation review, no live game injection, crash sidecar, or release task is needed.
+When changing code, update the relevant route, invariant, protocol table, or validation scope in place in the same change. Refresh the source index when paths are added, moved or removed. Merge useful additions into the current explanation and remove superseded text; keep change history in Git. Preserve the distinction between intentional behavior, compatibility rationale, observed risks, and behavior proven by tests. Read the build guide before running release tooling; documentation-only edits need link, source-reference and whitespace checks, not live game injection, a crash sidecar, or release tasks.

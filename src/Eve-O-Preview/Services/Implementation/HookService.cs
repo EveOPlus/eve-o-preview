@@ -133,7 +133,7 @@ public class HookService : IHookService
 
     public async Task TryInstallHooksAsync(IProcessInfo process)
     {
-        if (_stopping || process == null || process.MainWindowHandle == IntPtr.Zero) return;
+        if (_stopping || process == null || !process.IsEveClient || process.MainWindowHandle == IntPtr.Zero) return;
         var key = (process.ProcessId, process.MainWindowHandle);
         var installation = _installations.GetOrAdd(key, _ => new Lazy<Task>(() => InstallAndConfigureAsync(process)));
         try { await installation.Value.ConfigureAwait(false); }
@@ -175,9 +175,10 @@ public class HookService : IHookService
     private void Inject(IProcessInfo info)
     {
         using var process = Process.GetProcessById(info.ProcessId);
-        if (process.HasExited || process.MainWindowHandle != info.MainWindowHandle)
+        if (!process.ProcessName.Equals("ExeFile", StringComparison.OrdinalIgnoreCase) || process.HasExited || process.MainWindowHandle != info.MainWindowHandle)
             throw new InvalidOperationException("The target client changed before injection.");
-        string source = Path.Combine(AppContext.BaseDirectory, "Eve-O-Preview.Robin.dll");
+        // Match ProfileManager: single-file extraction can redirect AppContext.BaseDirectory into Temp.
+        string source = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), "Eve-O-Preview.Robin.dll");
         if (!File.Exists(source)) throw new FileNotFoundException("Publish the native Robin DLL beside the host executable.", source);
         // Loaded modules outlive the host. Load a versioned copy so installation files remain replaceable.
         string hash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(source)));
@@ -295,7 +296,7 @@ public class HookService : IHookService
     {
         _stopping = true;
         await Task.WhenAll(_installations.Values.Where(t => t.IsValueCreated).Select(t => t.Value)).ConfigureAwait(false);
-        await Task.WhenAll(processes.Select(async p =>
+        await Task.WhenAll(processes.Where(p => p.IsEveClient).Select(async p =>
         {
             await DisableFpsLimiterAsync(p.MainWindowHandle).ConfigureAwait(false);
             await SendAsync(p.MainWindowHandle, w => { w.Write((byte)0xA2); w.Write((byte)0xC1); }).ConfigureAwait(false);

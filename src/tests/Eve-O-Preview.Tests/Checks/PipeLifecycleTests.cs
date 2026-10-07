@@ -18,7 +18,7 @@ public sealed class PipeLifecycleTests
     [Fact]
     public async Task ReadyPipeReceivesFocusAndPredictionBeforeTheCallerReturns()
     {
-        var config = (IThumbnailConfiguration)Activator.CreateInstance(typeof(MainForm).Assembly.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
+        var config = (IThumbnailConfiguration)Activator.CreateInstance(typeof(ThumbnailView).Assembly.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
         config.FpsLimiterSettings.IsEnabled = true;
         using var logger = new LoggerConfiguration().CreateLogger();
         var hooks = new HookService(config, logger);
@@ -50,7 +50,7 @@ public sealed class PipeLifecycleTests
     [Fact]
     public async Task DisabledSettingsSendZeroTargetsAndShutdownClearsAudio()
     {
-        var config = (IThumbnailConfiguration)Activator.CreateInstance(typeof(MainForm).Assembly.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
+        var config = (IThumbnailConfiguration)Activator.CreateInstance(typeof(ThumbnailView).Assembly.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
         using var logger = new LoggerConfiguration().CreateLogger();
         var hooks = new HookService(config, logger);
         var handle = new IntPtr(-Random.Shared.NextInt64(1, long.MaxValue));
@@ -70,7 +70,7 @@ public sealed class PipeLifecycleTests
         var receive = Receive(zeroTargets);
         Assert.True(await hooks.UpdateTargetFpsAsync(handle));
         await receive;
-        var process = Stub.Create<IProcessInfo>((method, args) => method.Name == "get_MainWindowHandle" ? handle : Stub.Default(method.ReturnType));
+        var process = new TestProcessInfo(42, "EVE - Pipe fixture") { MainWindowHandle = handle };
         var shutdown = hooks.StopAsync(new[] { process });
         await Receive(zeroTargets);
         await Receive(new byte[] { 0xA2, 0xC1 });
@@ -81,7 +81,7 @@ public sealed class PipeLifecycleTests
     [Fact]
     public async Task ConnectedPeerWithoutReplyCannotHoldSettingsOrVersionQueriesOpen()
     {
-        var config = (IThumbnailConfiguration)Activator.CreateInstance(typeof(MainForm).Assembly.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
+        var config = (IThumbnailConfiguration)Activator.CreateInstance(typeof(ThumbnailView).Assembly.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
         using var logger = new LoggerConfiguration().CreateLogger();
         var hooks = new HookService(config, logger);
         var handle = new IntPtr(-Random.Shared.NextInt64(1, long.MaxValue));

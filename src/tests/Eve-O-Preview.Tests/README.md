@@ -10,7 +10,7 @@ worker output in the test results, so there is no console window to copy from.
 From `src`:
 
 ```powershell
-dotnet test tests/Eve-O-Preview.Tests/Eve-O-Preview.Tests.csproj
+dotnet test tests/Eve-O-Preview.Tests/Eve-O-Preview.Tests.csproj -- xUnit.ParallelizeTestCollections=false
 ```
 
 To run just the hidden-thumbnail recovery case:
@@ -21,11 +21,65 @@ dotnet test tests/Eve-O-Preview.Tests/Eve-O-Preview.Tests.csproj --filter "Displ
 
 The project uses xUnit v3 and the Visual Studio test adapter. It covers the following behaviors:
 
+- Augments checks cover complete shared log reads, duplicate delivery, rollover,
+  storage migration/restart, activity counters, simulation isolation, static-data
+  import/cancellation, compatibility with older preferences, damage filtering,
+  Blink/Fade strength, nine title/DPS positions and stable row ordering. Native
+  renderer checks assert that fade-only changes do not upload glyph surfaces.
+  Platform SVG checks render all 32 fixed weapon icons at 12, 16 and 24 pixels,
+  verifying embedded geometry and distinct monochrome images.
+  `StaticDataTests.Platforms` covers representative real offline catalog items,
+  transactional upgrades of old installed indexes (including forced rollback),
+  enum/custom-style compatibility, metadata-only enrichment and modeled cadence.
+  `AugmentLayoutTests` also verifies fade opacity endpoints and persistence.
+  `CombatDpsAverageTests` covers valid-middle sampling, slow volleys, idle gaps,
+  weighted lifetime averages, independent directions/categories, pending tails,
+  delayed files, duplicate delivery, transactional rollback, scoped reset,
+  migration, retention/restart, source retraction and simulation isolation.
+  `CombatCharacterResetTests` checks character-only and all-character resets across
+  counter scopes, replay, restart and simulation. `CombatLogFixtureTests` replays
+  the bundled anonymized autocannon, repair and artillery samples without network
+  access or personal files. These are normal Test Explorer/Run All cases; the
+  existing runner structure is unchanged. Live-client diagnostics remain separate
+  integration tools.
+
 - Three legacy-profile cases cover missing, malformed and expired keys,
   preserved feature settings, and removal of obsolete licensing fields on save.
 - Two FPS cases verify that enabling and disabling respect the user's setting.
+- Hotkey checks cover allocation-free unmatched key matching, held modifiers,
+  repeat/release behavior, immediate bounded UI dispatch, profile preference
+  persistence, native registration conflicts, full profile/mode replacement,
+  and capture success/cancellation/timeout/disposal. Settings checks cover profile
+  method/trigger persistence, switching, cloning, migration from earlier global
+  choices, awaited commits, immediate rebinding, session-only diagnostic passthrough,
+  and disabling it when selecting Windows hotkeys. Thumbnail mouse checks in
+  both input modes cover clicks and modifiers, overlay/title routes, hover zoom,
+  menu commands, move/resize subscriptions and cleanup, including mode changes
+  and hotkey capture during movement. Real input and focus timing remain in the
+  opt-in [live rendering harness](../Preview.RenderingSmoke/README.md#live-hotkey-input-latency).
+- Thumbnail group checks cover Shift+right-click selection, yellow highlighting,
+  compact group menus, relative movement, bounded proportional resizing, per-client
+  aspect/default resets, uniform-only Skip/Resume and lifecycle cleanup in Light
+  and Dark. Native popup messages reproduce selection through a menu covering the
+  adjacent preview, repeated selection and early Shift release. These private-desktop
+  cases do not replace live pointer or mixed-DPI monitor validation.
+- Thumbnail Undo checks in Light and Dark cover menu commands and native geometry
+  notifications, single/group edits, aspect/default resets, Skip/Resume, resize-all
+  including offline overrides, no-op retention, one-step replacement, hover baselines,
+  original client-layout restoration and profile/removal invalidation. They use
+  private desktops and do not establish live EVE input behavior.
+- Hotkey localization checks cover all 18 catalogs, hidden diagnostic text,
+  capture/status messages and registration error format arguments. Backend checks
+  verify that registration errors follow the current language while preserving
+  raw shortcut names and Legacy's English display.
 - One resource check verifies that no licensing key is embedded.
 - One UI case checks FPS, audio and CPU-affinity control availability.
+- CPU placement cases cover physical-core/SMT grouping, Intel hybrid and homogeneous
+  layouts, three capacity classes, cache/NUMA locality, processor groups, original
+  restrictions, persistent predictions, cached updates and native failure recovery.
+  The isolated settings worker verifies Windows CPU-set assignment/restoration,
+  unchanged hard affinity, terminal shutdown and ordinary Alt+Tab routing. These
+  checks do not establish live EVE frame-rate gains or optimal per-CPU budgets.
 - Custom audio cases cover ID parsing, deduplication, profile persistence,
   validation and automatic saving in the UI, and sending/clearing custom IDs
   alongside presets through a simulated audio pipe. UI renders are saved as
@@ -34,7 +88,7 @@ The project uses xUnit v3 and the Visual Studio test adapter. It covers the foll
   recovery after external hiding/demotion or minimizing, Hide All, individual
   and active-client hiding, focus-loss hiding, and the Always on top setting.
   Immediate-activation cases verify that reordering precedes client activation
-  and image capture, applies the border before activation without a UI continuation, preserves focus,
+  and image capture, submits the border immediately after the native focus request without a UI continuation, preserves focus,
   and respects hiding settings without waiting for a refresh tick.
 
 Live-thumbnail cases also exercise the production live view with a simulated
@@ -43,8 +97,10 @@ image, while failed updates replace it only after populating the replacement.
 
 The UI and thumbnail cases automatically launch an STA worker on a private
 Windows desktop that is never displayed. Each case gets fresh windows and state.
-The worker uses production forms and the thumbnail manager, with a stubbed image
-renderer. It does not launch EVE, install hooks, or alter the user's windows.
+The worker initializes the actual Avalonia platform and uses production windows and the thumbnail manager, with a stubbed image
+renderer. The dedicated hotkey workers install and remove keyboard hooks and
+Windows hotkey registrations on their private desktops; they do not inject
+desktop input. The workers do not launch EVE or alter the user's windows.
 Worker failures and timeouts fail their corresponding xUnit case.
 
 Focus checks explicitly activate the simulated client on the worker thread and
@@ -66,8 +122,67 @@ The defect-investigation additions exercise full profile load/edit/save/rename/c
 workflows, live settings propagation and current factory configuration, production
 hotkey subscriptions with pending affinity and immediate borders/focus, and process/GDI/affinity lifetime
 in isolated workers. Pipe tests cover both old/new audio protocols and response
-timeouts. The focused suite contains 50 cases after theory expansion.
+timeouts. The current complete suite and migration evidence are recorded in [the migration report](../../docs/ai/avalonia-migration.md).
+
+The workspace cases cover
+global preference persistence and portable/fallback locations, preservation of
+future global settings, theme validation, actual profile-file accent round trips,
+backend input validation, awaited saves before FPS/audio application, retry after
+a failed save, individual visibility while Hide All is active, and cycling edits
+that retain full titles and extra shortcuts. A private desktop case initializes
+the production Avalonia desktop host, changes themes and pages, and exercises
+hide/show and disposal without starting the presenter or native services. It
+also establishes a nonzero active simulated client before refreshing an
+inactive workspace, verifies native active/foreground handles remain unchanged,
+and checks that close can cancel or discard unapplied edits.
+
+Three visual cases capture the original MainForm tabs and control metrics,
+compare preview pixels against actual native title/highlight rendering, and
+capture the production Windows workspace. The title editor case types decimal
+font/outline sizes, blurs the fields, verifies staged font/color/offset/highlight
+edits in the displayed image and grouped Apply, and requires at least 200 pixels
+of editor viewport at the minimum modern window size while the preview remains
+pinned. The host case checks Legacy's 460 by 417 client size and restores the
+modern window size after switching themes.
+
+The PNG captures and original control metrics are written beside the test
+executable in `original-ui`, `title-preview`, and `native-ui`. Title pixel
+comparisons invoke the shared production scene rasterizer and compare with the
+original `OutlinedLabel` isolated under `LegacyReference`. The highlight reference uses production `ThumbnailView`
+insets with a solid image fixture. These checks do not capture a live EVE client.
+
+The separate [portable visual smoke executable](../Eve-O-Preview.UI.Smoke/README.md)
+renders the actual Avalonia controls in all three themes and checks navigation,
+search, draft retention, validation, profile accent cues and compact layouts.
+
+`WorkspaceCompositionTests` resolves the workspace from the production Autofac
+registrations with real configuration services and an isolated profile root on a
+private desktop. It does not start native services. In-process composition cannot
+establish which DLL a standalone build or single-file bundle will load: Cake also
+runs the host's `--validate-workspace` mode from a directory containing only the
+published executable, exercising UI resources and native rendering dependencies.
+
+`CharacterPortraitCacheTests` checks deduplicated downloads, character-ID filenames,
+reuse after restarting, weekly background refresh, and retention/backoff on failed
+or invalid image responses. Requests use a controlled HTTP handler and the shared
+test-only JPEG fixture. `WorkspaceHostTests` also opens and closes the donation
+details inside the real Windows/Avalonia host across all three themes.
+
+The `workspace-dpi` private-desktop case sends synthetic 100/125/150/200% DPI
+transitions through the production host and checks render scale, child bounds,
+focus/draft retention, actual-pixel sample sizing and Legacy/modern size restoration.
+It also moves its own window between available monitors and reports their DPI.
+Synthetic messages cannot change native caption/border metrics and do not replace
+manual testing on monitors with genuinely different scaling.
 
 Actual NativeAOT injection and DXGI/synthetic-audio checks are an optional separate
 [Robin.NativeSmoke](../Robin.NativeSmoke/README.md) run. They do not run implicitly
 from Test Explorer and have their own native toolchain/GPU prerequisites.
+
+Migration checks also exercise realtime snap/Shift/breakaway, synthetic DPI
+transitions, both actual image hosts, dependency removal and bounded pointer
+dispatch. Original Forms and their designers/resources remain only under
+`LegacyReference` for historical parity. Shipping dependencies are independently
+checked by `DesktopDependencyTests`. Private-desktop shutdown cases exercise both
+the workspace and Avalonia hidden dispatcher HWND; actual shutdown and physical
+mixed-DPI interaction remain separate acceptance gates.

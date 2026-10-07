@@ -17,12 +17,20 @@
 using EveOPreview.Configuration.Implementation;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Windows.Forms;
+using Keys = EveOPreview.Input.ShortcutKeys;
 
 namespace EveOPreview.Configuration
 {
     public interface IThumbnailConfiguration
     {
+        string UiAccentColor { get; set; }
+        bool UseWindowsHotkeys { get; set; }
+        bool GlobalHotkeysOnRelease { get; set; }
+
+        bool IsThumbnailIndividuallyDisabled(string currentClient);
+
+        IEnumerable<string> GetKnownClientTitles();
+
         int ConfigVersion { get; set; }
         List<CycleGroup> CycleGroups { get; set; }
 
@@ -45,6 +53,9 @@ namespace EveOPreview.Configuration
         int HideThumbnailsDelay { get; set; }
 
         Size ThumbnailSize { get; set; }
+        Dictionary<string, Size> PerClientThumbnailSizes { get; set; }
+        bool MaintainThumbnailAspectRatio { get; set; }
+        Size GetThumbnailSize(string title) => PerClientThumbnailSizes.TryGetValue(title, out var size) ? size : ThumbnailSize;
         Size ThumbnailMinimumSize { get; set; }
         Size ThumbnailMaximumSize { get; set; }
 
@@ -69,6 +80,8 @@ namespace EveOPreview.Configuration
 
         string ToggleHideActiveClientsHotkey { get; set; }
         string MinimizeAllClientsHotkey { get; set; }
+        string CycleLoginClientsHotkey { get; set; }
+        List<string> PreviewApplications { get; set; }
         Keys ToggleHideActiveClientsHotkeyParsed { get; set; }
         Keys MinimizeAllClientsHotkeyParsed { get; set; }
 
@@ -79,11 +92,19 @@ namespace EveOPreview.Configuration
         void SetClientLayout(string currentClient, ClientLayout layout);
         
         bool IsPriorityClient(string currentClient);
+        IEnumerable<string> GetPriorityClientTitles();
+        void SetPriorityClient(string title, bool priority);
 
         bool IsTemporarilyHidingAllThumbnails { get; set; }
         bool EnableAutomaticCpuAffinity { get; set; }
         bool IsThumbnailDisabled(string currentClient);
         void ToggleThumbnail(string currentClient, bool isDisabled);
+        event System.Action CycleSkipChanged;
+        bool IsClientCycleSkipped(string title);
+        void SetClientCycleSkipped(string title, bool skipped);
+        void SelectCycleSkipProfile(string profileId);
+        string CycleSkipIndicatorStyle { get; set; }
+        Color CycleSkipIndicatorColor { get; set; }
 
         void ApplyRestrictions();
     }

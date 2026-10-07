@@ -27,7 +27,7 @@ namespace Build.Tasks
 		{
 			context.Information("Convert README.MD");
 
-			context.MarkdownFileToPdf("readme.md", Configuration.BinFolder + "/readme.pdf", settings =>
+			context.MarkdownFileToPdf("readme.md", context.BinFolder + "/readme.pdf", settings =>
 			{
 				settings.Theme = Themes.Github;
 				settings.UseAdvancedMarkdownTables();

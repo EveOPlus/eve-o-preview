@@ -17,6 +17,7 @@
 using EveOPreview.View;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace EveOPreview.Services
 {
@@ -24,15 +25,33 @@ namespace EveOPreview.Services
     {
         void Start();
         void Stop();
+        // UI work stops before this returns. Confirmed session shutdown may finish
+        // native input cleanup asynchronously within the presenter's wait budget.
+        Task StopAsync(bool sessionEnding) { Stop(); return Task.CompletedTask; }
 
         void UpdateThumbnailsSize();
+        void BeginResizeAll(IntPtr id);
+        void ToggleThumbnailSelection(IntPtr id);
+        void ClearThumbnailSelection();
+        void RemoveThumbnailSelection(IntPtr id);
+        bool BeginSelectionTransform(IntPtr id, bool resize);
+        void EndSelectionTransform(IntPtr id);
+        bool CanUndoThumbnailEdit { get; }
+        void BeginThumbnailEdit(IntPtr id, ThumbnailEditKind kind, bool selected = false);
+        void CompleteThumbnailEdit(IntPtr id);
+        Task UndoThumbnailEdit();
+        void ApplyRuntimeSettings();
         void UpdateThumbnailFrames();
         void UpdateThumbnailTitleFont();
         void RegisterAllHotkeys();
+        string HotkeyRegistrationWarning { get; }
+        IReadOnlyList<FormattableString> HotkeyRegistrationWarnings => Array.Empty<FormattableString>();
 
         IThumbnailView GetClientByTitle(string title);
         IThumbnailView GetClientByPointer(System.IntPtr ptr);
         IThumbnailView GetActiveClient();
         Dictionary<IntPtr, IThumbnailView> GetAllKnownClients();
     }
+
+    public enum ThumbnailEditKind { Geometry, ResizeAll, CycleSkip }
 }

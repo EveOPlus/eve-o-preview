@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+  <title>Bomb platform</title>
+  <polygon points="5,1 11,1 12,4 4,4"/>
+  <polygon points="4,6 12,6 13,10 11,14 5,14 3,10"/>
+  <polygon points="6,15 10,15 10,16 6,16"/>
+</svg>

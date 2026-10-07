@@ -41,7 +41,7 @@ namespace EveOPreview.Mediator.Handlers.Configuration
 
         public async Task Handle(SetAudioSettings request, CancellationToken cancellationToken)
         {
-            var allKnownClients = _processMonitor.GetAllProcesses();
+            var allKnownClients = _processMonitor.GetAllProcesses().Where(p => p.IsEveClient).ToList();
             _logger.Verbose("SetAudioSettings: Updating audio settings for {ClientCount} clients", allKnownClients.Count);
 
             _logger.Verbose("Installing/updating hooks for audio control");

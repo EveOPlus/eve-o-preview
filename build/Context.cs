@@ -16,14 +16,29 @@
 
 using Cake.Core;
 using Cake.Frosting;
+using Cake.Common;
+using System;
+using System.IO;
 
 namespace Build
 {
 	public class Context : FrostingContext
 	{
+		public string OutputRoot { get; }
+		public string BinFolder => Path.Combine(OutputRoot, "bin");
+		public string PublishFolder => Path.Combine(OutputRoot, "publish");
+		public bool SkipSigning { get; }
+		public string BuildOutputFolder => Path.Combine(BinFolder, "intermediate");
+
 		public Context(ICakeContext context)
 			: base(context)
 		{
+			var repository = Path.GetFullPath(Environment.WorkingDirectory.FullPath);
+			OutputRoot = Path.GetFullPath(this.Argument("output-root", "."), repository);
+			if (!OutputRoot.Equals(repository, StringComparison.OrdinalIgnoreCase) &&
+				!OutputRoot.StartsWith(Path.TrimEndingDirectorySeparator(repository) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+				throw new ArgumentException("--output-root must be inside the repository.");
+			SkipSigning = this.Argument("skip-signing", false);
 		}
 	}
 }

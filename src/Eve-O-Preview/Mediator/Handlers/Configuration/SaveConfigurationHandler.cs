@@ -21,7 +21,6 @@ using EveOPreview.Mediator.Messages;
 using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using Serilog;
 
 namespace EveOPreview.Mediator.Handlers.Configuration

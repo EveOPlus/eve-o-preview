@@ -77,7 +77,7 @@ public sealed class FeatureAvailabilityTests(ITestOutputHelper output)
         config.FpsLimiterSettings.IsEnabled = isEnabled;
         using var logger = new LoggerConfiguration().CreateLogger();
         int enabled = 0, disabled = 0;
-        var processes = Stub.Create<IProcessMonitor>((method, args) => new List<IProcessInfo> { Stub.Create<IProcessInfo>() });
+        var processes = Stub.Create<IProcessMonitor>((method, args) => new List<IProcessInfo> { new TestProcessInfo(42, "EVE - Fixture") });
         var hooks = Stub.Create<IHookService>((method, args) =>
         {
             if (method.Name == "TryInstallHooksAsync") enabled++;

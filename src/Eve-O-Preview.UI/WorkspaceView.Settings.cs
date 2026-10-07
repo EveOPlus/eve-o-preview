@@ -1,0 +1,238 @@
+using System.Globalization;
+using Avalonia;
+using Avalonia.Automation;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Layout;
+using Avalonia.Media;
+
+namespace EveOPreview.UI;
+
+public sealed partial class WorkspaceView
+{
+    private void AddSettings(string page, Func<SettingDefinition, bool>? predicate = null)
+    {
+        var settings = SettingCatalog.All.Where(s => s.Page == page && (predicate?.Invoke(s) ?? true)).ToArray();
+        if (settings.Length == 0) return;
+        var rows = new StackPanel();
+        foreach (var definition in settings)
+        {
+            if (rows.Children.Count > 0) rows.Children.Add(new Border { Height = 1, Background = B(_theme.Border) });
+            rows.Children.Add(SettingRow(definition));
+        }
+        _page.Children.Add(Card(rows, new Thickness(16, 0)));
+    }
+
+    private SettingDefinition EffectiveDefinition(SettingDefinition definition)
+    {
+        if (definition.Key is not ("ThumbnailWidth" or "ThumbnailHeight")) return definition;
+        var axis = definition.Key == "ThumbnailWidth" ? "Width" : "Height";
+        var minimum = _drafts.GetValueOrDefault("ThumbnailMinimum" + axis, _snapshot.Settings.GetValueOrDefault("ThumbnailMinimum" + axis, ""));
+        var maximum = _drafts.GetValueOrDefault("ThumbnailMaximum" + axis, _snapshot.Settings.GetValueOrDefault("ThumbnailMaximum" + axis, ""));
+        return definition with
+        {
+            Minimum = double.TryParse(minimum, CultureInfo.InvariantCulture, out var min) ? min : definition.Minimum,
+            Maximum = double.TryParse(maximum, CultureInfo.InvariantCulture, out var max) ? max : definition.Maximum,
+        };
+    }
+
+    private Control SettingRow(SettingDefinition original)
+    {
+        var definition = EffectiveDefinition(original);
+        var value = _snapshot.Settings.GetValueOrDefault(definition.Key, "");
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions(_theme.Legacy ? "*" : "*,228"),
+            RowDefinitions = new RowDefinitions(_theme.Legacy ? "Auto,Auto" : "Auto"), Margin = new Thickness(0, 10) };
+        var label = new StackPanel { Spacing = 3, Margin = new Thickness(0, 0, 18, 0), VerticalAlignment = VerticalAlignment.Center };
+        var title = Text(definition.Label, 13, _theme.Text, true);
+        label.Children.Add(title);
+        label.Children.Add(Text(definition.Description, 11, _theme.Muted));
+        row.Children.Add(label);
+        Control editor;
+        if (definition.Kind == SettingKind.Toggle)
+        {
+            var toggle = new ToggleSwitch { Name = "setting-" + definition.Key, IsChecked = bool.TryParse(value, out var active) && active, OnContent = L("On"), OffContent = L("Off"), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center };
+            AutomationProperties.SetName(toggle, L(definition.Label));
+            toggle.IsCheckedChanged += async (_, _) => await Run(new("setting", definition.Key, (toggle.IsChecked == true).ToString()));
+            editor = toggle;
+        }
+        else if (definition.Key == "ThumbnailZoomAnchor") editor = AnchorEditor(value);
+        else
+        {
+            var stack = new StackPanel { Spacing = 7 };
+            var fieldValue = _drafts.GetValueOrDefault(definition.Key, value);
+            var error = Text("", 10, _theme.Danger);
+            AutomationProperties.SetLiveSetting(error, AutomationLiveSetting.Polite);
+            var controls = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
+            var apply = ActionButton("Apply", async () => await ApplySetting(definition), "apply-" + definition.Key, true);
+            apply.Margin = new Thickness(6, 0, 0, 0);
+            var reset = ActionButton("↶", () => { _drafts.Remove(definition.Key); RenderPage(true); }, "reset-" + definition.Key);
+            reset.Margin = new Thickness(4, 0, 0, 0);
+            AutomationProperties.SetName(reset, F($"Discard unapplied edit to {L(definition.Label)}"));
+            ToolTip.SetTip(reset, L("Discard edit"));
+            void Changed(string updated)
+            {
+                if (updated == value && !_failedSettings.Contains(definition.Key)) _drafts.Remove(definition.Key); else _drafts[definition.Key] = updated;
+                error.Text = SettingCatalog.Validate(definition, updated, L) ?? (_drafts.ContainsKey(definition.Key) ? L("Unapplied edit") : "");
+                error.Foreground = B(SettingCatalog.Validate(definition, updated, L) is null ? _theme.Muted : _theme.Danger);
+                apply.IsEnabled = _drafts.ContainsKey(definition.Key) && SettingCatalog.Validate(definition, updated, L) is null;
+                reset.IsVisible = _drafts.ContainsKey(definition.Key);
+                UpdateFooter();
+                if (definition.Page == "Overlay") UpdateFontPreview();
+            }
+            Control input;
+            if (definition.Kind == SettingKind.Choice)
+            {
+                string ChoiceLabel(string? option) => definition.Key switch
+                {
+                    "PreviewOverlayRenderer" => option == "Legacy" ? "Compatibility graphics" : "Enhanced graphics",
+                    "HotkeyInputMethod" => option == "Windows" ? "Windows hotkeys" : "Global input",
+                    "GlobalHotkeyTrigger" => option == "KeyUp" ? "Key up" : "Key down",
+                    _ => option ?? ""
+                };
+                var choices = new ComboBox { Name = "setting-" + definition.Key, ItemsSource = definition.Options, ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((option, _) => Text(ChoiceLabel(option))), MinHeight = 34, HorizontalAlignment = HorizontalAlignment.Stretch, FontSize = 11 };
+                if (definition.Key == "TitleFontStyle" && int.TryParse(fieldValue, out var style) && style is >= 0 and < 16) fieldValue = definition.Options![style];
+                choices.SelectedItem = fieldValue;
+                choices.SelectionChanged += (_, _) => Changed(choices.SelectedItem?.ToString() ?? "");
+                if (definition.Key == "HotkeyInputMethod")
+                {
+                    choices.DropDownOpened += (_, _) => TrackHotkeyDiagnosticGesture(true);
+                    choices.DropDownClosed += (_, _) => TrackHotkeyDiagnosticGesture(false);
+                }
+                input = choices;
+            }
+            else if (!_theme.Legacy && definition.Key == "TitleFontName")
+            {
+                _fontNames ??= _backend is IWorkspacePreviewRenderer renderer ? renderer.FontFamilies
+                    : FontManager.Current.SystemFonts.Select(f => f.Name).OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase).ToArray();
+                var font = WorkspacePickers.FontFamily(_fontNames, fieldValue, "setting-" + definition.Key, L("Font family"));
+                font.SelectionChanged += (_, _) => Changed(font.SelectedItem as string ?? "");
+                input = font;
+            }
+            else
+            {
+                var box = new TextBox { FlowDirection = Avalonia.Media.FlowDirection.LeftToRight, Name = "setting-" + definition.Key, Text = fieldValue, MinHeight = 34, FontSize = 12, Watermark = L(definition.Kind == SettingKind.Color ? "#RRGGBB" : ""), HorizontalContentAlignment = HorizontalAlignment.Left };
+                box.TextChanged += (_, _) => Changed(box.Text ?? "");
+                box.KeyDown += async (_, e) =>
+                {
+                    if (e.Key == Key.Enter && apply.IsEnabled) { e.Handled = true; await ApplySetting(definition); }
+                    if (e.Key == Key.Escape) { _drafts.Remove(definition.Key); RenderPage(true); e.Handled = true; }
+                };
+                if (definition.Kind == SettingKind.AudioIds)
+                {
+                    box.AcceptsReturn = false;
+                    box.TextWrapping = TextWrapping.Wrap;
+                    box.MinHeight = 70;
+                }
+                input = box;
+                if (!_theme.Legacy && definition.Kind == SettingKind.Color)
+                {
+                    var picker = WorkspacePickers.Color(Color.TryParse(box.Text, out var initial) ? initial : Color.Parse(_theme.Accent),
+                        "pick-" + definition.Key, F($"Open color picker for {L(definition.Label)}"));
+                    picker.ColorChanged += (_, e) => box.Text = $"#{e.NewColor.R:X2}{e.NewColor.G:X2}{e.NewColor.B:X2}";
+                    box.TextChanged += (_, _) => { if (Color.TryParse(box.Text, out var next) && picker.Color != next) picker.Color = next; };
+                    var colorRow = new Grid { ColumnDefinitions = new("64,*"), ColumnSpacing = 6 };
+                    colorRow.Children.Add(picker); Grid.SetColumn(box, 1); colorRow.Children.Add(box);
+                    input = colorRow;
+                }
+            }
+            AutomationProperties.SetName(input, L(definition.Label));
+            AutomationProperties.SetHelpText(input, L(definition.Description));
+            if (definition.Kind is SettingKind.AudioIds or SettingKind.Choice or SettingKind.Text || !_theme.Legacy && definition.Kind == SettingKind.Color)
+            {
+                stack.Children.Add(input);
+                var buttonRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 3, HorizontalAlignment = HorizontalAlignment.Right };
+                buttonRow.Children.Add(reset); buttonRow.Children.Add(apply);
+                stack.Children.Add(buttonRow);
+            }
+            else
+            {
+                controls.Children.Add(input);
+                Grid.SetColumn(apply, 1); controls.Children.Add(apply);
+                Grid.SetColumn(reset, 2); controls.Children.Add(reset);
+                stack.Children.Add(controls);
+            }
+            stack.Children.Add(error);
+            Changed(fieldValue);
+            editor = stack;
+        }
+        if (_theme.Legacy) Grid.SetRow(editor, 1); else Grid.SetColumn(editor, 1);
+        row.Children.Add(editor);
+        return row;
+    }
+
+    private async Task ApplySetting(SettingDefinition definition)
+    {
+        if (!_drafts.TryGetValue(definition.Key, out var value)) return;
+        if (SettingCatalog.Validate(definition, value, L) is { } error) { _message = error; _messageError = true; UpdateFooter(); return; }
+        var result = await Run(new("setting", definition.Key, value));
+        if (result.Success) { if (_drafts.GetValueOrDefault(definition.Key) == value) _drafts.Remove(definition.Key); RefreshFromBackend(); }
+    }
+
+    private Control AnchorEditor(string value)
+    {
+        var grid = new Grid { FlowDirection = FlowDirection.LeftToRight, ColumnDefinitions = new ColumnDefinitions("42,42,42"), RowDefinitions = new RowDefinitions("38,38,38"), HorizontalAlignment = HorizontalAlignment.Right };
+        var keys = new[] { "NW", "N", "NE", "W", "C", "E", "SW", "S", "SE" };
+        var symbols = new[] { "↖", "↑", "↗", "←", "·", "→", "↙", "↓", "↘" };
+        var labels = new[] { "Top left", "Top center", "Top right", "Middle left", "Center", "Middle right", "Bottom left", "Bottom center", "Bottom right" };
+        for (var index = 0; index < keys.Length; index++)
+        {
+            var key = keys[index];
+            var button = CommandButton(symbols[index], new("setting", "ThumbnailZoomAnchor", key), "anchor-" + key);
+            button.Margin = new Thickness(2); button.HorizontalAlignment = HorizontalAlignment.Stretch; button.HorizontalContentAlignment = HorizontalAlignment.Center;
+            if (value == key) { button.Background = B(_theme.AccentSurface); button.BorderBrush = B(_theme.Accent); }
+            ToolTip.SetTip(button, L(labels[index]));
+            AutomationProperties.SetName(button, F($"Zoom anchor {L(labels[index])}") + (value == key ? L(", selected") : ""));
+            Grid.SetColumn(button, index % 3); Grid.SetRow(button, index / 3); grid.Children.Add(button);
+        }
+        return grid;
+    }
+
+    private void RenderSearch()
+    {
+        var searchableSettings = _hotkeyDiagnosticsUnlocked ? SettingCatalog.All.Append(SettingCatalog.HotkeyPassthroughDiagnostic) : SettingCatalog.All;
+        var matches = searchableSettings.Where(s => (s.Key != "GlobalHotkeyTrigger" || _snapshot.Settings.GetValueOrDefault("HotkeyInputMethod", "Global") == "Global")
+            && (!_theme.Legacy || s.Page != "Hotkeys" && s.Page != "PreviewGraphics" && s.Key != "ShowCurrentSolarSystem" && !s.Key.StartsWith("SolarSystem", StringComparison.Ordinal))
+            && (s.Matches(_query) || _localization.Contains($"{L(s.Label)} {L(s.Description)} {L(PageLabel(s.Page))}", _query))).ToArray();
+        var routes = new[] { ("Switching", "Cycle groups, hotkeys and keyboard shortcuts"), ("Clients", "Active clients and preview visibility"), ("ClientSettings", "Character colors & minimization"), ("Profiles", "Profiles, clone, rename, delete and profile accent color"), ("Appearance", "Appearance, themes, Light, Dark and Legacy") };
+        var showGlobalShortcuts = "hide all show all minimize all minimise all global hotkey keyboard shortcuts ToggleHideAllActiveHotkey MinimizeAllClientsHotkey".Contains(_query, StringComparison.OrdinalIgnoreCase)
+            || !_theme.Legacy && _localization.Contains(L("Cycle login clients") + " login logon account username pid CycleLoginClientsHotkey", _query);
+        bool showGroupLogin = !_theme.Legacy && _localization.Contains(L("Include login clients") + " group login logon account character order IncludeLoginClients", _query);
+        var featureMatches = routes.Where(r => r.Item2.Contains(_query, StringComparison.OrdinalIgnoreCase) || _localization.Contains(L(r.Item2), _query)
+            || r.Item1 == "Clients" && !_theme.Legacy && _localization.Contains(L("Other applications") + " application process executable non eve thumbnail", _query)
+            || r.Item1 == "Appearance" && _localization.Contains(L("Language") + " language", _query)
+            || r.Item1 == "Profiles" && !_theme.Legacy && _localization.Contains(L("Open profiles folder") + " open profiles folder directory location saved files", _query)
+            || r.Item1 == "ClientSettings" && "PriorityClients PerClientActiveClientHighlightColor priority border minimization exceptions offline".Contains(_query, StringComparison.OrdinalIgnoreCase)).ToArray();
+        var queryWords = _query.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        var sectionMatches = _modules.Where(_ => !_theme.Legacy).SelectMany(module => module.SearchTargets.Select(target => (module, target)))
+            .Where(x => queryWords.All(word =>
+                _localization.Contains(string.Join(" ", x.target.Keywords.Prepend(x.target.Title).Prepend(x.module.Title)), word)
+                || _localization.Contains(string.Join(" ", x.target.Keywords.Prepend(x.target.Title).Prepend(x.module.Title).Select(L)), word))).ToArray();
+        var moduleMatches = _modules.Where(m => !_theme.Legacy && !sectionMatches.Any(x => x.module.Id == m.Id)
+            && (_localization.Contains($"{m.Title} {m.Description}", _query) || _localization.Contains($"{L(m.Title)} {L(m.Description)}", _query))).ToArray();
+        Heading("Search results", F($"{matches.Length + featureMatches.Length + sectionMatches.Length + moduleMatches.Length + (showGroupLogin ? 1 : 0)} settings matching “{_query}”. Edit them here; your navigation stays available."));
+        foreach (var group in matches.GroupBy(s => s.Page))
+        {
+            _page.Children.Add(Text(PageLabel(group.Key), 12, _theme.Accent, true));
+            if (group.Key == "Overlay") _page.Children.Add(ActionButton("Open title & highlight editor", () => NavigatePreviewTab("Titles"), "search-open-title-editor", true));
+            if (group.Key is "Thumbnail" or "Zoom") _page.Children.Add(ActionButton("Open size & zoom editor", () => NavigatePreviewTab("Layout"), "search-open-layout-editor", true));
+            if (group.Key == "AdvancedPreview") _page.Children.Add(ActionButton("Open advanced preview settings", () => NavigatePreviewTab("Advanced"), "search-open-advanced-editor", true));
+            if (group.Key == "Hotkeys") _page.Children.Add(ActionButton("Open hotkey settings", () => { _showGlobalShortcuts = true; Navigate("Switching"); }, "search-open-hotkeys", true));
+            var rows = new StackPanel();
+            foreach (var definition in group) rows.Children.Add(definition.Key == "DiagnosticHotkeyPassthrough" ? HotkeyDiagnosticRow() : SettingRow(definition));
+            _page.Children.Add(Card(rows, new Thickness(20, 0)));
+        }
+        if (showGlobalShortcuts) AddGlobalHotkeys();
+        if (showGroupLogin)
+            _page.Children.Add(ActionButton(L("Include login clients"), () => { _showGlobalShortcuts = false; Navigate("Switching"); }, "search-group-login-clients"));
+        foreach (var route in featureMatches) _page.Children.Add(ActionButton(F($"Open {L(route.Item2)}  →"), () => Navigate(route.Item1)));
+        foreach (var (module, target) in sectionMatches)
+            _page.Children.Add(ActionButton(F($"Open {L(module.Title) + " - " + L(target.Title)}  →"),
+                () => { target.PrepareNavigation(); Navigate(module.Id); }, "search-module-" + module.Id + "-" + target.Id));
+        foreach (var module in moduleMatches) _page.Children.Add(ActionButton(F($"Open {module.Title}  →"), () => Navigate(module.Id)));
+        if (matches.Length == 0 && featureMatches.Length == 0 && moduleMatches.Length == 0 && sectionMatches.Length == 0 && !showGlobalShortcuts && !showGroupLogin)
+            _page.Children.Add(Card(new StackPanel { Spacing = 9, Children = { Text("No matching settings", 18, _theme.Text, true), Text("Try a shorter term such as “opacity”, “FPS”, “hotkey” or “font”.", 13, _theme.Muted), ActionButton("Clear search", () => { _search.Text = L(""); }) } }));
+    }
+
+    private static string PageLabel(string key) => key switch { "General" => "Window behavior & layouts", "Thumbnail" => "Preview windows", "Zoom" => "Hover zoom", "Overlay" => "Titles & highlighting", "AdvancedPreview" => "Advanced preview settings", "PreviewGraphics" => "Preview graphics", "FpsAudio" => "Performance & audio", _ => key };
+
+}

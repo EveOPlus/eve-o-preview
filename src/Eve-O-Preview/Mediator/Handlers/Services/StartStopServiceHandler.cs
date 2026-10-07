@@ -64,20 +64,31 @@ namespace EveOPreview.Mediator.Handlers.Services
             try
             {
                 _logger.Information("StartStopServiceHandler: Stopping thumbnail manager service");
-                this._manager.Stop();
-
-                var processes = _procMonitor.GetAllProcesses();
-                _logger.Information("Resetting CPU affinity and FPS limiter for {ProcessCount} clients", processes.Count);
-                
-                _cpuAffinityService.Stop(processes);
-                await _hook.StopAsync(processes).ConfigureAwait(false);
-                
-                _logger.Information("Thumbnail manager service stopped successfully");
+                // Timers and WinEvent hooks stop on their owning UI thread.
+                // Input-thread waits and client lock/IPC work must begin off-thread
+                // before the presenter starts its bounded session-end wait. Start
+                // both independently: stalled input must not prevent client reset.
+                var stop = _manager.StopAsync(message.IsSessionEnding);
+                if (message.IsSessionEnding)
+                    await Task.WhenAll(stop, Task.Run(ResetClientsAsync)).ConfigureAwait(false);
+                else
+                {
+                    await stop.ConfigureAwait(false);
+                    await ResetClientsAsync().ConfigureAwait(false);
+                }
             }
             catch (Exception exception)
             {
                 _logger.Error(exception, "Error stopping thumbnail manager service");
             }
+        }
+        private async Task ResetClientsAsync()
+        {
+            var processes = _procMonitor.GetAllProcesses().Where(p => p.IsEveClient).ToList();
+            _logger.Information("Resetting CPU affinity and FPS limiter for {ProcessCount} clients", processes.Count);
+            _cpuAffinityService.Stop(processes);
+            await _hook.StopAsync(processes).ConfigureAwait(false);
+            _logger.Information("Thumbnail manager service stopped successfully");
         }
     }
 }

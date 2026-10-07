@@ -21,12 +21,13 @@ namespace EveOPreview.Services.Implementation
 {
     sealed class ProcessInfo : IProcessInfo, IDisposable
     {
-        public ProcessInfo(IntPtr mainWindowHandle, IntPtr processHandle, int processId, string title)
+        public ProcessInfo(IntPtr mainWindowHandle, IntPtr processHandle, int processId, string title, string processName = "")
         {
             this.MainWindowHandle = mainWindowHandle;
             this.OwnedHandle = new SafeProcessHandle(processHandle, ownsHandle: true);
             this.ProcessId = processId;
             this.Title = title;
+            ProcessName = processName;
         }
 
         /// <inheritdoc/>
@@ -36,11 +37,12 @@ namespace EveOPreview.Services.Implementation
         public IntPtr ProcessHandle => OwnedHandle.IsClosed ? IntPtr.Zero : OwnedHandle.DangerousGetHandle();
         internal SafeProcessHandle OwnedHandle { get; private set; }
 
-        internal ProcessInfo WithTitle(string title) => new ProcessInfo(MainWindowHandle, IntPtr.Zero, ProcessId, title) { OwnedHandle = OwnedHandle };
+        internal ProcessInfo WithTitle(string title) => new ProcessInfo(MainWindowHandle, IntPtr.Zero, ProcessId, title, ProcessName) { OwnedHandle = OwnedHandle };
         public void Dispose() => OwnedHandle.Dispose();
 
         public string Title { get; }
 
         public int ProcessId { get; }
+        public string ProcessName { get; }
     }
 }

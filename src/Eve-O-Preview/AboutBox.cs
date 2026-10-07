@@ -1,4 +1,4 @@
-﻿//Eve-O Preview Plus is a program designed to deliver quality of life tooling. Primarily but not limited to enabling rapid window foreground and focus changes for the online game Eve Online.
+//Eve-O Preview Plus is a program designed to deliver quality of life tooling. Primarily but not limited to enabling rapid window foreground and focus changes for the online game Eve Online.
 //Copyright (C) 2026  Aura Asuna
 //
 //This program is free software: you can redistribute it and/or modify
@@ -47,11 +47,11 @@ namespace PreviewToy
 \pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\i0 Client Previews (windowed and borderless)\par
 {\pntext\f2\'B7\tab}Resizable previews (independent or syncronized)\par
 {\pntext\f2\'B7\tab}Options for 'always on top', 'hide when EVE client not active', 'hide active client preview', and 'zoom on hover'\par
-{\pntext\f2\'B7\tab}EVE Client position tracking (CCP FoxFour)\par
+{\pntext\f2\'B7\tab}EVE Client position tracking (FC FoxFour)\par
 
-\pard\sa200\sl276\slmult1\i Current Maintainer(s):\i0\line CCP FoxFour\line Makari Aeron\par
+\pard\sa200\sl276\slmult1\i Current Maintainer(s):\i0\line FC FoxFour\line Makari Aeron\par
 \i Original Creator:\line\i0 StinkRay\par
-\i Devs:\line\i0 StinkRay, CCP FoxFour, Makari Aeron\par
+\i Devs:\line\i0 StinkRay, FC FoxFour, Makari Aeron\par
 \i Special Thanks:\i0\line Takagamu\f1\fs22\par
 }";
         }

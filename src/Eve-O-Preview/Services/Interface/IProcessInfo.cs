@@ -21,7 +21,7 @@ namespace EveOPreview.Services
     public interface IProcessInfo
     {
         /// <summary>
-        /// Window handle (HWND) for the main window of the Eve Client.
+        /// Window handle (HWND) for the source application's main window.
         /// </summary>
         public IntPtr MainWindowHandle { get; }
 
@@ -31,5 +31,9 @@ namespace EveOPreview.Services
         public IntPtr ProcessHandle { get; }
         string Title { get; }
         int ProcessId { get; }
+        string ProcessName => "";
+        bool IsEveClient => string.Equals(ProcessName, "ExeFile", StringComparison.OrdinalIgnoreCase);
+        bool IsLoginClient => IsEveClient && string.Equals(Title, "EVE", StringComparison.OrdinalIgnoreCase);
+        string PreviewTitle => IsLoginClient ? "EVE" : IsEveClient ? Title : $"{ProcessName} ({ProcessId})";
     }
 }

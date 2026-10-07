@@ -1,4 +1,4 @@
-﻿//Eve-O Preview Plus is a program designed to deliver quality of life tooling. Primarily but not limited to enabling rapid window foreground and focus changes for the online game Eve Online.
+//Eve-O Preview Plus is a program designed to deliver quality of life tooling. Primarily but not limited to enabling rapid window foreground and focus changes for the online game Eve Online.
 //Copyright (C) 2026  Aura Asuna
 //
 //This program is free software: you can redistribute it and/or modify
@@ -35,7 +35,7 @@ namespace EveOPreview.Presenters
     public class MainFormPresenter : Presenter<IMainFormView>, IMainFormPresenter
     {
         #region Private constants
-        private const string DISCORD_URL = @"https://discord.gg/HzQHBtTEcB";
+        private const string DOCUMENTATION_URL = @"https://github.com/EveOPlus/eve-o-preview";
         #endregion
 
         #region Private fields
@@ -51,6 +51,9 @@ namespace EveOPreview.Presenters
         private bool _exitApplication;
         private bool _shutdownInProgress;
         private bool _shutdownCompleted;
+        private bool _windowsSessionEnding;
+        private Task _stopTask;
+        private Task _saveOnExitTask;
         #endregion
 
         public MainFormPresenter(
@@ -93,8 +96,7 @@ namespace EveOPreview.Presenters
             this.View.ThumbnailStateChanged = this.UpdateThumbnailState;
             this.View.DocumentationLinkActivated = this.OpenDocumentationLink;
             this.View.ApplicationExitRequested = this.ExitApplication;
-            this.View.GetClientNameFromInput = this.GetClientDescriptionFromInputBox;
-            this.View.CaptureNewHotkey = this.SendCaptureNewHotkeyRequest;
+            this.View.WindowsSessionEnding = this.EndWindowsSession;
             this.View.FpsLimiterChanged = this.TriggerSetFpsLimiter;
             this.View.FpsLimiterEnabledChanged = this.TriggerSetFpsLimiterEnabled;
             this.View.AudioSettingsChanged = this.TriggerSetAudioSettings;
@@ -104,6 +106,16 @@ namespace EveOPreview.Presenters
             this.View.CloneCurrentProfile = this.ActionCloneCurrentProfile;
             this.View.DeleteCurrentProfile = this.ActionDeleteCurrentProfile;
             this.View.RenameCurrentProfile = this.RenameCurrentProfile;
+
+            if (view is IAsyncSettingsView asyncView)
+            {
+                asyncView.CommitSettingsAsync = SaveApplicationSettingsAsync;
+                asyncView.CommitSizeAsync = async () =>
+                {
+                    await SaveApplicationSettingsAsync();
+                    await _mediator.Publish(new ThumbnailConfiguredSizeUpdated());
+                };
+            }
 
             var currentProfile = _mediator.Send(new GetCurrentProfileLocation()).Result;
             _logger.Verbose("MainFormPresenter: Current profile retrieved: {ProfilePath}", currentProfile?.FullPath ?? "(null)");
@@ -155,20 +167,12 @@ namespace EveOPreview.Presenters
             this.View.UpdateProfileList(notification.NewProfileLocations);
         }
 
-        private CaptureNewHotkeyResponse SendCaptureNewHotkeyRequest(string currentKey)
-        {
-            _logger.Verbose("MainFormPresenter.SendCaptureNewHotkeyRequest: Capturing hotkey. Current: {CurrentKey}", currentKey);
-            var response = _mediator.Send(new CaptureNewHotkey(currentKey, 10000)).ConfigureAwait(false).GetAwaiter().GetResult();
-            _logger.Verbose("MainFormPresenter.SendCaptureNewHotkeyRequest: Hotkey capture result: Valid={IsValid}, Captured={KeyString}", response.IsValid, response.KeyString);
-            return response;
-        }
-
         private void Activate()
         {
             _logger.Verbose("MainFormPresenter.Activate: Activating main form");
             this._suppressSizeNotifications = true;
             this.LoadApplicationSettings();
-            this.View.SetDocumentationUrl(MainFormPresenter.DISCORD_URL);
+            this.View.SetDocumentationUrl(MainFormPresenter.DOCUMENTATION_URL);
             this.View.SetVersionInfo(this.GetApplicationVersion());
             if (this._configuration.MinimizeToTray)
             {
@@ -205,17 +209,18 @@ namespace EveOPreview.Presenters
                 _shutdownInProgress = true;
                 try
                 {
-                    // Cancel this close, let the FormClosing callback return, and keep
+                    // Cancel this close, let the Closing callback return, and keep
                     // pumping UI continuations while MediatR/native cleanup completes.
                     await Task.Yield();
-                    await _mediator.Send(new StopService());
-                    _configurationStorage.Save();
+                    if (_windowsSessionEnding) return;
+                    await (_stopTask ??= _mediator.Send(new StopService()));
+                    await SaveOnExitAsync();
                 }
                 catch (Exception ex) { _logger.Error(ex, "Application shutdown cleanup failed"); }
                 finally
                 {
                     _shutdownCompleted = true;
-                    View.Close();
+                    if (!_windowsSessionEnding) View.Close();
                 }
                 return;
             }
@@ -223,6 +228,26 @@ namespace EveOPreview.Presenters
             _logger.Verbose("MainFormPresenter.Close: Minimizing instead of closing");
             request.Allow = false;
             this.View.Minimize();
+        }
+
+        private Task SaveOnExitAsync() => _saveOnExitTask ??= Task.Run(() => _configurationStorage.Save());
+
+        private void EndWindowsSession()
+        {
+            if (_windowsSessionEnding) return;
+            _windowsSessionEnding = true;
+            _shutdownCompleted = true;
+            _shutdownInProgress = true;
+            // The session callback means WM_ENDSESSION was confirmed. Windows may terminate
+            // us when it returns: don't defer work to the UI pump or call Close.
+            try
+            {
+                var save = SaveOnExitAsync(); // Persist even if native cleanup stalls.
+                _stopTask ??= _mediator.Send(new StopService { IsSessionEnding = true });
+                Task.WhenAll(_stopTask, save).WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+            }
+            catch (TimeoutException) { _logger.Warning("Windows session cleanup exceeded its two-second budget"); }
+            catch (Exception ex) { _logger.Error(ex, "Windows session cleanup failed"); }
         }
 
         private async void UpdateThumbnailsSize()
@@ -287,6 +312,11 @@ namespace EveOPreview.Presenters
         }
 
         private async void SaveApplicationSettings()
+        {
+            await SaveApplicationSettingsAsync();
+        }
+
+        private async Task SaveApplicationSettingsAsync()
         {
             _logger.Verbose("MainFormPresenter.SaveApplicationSettings: Saving all application settings");
             this._configuration.CycleGroups = this.View.CycleGroups;
@@ -418,37 +448,27 @@ namespace EveOPreview.Presenters
         public void UpdateThumbnailSize(Size size)
         {
             _logger.Verbose("MainFormPresenter.UpdateThumbnailSize: Setting size to {Width}x{Height}", size.Width, size.Height);
+            // Native resizing already updates all previews. Keep the persisted model
+            // in sync without committing unrelated workspace edits or replaying resize.
+            this._configuration.ThumbnailSize = size;
             this._suppressSizeNotifications = true;
             this.View.ThumbnailSize = size;
             this._suppressSizeNotifications = false;
         }
 
-        public string GetClientDescriptionFromInputBox()
-        {
-            _logger.Verbose("MainFormPresenter.GetClientDescriptionFromInputBox: Opening client selection dialog");
-            using var input = new ClientNameInputBox();
-            lock (_descriptionsCache)
-            {
-                input.LoadKnownClients(_descriptionsCache.Keys.ToList());
-            }
-
-            input.ShowDialog();
-
-            _logger.Verbose("MainFormPresenter.GetClientDescriptionFromInputBox: User selected {SelectedClient}", input.SelectedClientName ?? "(cancelled)");
-            return input.SelectedClientName;
-        }
-
         private void OpenDocumentationLink()
         {
-            _logger.Verbose("MainFormPresenter.OpenDocumentationLink: Opening Discord documentation link");
+            _logger.Verbose("MainFormPresenter.OpenDocumentationLink: Opening project documentation");
             // TODO Move out to a separate service / presenter / message handler
-            ProcessStartInfo processStartInfo = new ProcessStartInfo(new Uri(MainFormPresenter.DISCORD_URL).AbsoluteUri);
+            ProcessStartInfo processStartInfo = new ProcessStartInfo(new Uri(MainFormPresenter.DOCUMENTATION_URL).AbsoluteUri);
             Process.Start(processStartInfo);
         }
 
         private string GetApplicationVersion()
         {
-            var version = System.Windows.Forms.Application.ProductVersion;
+            var version = typeof(MainFormPresenter).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+                .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion
+                ?? typeof(MainFormPresenter).Assembly.GetName().Version?.ToString() ?? "";
             _logger.Verbose("MainFormPresenter.GetApplicationVersion: {Version}", version);
             return version;
         }

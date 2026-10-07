@@ -21,9 +21,7 @@ namespace Build
 		public const string MainSolutionName = @"./src/Eve-O-Preview/Eve-O-Preview.csproj";
 		public const string RobinSolutionName = @"./src/Eve-O-Preview.Robin/Eve-O-Preview.Robin.csproj";
 
-		public const string BinFolder = @"./bin";
 		public const string ToolsFolder = @"./tools";
-		public const string PublishFolder = @"./publish";
 		public const string BuildConfiguration = @"Release";
 
 		public const string BuildToolPath = @"C:\Program Files\Microsoft Visual Studio\18\Professional\MSBuild\Current\Bin\MSBuild.exe"; // Set to NULL to let Cake to try to use the default MSBuild instance

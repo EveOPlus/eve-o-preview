@@ -34,7 +34,7 @@ namespace EveOPreview.Helper
             var hwnd = process.MainWindowHandle;
             var id = process.Id;
             var title = process.MainWindowTitle;
-            return new ProcessInfo(hwnd, process.OpenKernelHandle(), id, title);
+            return new ProcessInfo(hwnd, process.OpenKernelHandle(), id, title, process.ProcessName);
         }
 
         public static IntPtr OpenKernelHandle(this Process process)

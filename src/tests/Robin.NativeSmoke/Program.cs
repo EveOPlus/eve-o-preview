@@ -35,7 +35,7 @@ try
     }
     else handle = new IntPtr(long.Parse(await target.StandardOutput.ReadLineAsync(deadline.Token) ?? throw new Exception("Probe failed to create a window")));
     Check(handle != IntPtr.Zero, "Target has no window");
-    var config = (IThumbnailConfiguration)Activator.CreateInstance(typeof(MainForm).Assembly.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
+    var config = (IThumbnailConfiguration)Activator.CreateInstance(typeof(ThumbnailView).Assembly.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
     config.FpsLimiterSettings.IsEnabled = true;
     config.FpsLimiterSettings.FpsFocused = config.FpsLimiterSettings.FpsBackground = 30;
     config.AudioMuteSettings.CustomMutedEventIds = new() { 42, 99 };
@@ -145,7 +145,7 @@ static async Task MockFocus(string dll, string mockPath)
 {
     string hash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(dll)));
     File.Copy(dll, Path.Combine(AppContext.BaseDirectory, "Eve-O-Preview.Robin.dll"), true);
-    var config = (IThumbnailConfiguration)Activator.CreateInstance(typeof(MainForm).Assembly.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
+    var config = (IThumbnailConfiguration)Activator.CreateInstance(typeof(ThumbnailView).Assembly.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
     config.FpsLimiterSettings.IsEnabled = true;
     config.FpsLimiterSettings.FpsFocused = 60;
     config.FpsLimiterSettings.FpsBackground = config.FpsLimiterSettings.FpsPredictingFocus = 1;
@@ -201,7 +201,7 @@ static async Task LiveClient(string[] arguments)
     using var client = Process.GetProcessById(int.Parse(arguments[2]));
     Check(client.ProcessName.Equals("exefile", StringComparison.OrdinalIgnoreCase) && client.MainWindowHandle != IntPtr.Zero, "Expected a running EVE client with a main window");
     var process = new ProbeProcess(client.Id, client.MainWindowHandle);
-    var config = (IThumbnailConfiguration)Activator.CreateInstance(typeof(MainForm).Assembly.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
+    var config = (IThumbnailConfiguration)Activator.CreateInstance(typeof(ThumbnailView).Assembly.GetType("EveOPreview.Configuration.Implementation.ThumbnailConfiguration"));
     // A sentinel enables injection; it is immediately cleared before diagnostics.
     config.AudioMuteSettings.CustomMutedEventIds = new() { uint.MaxValue };
     using var logger = new LoggerConfiguration().WriteTo.File(Path.Combine(AppContext.BaseDirectory, "native-smoke.log")).CreateLogger();

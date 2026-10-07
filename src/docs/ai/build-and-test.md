@@ -1,115 +1,167 @@
 # Build, test, and validation guide
 
-Use this guide when choosing a project, diagnosing test discovery, changing tests, or assessing what a passing test run proves. All command examples start in `src` and use PowerShell. The project files and test bodies are authoritative; commands below were inspected against those files, not executed as part of the documentation review.
-
+Run commands from `src` in PowerShell. Project files and test bodies are authoritative.
+The [migration report](avalonia-migration.md) records current host cutover evidence,
+artifact paths, performance limits and outstanding acceptance gates.
 
 ## Choose the project deliberately
 
-| Entry point | Current role and build contract |
+| Entry point | Current role |
 | --- | --- |
-| [EVE-O-Preview.sln](../../EVE-O-Preview.sln) | Full solution: application, Robin, Mock, tests, and the release tooling in `../build`. Use this solution for Test Explorer. Its `Build` solution configuration selects the release-tool project plus Debug configurations of Robin/tests; the name does not mean an ordinary Release build. |
-| [Eve-O-Preview.csproj](../../Eve-O-Preview/Eve-O-Preview.csproj) | SDK project, `net10.0-windows`, WinForms with WPF enabled, assembly name `EVE-O Preview`, unsafe code. Debug is explicitly x64. Release publishing selects `win-x64`. There is no project reference to Robin: building the app does not create the native injection DLL. |
-| [Nested application solution](../../Eve-O-Preview/Eve-O-Preview.sln) | Contains only the application. Opening it will not expose the test project or Robin/Mock/build projects. |
-| [Robin project](../../Eve-O-Preview.Robin/Eve-O-Preview.Robin.csproj) | `net10.0`, x64, unsafe, NativeAOT shared library (`PublishAot`, `NativeLib=Shared`). A managed `dotnet build` does not establish that the native DLL can be published, loaded, or hooked. |
-| [Test project](../../tests/Eve-O-Preview.Tests/Eve-O-Preview.Tests.csproj) | `net10.0-windows` executable with WinForms/WPF, xUnit v3, `Microsoft.NET.Test.Sdk`, and the Visual Studio adapter. References the application project, not Robin. Uses its own entry point. |
-| [Mock project](../../Eve-O-Mock/Eve-O-Mock.csproj) | Legacy non-SDK WPF project targeting .NET Framework 4.8, `packages.config`, assembly name `ExeFile`. Needs the .NET Framework targeting/build tools and restored `src/packages` dependencies. |
-| [Build project](../../../build/Build.csproj) | .NET 10 Cake Frosting release pipeline; its execution has cleanup, documentation, publish, signing, and packaging side effects described below. |
+| [Source solution](../../EVE-O-Preview.sln) | Application, Robin, Mock, tests and release tooling. Open this solution for Test Explorer. Its Build configuration selects release tooling plus Debug Robin/tests; it is not an ordinary Release build. |
+| [Application](../../Eve-O-Preview/Eve-O-Preview.csproj) | net10.0-windows, Avalonia desktop lifetime and all shipping windows. Windows adapters retain DWM, DirectComposition and global input. Debug is x64; publishing uses win-x64. No Forms/WPF runtime or Robin project reference. |
+| [Portable UI](../../Eve-O-Preview.UI/Eve-O-Preview.UI.csproj) | net10.0 Avalonia workspace and palettes, with no process/HWND contract. |
+| [Preview contracts](../../Eve-O-Preview.Preview/Eve-O-Preview.Preview.csproj) | Toolkit-independent image/scene contracts and physical-pixel snap session. |
+| [UI smoke](../../tests/Eve-O-Preview.UI.Smoke/Eve-O-Preview.UI.Smoke.csproj) | Headless/Skia workspace renders using a controlled backend. |
+| [Portable overlay smoke](../../tests/Eve-O-Preview.Preview.Smoke/Eve-O-Preview.Preview.Smoke.csproj) | Retained scenes and finite animations; does not establish Linux capture/hosting. |
+| [Renderer harness](../../tests/Preview.RenderingSmoke/README.md) | Opt-in synthetic/live production image and overlay checks. Desktop readback/performance require an interactive desktop. |
+| [Tests](../../tests/Eve-O-Preview.Tests/Eve-O-Preview.Tests.csproj) | Windows xUnit v3 executable, Visual Studio adapter and custom private-desktop dispatch. Forms/WPF remain test-only for source/reference fixtures. |
+| [Robin](../../Eve-O-Preview.Robin/Eve-O-Preview.Robin.csproj) | Unsafe x64 NativeAOT shared library; managed build does not prove native publish/load/hook success. |
+| [Mock](../../Eve-O-Mock/Eve-O-Mock.csproj) | Separate WPF Framework 4.8 fixture, packages.config, assembly name ExeFile. |
+| [Build](../../../build/Build.csproj) | Cake release pipeline with cleanup, download, signing and packaging effects. |
 
-The development target is Windows with the .NET 10 SDK. No tracked `global.json` pins a particular SDK patch. `dotnet --info` establishes the local SDK/runtime and architecture. The [root user README](../../../README.md) and [application app.config](../../Eve-O-Preview/app.config) still contain .NET Framework-era runtime claims; do not infer the current application target from those. The Mock's [App.config](../../Eve-O-Mock/App.config) does match its Framework 4.8 target.
+The nested application-only solution omits tests and Robin. The development
+prerequisite is the Windows .NET 10 SDK; no tracked global.json pins a patch.
+The historical application app.config does not determine its current target.
 
 ## Routine commands
 
-For application compilation or the existing regression suite:
-
 ```powershell
-dotnet build .\Eve-O-Preview\Eve-O-Preview.csproj -c Debug
-dotnet test .\tests\Eve-O-Preview.Tests\Eve-O-Preview.Tests.csproj -c Debug
+dotnet build .\Eve-O-Preview\Eve-O-Preview.csproj -c Debug -p:UsedAvaloniaProducts=
+dotnet test .\tests\Eve-O-Preview.Tests\Eve-O-Preview.Tests.csproj -c Debug -p:UsedAvaloniaProducts= -- xUnit.ParallelizeTestCollections=false
+dotnet test .\tests\Eve-O-Preview.Tests\Eve-O-Preview.Tests.csproj -c Debug --list-tests -p:UsedAvaloniaProducts=
+dotnet run --project .\tests\Eve-O-Preview.UI.Smoke\Eve-O-Preview.UI.Smoke.csproj -c Debug -p:UsedAvaloniaProducts=
+dotnet run --project .\tests\Eve-O-Preview.Preview.Smoke\Eve-O-Preview.Preview.Smoke.csproj -c Debug -p:UsedAvaloniaProducts=
 ```
 
-`dotnet test` builds its application reference. A separate app build is useful when compilation alone is the intended check; running both is not mandatory. Debug app output is configured under `src/bin` and the SDK appends its target-framework directory. Release app output defaults to repository-root `bin`, outside `src`. Test output uses its own project `bin/Debug/net10.0-windows` directory. Build artifacts, packages, `.vs`, and user settings are ignored by the [repository ignore rules](../../../.gitignore).
-
-For discovery and focused runs:
-
-```powershell
-dotnet test .\tests\Eve-O-Preview.Tests\Eve-O-Preview.Tests.csproj -c Debug --list-tests
-dotnet test .\tests\Eve-O-Preview.Tests\Eve-O-Preview.Tests.csproj -c Debug --filter "DisplayName~HiddenWindowRecovery"
-dotnet test .\tests\Eve-O-Preview.Tests\Eve-O-Preview.Tests.csproj -c Debug --filter "FullyQualifiedName~CustomAudioTests"
-```
-
-Use `--no-build` only after building that same configuration and its current sources. For documentation-only changes, verify links, symbols, inventory, and the diff; running the app or rebuilding native code does not validate prose.
-
-For Robin compilation:
-
-```powershell
-dotnet build .\Eve-O-Preview.Robin\Eve-O-Preview.Robin.csproj -c Debug
-```
-
-When the change actually concerns NativeAOT output, publish to a distinct staging directory with the required Windows native build tools available:
-
-```powershell
-dotnet publish .\Eve-O-Preview.Robin\Eve-O-Preview.Robin.csproj -c Release -r win-x64 -p:PublishAot=true -o .\bin\robin-native-check
-```
-
-The injected artifact is the published native `Eve-O-Preview.Robin.dll`, not the managed assembly with the same filename produced by an ordinary build. Treat successful publication, DLL loading, hook installation, and observed frame/audio behavior as separate validation steps.
-
-For Mock development, use Visual Studio with the .NET desktop/.NET Framework 4.8 build tools. Its [package list](../../Eve-O-Mock/packages.config) includes HelixToolkit 2.27.3, SharpDX 4.2.0, and support libraries. The project uses explicit `../packages/...` hint paths and errors when the logging-package build import is missing. In a Developer PowerShell with NuGet CLI and full MSBuild available:
-
-```powershell
-nuget restore .\Eve-O-Mock\packages.config -PackagesDirectory .\packages
-MSBuild.exe .\Eve-O-Mock\Eve-O-Mock.csproj /p:Configuration=Debug /p:Platform=AnyCPU
-```
-
-A failure in the legacy Mock's WPF or package-import targets during a full-solution build does not by itself show that the application or tests fail to build. Select the relevant project before diagnosing a change.
+Use a focused filter for an affected subsystem, then the complete applicable
+suite on an integrated change. Timing-sensitive checks run serially; do not
+benchmark alongside builds or competing native checks. An absolute OutputPath
+under ignored src/bin preserves baselines without replacing development output.
+Use --no-build only after building the same configuration and current sources.
 
 ## Test Explorer and private desktop workers
 
-Read the [test README](../../tests/Eve-O-Preview.Tests/README.md), [test entry point](../../tests/Eve-O-Preview.Tests/Program.cs), and [PrivateDesktopRunner](../../tests/Eve-O-Preview.Tests/Infrastructure/PrivateDesktopRunner.cs) together.
+Read the [test README](../../tests/Eve-O-Preview.Tests/README.md),
+[entry point](../../tests/Eve-O-Preview.Tests/Program.cs), and
+[PrivateDesktopRunner](../../tests/Eve-O-Preview.Tests/Infrastructure/PrivateDesktopRunner.cs).
 
-- Normal entry, including IDE launches, delegates to xUnit's in-process console runner. `XunitAutoGeneratedEntryPoint=false` preserves this dispatch. Do not replace it with a worker-only runner or remove the test adapter to solve discovery symptoms.
-- The exact three-argument `--private-desktop` entry is internal worker dispatch. The parent creates a new Windows desktop, never switches the user to it, and starts the test assembly's `.exe` apphost with `CREATE_NO_WINDOW`. Using the current IDE/testhost/dotnet process path here would launch the wrong program.
-- Each UI/window scenario runs on a fresh STA process, creates real WinForms windows on the hidden desktop, and writes stdout/stderr to a temporary file. Exit failure or a 30-second timeout fails the xUnit case; worker output is copied into test output. Handles and the temporary log are cleaned up. Debugging a window scenario requires attaching to its worker process.
-- Tests instantiate production forms and services directly, using reflection for internal types/private methods. They do not run the application's startup, global input hooks, injection, or debugger sidecar. `Stub` supplies interface implementations; the thumbnail subclass replaces image rendering, and live-view tests replace DWM operations with simulated results.
-- Focus checks require a real nonzero active simulated-client handle and compare active/foreground handles immediately before/after the operation. The hidden desktop is not the user's input desktop; this is narrower than live EVE foreground validation.
-- When no tests are discovered, check the selected solution, restore/build output, adapter/package references, and the CLI discovery command first. The IDE's active Test Explorer log filename alone is not evidence of a particular failure. Preserve actual failure output instead of attributing it to the IDE without a reproduction.
+- Normal entry delegates to xUnit's in-process runner. Keep the Visual Studio
+  adapter and XunitAutoGeneratedEntryPoint=false.
+- Only the exact three-argument --private-desktop path runs a worker. The parent
+  creates a fresh undisplayed Windows desktop and starts the test assembly's
+  apphost with CREATE_NO_WINDOW, not the IDE/testhost/dotnet process.
+- TestAvalonia initializes the real platform backend in each worker. Production
+  WorkspaceWindow, ThumbnailView and ThumbnailOverlay are Avalonia top-level
+  windows. Test-only Forms supply simulated clients and historical references;
+  they never ship in the application.
+- Each scenario has a bounded timeout and carries stdout/stderr, assertion and
+  stack trace to xUnit. Desktop/process handles and temporary logs are closed.
+- Native focus assertions establish a nonzero simulated-client handle first.
+  The private desktop is not the interactive input desktop and cannot establish
+  DWM compositor pixels, monitor scan-out, actual injection or GPU performance.
+- Dedicated input cases install hooks/RegisterHotKey on their private desktop.
+  Both modes, capture/suppression and held modifiers are exercised. Synthetic
+  message delivery remains narrower than actual interactive input.
+- If discovery is empty, inspect the solution, build, adapter references and
+  --list-tests output. The IDE log filename alone is not failure evidence.
 
-## Existing validation coverage
+## Behavioral coverage and limits
 
-The focused xUnit suite passed 50 cases during the 2026-09-06 defect investigation (baseline 36). It retains the xUnit v3 adapter/custom private-desktop entry point.
-
-| Area | Coverage |
+| Area | Current coverage |
 | --- | --- |
-| Legacy profiles / feature availability | Existing feature tests retain obsolete-key migration, FPS enable/disable, resource and UI availability checks. |
-| Custom audio | Parsing/UI/persistence plus both legacy clear/add and current atomic replacement through the production host pipe sender. |
-| Visibility and DWM | Eleven private-desktop z-order/activation scenarios and five live-image cases preserve nonactivation, immediate raises, recovery and stable DWM relationships with a simulated renderer. |
-| Profiles | ProfileWorkflowTests covers omitted/null defaults, malformed-load rollback, migration idempotence/duplicate keys, missing Default, clone and rename/save/reload. |
-| Settings/input/resources | SettingsIntegrationTests uses production forms, manager/factory and event subscriptions. It exercises Move Up/empty groups/font suppression, live profile propagation, modifier release, immediate borders/selection with pending affinity and wake-before-activation window messages, repeated real process enumeration/handle stability, actual affinity restoration/terminal shutdown, delayed UI cleanup/repeated close, and GDI capture cleanup in an isolated worker. |
-| Pipe lifecycle | PipeLifecycleTests verifies zero targets, shutdown audio clearing and bounded responses from connected-but-silent/truncated peers, plus ready-pipe wake/prediction issuance and old zero-buffer compatibility. |
+| Workspace/configuration | Production Autofac graph, all three themes, preferences, profile clone/rename/load rollback, draft guards, resize persistence, localization, fractional font/outline rendering and grouped Apply. |
+| Lifetime | Tray/Exit, overlapping stop/save, blocked diagnostics, query/cancel/confirmed session messages through workspace and Avalonia message HWND. No actual Windows shutdown. |
+| Thumbnail/input | Nonactivation, immediate focus requests, MRU/z-order recovery, menu order/palettes/second click, live/static views, individual/group resize, shared aspect lock, single-client ratio reset, profile size persistence, hover, resize/move snap/breakaway, synthetic DPI transitions and retained DWM relationships. |
+| Graphics | Historical glyph reference pixels, border geometry, retained resources, alerts, changed-scene uploads, fallback and injected device-loss recovery. Interactive readback separately verifies compositor order/opacity. |
+| Hotkeys/pointer | Both input modes, exhaustive legacy shortcut numeric/string compatibility, capture cleanup, bounded/coalesced pointer queue and zero-allocation motion ingestion. |
+| Process/CPU/IPC | Enumeration/handle cleanup, login account/PID ordering and lifecycle, opt-in group/account matching (order, skips, ambiguity, prediction and login transitions), duplicate-title application identity, EVE-only native/CPU routing, CPU-set topology/planning/restoration, prediction, bounded silent/truncated peers, old audio clear/add and atomic replacement protocol. |
+| Augments | Log reads/rollover/deduplication, SQLite migration/restart, simulation isolation, recorded statistics, damage/repair filters, concurrent repair rates, platform icons, nine overlay positions and row order. |
+| Languages/static data | All eight grammar catalogs, Important Names in English, visible-name lookup, unknown rejection, offline fixtures/import/cancellation and localization catalogs. |
+| Dependencies | Shipping hosts derive from Avalonia Window; no Forms/WPF/MouseKeyHook/embedded-host references in assembly/deps/runtimeconfig. |
 
-These tests do not inject Robin or prove real desktop/GPU/audio performance. The optional [native smoke driver](../../tests/Robin.NativeSmoke/README.md) publishes/loads the real AOT DLL through production injection, then checks actual DXGI pacing and synthetic audio/pipe/lifecycle boundaries. Its allocation measurement compiles the same source as managed code and is explicitly separate from native timing. See [recorded results and remaining checks](reported-bugs.md).
+Test bodies define exact assertions. Passing synthetic cases does not establish
+low-FPS Robin wake, audio interception, driver reset, physical mixed-DPI moves or
+input-to-visible EVE latency. The [Robin smoke driver](../../tests/Robin.NativeSmoke/README.md)
+separately publishes/loads AOT; managed allocation measurements are not native
+timing. Defect status and remaining live checks are in [reported bugs](reported-bugs.md).
 
-## Manual Mock integration
+The native `settings-resources` scenario has intermittently exceeded its ±10
+process-handle delta assertion. Its cause remains unresolved; keep that assertion
+intact and report failures separately from feature and UI-render results.
 
-[MainWindow.xaml](../../Eve-O-Mock/MainWindow.xaml) enables swap-chain rendering with FXAA/MSAA disabled. [MainWindow.xaml.cs](../../Eve-O-Mock/MainWindow.xaml.cs) creates a rotating cube with randomized material, background, and window-title suffix, and disposes the effects manager on close. The rotation deliberately makes stalled/frozen previews visible; this small rendering loop is a manual fixture, not a performance model for EVE.
+## Visual and native checks
 
-The assembly is intentionally named `ExeFile`: [ProcessMonitor](../../Eve-O-Preview/Services/Implementation/ProcessMonitor.cs) matches that process name case-insensitively. A `Mock...` title still produces a monitored process because detection uses the process name. Renaming the assembly without adjusting the fixture contract breaks discovery. Multiple instances give distinguishable windows for order, title, geometry, and movement checks.
+Inspect smoke PNGs; control-state assertions alone do not prove readable layout.
+WorkspaceVisualReviewTests use the Windows host/backend. Historical images and
+glyph references live under tests/LegacyReference. WorkspacePreviewRenderingTests
+compare the shared production rasterizer with that fixture and actual insets.
 
-For a relevant manual regression, record the application/Robin build, render mode, refresh period, number of clients, OS, GPU, display/DPI layout, and exact sequence. Check a normal state, the regression trigger, and the recovery/disabled state. Mock checks can validate process discovery and animated preview behavior; they do not emulate EVE's audio module or establish EVE-specific injection compatibility.
+The interactive renderer harness uses synthetic windows by default. Record build,
+count, dimensions, renderer, profile, monitor/DPI and workload for comparisons.
+CPU is a percentage of one logical core; maintenance duration is not
+input-to-visible latency. Restore foreground, cursor and source state after
+authorized interaction. Do not manufacture gameplay input.
 
-## Packaging, resources, and operational paths
+The separate Mock rotates a cube to reveal frozen previews. ExeFile is its
+process-discovery contract, not an EVE performance/audio model. It requires
+Framework 4.8 targeting/build tools and restored src/packages. A Mock build failure
+does not by itself establish that the application or tests cannot build.
 
-The [Fody configuration](../../Eve-O-Preview/FodyWeavers.xml) enables Costura and excludes embedded debug symbols. [FodyWeavers.xsd](../../Eve-O-Preview/FodyWeavers.xsd) is generated schema; edit the XML/project configuration when changing weaving, then let the schema regenerate. The app project copies the license, verbose launcher, and root certificate. The native Robin DLL is produced separately. `AboutBox.cs`, its designer, and its resources remain tracked but are explicitly excluded from the app project.
+## Standalone publishing and resources
 
-[app.manifest](../../Eve-O-Preview/app.manifest) runs `asInvoker`, sets `uiAccess=false`, and declares per-monitor DPI awareness including `PerMonitorV2`. Its commented historical OS declarations are not current support guarantees. [Program.cs](../../Eve-O-Preview/Program.cs) accepts `-v`/`--verbose`, writes rolling `logs/EVE-O Preview Log-.txt` files relative to the working directory, rolls at 10 MiB as well as daily, and retains seven files. The [verbose launcher](<../../Eve-O-Preview/Launch Eve-O Preview with Verbose Logging.cmd>) starts `EVE-O Preview.exe -v` without changing directory. Account for the working directory when locating logs or reproducing launches.
+The shipping app requires the .NET 10 runtime, not Windows Desktop Runtime.
+System.Drawing.Common remains an explicit Windows capture/changed-scene
+rasterization adapter. Avalonia stays pinned to 11.3.20.
 
-The [Cake entry point](../../../build/Program.cs) uses `../` from the build project as its working directory. [Configuration](../../../build/Configuration.cs) names repository-root `bin`, `publish`, and `tools`, the two publish projects, Release configuration, and a machine-specific signing-certificate path. Its declared MSBuild executable path is not consumed by the current `DotNetPublish` task.
+Fody excludes Eve-O-Preview.UI and Eve-O-Preview.Preview from Costura so a stale
+loose assembly cannot shadow an embedded newer copy during development. The SDK
+bundles them, Avalonia/Skia/HarfBuzz, ColorPicker and native SQLite in single-file
+publishing. Icons, fonts, damage/platform SVGs and the offline catalog stay
+embedded. The license, verbose launcher and public certificate stay separate.
+AboutBox source/designer/resources remain tracked but excluded from compilation.
 
-Execution flows through these files:
+Publish into a new ignored directory; Cake is not needed:
 
-1. [Lifetime.Setup](../../../build/Lifetime.cs) recursively deletes `bin` and `publish` and downloads `tools/nuget.exe` if absent. This setup runs even when selecting a narrower Cake task; it is not a harmless substitute for `dotnet build`.
-2. [Documentation](../../../build/Tasks/Documentation.cs) converts repository-root `readme.md` to `bin/readme.pdf` using the [HTML](../../../build/Themes/Github/Theme.html)/[CSS](../../../build/Themes/Github/Theme.css) theme. It does not package this AI guide automatically.
-3. [Build](../../../build/Tasks/Build.cs) publishes the main app as a framework-dependent `win-x64` single file with extraction options, then publishes Robin as self-contained NativeAOT to the same root `bin`. The release is therefore not a fully self-contained GUI application.
-4. [Sign](../../../build/Tasks/Sign.cs) uses the configured certificate, prompts for its password, and timestamps through DigiCert; a blank certificate path skips signing. Certificate installation is not an application-build prerequisite.
-5. [Zip](../../../build/Tasks/Zip.cs) includes the app, native Robin DLL, license, user PDF, and verbose launcher in `publish/EVE-O Preview.zip`; copies the public certificate separately. Its source certificate path assumes `bin/net10.0-windows/win-x64/EveoPreviewRootCA.crt` even though publish output is set to root `bin`; verify actual output before relying on that path.
-6. [Default](../../../build/Tasks/Default.cs) waits on `Console.ReadLine()` after packaging.
+```powershell
+dotnet publish .\Eve-O-Preview\Eve-O-Preview.csproj -c Release -r win-x64 --self-contained false -p:SelfContained=false -p:PublishSelfContained=false -p:UsedAvaloniaProducts= -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true -p:OutputPath=C:\dev\eve-o-preview\src\bin\publish-check\build\ -o .\bin\publish-check\package
+$validation = Start-Process -FilePath '.\bin\publish-check\package\EVE-O Preview.exe' -ArgumentList '--validate-desktop --validation-output C:\dev\eve-o-preview\src\bin\publish-check\results' -WindowStyle Hidden -Wait -PassThru
+$validation.ExitCode
+```
 
-These are concrete release-workflow side effects and assumptions, not requirements for ordinary source edits. No tracked CI workflow, standalone tool script, or source under `tools` was present at the review. Ignored downloads and prior binary outputs are not a substitute for current source or a verified release build.
+--validate-workspace resolves the production graph against an isolated temporary
+profile and opens/renders/closes the workspace. --validate-desktop runs the actual
+Avalonia loop with isolated settings, theme captures, SQLite and owned synthetic
+source/live/static previews. It checks native graphics, retained HWNDs and loaded
+forbidden assemblies, writes JSON/PNGs and exits. Neither mode discovers/injects
+games or changes personal profiles. Start-Process -Wait is necessary for WinExe;
+direct PowerShell invocation can return before validation finishes.
+
+Inspect resolved dependencies and the fresh package; development output with loose
+DLLs is not standalone validation. Robin remains an adjacent native DLL with the
+same loading/IPC ABI. A managed app build does not produce it. Follow the
+[Robin guide](robin.md) when its native toolchain/rebuild is needed.
+
+The manifest declares PerMonitorV2, asInvoker and uiAccess=false. Startup -v/--verbose
+writes rolling logs relative to the working directory, with daily/10MiB rollover
+and seven retained files. Account for the working directory when reproducing a launch.
+
+## Release-tooling side effects
+
+Read [Cake lifetime](../../../build/Lifetime.cs) and task sources before execution.
+An output-root override redirects generated folders; it is not a dry run.
+
+1. Lifetime.Setup deletes bin/publish beneath the selected root and may download
+   tools/nuget.exe. This applies even to narrower task selections.
+2. Documentation renders the root README with the release HTML/CSS theme.
+3. Build publishes the framework-dependent single-file app and NativeAOT Robin.
+4. ValidateWorkspace stages only the executable and runs isolated startup before signing.
+5. Sign uses credentials/certificates and a timestamp service. Certificate
+   installation/signing is not an ordinary build prerequisite.
+6. Zip packages executable, Robin, license, user PDF and verbose launcher;
+   the public certificate is copied separately.
+7. Default waits for console input; selecting Zip omits that final pause.
+
+--skip-signing=true supports an explicitly requested unsigned local Cake package.
+Ordinary migration checks use direct dotnet commands. Do not install over personal
+applications, change profiles, sign or publish a release to verify compilation.

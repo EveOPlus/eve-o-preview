@@ -1,0 +1,13 @@
+﻿------------------------------------------------------------
+  游戏记录
+  收听者: Sample Observer
+  进程开始: 2026.01.01 00:00:00
+------------------------------------------------------------
+[ 2026.01.01 00:00:00 ] (bounty) <font size=12><b><color=0xff00aa00>281 星币</b><color=0x77ffffff>添加到下一次赏金支付（支付额调整）
+[ 2026.01.01 00:00:01 ] (bounty) <font size=12><b><color=0xff00aa00>60,000,000 星币</b><color=0x77ffffff>添加到下一次赏金支付（支付额调整）
+[ 2026.01.01 00:00:02 ] (notify) 当你被别人锁定时，无法将飞船隐形。
+[ 2026.01.01 00:00:03 ] (combat) <color=0xffccff66><b>85</b><color=0x77ffffff><font size=10>远程护盾回充增量由</font><b><color=0xffffffff><fontsize=16><color=0xFFFFCC66><b> <u><localized hint="Bantam">矮脚鸡级*</u></b></color></fontsize><fontsize=14><color=0xFFCCCC33> [SAMPLE]</color></fontsize> <fontsize=12><color=0xFFFFFFCC><b>[SAMPLE]</b></fontsize>
+[ 2026.01.01 00:00:04 ] (combat) <color=0xffccff66><b>35</b><color=0x77ffffff><font size=10>远程装甲维修量由</font><b><color=0xffffffff><localized hint="Light Armor Maintenance Bot II">轻型装甲维护机器人 II*<b><fontsize=13><color=0xffFF3333> <localized hint="Light Armor Maintenance Bot II">轻型装甲维护机器人 II*<color=0xFF3399FF> [SAMPLE]</color><color=0xFF66FF00> (SAMPLE)</color></b><color=0x77ffffff><font size=10> - <localized hint="Light Armor Maintenance Bot II">轻型装甲维护机器人 II*</font>
+[ 2026.01.01 00:00:05 ] (combat) <color=0xffccff66><b>0</b><color=0x77ffffff><font size=10>远程护盾回充增量至</font><b><color=0xffffffff>Sample Pilot<b><fontsize=13><color=0xffFF3333> <localized hint="Stork">鹳鸟级*<color=0xFF3399FF> [SAMPLE]</color><color=0xFF66FF00> (SAMPLE)</color></b><color=0x77ffffff><font size=10> - <localized hint="Medium Asymmetric Enduring Remote Shield Booster">中型不对称持久型远程护盾回充增量器*</font>
+[ 2026.01.01 00:00:06 ] (combat) <color=0xffccff66><b>0</b><color=0x77ffffff><font size=10>远程装甲维修量至</font><b><color=0xffffffff><fontsize=16><color=0xFFFFCC66><b> <u><localized hint="Muninn">缪宁级*</u></b></color></fontsize><fontsize=14><color=0xFFCCCC33> [SAMPLE]</color></fontsize> <fontsize=12><color=0xFFFFFFCC><b>[SAMPLE]</b></fontsize>
+[ 2026.01.01 00:00:07 ] (combat) <color=0xffccff66><b>14</b><color=0x77ffffff><font size=10>远程结构维修量由</font><b><color=0xffffffff><localized hint="Medium Hull Maintenance Bot I">中型船体维护机器人 I*<b><fontsize=13><color=0xffFF3333> <localized hint="Medium Hull Maintenance Bot I">中型船体维护机器人 I*<color=0xFF3399FF> [SAMPLE]</color><color=0xFF66FF00> (SAMPLE)</color></b><color=0x77ffffff><font size=10> - <localized hint="Medium Hull Maintenance Bot I">中型船体维护机器人 I*</font>

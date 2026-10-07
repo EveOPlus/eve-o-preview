@@ -21,6 +21,7 @@ using EveOPreview.Services.Interface;
 using MediatR;
 using Serilog;
 using System.Threading;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace EveOPreview.Mediator.Handlers.Process;
@@ -42,7 +43,7 @@ public class ResetAllCpuAffinityHandler : IRequestHandler<ResetAllCpuAffinity>
     {
         _logger.WithCallerInfo().Verbose("ResetAllCpuAffinity handler invoked");
         
-        var allProcesses = _processMonitor.GetAllProcesses();
+        var allProcesses = _processMonitor.GetAllProcesses().Where(p => p.IsEveClient).ToList();
         _logger.Verbose("Retrieved {ProcessCount} processes for CPU affinity reset", allProcesses.Count);
 
         _cpyAffinityService.ResetAll(allProcesses);

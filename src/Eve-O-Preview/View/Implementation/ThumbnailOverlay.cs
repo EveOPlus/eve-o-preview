@@ -1,76 +1,200 @@
-﻿//Eve-O Preview Plus is a program designed to deliver quality of life tooling. Primarily but not limited to enabling rapid window foreground and focus changes for the online game Eve Online.
-//Copyright (C) 2026  Aura Asuna
-//
-//This program is free software: you can redistribute it and/or modify
-//it under the terms of the GNU General Public License as published by
-//the Free Software Foundation, either version 3 of the License, or
-//(at your option) any later version.
-//
-//This program is distributed in the hope that it will be useful,
-//but WITHOUT ANY WARRANTY; without even the implied warranty of
-//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//GNU General Public License for more details.
-//
-//You should have received a copy of the GNU General Public License
-//along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-using EveOPreview.Services;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
-using System.Windows.Forms;
+using System.Linq;
+using Avalonia.Controls;
+using Avalonia.Media;
 using EveOPreview.Configuration.Implementation;
+using EveOPreview.Preview;
+using EveOPreview.View.Rendering;
+using Point = System.Drawing.Point;
+using Size = System.Drawing.Size;
+using Color = System.Drawing.Color;
 
-namespace EveOPreview.View
+namespace EveOPreview.View;
+
+/// <summary>Avalonia owns this transparent, nonactivating overlay top-level. The Windows
+/// compositor retains native assets independently of the paired DWM image window.</summary>
+public class ThumbnailOverlay : Window, IDisposable
 {
-    public partial class ThumbnailOverlay : Form
+    private readonly Window _owner;
+    private readonly WindowsPreviewWindowAdapter _native;
+    private OverlayRendererKind _rendererKind;
+    private IOverlayRenderer _renderer;
+    private OverlayScene _scene = new();
+    private double _overlayOpacity = 1;
+    private bool _disposed;
+    private bool _rendererStateDirty = true;
+
+    public ThumbnailOverlay(Window owner, OverlayRendererKind rendererKind = OverlayRendererKind.Legacy)
     {
-        #region Private fields
-        private readonly Action<object, MouseEventArgs> _areaClickAction;
-        #endregion
-
-        public ThumbnailOverlay(Form owner, Action<object, MouseEventArgs> areaClickAction)
+        _owner = owner; _rendererKind = rendererKind;
+        Title = "EVE-O Preview overlay";
+        SystemDecorations = SystemDecorations.None;
+        ShowInTaskbar = false; ShowActivated = false; CanResize = false;
+        Background = Avalonia.Media.Brushes.Transparent;
+        TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        _native = new WindowsPreviewWindowAdapter(this, clickThrough: true);
+        Closed += (_, _) => ReleaseResources();
+        SizeChanged += (_, _) => ResizeRenderer();
+    }
+    public IntPtr Handle => _native.Handle;
+    public bool IsHandleCreated => Handle != IntPtr.Zero;
+    public bool IsDisposed => _disposed;
+    public bool Visible => IsVisible;
+    public bool TopMost { get => Topmost; set => Topmost = value; }
+    public Point Location { get => _native.Location; set => _native.Location = value; }
+    public Size Size { get => _native.Size; set => _native.Size = value; }
+    public new Size ClientSize { get => _native.ClientSize; set => _native.ClientSize = value; }
+    public Point PointToScreen(Point point) => _native.PointToScreen(point);
+    public Point PointToClient(Point point) => _native.PointToClient(point);
+    public OverlayRendererKind RendererKind => _rendererKind;
+    internal OverlayScene Scene => _scene;
+    public OverlayCapabilities GraphicsCapabilities => _renderer?.Capabilities ?? (OverlayCapabilities.Title | OverlayCapabilities.CycleMarker);
+    // Visual.Opacity does not affect the independent DirectComposition tree.
+    public new double Opacity
+    {
+        get => _overlayOpacity;
+        set
         {
-            this.Owner = owner;
-            this._areaClickAction = areaClickAction;
-
-            InitializeComponent();
+            _overlayOpacity = double.IsFinite(value) ? Math.Clamp(value, 0, 1) : 1;
+            if (!IsVisible) _rendererStateDirty = true;
+            else Render(r => r.SetOpacity(_overlayOpacity));
         }
-
-        private void OverlayArea_Click(object sender, MouseEventArgs e)
+    }
+    protected override void OnOpened(EventArgs e)
+    {
+        // Native composition supplies every pixel; framework rendering is only
+        // needed if this same window switches to compatibility graphics.
+        if (_rendererKind == OverlayRendererKind.NativeComposition) StopRendering();
+        base.OnOpened(e);
+    }
+    protected override void OnPropertyChanged(Avalonia.AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == WindowStateProperty && _rendererKind == OverlayRendererKind.NativeComposition)
         {
-            this._areaClickAction(this, e);
-        }
-
-        public void SetOverlayLabel(string label)
-        {
-            this.OverlayLabel.Text = label;
-        }
-        
-        public void SetOverlayFont(FontSettings fontSettings)
-        {
-            this.OverlayLabel.Font = new Font(fontSettings.Name, fontSettings.Size, fontSettings.Style);
-            this.OverlayLabel.ForeColor = fontSettings.ForeColor;
-            this.OverlayLabel.OutlineColor = fontSettings.OutlineColor;
-            this.OverlayLabel.OutlineWidth = fontSettings.OutlineWidth;
-            this.OverlayLabel.Top = fontSettings.PositionOffsetFromTop;
-            this.OverlayLabel.Left = fontSettings.PositionOffsetFromLeft;
-        }
-
-        public void EnableOverlayLabel(bool enable)
-        {
-            this.OverlayLabel.Visible = enable;
-        }
-
-        protected override bool ShowWithoutActivation => true;
-
-        protected override CreateParams CreateParams
-        {
-            get
+            // Avalonia restarts drawing after delivering a native restore state.
+            // Run after that callback, before the next framework render pass.
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
-                var Params = base.CreateParams;
-                Params.ExStyle |= (int)InteropConstants.WS_EX_TOOLWINDOW;
-                return Params;
-            }
+                if (!_disposed && _rendererKind == OverlayRendererKind.NativeComposition) StopRendering();
+            }, Avalonia.Threading.DispatcherPriority.Send);
         }
+    }
+    public override void Show()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!IsVisible) { if (_owner != null && _owner.IsVisible) base.Show(_owner); else base.Show(); }
+        _native.EnsureStyles(); EnsureRenderer();
+        if (_rendererStateDirty) ApplyRendererState();
+        Render(r => r.SetVisible(true));
+    }
+    public override void Hide() { if (_disposed) return; Render(r => r.SetVisible(false)); base.Hide(); }
+    public void Refresh() => ResizeRenderer();
+    public void RestoreGraphicsVisibility()
+    {
+        if (_rendererStateDirty) ApplyRendererState();
+        Render(r => r.SetVisible(true));
+    }
+    public void ClearAlerts() => Render(r => r.ClearAlerts());
+    public void ShowAlert(PreviewAlert alert) { if (IsVisible && !_disposed) Render(r => r.ShowAlert(alert.Normalize())); }
+    private void EnsureRenderer()
+    {
+        if (_renderer != null || _disposed) return;
+        if (_rendererKind == OverlayRendererKind.NativeComposition)
+        {
+            try { _renderer = CreateNativeRenderer(Handle); }
+            catch (Exception ex) { UseCompatibilityRenderer(ex); return; }
+        }
+        else CreateCompatibilityRenderer();
+        ApplyRendererState();
+    }
+    protected virtual IOverlayRenderer CreateNativeRenderer(IntPtr handle) => new NativeCompositionOverlayRenderer(handle);
+    private void ApplyRendererState()
+    {
+        if (_renderer == null || !IsVisible) return;
+        _rendererStateDirty = false;
+        Render(r =>
+        {
+            var size = ClientSize;
+            r.Resize(new PreviewSize(size.Width, size.Height)); r.SetScene(_scene);
+            r.SetOpacity(_overlayOpacity); r.SetVisible(true);
+        });
+    }
+    private void CreateCompatibilityRenderer()
+    {
+        var renderer = new CompatibilityOverlayRenderer(); _renderer = renderer; Content = renderer;
+        if (IsVisible) StartRendering();
+    }
+    private void UseCompatibilityRenderer(Exception ex)
+    {
+        _renderer?.Dispose(); _renderer = null; _rendererKind = OverlayRendererKind.Legacy;
+        Serilog.Log.Warning(ex, "Native preview overlay unavailable; using compatibility graphics");
+        // Resume framework drawing only after releasing our native target. The
+        // same HWND and DWM image relationship survive compatibility recovery.
+        _rendererStateDirty = true;
+        CreateCompatibilityRenderer(); ApplyRendererState();
+    }
+    internal void MaintainGraphics()
+    {
+        if (_renderer is not NativeCompositionOverlayRenderer native) return;
+        try { native.CheckDeviceHealth(); }
+        catch (System.Runtime.InteropServices.COMException ex) { UseCompatibilityRenderer(ex); }
+    }
+    private void Render(Action<IOverlayRenderer> action)
+    {
+        if (_renderer == null || _disposed) return;
+        try { action(_renderer); }
+        catch (System.Runtime.InteropServices.COMException ex) when (_rendererKind == OverlayRendererKind.NativeComposition)
+        { UseCompatibilityRenderer(ex); }
+    }
+    private void ResizeRenderer()
+    {
+        if (_native == null) return;
+        if (!IsVisible) { _rendererStateDirty = true; return; }
+        var size = ClientSize; Render(r => r.Resize(new PreviewSize(size.Width, size.Height)));
+    }
+    private void SetScene(OverlayScene scene)
+    {
+        if (_scene == scene) return;
+        _scene = scene;
+        if (!IsVisible) _rendererStateDirty = true;
+        else Render(r => r.SetScene(scene));
+    }
+    public void SetOverlayLabel(string label) => SetScene(_scene with { Title = label });
+    public void EnableOverlayLabel(bool enable) => SetScene(_scene with { ShowTitle = enable });
+    public void SetOverlayFont(FontSettings settings) => SetScene(_scene with
+    {
+        Font = new OverlayFont(settings.Name, settings.Size, (OverlayFontStyle)settings.Style,
+            unchecked((uint)settings.ForeColor.ToArgb()), unchecked((uint)settings.OutlineColor.ToArgb()),
+            settings.OutlineWidth, settings.PositionOffsetFromLeft, settings.PositionOffsetFromTop)
+    });
+    public void SetCycleSkipIndicator(bool skipped, string style, Color color) => SetScene(_scene with
+    {
+        CycleSkipped = skipped, MarkerStyle = style switch { "Pause" => CycleMarkerStyle.Pause, "Cross" => CycleMarkerStyle.Cross, _ => CycleMarkerStyle.CircleSlash },
+        MarkerColor = unchecked((uint)color.ToArgb())
+    });
+    public void SetStats(IReadOnlyList<OverlayStat> stats, OverlayStatsStyle style = null)
+    {
+        var next = stats?.Take(8).ToArray() ?? Array.Empty<OverlayStat>(); style ??= _scene.StatsStyle;
+        if (!_scene.Stats.SequenceEqual(next) || _scene.StatsStyle != style) SetScene(_scene with { Stats = next, StatsStyle = style });
+    }
+    public void SetSubtitle(string text, uint color, SubtitlePlacement placement = SubtitlePlacement.Below, float? fontSize = null) =>
+        SetScene(_scene with { Subtitle = text, SubtitleColor = color, SubtitlePlacement = placement, SubtitleFontSize = fontSize });
+    public void SetTitleColor(uint? color) => SetDamageFlash(color, _scene.DamageTint, _scene.DamageFlashIntensity);
+    public void SetTitlePosition(OverlayPosition position) => SetScene(_scene with { TitlePosition = position });
+    public void SetDamageFlash(uint? titleColor, uint? tint, double intensity = 1) => SetScene(_scene with
+    {
+        TitleColor = titleColor, DamageTint = tint, DamageFlashIntensity = double.IsFinite(intensity) ? Math.Clamp(intensity, 0, 1) : 0
+    });
+    internal void SetAlertBounds(PreviewRect? bounds) => SetScene(_scene with { AlertBounds = bounds });
+    internal void SetActiveBorder(OverlayBorder border) => SetScene(_scene with { ActiveBorder = border, AlertBounds = border?.InnerBounds });
+    public void Dispose() { if (_disposed) return; ReleaseResources(); Close(); }
+    private void ReleaseResources()
+    {
+        if (_disposed) return;
+        _disposed = true; _renderer?.Dispose(); _renderer = null; _native.Dispose();
     }
 }

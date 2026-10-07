@@ -1,0 +1,80 @@
+---
+Gamelog
+Listener: Sample Observer
+Session Started: 2026.01.01 00:00:00
+---
+[ 2026.01.01 00:00:00 ] (combat) <color=0xff00ffff><b>42</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:00:03 ] (combat) <color=0xff00ffff><b>108</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Glances Off
+[ 2026.01.01 00:00:05 ] (combat) <color=0xff00ffff><b>31</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:00:07 ] (combat) <color=0xff00ffff><b>68</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:00:11 ] (combat) <color=0xff00ffff><b>36</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:00:12 ] (combat) <color=0xffcc0000><b>12</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:00:14 ] (combat) <color=0xffcc0000><b>6</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Grazes
+[ 2026.01.01 00:00:23 ] (combat) <color=0xffcc0000><b>13</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:00:24 ] (combat) <color=0xffcc0000><b>9</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Hits
+[ 2026.01.01 00:00:28 ] (combat) <color=0xffcc0000><b>8</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Hits
+[ 2026.01.01 00:00:32 ] (combat) <color=0xffcc0000><b>12</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Smashes
+[ 2026.01.01 00:00:33 ] (combat) <color=0xffcc0000><b>13</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:00:35 ] (combat) <color=0xffcc0000><b>9</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Hits
+[ 2026.01.01 00:00:39 ] (combat) <color=0xffcc0000><b>12</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Smashes
+[ 2026.01.01 00:00:43 ] (combat) <color=0xffcc0000><b>9</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Hits
+[ 2026.01.01 00:00:45 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:00:47 ] (combat) <color=0xffcc0000><b>6</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Grazes
+[ 2026.01.01 00:00:51 ] (combat) <color=0xffcc0000><b>11</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Penetrates
+[ 2026.01.01 00:00:54 ] (combat) <color=0xffcc0000><b>11</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Penetrates
+[ 2026.01.01 00:00:56 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:00:58 ] (combat) <color=0xffcc0000><b>5</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Grazes
+[ 2026.01.01 00:01:03 ] (combat) <color=0xffcc0000><b>11</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Penetrates
+[ 2026.01.01 00:01:06 ] (combat) <color=0xffcc0000><b>6</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Glances Off
+[ 2026.01.01 00:01:08 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:01:10 ] (combat) <color=0xffcc0000><b>6</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Glances Off
+[ 2026.01.01 00:01:13 ] (combat) <color=0xffcc0000><b>12</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Smashes
+[ 2026.01.01 00:01:15 ] (combat) <color=0xff00ffff><b>139</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Hits
+[ 2026.01.01 00:01:17 ] (combat) <color=0xffcc0000><b>6</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - Grazes
+[ 2026.01.01 00:01:17 ] (combat) <color=0xff00ffff><b>79</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 1</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Penetrates
+[ 2026.01.01 00:03:26 ] (combat) <color=0xff00ffff><b>107</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 2</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Glances Off
+[ 2026.01.01 00:03:26 ] (combat) <color=0xffcc0000><b>1</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 2</b><font size=10><color=0x77ffffff> - Grazes
+[ 2026.01.01 00:03:27 ] (combat) <color=0xffcc0000><b>1</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 2</b><font size=10><color=0x77ffffff> - Grazes
+[ 2026.01.01 00:03:27 ] (combat) <color=0xff00ffff><b>53</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 2</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:03:30 ] (combat) <color=0xffcc0000><b>3</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 3</b><font size=10><color=0x77ffffff> - Hits
+[ 2026.01.01 00:03:32 ] (combat) <color=0xffcc0000><b>1</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 2</b><font size=10><color=0x77ffffff> - Glances Off
+[ 2026.01.01 00:03:32 ] (combat) <color=0xffcc0000><b>3</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 3</b><font size=10><color=0x77ffffff> - Hits
+[ 2026.01.01 00:03:32 ] (combat) <color=0xff00ffff><b>135</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 2</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Hits
+[ 2026.01.01 00:03:34 ] (combat) <color=0xffcc0000><b>1</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 2</b><font size=10><color=0x77ffffff> - Grazes
+[ 2026.01.01 00:03:35 ] (combat) <color=0xff00ffff><b>25</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 2</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Glances Off
+[ 2026.01.01 00:05:51 ] (combat) <color=0xffcc0000><b>0</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Hits
+[ 2026.01.01 00:05:51 ] (combat) <color=0xffcc0000><b>0</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Hits
+[ 2026.01.01 00:05:58 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:05:58 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:06:03 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:06:03 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:06:09 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:06:10 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:06:16 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:06:16 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:06:24 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:06:24 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:06:28 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:06:28 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:06:34 ] (combat) <color=0xffcc0000><b>14</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:06:35 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:06:42 ] (combat) <color=0xff00ffff><b>77</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:06:45 ] (combat) <color=0xff00ffff><b>37</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:06:47 ] (combat) <color=0xff00ffff><b>28</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:06:52 ] (combat) <color=0xff00ffff><b>35</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:06:56 ] (combat) <color=0xff00ffff><b>29</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:07:08 ] (combat) <color=0xff00ffff><b>26</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:09:35 ] (combat) <color=0xff00ffff><b>59</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:09:37 ] (combat) <color=0xff00ffff><b>40</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:09:40 ] (combat) <color=0xff00ffff><b>115</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Grazes
+[ 2026.01.01 00:09:42 ] (combat) <color=0xff00ffff><b>11</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Glances Off
+[ 2026.01.01 00:09:54 ] (combat) <color=0xffcc0000><b>0</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Hits
+[ 2026.01.01 00:10:02 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:10:09 ] (combat) <color=0xffcc0000><b>16</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:10:14 ] (combat) <color=0xffcc0000><b>13</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:10:20 ] (combat) <color=0xffcc0000><b>20</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:10:27 ] (combat) <color=0xffcc0000><b>19</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:10:33 ] (combat) <color=0xffcc0000><b>18</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:10:39 ] (combat) <color=0xffcc0000><b>17</b> <color=0x77ffffff><font size=10>from</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - Scourge Rocket - Hits
+[ 2026.01.01 00:10:41 ] (combat) <color=0xff00ffff><b>148</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Hits
+[ 2026.01.01 00:10:44 ] (combat) <color=0xff00ffff><b>152</b> <color=0x77ffffff><font size=10>to</font> <b><color=0xffffffff>Sample NPC 4</b><font size=10><color=0x77ffffff> - 200mm Light 'Scout' Autocannon I - Penetrates
