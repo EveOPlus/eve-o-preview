@@ -23,7 +23,7 @@ internal sealed class CompatibilityOverlayRenderer : Canvas, IOverlayRenderer
     private bool _disposed, _initialized;
     private double _scale = 1;
     private TopLevel _topLevel;
-    private OverlaySceneRasterizer.Asset _titleAsset, _statsAsset;
+    private PreviewRect _titleBounds, _statsBounds;
 
     public CompatibilityOverlayRenderer()
     {
@@ -84,31 +84,36 @@ internal sealed class CompatibilityOverlayRenderer : Canvas, IOverlayRenderer
         int bottom = (int)Math.Clamp((long)bounds.Y + Math.Max(0, bounds.Height), top, Math.Max(top, _size.Height));
         SetLeft(_tint, left / _scale); SetTop(_tint, top / _scale);
         _tint.Width = (right - left) / _scale; _tint.Height = (bottom - top) / _scale;
-        Position(_title, _titleAsset); Position(_stats, _statsAsset);
+        Position(_title, _titleBounds); Position(_stats, _statsBounds);
     }
-    private void Position(Image image, OverlaySceneRasterizer.Asset asset)
+    private void Position(Image image, PreviewRect bounds)
     {
-        if (asset == null) return;
-        SetLeft(image, asset.X / _scale); SetTop(image, asset.Y / _scale);
-        image.Width = asset.Bitmap.Width / _scale; image.Height = asset.Bitmap.Height / _scale;
+        SetLeft(image, bounds.X / _scale); SetTop(image, bounds.Y / _scale);
+        image.Width = bounds.Width / _scale; image.Height = bounds.Height / _scale;
     }
     private void UpdateAssets(bool titleChanged, bool statsChanged)
     {
         if (_disposed || _size.Width <= 0 || _size.Height <= 0) return;
         if (titleChanged)
         {
-            Replace(_title, ref _titleAsset, OverlaySceneRasterizer.RenderAsset(_scene, _size, drawStats: false));
+            Replace(_title, ref _titleBounds, OverlaySceneRasterizer.RenderAsset(_scene, _size, drawStats: false));
         }
-        if (statsChanged) Replace(_stats, ref _statsAsset, OverlaySceneRasterizer.RenderAsset(_scene, _size, drawTitle: false));
+        if (statsChanged) Replace(_stats, ref _statsBounds, OverlaySceneRasterizer.RenderAsset(_scene, _size, drawTitle: false));
         UpdateScale();
     }
-    private void Replace(Image image, ref OverlaySceneRasterizer.Asset asset, OverlaySceneRasterizer.Asset replacement)
+    private void Replace(Image image, ref PreviewRect bounds, OverlaySceneRasterizer.Asset replacement)
     {
-        var bitmap = replacement == null ? null : WindowsBitmap.Copy(replacement.Bitmap);
-        var previous = image.Source as Bitmap;
-        image.Source = bitmap;
-        previous?.Dispose(); asset?.Dispose(); asset = replacement;
-        Position(image, asset);
+        // Avalonia owns a pixel copy. Retain only placement after the copy, not
+        // a second GDI bitmap for every title and stat block.
+        using (replacement)
+        {
+            var bitmap = replacement == null ? null : WindowsBitmap.Copy(replacement.Bitmap);
+            var previous = image.Source as Bitmap;
+            image.Source = bitmap;
+            previous?.Dispose();
+            bounds = replacement == null ? default : new(replacement.X, replacement.Y, replacement.Bitmap.Width, replacement.Bitmap.Height);
+            Position(image, bounds);
+        }
     }
     private static bool TitleEquals(OverlayScene a, OverlayScene b) => a.Font == b.Font && a.Title == b.Title && a.ShowTitle == b.ShowTitle
         && a.CycleSkipped == b.CycleSkipped && a.MarkerStyle == b.MarkerStyle && a.MarkerColor == b.MarkerColor
@@ -121,6 +126,5 @@ internal sealed class CompatibilityOverlayRenderer : Canvas, IOverlayRenderer
         _disposed = true;
         if (_topLevel != null) _topLevel.ScalingChanged -= ScalingChanged;
         foreach (var image in new[] { _title, _stats }) { (image.Source as Bitmap)?.Dispose(); image.Source = null; }
-        _titleAsset?.Dispose(); _statsAsset?.Dispose();
     }
 }

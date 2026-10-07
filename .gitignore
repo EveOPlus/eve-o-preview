@@ -12,6 +12,7 @@ src/packages/**
 
 # Local AI working files and generated captures (keep shared AGENTS.md/guides tracked).
 .ai-work/
+.vscode/
 .ai-output/
 .codex/logs/
 .codex/sessions/

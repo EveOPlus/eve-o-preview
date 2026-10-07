@@ -459,7 +459,7 @@ internal static partial class Program
     {
         if (portableOverlays.TryGetValue(view, out var window)) return (object)new { Backend = "avalonia", window.Renderer.SceneRenderCount, window.Renderer.SceneUpdateCount };
         var renderer = typeof(ThumbnailOverlay).GetField("_renderer", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(Overlay(view));
-        return renderer is NativeCompositionOverlayRenderer native ? (object)new { Backend = "native", native.SurfaceUploadCount, native.CommitCount, native.SceneSurfacePixels, native.AlertSurfacePixels } : new { Backend = "legacy" };
+        return renderer is NativeCompositionOverlayRenderer native ? (object)new { Backend = "native", native.SurfaceUploadCount, native.SurfaceAllocationCount, native.CommitCount, native.SceneSurfacePixels, native.AlertSurfacePixels } : new { Backend = "legacy" };
     }).ToArray();
     private static object ExerciseZoom(ThumbnailView view, Dictionary<ThumbnailView, AvaloniaPreviewOverlayWindow> portableOverlays, Process process, int factor)
     {

@@ -24,6 +24,7 @@ public class ThumbnailOverlay : Window, IDisposable
     private OverlayScene _scene = new();
     private double _overlayOpacity = 1;
     private bool _disposed;
+    private bool _rendererStateDirty = true;
 
     public ThumbnailOverlay(Window owner, OverlayRendererKind rendererKind = OverlayRendererKind.Legacy)
     {
@@ -55,17 +56,48 @@ public class ThumbnailOverlay : Window, IDisposable
     public new double Opacity
     {
         get => _overlayOpacity;
-        set { _overlayOpacity = double.IsFinite(value) ? Math.Clamp(value, 0, 1) : 1; Render(r => r.SetOpacity(_overlayOpacity)); }
+        set
+        {
+            _overlayOpacity = double.IsFinite(value) ? Math.Clamp(value, 0, 1) : 1;
+            if (!IsVisible) _rendererStateDirty = true;
+            else Render(r => r.SetOpacity(_overlayOpacity));
+        }
     }
-    public new void Show()
+    protected override void OnOpened(EventArgs e)
+    {
+        // Native composition supplies every pixel; framework rendering is only
+        // needed if this same window switches to compatibility graphics.
+        if (_rendererKind == OverlayRendererKind.NativeComposition) StopRendering();
+        base.OnOpened(e);
+    }
+    protected override void OnPropertyChanged(Avalonia.AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == WindowStateProperty && _rendererKind == OverlayRendererKind.NativeComposition)
+        {
+            // Avalonia restarts drawing after delivering a native restore state.
+            // Run after that callback, before the next framework render pass.
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                if (!_disposed && _rendererKind == OverlayRendererKind.NativeComposition) StopRendering();
+            }, Avalonia.Threading.DispatcherPriority.Send);
+        }
+    }
+    public override void Show()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (!IsVisible) { if (_owner != null && _owner.IsVisible) base.Show(_owner); else base.Show(); }
-        _native.EnsureStyles(); EnsureRenderer(); Render(r => r.SetVisible(true));
+        _native.EnsureStyles(); EnsureRenderer();
+        if (_rendererStateDirty) ApplyRendererState();
+        Render(r => r.SetVisible(true));
     }
-    public new void Hide() { if (_disposed) return; Render(r => r.SetVisible(false)); base.Hide(); }
+    public override void Hide() { if (_disposed) return; Render(r => r.SetVisible(false)); base.Hide(); }
     public void Refresh() => ResizeRenderer();
-    public void RestoreGraphicsVisibility() => Render(r => r.SetVisible(true));
+    public void RestoreGraphicsVisibility()
+    {
+        if (_rendererStateDirty) ApplyRendererState();
+        Render(r => r.SetVisible(true));
+    }
     public void ClearAlerts() => Render(r => r.ClearAlerts());
     public void ShowAlert(PreviewAlert alert) { if (IsVisible && !_disposed) Render(r => r.ShowAlert(alert.Normalize())); }
     private void EnsureRenderer()
@@ -80,22 +112,29 @@ public class ThumbnailOverlay : Window, IDisposable
         ApplyRendererState();
     }
     protected virtual IOverlayRenderer CreateNativeRenderer(IntPtr handle) => new NativeCompositionOverlayRenderer(handle);
-    private void ApplyRendererState() => Render(r =>
+    private void ApplyRendererState()
     {
-        var size = ClientSize;
-        r.Resize(new PreviewSize(size.Width, size.Height)); r.SetScene(_scene);
-        r.SetOpacity(_overlayOpacity); r.SetVisible(IsVisible);
-    });
+        if (_renderer == null || !IsVisible) return;
+        _rendererStateDirty = false;
+        Render(r =>
+        {
+            var size = ClientSize;
+            r.Resize(new PreviewSize(size.Width, size.Height)); r.SetScene(_scene);
+            r.SetOpacity(_overlayOpacity); r.SetVisible(true);
+        });
+    }
     private void CreateCompatibilityRenderer()
     {
         var renderer = new CompatibilityOverlayRenderer(); _renderer = renderer; Content = renderer;
+        if (IsVisible) StartRendering();
     }
     private void UseCompatibilityRenderer(Exception ex)
     {
         _renderer?.Dispose(); _renderer = null; _rendererKind = OverlayRendererKind.Legacy;
         Serilog.Log.Warning(ex, "Native preview overlay unavailable; using compatibility graphics");
-        // Avalonia retains its transparent target. Releasing only our DComp target
-        // restores that surface without replacing this HWND or the DWM image HWND.
+        // Resume framework drawing only after releasing our native target. The
+        // same HWND and DWM image relationship survive compatibility recovery.
+        _rendererStateDirty = true;
         CreateCompatibilityRenderer(); ApplyRendererState();
     }
     internal void MaintainGraphics()
@@ -114,12 +153,15 @@ public class ThumbnailOverlay : Window, IDisposable
     private void ResizeRenderer()
     {
         if (_native == null) return;
+        if (!IsVisible) { _rendererStateDirty = true; return; }
         var size = ClientSize; Render(r => r.Resize(new PreviewSize(size.Width, size.Height)));
     }
     private void SetScene(OverlayScene scene)
     {
         if (_scene == scene) return;
-        _scene = scene; Render(r => r.SetScene(scene));
+        _scene = scene;
+        if (!IsVisible) _rendererStateDirty = true;
+        else Render(r => r.SetScene(scene));
     }
     public void SetOverlayLabel(string label) => SetScene(_scene with { Title = label });
     public void EnableOverlayLabel(bool enable) => SetScene(_scene with { ShowTitle = enable });

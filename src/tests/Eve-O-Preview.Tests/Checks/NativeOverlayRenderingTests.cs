@@ -54,6 +54,16 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
     public Task AlertBoundsClipTheAnimatedChildWithoutUploadingOrRestartingSurfaces() =>
         PrivateDesktopRunner.RunAsync("native-overlay-clipping", output);
 
+    [Fact]
+    public Task ChangingTextReusesSurfacesAndShrinkingReleasesLargeAllocations() =>
+        PrivateDesktopRunner.RunAsync("native-overlay-reuse", output);
+
+    [Theory]
+    [InlineData("native")]
+    [InlineData("compatibility")]
+    public Task HiddenOverlaysDeferUpdatesAndRestoreLatestScene(string renderer) =>
+        PrivateDesktopRunner.RunAsync("native-overlay-hidden-" + renderer, output);
+
     [Theory]
     [InlineData(CycleMarkerStyle.CircleSlash)]
     [InlineData(CycleMarkerStyle.Cross)]
@@ -177,6 +187,11 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
         Native.SetActiveWindow(client.Handle);
         Assert.Equal(client.Handle, Native.GetActiveWindow());
         nint foreground = Native.GetForegroundWindow();
+        if (scenario.StartsWith("hidden-", StringComparison.Ordinal))
+        {
+            CheckHiddenOverlay(client, foreground, scenario == "hidden-native");
+            return;
+        }
         if (scenario == "highlight")
         {
             CheckActiveHighlight(client, foreground);
@@ -247,6 +262,33 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
             Assert.Equal(uploads + 1, renderer.SurfaceUploadCount);
             Console.WriteLine($"9600x5400 viewport retains {renderer.SceneSurfacePixels} title/stat pixels and {renderer.AlertSurfacePixels} alert pixels.");
         }
+        else if (scenario == "reuse")
+        {
+            var text = scene with { Font = new OverlayFont(Family: "Consolas", Size: 18),
+                StatsStyle = new OverlayStatsStyle { FontFamily = "Consolas" }, Stats = [new OverlayStat("", "888")] };
+            renderer.SetScene(text);
+            long allocations = renderer.SurfaceAllocationCount, uploads = renderer.SurfaceUploadCount;
+            for (int i = 0; i < 100; i++)
+                renderer.SetScene(text with { Stats = [new OverlayStat("", "888", i % 2 == 0 ? 0xFFFF0000 : 0xFF00FF00)] });
+            Assert.Equal(allocations, renderer.SurfaceAllocationCount);
+            Assert.Equal(uploads + 100, renderer.SurfaceUploadCount);
+            // Real counter changes in a fixed-width font also retain the GPU surface.
+            renderer.SetScene(text with { Stats = [new OverlayStat("", "808")] });
+            long counterAllocations = renderer.SurfaceAllocationCount;
+            for (int i = 0; i < 100; i++)
+                renderer.SetScene(text with { Stats = [new OverlayStat("", i % 2 == 0 ? "888" : "808")] });
+            Assert.Equal(counterAllocations, renderer.SurfaceAllocationCount);
+            long smallPixels = renderer.SceneSurfacePixels;
+            renderer.SetScene(text with { Stats = [new OverlayStat("", "888888888888888888")] });
+            Assert.True(renderer.SceneSurfacePixels > smallPixels);
+            renderer.SetScene(text);
+            Assert.Equal(smallPixels, renderer.SceneSurfacePixels);
+            renderer.SetScene(text with { ShowTitle = false, Stats = [] });
+            renderer.SetScene(text with { ShowTitle = false, CycleSkipped = false, Stats = [] });
+            Assert.Equal(0, renderer.SceneSurfacePixels);
+            renderer.SetScene(text); renderer.WaitForPendingCommit();
+            Assert.True(renderer.SceneSurfacePixels > 0);
+        }
         else if (scenario == "clipping")
         {
             renderer.ShowAlert(new PreviewAlert(DurationSeconds: 0.1, Intensity: 1, ShakePixels: 24));
@@ -309,6 +351,7 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
             PositionOffsetFromLeft = 17, PositionOffsetFromTop = 13 });
         overlay.SetCycleSkipIndicator(true, "Pause", Color.Lime);
         overlay.Show(); overlay.Opacity = 0.7;
+        Assert.False(FrameworkRenderingEnabled(overlay));
         Assert.Equal(OverlayRendererKind.NativeComposition, overlay.RendererKind);
         Assert.True(overlay.GraphicsCapabilities.HasFlag(OverlayCapabilities.CompositorAnimations));
         int styles = Native.GetWindowLong(overlay.Handle, -20);
@@ -329,12 +372,71 @@ public sealed class NativeOverlayRenderingTests(ITestOutputHelper output)
         Assert.NotEqual(0, styles & 0x08000000);
         Assert.Equal(originalHandle, overlay.Handle);
         var compatibility = Assert.IsType<CompatibilityOverlayRenderer>(overlay.Content);
+        Assert.True(FrameworkRenderingEnabled(overlay));
         Assert.True(compatibility.IsVisible);
         Assert.Equal("Configured native title", overlay.Scene.Title);
         Assert.Equal(19, overlay.Scene.Font.Size);
         Assert.Equal((17, 13), (overlay.Scene.Font.OffsetX, overlay.Scene.Font.OffsetY));
         Assert.Contains(compatibility.Children.OfType<Avalonia.Controls.Image>(), image => image.Source != null);
         Assert.Equal(0.7, overlay.Opacity);
+        Assert.Equal(client.Handle, Native.GetActiveWindow());
+        Assert.Equal(foreground, Native.GetForegroundWindow());
+    }
+
+    private static bool FrameworkRenderingEnabled(ThumbnailOverlay overlay)
+    {
+        var renderer = typeof(Avalonia.Controls.TopLevel).GetProperty("Renderer", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(overlay)!;
+        var target = renderer.GetType().GetProperty("CompositionTarget", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(renderer)!;
+        return (bool)target.GetType().GetProperty("IsEnabled")!.GetValue(target)!;
+    }
+
+    private static void CheckHiddenOverlay(Form client, nint foreground, bool native)
+    {
+        using var overlay = new ThumbnailOverlay(null, native ? OverlayRendererKind.NativeComposition : OverlayRendererKind.Legacy)
+        { ClientSize = new Size(320, 180) };
+        overlay.SetOverlayLabel("Initial title");
+        overlay.SetStats([new OverlayStat("", "100")]);
+        overlay.Show(); TestAvalonia.Pump();
+        var renderer = (IOverlayRenderer)typeof(ThumbnailOverlay).GetField("_renderer", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(overlay)!;
+        var graphics = renderer as NativeCompositionOverlayRenderer;
+        var images = (overlay.Content as CompatibilityOverlayRenderer)?.Children.OfType<Avalonia.Controls.Image>().ToArray();
+        var sources = images?.Select(x => x.Source).ToArray();
+        var hwnd = overlay.Handle;
+        // Dispatch through Window as owner-driven hiding does.
+        ((Avalonia.Controls.Window)overlay).Hide();
+        long uploads = graphics?.SurfaceUploadCount ?? 0, commits = graphics?.CommitCount ?? 0;
+        for (int i = 0; i < 100; i++)
+        {
+            overlay.SetOverlayLabel("Hidden title " + i);
+            overlay.SetStats([new OverlayStat("", i.ToString())]);
+            overlay.Opacity = .6;
+            overlay.ClientSize = new Size(320 + i, 180 + i);
+            overlay.Refresh();
+        }
+        TestAvalonia.Pump();
+        if (graphics != null)
+        {
+            Assert.Equal(uploads, graphics.SurfaceUploadCount);
+            Assert.Equal(commits, graphics.CommitCount);
+        }
+        else
+            for (int i = 0; i < images!.Length; i++) Assert.Same(sources![i], images[i].Source);
+        overlay.Show(); TestAvalonia.Pump();
+        Assert.Equal(hwnd, overlay.Handle);
+        Assert.Equal(new Size(419, 279), overlay.ClientSize);
+        Assert.Equal(.6, overlay.Opacity);
+        Assert.Equal("Hidden title 99", overlay.Scene.Title);
+        var applied = (OverlayScene)renderer.GetType().GetField("_scene", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(renderer)!;
+        Assert.Equal(overlay.Scene, applied);
+        Assert.Equal(!native, FrameworkRenderingEnabled(overlay));
+        Native.ShowWindow(overlay.Handle, 7); TestAvalonia.Pump(); // SW_SHOWMINNOACTIVE
+        Assert.True(Native.IsIconic(overlay.Handle));
+        Native.ShowWindow(overlay.Handle, 4); TestAvalonia.Pump(); // SW_SHOWNOACTIVATE
+        Assert.False(Native.IsIconic(overlay.Handle));
+        Assert.Equal(!native, FrameworkRenderingEnabled(overlay));
+        if (graphics != null) Assert.True(graphics.SurfaceUploadCount > uploads);
+        else
+            for (int i = 0; i < images!.Length; i++) Assert.NotSame(sources![i], images[i].Source);
         Assert.Equal(client.Handle, Native.GetActiveWindow());
         Assert.Equal(foreground, Native.GetForegroundWindow());
     }

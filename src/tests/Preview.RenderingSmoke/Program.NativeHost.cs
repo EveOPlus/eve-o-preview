@@ -116,10 +116,44 @@ internal static partial class Program
             using (var image = Capture("restored")) Require(Near(image.GetPixel(size.Width / 2, size.Height / 2), sourceColor), "image survives hide/show and opacity restoration");
             Require(view.Handle == imageHandle && Overlay(view).Handle == overlayHandle, "image and overlay HWNDs survive hide/show");
             Require(windows.Registrations == registrations && windows.FailedUpdates == 0, "DWM relationship remains registered and healthy");
-            Require(Native.GetForegroundWindow() == foreground, "host creation, opacity, tint and show preserve foreground");
+            Require(Native.GetForegroundWindow() == foreground,
+                $"host creation, opacity, tint and show preserve foreground (expected {foreground:X}, actual {Native.GetForegroundWindow():X}, image {imageHandle:X}, overlay {overlayHandle:X}, source {source.Handle:X}, backdrop {backdrop.Handle:X})");
             Require((Native.GetWindowLongPtr(imageHandle, -20).ToInt64() & 0x08000080) == 0x08000080 &&
                 (Native.GetWindowLongPtr(overlayHandle, -20).ToInt64() & 0x080000A0) == 0x080000A0, "both HWNDs are nonactivating tool windows and overlay is pointer-transparent");
+            // Same-sized updates must replace all pixels, not retain an old
+            // upload or leave stale glyphs in a reused surface.
+            view.SetOverlayStats([new OverlayStat("", "888", 0xFFFF0000)]);
+            var redStats = new List<Point>();
+            using (var image = Capture("stats-before-reuse"))
+                for (int y = image.Height / 2; y < image.Height - 5; y++)
+                    for (int x = 6; x < image.Width - 6; x++)
+                        if (image.GetPixel(x, y).ToArgb() == Color.Red.ToArgb()) redStats.Add(new(x, y));
+            Require(redStats.Count > 10, "stat glyphs are present before surface reuse");
+            var nativeGraphics = (NativeCompositionOverlayRenderer)typeof(ThumbnailOverlay)
+                .GetField("_renderer", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(Overlay(view))!;
+            long allocations = nativeGraphics.SurfaceAllocationCount;
+            view.SetOverlayStats([new OverlayStat("", "888", 0xFF00FF00)]);
+            using (var image = Capture("stats-after-reuse"))
+                Require(redStats.All(point => image.GetPixel(point.X, point.Y).ToArgb() == Color.Lime.ToArgb()), "reused stat surface contains the new pixels");
+            Require(nativeGraphics.SurfaceAllocationCount == allocations, "same-sized stat updates allocate no new composition surface");
+            view.Hide();
+            long hiddenUploads = nativeGraphics.SurfaceUploadCount;
+            view.SetOverlayStats([new OverlayStat("", "888", 0xFFFF0000)]);
+            Require(nativeGraphics.SurfaceUploadCount == hiddenUploads, "hidden stat changes defer GPU uploads");
+            view.Show(); view.RestoreAndBringToFront();
+            using (var image = Capture("stats-after-hidden-update"))
+                Require(redStats.All(point => image.GetPixel(point.X, point.Y).ToArgb() == Color.Red.ToArgb()), "show submits the latest hidden stat update");
+            view.SetOverlayStats([]);
             view.ClearBorder();
+            // Simulate the recovery route, not a hardware reset. Framework
+            // rendering must resume on the existing native overlay HWND.
+            typeof(ThumbnailOverlay).GetMethod("UseCompatibilityRenderer", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                .Invoke(Overlay(view), [new System.Runtime.InteropServices.COMException("Synthetic recovery")]);
+            using (var image = Capture("same-window-fallback"))
+            {
+                Require(Overlay(view).Handle == overlayHandle, "fallback retains the existing overlay HWND");
+                Require(glyphs.All(point => image.GetPixel(point.X, point.Y).ToArgb() == Color.White.ToArgb()), "fallback resumes framework painting on the same window");
+            }
             view.SetOverlayRenderer(OverlayRendererKind.Legacy); view.Refresh(true);
             using (var image = Capture("compatibility-image"))
             {
@@ -164,5 +198,16 @@ internal static partial class Program
     {
         public SolidSource(Color color) { BackColor = color; FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; StartPosition = FormStartPosition.Manual; }
         protected override bool ShowWithoutActivation => true;
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                var value = base.CreateParams;
+                // ShowWithoutActivation only protects Show. A topmost backdrop
+                // must also be excluded from native activation during hide/show.
+                value.ExStyle |= 0x08000080; // WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW
+                return value;
+            }
+        }
     }
 }

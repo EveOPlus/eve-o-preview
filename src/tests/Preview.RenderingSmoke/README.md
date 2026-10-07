@@ -51,7 +51,10 @@ outside performance sampling and do not establish equivalent old/new appearance
 for the previously incorrect tint/frame order.
 The same proof selects Compatibility graphics and compares source, tint and title
 pixels through the actual compositor, including intermediate title color without
-alpha loss. Its source-lifetime phase uses controlled discovery snapshots with the
+alpha loss. It verifies changed pixels on a reused native stat surface without
+a new surface allocation, deferred hidden uploads followed by current pixels on
+show, and native-to-compatibility recovery on the same overlay HWND. Its
+source-lifetime phase uses controlled discovery snapshots with the
 production manager: a real source minimizes/restores, exits, and reconnects under
 the same title with a new HWND and distinct pixels. Removed hosts must close and
 all native registrations must balance on disposal. Only owned source windows are
@@ -125,7 +128,7 @@ animation completion rather than an explicit clear.
 `result.json` records source identities, foreground HWNDs, creation focus capture,
 maintenance focus captures, native image/overlay HWNDs, persistent DWM registration
 and update counts, process CPU, private/working memory and GDI/USER/process handles.
-Graphics counters record native uploads/commits and scene pixel allocation, or
+Graphics counters record native surface allocations/uploads/commits and retained scene pixels, or
 Avalonia scene updates/renders, before and after the timed workload.
 CPU percentage is a percentage of **one logical core**; divide by the reported
 logical processor count for Task Manager's approximate whole-machine convention.

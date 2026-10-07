@@ -93,7 +93,39 @@ Text/marker/stat assets come from [OverlaySceneRasterizer](../../Eve-O-Preview/V
 
 [ThumbnailOverlay](../../Eve-O-Preview/View/Implementation/ThumbnailOverlay.cs) is an owned transparent Avalonia `Window`. Its top-level HWND receives the native composition target directly; whole-overlay opacity belongs to that tree. [WindowsPreviewWindowAdapter](../../Eve-O-Preview/View/Rendering/WindowsPreviewWindowAdapter.cs) enforces `WS_EX_NOACTIVATE`, tool-window styles and native pixel geometry. Overlay `WM_NCHITTEST` returns `HTTRANSPARENT`, and `WM_MOUSEACTIVATE` rejects activation; image/title/alert interaction routes to the paired preview on the same UI thread. Source activation remains explicit and precedes appearance work.
 
-Graphics creation or managed COM update failure releases the native target and switches the same Avalonia overlay HWND to [CompatibilityOverlayRenderer](../../Eve-O-Preview/View/Rendering/CompatibilityOverlayRenderer.cs). Avalonia retains its own transparent presentation surface, so fallback needs no window recreation, transparency key or label controls. The source image HWND and healthy DWM registration remain unchanged. Closing releases the native target before its HWND is destroyed. Native restoration explicitly reasserts graphics visibility independently of the framework's cached visibility.
+While native graphics owns the overlay, `ThumbnailOverlay` suspends Avalonia's
+unused rendering with the protected `StopRendering` lifecycle method after show
+and native window-state restoration. This reduces redundant framework graphics
+resources without replacing the HWND or modifying the DWM image host. In the
+pinned [Avalonia 11.3.20 TopLevel](https://github.com/AvaloniaUI/Avalonia/blob/11.3.20/src/Avalonia.Controls/TopLevel.cs),
+`StopRendering` removes the top-level from `MediaContext`; `StartRendering`
+reenables it. Suspension does not promise to dispose every resource already
+allocated by the framework. Do not dispose its renderer or reflect into internals
+in production: the same window must support recovery.
+
+Graphics creation or managed COM update failure releases the native target and
+switches that overlay HWND to [CompatibilityOverlayRenderer](../../Eve-O-Preview/View/Rendering/CompatibilityOverlayRenderer.cs).
+Fallback resumes Avalonia rendering and applies the latest scene, size and opacity.
+No window recreation, transparency key or label controls are needed. The source
+image HWND and healthy DWM registration remain unchanged. Closing releases the
+native target before its HWND is destroyed. Native restoration explicitly
+reasserts graphics visibility independently of the framework's cached visibility.
+
+Hidden overlays retain their latest scene and defer text rasterization, uploads,
+size and opacity application until shown. Their existing graphics remain cached
+for fast restoration; hiding is not a resource eviction timer. The `Hide` override
+also covers hiding through an owner/base-window reference. Compatibility graphics
+disposes the temporary GDI bitmap immediately after copying it into Avalonia;
+only the destination bitmap and placement rectangle remain owned.
+
+Native text and colour surfaces reuse their allocation when pixel dimensions
+match. [BeginDraw/EndDraw](https://learn.microsoft.com/en-us/windows/win32/api/dcomp/nf-dcomp-idcompositionsurface-begindraw)
+uploads every pixel, including transparent background, before commit. A changed
+size creates an exact replacement before releasing the old surface; empty text
+detaches/releases its surface. There is no growing texture pool that retains a
+large zoom/font allocation. `SurfaceAllocationCount` and `SurfaceUploadCount`
+distinguish allocation reuse from avoided drawing. Surface reuse reduces churn;
+it does not eliminate rasterization/upload of changed text.
 
 The composition arrangement was checked with Avalonia 11.3.20 and actual Windows compositor pixels before integrating the host. Both DWM source and destination are top-level windows, as required by [DwmRegisterThumbnail](https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/nf-dwmapi-dwmregisterthumbnail); no native child image surface or bitmap copy is substituted. A separately owned transparent Avalonia top-level accepts the native DirectComposition target while Avalonia owns its lifetime. The permanent [rendering harness](../../tests/Preview.RenderingSmoke/README.md) `--host-proof` exercises the production host using a controlled source and backdrop: source `FF0F5AB4` blends to `FF082D5A` at 50% whole-window opacity; half-red tint produces `FF872D5A`; full-red tint retains all four green edges and every sampled opaque white title pixel. Both native and compatibility graphics pass the actual compositor border/title checks. Compatibility tint clips to the inset image's `AlertBounds`, preserving the host-drawn frame, and clearing selection restores full-image tint. Renderer switching retains the image HWND/DWM relationship. The source-lifetime phase exercises real source minimize/restore, then production manager removal/recreation through controlled discovery snapshots; a same-title new source produces new pixels and all registrations balance at disposal. These checks preserve foreground and do not establish EVE discovery, physical device-loss or live gameplay behavior; those have separate validation boundaries.
 
@@ -131,15 +163,19 @@ Do not confuse maintenance-call duration with end-to-end switching latency, appl
 ## Current validation and open acceptance gates
 
 The current production host retains native DWM images and DirectComposition
-graphics. The rendering-focused suite passed 39 checks, including pixel parity
-against the former glyph control, compatibility layout invalidation, combat
-graphics, pointer teardown, hover/menu behavior and z-order. The permanent
-`--host-proof` passed 23 compositor checks and 13 source-lifetime checks. Actual
-100%/125% monitor transitions passed with signed coordinates, physical client
-dimensions, framed/borderless hosts, overlay alignment, hover restoration,
-saved geometry and retained native relationships. See the
-[migration report](avalonia-migration.md) for the complete application/package
-validation and exact artifact locations.
+graphics. The resource-change rendering suite passed 35/35 checks. The full
+integrated run passed 492/493, with no skipped cases: the documented intermittent
+`settings-resources` process-handle check observed +13 against its unchanged
+[-10, 10] bound, then passed when rerun alone. That full run is not an all-green
+result. New tests cover surface reuse, grow/shrink/clear, hidden updates,
+native minimize/restore and framework-renderer suspension/recovery.
+The permanent `--host-proof` passed 30 compositor checks and 13 source-lifetime
+checks, including actual pixels after reuse and fallback on the same HWND.
+The current mixed-DPI run could not execute because the configured monitors
+did not expose two different scales. Earlier migration validation covered
+100%/125% transitions; it is not new validation of these resource changes.
+See the [migration report](avalonia-migration.md) for the wider application/package
+evidence and remaining live-input limits.
 
 Five live clients passed the 15-second native image/alert workload and 2x hover
 restoration with five persistent DWM relationships, no failed updates and no
@@ -150,47 +186,51 @@ the raw foreground HWND changed during one alert interval. The cause was not
 identified, and earlier live pointer runs were inconsistent. The test restored
 the original foreground and cursor. This is not an unconditional live-input pass.
 
-Matched Debug measurements used the preserved original application and the
-Avalonia host, identical Avalonia initialization and message pumps, two animated
-synthetic sources, 384x216 previews, a one-second warmup and 30-second intervals.
-Twelve previews repeat those two sources; they are not twelve game clients.
-CPU includes the identical source-painting workload and is a percentage of one
-logical core on a 24-logical-processor machine. The local evidence is under
-`src/bin/avalonia-migration/performance/`.
+Current resource checks compare the preserved pre-optimization Avalonia host
+with the optimized host, using twelve 384x216 native previews of two animated
+synthetic sources, alerts on every preview, a one-second warmup and 30-second
+intervals. These are twelve previews, not twelve independent EVE clients.
+Debug builds use identical message pumps; CPU includes the source painting and
+is a percentage of one logical core on a 24-logical-processor machine. Evidence
+is under `src/bin/preview-memory-results/` (`baseline-matched`, `candidate-final`,
+and `host-proof-final`), with isolated binaries under `src/bin/preview-memory-*`.
 
-| Native workload | Original / Avalonia CPU, one core | Original / Avalonia maintenance p50 / p95 / p99, ms | Original / Avalonia final private memory, MiB | Original / Avalonia process handles |
-|---|---:|---|---:|---:|
-| Two idle previews | 10.83 / 12.18% | 0.54 / 1.50 / 1.85; 0.64 / 1.39 / 10.33 | 109.34 / 136.46 | 949 / 1221 |
-| Two idle previews, reverse-order repeat | 10.15 / 9.89% | 0.55 / 1.21 / 1.57; 0.57 / 2.17 / 8.26 | 108.11 / 138.07 | 946 / 1247 |
-| Twelve previews, alerts on all | 10.99 / 11.55% | 1.61 / 3.49 / 4.18; 1.74 / 3.60 / 68.36 | 113.63 / 175.77 | 955 / 1329 |
+| Metric | Before | Optimized |
+| --- | ---: | ---: |
+| Application dedicated GPU allocation, MiB | 161.33 | 89.41 |
+| Final process private memory, MiB | 180.73 | 149.43 |
+| Final process handles | 1320 | 1295 |
+| CPU, percent of one logical core | 11.66 | 9.32 |
+| Maintenance p50 / p95 / p99, ms | 1.03 / 2.23 / 58.28 | 1.14 / 2.51 / 59.31 |
 
-The reverse-order repeat did not reproduce the initial CPU increase; the larger private-memory/handle footprint and maintenance tail remained. All six runs retained their original DWM registrations, with no failed image
-updates or preview focus capture. The twelve-preview runs each submitted 168
-alerts. Median and p95 maintenance times were close, but the Avalonia host had
-unexplained tail outliers, including the 68.36 ms complete twelve-view batch.
-No individual view or DWM call exceeded the existing 25 ms diagnostic threshold,
-so the captured data cannot attribute that batch to one native call, managed
-work or garbage collection. The initial geometry/asset settling work also crossed
-the one-second warmup boundary: native idle renderers each uploaded once more
-during the measured interval, then retained their counters.
+The allocation reduction is about 45% dedicated GPU memory and 17% process
+private memory in this workload. An earlier candidate with the host suspension
+alone was similar (89.24 MiB GPU and 148.97 MiB private), supporting the redundant
+framework rendering path as the main saving. Each matched run retained twelve
+DWM registrations, made 720 successful image updates, submitted 168 alerts and
+recorded zero preview focus captures. The GPU figures are external PDH allocation
+counters, not GPU execution time; private memory is the whole harness process,
+not memory exclusively owned by previews. Shared GPU allocations are reported
+separately in the raw counters and must not be added to physical-memory savings.
 
-The added resource cost is explicit. In the twelve-preview Avalonia run, most
-private-memory growth occurred by five seconds, then rose by about 1.6 MiB over
-the following twenty seconds; handles stayed at 1328-1330. This short observation
-does not prove a long-term plateau or rule out leaks. External PDH sampling
-reported application dedicated GPU allocations of 23.88 / 53.77 MiB for two idle
-previews and 24.01 / 159.44 MiB for twelve alerted previews (original / Avalonia).
-No application 3D-engine instance was reported in these samples; that is not a
-zero-GPU-cost measurement. The busiest DWM 3D engine averaged 1.249 / 1.354% for
-idle and 2.098 / 2.124% for alerts; DWM CPU averaged 54.27 / 58.71% and
-69.97 / 81.20% of one core respectively. DWM includes the entire desktop and
-cannot isolate these previews. Invalid counter samples were excluded by status;
-the raw files retain the sampling warnings and per-engine data.
+Native reuse tests exercise 100 same-sized colour changes and 100 changing
+fixed-width counters without a new surface allocation, then grow/shrink/clear
+the assets. Hidden-overlay tests exercise 100 scene/size updates without native
+uploads or compatibility bitmap replacement, and check current state on show.
+The actual compositor proof verifies changed pixels after reuse, hidden updates,
+and same-HWND fallback. The proof's foreground assertion initially failed in both
+baseline and candidate. Diagnostics identified its topmost black fixture backdrop
+as the new foreground window. `SolidSource` now uses `WS_EX_NOACTIVATE` as well as
+`ShowWithoutActivation`; the complete proof passes with the assertion intact.
+This fixture correction does not resolve the separate live-input report above.
 
-Full performance acceptance remains open because of the added private/GPU memory
-and handles, unexplained maintenance tails, and the unresolved live foreground
-interval. The longer sustained run, matched compatibility-renderer performance
-and new end-to-end input latency measurements remain unverified.
+CPU and maintenance timing do not establish a speedup: the p99 tail remains
+about 59 ms, and desktop/scheduling variation is not isolated. No application
+3D-engine utilization instance was reported, which does not mean zero GPU work.
+DWM includes the whole desktop and cannot attribute its workload solely to
+these previews. Invalid counter samples are excluded by status in summaries.
+Long-session resource stability, matched compatibility-renderer performance,
+real-client FPS, and end-to-end input latency remain unverified.
 Screen readback and WM_NULL response timings must never be called monitor scan-out
 or game-frame latency. Physical GPU reset, HDR and multi-GPU behavior remain
 separate hardware validation. Existing Robin endpoints were inspected without

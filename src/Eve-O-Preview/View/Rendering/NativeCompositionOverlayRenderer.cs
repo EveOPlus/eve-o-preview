@@ -20,13 +20,21 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
     private SharedDevice _device;
     private nint _target, _root, _sceneVisual, _statsVisual, _alertClipVisual, _alertVisual, _rootEffect, _alertEffect;
     private nint _tintVisual, _topVisual, _bottomVisual, _leftVisual, _rightVisual;
-    private nint _sceneSurface, _statsSurface, _alertSurface, _tintSurface;
-    private nint _borderRoot, _borderEffect, _borderSurface;
+    private Surface _sceneSurface, _statsSurface, _alertSurface, _tintSurface;
+    private nint _borderRoot, _borderEffect;
+    private Surface _borderSurface;
     private nint _borderTop, _borderBottom, _borderLeft, _borderRight;
     private uint? _borderColor;
-    private nint _damageVisual, _damageSurface;
+    private nint _damageVisual;
+    private Surface _damageSurface;
     private uint? _damageColor;
-    private nint _damageEffect, _titleEffect, _flashTitleVisual, _flashTitleEffect, _flashTitleSurface;
+    private nint _damageEffect, _titleEffect, _flashTitleVisual, _flashTitleEffect;
+    private Surface _flashTitleSurface;
+    private struct Surface
+    {
+        internal nint Handle;
+        internal Size Size;
+    }
     private long _flashTitlePixels;
     private long _titlePixels, _statsPixels;
     private PreviewSize _size;
@@ -105,10 +113,11 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
 
     /// <summary>Instrumentation counts state uploads/transactions; never counts game frames.</summary>
     public long SurfaceUploadCount { get; private set; }
+    public long SurfaceAllocationCount { get; private set; }
     public long CommitCount { get; private set; }
     public long SceneSurfacePixels => _titlePixels + _flashTitlePixels + _statsPixels;
-    public long AlertSurfacePixels => _alertSurface == 0 ? 0 : 2;
-    public long DamageTintSurfacePixels => _damageSurface == 0 ? 0 : 1;
+    public long AlertSurfacePixels => _alertSurface.Handle == 0 ? 0 : 2;
+    public long DamageTintSurfacePixels => _damageSurface.Handle == 0 ? 0 : 1;
     public PreviewRect AlertClipBounds { get; private set; }
     public OverlayBorder ActiveBorder => _scene.ActiveBorder;
 
@@ -194,7 +203,7 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
         if (!_visible || _size.Width == 0) return;
         alert = alert.Normalize();
         if (alert.Intensity <= 0) { ClearAlerts(); return; }
-        if (_alertColor != alert.Color || _alertSurface == 0)
+        if (_alertColor != alert.Color || _alertSurface.Handle == 0)
         {
             // A zoomed preview can cover tens of millions of pixels. Two 1px
             // assets are scaled by composition; four edges share the same pixel.
@@ -203,9 +212,9 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
             using (var graphics = Graphics.FromImage(bitmap))
                 graphics.Clear(color);
             ReplaceSurface(ref _alertSurface, _topVisual, bitmap);
-            SetContent(_bottomVisual, _alertSurface);
-            SetContent(_leftVisual, _alertSurface);
-            SetContent(_rightVisual, _alertSurface);
+            SetContent(_bottomVisual, _alertSurface.Handle);
+            SetContent(_leftVisual, _alertSurface.Handle);
+            SetContent(_rightVisual, _alertSurface.Handle);
             using (var graphics = Graphics.FromImage(bitmap))
                 graphics.Clear(Color.FromArgb(color.A / 3, color));
             ReplaceSurface(ref _tintSurface, _tintVisual, bitmap);
@@ -295,14 +304,14 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
             SetContent(_damageVisual, 0);
             return; // Keep the single colour pixel for the next on phase.
         }
-        if (_damageColor != tint || _damageSurface == 0)
+        if (_damageColor != tint || _damageSurface.Handle == 0)
         {
             using var pixel = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
             using (var graphics = Graphics.FromImage(pixel)) graphics.Clear(Color.FromArgb(unchecked((int)tint)));
             ReplaceSurface(ref _damageSurface, _damageVisual, pixel);
             _damageColor = tint;
         }
-        else SetContent(_damageVisual, _damageSurface);
+        else SetContent(_damageVisual, _damageSurface.Handle);
     }
 
     private void UpdateDamageIntensity()
@@ -322,15 +331,15 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
             NativeCompositionInterop.SetOpacity(_borderEffect, 0);
             return; // Retain the pixel for the next selection of this client.
         }
-        if (_borderColor != border.Color || _borderSurface == 0)
+        if (_borderColor != border.Color || _borderSurface.Handle == 0)
         {
             using var bitmap = new Bitmap(1, 1, PixelFormat.Format32bppPArgb);
             using (var graphics = Graphics.FromImage(bitmap))
                 graphics.Clear(Color.FromArgb(unchecked((int)border.Color)));
             ReplaceSurface(ref _borderSurface, _borderTop, bitmap);
-            SetContent(_borderBottom, _borderSurface);
-            SetContent(_borderLeft, _borderSurface);
-            SetContent(_borderRight, _borderSurface);
+            SetContent(_borderBottom, _borderSurface.Handle);
+            SetContent(_borderLeft, _borderSurface.Handle);
+            SetContent(_borderRight, _borderSurface.Handle);
             _borderColor = border.Color;
         }
         var inner = border.InnerBounds;
@@ -363,12 +372,12 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
         }
     }
 
-    private void UpdateAsset(ref nint surface, nint visual, OverlaySceneRasterizer.Asset asset, ref long pixels)
+    private void UpdateAsset(ref Surface surface, nint visual, OverlaySceneRasterizer.Asset asset, ref long pixels)
     {
         if (asset == null)
         {
             SetContent(visual, 0);
-            Release(ref surface);
+            ReleaseSurface(ref surface);
             pixels = 0;
             return;
         }
@@ -378,19 +387,36 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
         pixels = (long)asset.Bitmap.Width * asset.Bitmap.Height;
     }
 
-    private void ReplaceSurface(ref nint stored, nint visual, Bitmap bitmap)
+    private void ReplaceSurface(ref Surface stored, nint visual, Bitmap bitmap)
     {
+        // BeginDraw/EndDraw updates an existing surface transactionally. Match
+        // exact bounds so shrinking text cannot leave stale pixels or retain a
+        // large high-water allocation after zooming or changing the font.
+        if (stored.Handle != 0 && stored.Size == bitmap.Size)
+        {
+            Upload(stored.Handle, _device.Factory, bitmap);
+            SetContent(visual, stored.Handle);
+            SurfaceUploadCount++;
+            return;
+        }
         nint replacement = CreateSurface(_device.Composition, bitmap.Width, bitmap.Height);
+        SurfaceAllocationCount++;
         try
         {
             Upload(replacement, _device.Factory, bitmap);
             SetContent(visual, replacement);
-            Release(ref stored);
-            stored = replacement;
+            ReleaseSurface(ref stored);
+            stored = new Surface { Handle = replacement, Size = bitmap.Size };
             replacement = 0;
             SurfaceUploadCount++;
         }
         finally { Release(ref replacement); }
+    }
+
+    private static void ReleaseSurface(ref Surface surface)
+    {
+        Release(ref surface.Handle);
+        surface = default;
     }
 
     private void CommitChanges() { Commit(_device.Composition); CommitCount++; }
@@ -427,14 +453,14 @@ public sealed class NativeCompositionOverlayRenderer : IOverlayRenderer
         }
         finally
         {
-            Release(ref _sceneSurface); Release(ref _statsSurface); Release(ref _alertSurface); Release(ref _tintSurface);
-            Release(ref _damageSurface); Release(ref _damageVisual);
+            ReleaseSurface(ref _sceneSurface); ReleaseSurface(ref _statsSurface); ReleaseSurface(ref _alertSurface); ReleaseSurface(ref _tintSurface);
+            ReleaseSurface(ref _damageSurface); Release(ref _damageVisual);
             Release(ref _damageEffect); Release(ref _titleEffect); Release(ref _flashTitleEffect);
-            Release(ref _flashTitleSurface); Release(ref _flashTitleVisual);
+            ReleaseSurface(ref _flashTitleSurface); Release(ref _flashTitleVisual);
             Release(ref _sceneVisual); Release(ref _statsVisual); Release(ref _alertVisual); Release(ref _alertClipVisual); Release(ref _root);
             Release(ref _tintVisual); Release(ref _topVisual); Release(ref _bottomVisual); Release(ref _leftVisual); Release(ref _rightVisual);
             Release(ref _rootEffect); Release(ref _alertEffect); Release(ref _target);
-            Release(ref _borderSurface); Release(ref _borderTop); Release(ref _borderBottom);
+            ReleaseSurface(ref _borderSurface); Release(ref _borderTop); Release(ref _borderBottom);
             Release(ref _borderLeft); Release(ref _borderRight); Release(ref _borderRoot); Release(ref _borderEffect);
             _device?.ReleaseOwner(); _device = null;
         }
