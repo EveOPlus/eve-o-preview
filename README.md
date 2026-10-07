@@ -73,6 +73,10 @@ These gestures apply to the preview under your mouse.
 | Bypass snapping while moving | Hold Shift; move farther from a snapped edge to break away |
 | Resize one preview | Right-click > **Resize > Resize individual**, then click to finish |
 | Resize all previews proportionally | Right-click > **Resize all**, then click to finish |
+| Select previews to move or resize together | Hold Shift and right-click each preview; selected previews have a yellow border |
+| Move or resize the selection | Choose **Move** or **Resize** in a selected preview's menu, then click to finish |
+| Remove a preview from the selection | Shift+right-click it again; a normal click outside the selection clears the group |
+| Undo the last preview edit | Right-click any preview and choose **Undo** (Light/Dark) |
 | Match one preview to its client | Right-click > **Resize > Reset aspect ratio to client** |
 | Maintain proportions for future resizing | Tick **Resize > Maintain aspect ratio** in any preview menu; applies to all previews |
 | Temporarily keep proportions and bypass snapping | Hold Shift during the resize |
@@ -196,6 +200,14 @@ The default modern menu order is Minimize, Minimize all, a divider, Skip cycling
 Only one thumbnail menu stays open at a time. Opening another closes the previous menu. Click outside the menu, or click its thumbnail again, to dismiss it. Clicks inside nested menus remain available, including the quick second-right-click action.
 
 In Light and Dark, **Resize > Resize individual** changes only the clicked preview. **Reset aspect ratio to client** also affects only that preview, matching the current client area while keeping its width where size limits allow. Restore a minimized client first if this action is unavailable. **Reset to default size** removes that preview's individual size override.
+
+To arrange a group in Light or Dark, hold **Shift** and **right-click** each preview. Selected previews stay outlined in **yellow**, even when active-client highlighting is off. Their group menu offers **Move**, **Resize**, **Reset Aspect Ratio**, **Reset Size**, and **Skip Cycling** or **Resume Cycling** when applicable. Shift+right-click also selects a preview underneath an open menu; the new menu opens after release. Move keeps the spacing between selected previews; Resize scales their sizes together, preserving each preview's proportions and position, and stops when any member reaches a size limit. Unselected previews, offline sizes and the default size stay unchanged. Click to finish, or hold the right button on an already selected preview to move the group and release to finish.
+
+**Reset Aspect Ratio** matches each selected preview to its own client; it is unavailable if any selected client's dimensions cannot be read (for example, while minimized). **Reset Size** removes only the selected previews' size overrides. **Skip Cycling** appears only when none of the selection is skipped; **Resume Cycling** appears only when all are skipped. Mixed selections show neither action. The change applies to every selected character for this session.
+
+Shift+right-click again to remove a member. A normal left-click, or a normal click outside the selected previews and their menu, clears selection. Selection is temporary; resulting sizes and positions use the current profile's normal save behavior. Selected previews do not hover-zoom. Legacy keeps its existing gestures and menu.
+
+**Undo** appears in the single and group right-click menus after a move, resize, aspect/size reset or Skip/Resume action. It restores the most recent edit, including every member of a group or a Resize all operation, in one step. A click without movement keeps the previous Undo available. History lasts for this session and clears when applying a profile or when an affected client closes or changes character; there is no redo or multi-step history.
 
 **Maintain aspect ratio** is shared by all thumbnails and saved in the current profile. It preserves each thumbnail's starting proportions during future individual, window-border and numeric size changes. **Resize all** always scales all previews, including saved sizes for offline clients, by a common factor, retaining their relative sizes and aspect ratios. Scaling stops when any preview reaches a configured size limit. Positions stay fixed. Sizes and the shared checkbox survive normal saves, restart and profile switching; old profiles use the default size with the checkbox off.
 

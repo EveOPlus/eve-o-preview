@@ -57,6 +57,17 @@ The project uses xUnit v3 and the Visual Studio test adapter. It covers the foll
   menu commands, move/resize subscriptions and cleanup, including mode changes
   and hotkey capture during movement. Real input and focus timing remain in the
   opt-in [live rendering harness](../Preview.RenderingSmoke/README.md#live-hotkey-input-latency).
+- Thumbnail group checks cover Shift+right-click selection, yellow highlighting,
+  compact group menus, relative movement, bounded proportional resizing, per-client
+  aspect/default resets, uniform-only Skip/Resume and lifecycle cleanup in Light
+  and Dark. Native popup messages reproduce selection through a menu covering the
+  adjacent preview, repeated selection and early Shift release. These private-desktop
+  cases do not replace live pointer or mixed-DPI monitor validation.
+- Thumbnail Undo checks in Light and Dark cover menu commands and native geometry
+  notifications, single/group edits, aspect/default resets, Skip/Resume, resize-all
+  including offline overrides, no-op retention, one-step replacement, hover baselines,
+  original client-layout restoration and profile/removal invalidation. They use
+  private desktops and do not establish live EVE input behavior.
 - Hotkey localization checks cover all 18 catalogs, hidden diagnostic text,
   capture/status messages and registration error format arguments. Backend checks
   verify that registration errors follow the current language while preserving

@@ -153,6 +153,8 @@ namespace EveOPreview.Services
         public void ApplyRuntimeSettings()
         {
             if (_stopped) return;
+            InvalidateThumbnailUndo();
+            ClearThumbnailSelection();
             _thumbnailUpdateTimer.Interval = TimeSpan.FromMilliseconds(_configuration.ThumbnailRefreshPeriod);
             _hideThumbnailsDelay = _configuration.HideThumbnailsDelay;
             _enqueuedLocationChangeNotification = (IntPtr.Zero, null, null, Point.Empty, -1);
@@ -387,6 +389,11 @@ namespace EveOPreview.Services
 
         private void HotkeyPreferencesChanged()
         {
+            if (_hotkeyPreferences.Theme == "Legacy")
+            {
+                InvalidateThumbnailUndo();
+                ClearThumbnailSelection();
+            }
             bool passthrough = _hotkeyPreferences.DiagnosticHotkeyPassthrough;
             if (_diagnosticHotkeyPassthrough == passthrough) return;
             _diagnosticHotkeyPassthrough = passthrough;
@@ -426,6 +433,8 @@ namespace EveOPreview.Services
             if (_stopTask is not null) return _stopTask;
             _logger.Verbose("ThumbnailManager.Stop: Stopping thumbnail manager");
             this._thumbnailUpdateTimer.Stop();
+            InvalidateThumbnailUndo();
+            ClearThumbnailSelection();
             _stopped = true;
             _combatLogs?.Stop();
             ApplyCombatOverlays();
@@ -482,6 +491,8 @@ namespace EveOPreview.Services
                 // Closing a hovered source need not deliver pointer-leave. Release its
                 // hover before detaching callbacks so saved layouts can resume updating.
                 ThumbnailViewLostFocus(view.Id);
+                ForgetThumbnailUndo(view);
+                RemoveThumbnailSelection(view.Id);
                 this._thumbnailViews.Remove(view.Id);
                 this._thumbnailActivationOrder.Remove(view.Id);
                 if (view.Title != ThumbnailManager.DEFAULT_CLIENT_TITLE)
@@ -527,6 +538,8 @@ namespace EveOPreview.Services
                 {
                     _logger.Verbose("ThumbnailManager.UpdateThumbnailsList: Thumbnail title changed: {OldTitle} -> {NewTitle}", view.Title, process.Title);
                     viewsRemoved.Add(view.Title);
+                    ForgetThumbnailUndo(view);
+                    RemoveThumbnailSelection(view.Id);
                     view.CancelInteraction();
                     view.ZoomOut();
                     view.Title = process.PreviewTitle;
@@ -829,6 +842,7 @@ namespace EveOPreview.Services
 
         public void UpdateThumbnailsSize()
         {
+            InvalidateThumbnailUndo();
             Size requested = _configuration.ThumbnailSize;
             // Workspace dimensions set the default; individual overrides retain their ratios.
             if (!_appliedThumbnailSize.IsEmpty && _appliedThumbnailSize != _configuration.ThumbnailSize)
@@ -1044,6 +1058,7 @@ namespace EveOPreview.Services
             _logger.Verbose("ThumbnailManager.ThumbnailViewResized: Thumbnail resized (Handle: 0x{Handle:X})", id);
             IThumbnailView view = this._thumbnailViews[id];
 
+            if (ApplySelectionResize(view)) return;
             if (view.IsResizingAll && !_resizeAllOrigin.IsEmpty)
             {
                 double scale = (double)view.ThumbnailSize.Width / _resizeAllOrigin.Width;
@@ -1080,6 +1095,7 @@ namespace EveOPreview.Services
 
             _logger.Verbose("ThumbnailManager.ThumbnailViewMoved: Thumbnail moved (Handle: 0x{Handle:X})", id);
             IThumbnailView view = this._thumbnailViews[id];
+            if (ApplySelectionMove(view)) return;
             view.Refresh(false);
             this.EnqueueLocationChange(view);
         }

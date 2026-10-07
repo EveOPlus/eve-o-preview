@@ -30,6 +30,9 @@ namespace EveOPreview.Services.Interop
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetForegroundWindow(); 
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetWindow(IntPtr window, uint command);
         
         [DllImport("user32.dll")]
         public static extern IntPtr GetFocus();

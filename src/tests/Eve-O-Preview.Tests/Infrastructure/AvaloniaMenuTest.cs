@@ -18,7 +18,7 @@ internal static class AvaloniaMenuTest
         var hit = menu.InputHitTest(point) as Visual;
         return hit as MenuItem ?? hit?.GetVisualAncestors().OfType<MenuItem>().FirstOrDefault();
     }
-    public static void RightClick(ContextMenu menu, System.Drawing.Point screen)
+    public static void RightClick(ContextMenu menu, System.Drawing.Point screen, System.Drawing.Point? releaseAt = null)
     {
         var handle = Handle(menu);
         if (handle == IntPtr.Zero) throw new InvalidOperationException("The actual menu popup must have an HWND.");
@@ -26,6 +26,13 @@ internal static class AvaloniaMenuTest
         ScreenToClient(handle, ref point);
         var coordinates = (IntPtr)((point.Y << 16) | (point.X & 0xffff));
         SendMessage(handle, 0x0204, (IntPtr)2, coordinates);
+        if (releaseAt is { } moved)
+        {
+            point = new NativePoint { X = moved.X, Y = moved.Y };
+            ScreenToClient(handle, ref point);
+            coordinates = (IntPtr)((point.Y << 16) | (point.X & 0xffff));
+            SendMessage(handle, 0x0200, (IntPtr)2, coordinates);
+        }
         SendMessage(handle, 0x0205, IntPtr.Zero, coordinates);
         TestAvalonia.Pump();
     }

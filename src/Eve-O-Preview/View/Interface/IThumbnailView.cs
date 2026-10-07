@@ -26,6 +26,9 @@ namespace EveOPreview.View
         bool IsContextMenuOpen { get; }
         bool IsInteracting => false;
         bool IsResizingAll => false;
+        bool IsSelected => false;
+        void SetSelected(bool selected) { }
+        void SetGroupInteraction(bool active) { }
         void CancelInteraction() { }
         IntPtr Id { get; set; }
         string Title { get; set; }

@@ -31,6 +31,15 @@ namespace EveOPreview.Services
 
         void UpdateThumbnailsSize();
         void BeginResizeAll(IntPtr id);
+        void ToggleThumbnailSelection(IntPtr id);
+        void ClearThumbnailSelection();
+        void RemoveThumbnailSelection(IntPtr id);
+        bool BeginSelectionTransform(IntPtr id, bool resize);
+        void EndSelectionTransform(IntPtr id);
+        bool CanUndoThumbnailEdit { get; }
+        void BeginThumbnailEdit(IntPtr id, ThumbnailEditKind kind, bool selected = false);
+        void CompleteThumbnailEdit(IntPtr id);
+        Task UndoThumbnailEdit();
         void ApplyRuntimeSettings();
         void UpdateThumbnailFrames();
         void UpdateThumbnailTitleFont();
@@ -43,4 +52,6 @@ namespace EveOPreview.Services
         IThumbnailView GetActiveClient();
         Dictionary<IntPtr, IThumbnailView> GetAllKnownClients();
     }
+
+    public enum ThumbnailEditKind { Geometry, ResizeAll, CycleSkip }
 }

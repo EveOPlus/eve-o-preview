@@ -16,9 +16,9 @@
     <TargetZone>LocalIntranet</TargetZone>
     <AssemblyOriginatorKeyFile />
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <FileVersion>10.1.0.29</FileVersion>
-    <AssemblyVersion>10.1.0.29</AssemblyVersion>
-    <Version>10.1.0.29</Version>
+    <FileVersion>10.1.0.31</FileVersion>
+    <AssemblyVersion>10.1.0.31</AssemblyVersion>
+    <Version>10.1.0.31</Version>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
