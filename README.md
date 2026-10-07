@@ -35,6 +35,8 @@ Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile -ExecutionPolicy 
 
 This downloads the project's public root certificate and adds it to the computer's **Trusted Root Certification Authorities** store, to trust the EVE-O Preview certificate authority. The temporary download is removed afterward. See Microsoft's [Import-Certificate documentation](https://learn.microsoft.com/en-us/powershell/module/pki/import-certificate) for details about the certificate store.
 
+**To remove this trust later:** Press **Windows+R**, enter `certlm.msc`, and accept the administrator prompt. Under **Trusted Root Certification Authorities > Certificates**, right-click **Eve-O Preview Root CA**, choose **Delete**, and confirm. Remove only this certificate. This leaves EVE-O Preview and your settings in place, but Windows security warnings may return. See Microsoft's [certificate manager instructions](https://learn.microsoft.com/en-us/dotnet/framework/wcf/feature-details/how-to-view-certificates-with-the-mmc-snap-in).
+
 ## Find what you need
 
 | I want to… | Go to… |
