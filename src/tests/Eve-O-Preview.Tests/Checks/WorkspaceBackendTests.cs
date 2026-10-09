@@ -22,7 +22,7 @@ namespace EveOPreview.Tests.Checks;
 
 public interface IWorkspaceTestView : IMainFormView, IAsyncSettingsView { }
 
-public sealed class WorkspaceBackendTests
+public sealed partial class WorkspaceBackendTests
 {
     [Fact]
     public async Task StatisticsResetForwardsSelectedCharacterAndCounterScope()

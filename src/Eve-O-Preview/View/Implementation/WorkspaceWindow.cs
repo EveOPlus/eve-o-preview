@@ -49,7 +49,8 @@ public sealed class WorkspaceWindow : Window, IMainFormView, IAsyncSettingsView,
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Icon = LoadIcon();
         Backend = new WindowsWorkspaceBackend(this, this, mediator, storage, configuration, profiles, preferences, logger, portraits, previewCapture, characters, thumbnails, combatLogs, staticData);
-        _workspace = new WorkspaceView(Backend, combatLogs is null ? null : new[] { CombatLogView.CreateModule() });
+        _workspace = new WorkspaceView(Backend, combatLogs is null
+            ? new[] { RegionsView.CreateModule() } : new[] { CombatLogView.CreateModule(), RegionsView.CreateModule() });
         Content = _workspace;
         _windowsSession = new WindowsSessionLifetime(EndWindowsSession, logger);
         var menu = new NativeMenu();
@@ -71,6 +72,8 @@ public sealed class WorkspaceWindow : Window, IMainFormView, IAsyncSettingsView,
         };
         PropertyChanged += (_, e) =>
         {
+            if (e.Property == IsVisibleProperty && !IsVisible || e.Property == WindowStateProperty && WindowState == WindowState.Minimized)
+                Backend.StopRegionEditing();
             if (e.Property == WindowStateProperty && WindowState == WindowState.Minimized) FormMinimized?.Invoke();
         };
         Closing += (_, e) =>

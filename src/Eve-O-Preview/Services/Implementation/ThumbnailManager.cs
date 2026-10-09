@@ -185,7 +185,8 @@ namespace EveOPreview.Services
             }
             finally { _ignoreViewEvents = wasIgnoring; }
             UpdateThumbnailFrames();
-            ApplyThumbnailSizes();
+            ApplyRegionLayout();
+            _appliedThumbnailSize = _configuration.ThumbnailSize;
             UpdateThumbnailTitleFont();
             _refreshThumbnailZOrder = true;
             RefreshThumbnails();
@@ -368,6 +369,9 @@ namespace EveOPreview.Services
                 _hotkeyPreferences?.SetDiagnosticHotkeyPassthrough(false);
             }
             var bindings = new List<HotkeyBinding>();
+            // Editing overlays never take focus, so Escape must work globally.
+            // The temporary binding takes precedence over configured shortcuts.
+            if (_cancelRegionEdit != null) bindings.Add(new("Escape", () => _cancelRegionEdit?.Invoke()));
             bool onRelease = !_configuration.UseWindowsHotkeys && _configuration.GlobalHotkeysOnRelease;
             foreach (var group in _configuration.CycleGroups)
             {
@@ -393,6 +397,7 @@ namespace EveOPreview.Services
             {
                 InvalidateThumbnailUndo();
                 ClearThumbnailSelection();
+                foreach (var view in _thumbnailViews.Values) view.CancelInteraction();
             }
             bool passthrough = _hotkeyPreferences.DiagnosticHotkeyPassthrough;
             if (_diagnosticHotkeyPassthrough == passthrough) return;
@@ -436,6 +441,8 @@ namespace EveOPreview.Services
             InvalidateThumbnailUndo();
             ClearThumbnailSelection();
             _stopped = true;
+            _cancelRegionEdit?.Invoke();
+            _cancelRegionEdit = null;
             _combatLogs?.Stop();
             ApplyCombatOverlays();
             _foregroundObserver?.Dispose();
@@ -542,7 +549,11 @@ namespace EveOPreview.Services
                     RemoveThumbnailSelection(view.Id);
                     view.CancelInteraction();
                     view.ZoomOut();
+                    bool wasDocked = _configuration.GetThumbnailRegion(view.Title) != null;
                     view.Title = process.PreviewTitle;
+                    view.SetFrames(_configuration.ShowThumbnailFrames && _configuration.GetThumbnailRegion(view.Title) == null);
+                    if (wasDocked || _configuration.GetThumbnailRegion(view.Title) != null)
+                        view.ThumbnailLocation = _configuration.GetThumbnailLocation(view.Title, _activeClient.Title, _configuration.LoginThumbnailLocation);
                     view.ThumbnailSize = _configuration.GetThumbnailSize(view.Title);
                     if (_activeClient.Handle == process.MainWindowHandle) _activeClient.Title = view.Title;
                     viewsAdded.Add(view.Title);
@@ -565,11 +576,11 @@ namespace EveOPreview.Services
             IThumbnailView view = _thumbnailViewFactory.Create(process.MainWindowHandle, process.PreviewTitle, _configuration.GetThumbnailSize(process.PreviewTitle));
             view.TitleFontSettings = _configuration.TitleFontSettings;
             view.IsOverlayEnabled = _configuration.ShowThumbnailOverlays;
-            view.SetFrames(_configuration.ShowThumbnailFrames);
+            view.SetFrames(_configuration.ShowThumbnailFrames && _configuration.GetThumbnailRegion(view.Title) == null);
             view.SetSizeLimitations(_configuration.ThumbnailMinimumSize, _configuration.ThumbnailMaximumSize);
             view.ThumbnailSize = _configuration.GetThumbnailSize(view.Title);
             view.SetTopMost(_configuration.ShowThumbnailsAlwaysOnTop);
-            view.ThumbnailLocation = IsManageableThumbnail(view)
+            view.ThumbnailLocation = IsManageableThumbnail(view) || _configuration.GetThumbnailRegion(view.Title) != null
                 ? _configuration.GetThumbnailLocation(view.Title, _activeClient.Title, view.ThumbnailLocation)
                 : _configuration.LoginThumbnailLocation;
             _thumbnailViews.Add(view.Id, view);
@@ -738,7 +749,7 @@ namespace EveOPreview.Services
                 if (!this._isHoverEffectActive && !view.IsInteracting)
                 {
                     // Do not even move thumbnails with default caption
-                    if (this.IsManageableThumbnail(view))
+                    if (this.IsManageableThumbnail(view) || _configuration.GetThumbnailRegion(view.Title) != null)
                     {
                         view.ThumbnailLocation = this._configuration.GetThumbnailLocation(view.Title, this._activeClient.Title, view.ThumbnailLocation);
                     }
@@ -830,11 +841,12 @@ namespace EveOPreview.Services
 
         public void BeginResizeAll(IntPtr id)
         {
-            _resizeAllSizes = new(_configuration.PerClientThumbnailSizes);
+            _resizeAllSizes = _configuration.PerClientThumbnailSizes
+                .Where(entry => _configuration.GetThumbnailRegion(entry.Key) == null).ToDictionary(entry => entry.Key, entry => entry.Value);
             foreach (var view in _thumbnailViews.Values)
             {
                 view.ZoomOut();
-                _resizeAllSizes[view.Title] = view.ThumbnailSize;
+                if (_configuration.GetThumbnailRegion(view.Title) == null) _resizeAllSizes[view.Title] = view.ThumbnailSize;
             }
             _resizeAllDefault = _configuration.ThumbnailSize;
             _resizeAllOrigin = _thumbnailViews[id].ThumbnailSize;
@@ -853,7 +865,8 @@ namespace EveOPreview.Services
                 if (_configuration.MaintainThumbnailAspectRatio)
                     _configuration.ThumbnailSize = ScaleSize(_appliedThumbnailSize, scale);
                 foreach (var title in _configuration.PerClientThumbnailSizes.Keys.ToArray())
-                    _configuration.PerClientThumbnailSizes[title] = ScaleSize(_configuration.PerClientThumbnailSizes[title], scale);
+                    if (_configuration.GetThumbnailRegion(title) == null)
+                        _configuration.PerClientThumbnailSizes[title] = ScaleSize(_configuration.PerClientThumbnailSizes[title], scale);
             }
             ApplyThumbnailSizes();
             if (requested != _configuration.ThumbnailSize)
@@ -896,7 +909,7 @@ namespace EveOPreview.Services
 
             foreach (KeyValuePair<IntPtr, IThumbnailView> entry in this._thumbnailViews)
             {
-                entry.Value.SetFrames(this._configuration.ShowThumbnailFrames);
+                entry.Value.SetFrames(this._configuration.ShowThumbnailFrames && _configuration.GetThumbnailRegion(entry.Value.Title) == null);
             }
 
             this.EnableViewEvents();
@@ -1058,6 +1071,7 @@ namespace EveOPreview.Services
             _logger.Verbose("ThumbnailManager.ThumbnailViewResized: Thumbnail resized (Handle: 0x{Handle:X})", id);
             IThumbnailView view = this._thumbnailViews[id];
 
+            if (_configuration.GetThumbnailRegion(view.Title) != null) { ApplyRegionLayout(); return; }
             if (ApplySelectionResize(view)) return;
             if (view.IsResizingAll && !_resizeAllOrigin.IsEmpty)
             {
@@ -1095,6 +1109,7 @@ namespace EveOPreview.Services
 
             _logger.Verbose("ThumbnailManager.ThumbnailViewMoved: Thumbnail moved (Handle: 0x{Handle:X})", id);
             IThumbnailView view = this._thumbnailViews[id];
+            if (_configuration.GetThumbnailRegion(view.Title) != null) { ApplyRegionLayout(); return; }
             if (ApplySelectionMove(view)) return;
             view.Refresh(false);
             this.EnqueueLocationChange(view);

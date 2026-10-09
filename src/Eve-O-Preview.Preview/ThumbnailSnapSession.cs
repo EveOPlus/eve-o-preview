@@ -1,13 +1,19 @@
 namespace EveOPreview.Preview;
 
-/// <summary>A visible neighbour in desktop pixels. Identity is stable for one drag.</summary>
-public readonly record struct ThumbnailSnapTarget(long Id, PreviewRect Bounds);
+/// <summary>A desktop-pixel target with stable identity. Fixed bounds remain eligible during group scaling.</summary>
+public readonly record struct ThumbnailSnapTarget(long Id, PreviewRect Bounds, bool FixedBounds = false);
 
 /// <summary>A desktop-pixel alignment line joining the moving and neighbouring edges.</summary>
 public readonly record struct ThumbnailSnapGuide(bool Vertical, int Coordinate, int Start, int End);
 
 public readonly record struct ThumbnailSnapResult(PreviewRect Bounds, ThumbnailSnapGuide? VerticalGuide,
-    ThumbnailSnapGuide? HorizontalGuide);
+    ThumbnailSnapGuide? HorizontalGuide)
+{
+    // Size/aspect limits take precedence over snapping. Never draw a guide for a lost alignment.
+    public ThumbnailSnapResult WithConstrainedBounds(PreviewRect bounds, bool left, bool top) => new(bounds,
+        VerticalGuide?.Coordinate == (left ? bounds.X : bounds.X + bounds.Width) ? VerticalGuide : null,
+        HorizontalGuide?.Coordinate == (top ? bounds.Y : bounds.Y + bounds.Height) ? HorizontalGuide : null);
+}
 
 /// <summary>
 /// Magnetic edge alignment during a drag. Always pass the raw pointer-derived rectangle,
@@ -89,7 +95,7 @@ public sealed class ThumbnailSnapSession
             for (int destination = 0; destination < 2; destination++)
             {
                 if (movingTrailing is { } trailing && (moving != 0) != trailing) continue;
-                if (leadingTargetsOnly && destination != 0) continue;
+                if (leadingTargetsOnly && !target.FixedBounds && destination != 0) continue;
                 int coordinate = Coordinate(target.Bounds, horizontal, destination != 0);
                 int position = coordinate - (moving != 0 ? Length(raw, horizontal) : 0);
                 long distance = Math.Abs((long)position - Origin(raw, horizontal));

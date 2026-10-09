@@ -76,13 +76,18 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         if (_portraits is IWorkspacePortraitUpdates updates) updates.PortraitChanged += PortraitUpdated;
         preferences.Changed += NotifyChanged;
         configuration.CycleSkipChanged += NotifyChanged;
+        configuration.RegionsChanged += NotifyChanged;
+        if (view is Avalonia.Controls.Window owner) owner.Screens.Changed += RegionScreensChanged;
         BuildSettings();
     }
 
     public void Dispose()
     {
+        StopRegionEditing();
         _preferences.Changed -= NotifyChanged;
         _configuration.CycleSkipChanged -= NotifyChanged;
+        _configuration.RegionsChanged -= NotifyChanged;
+        if (_view is Avalonia.Controls.Window owner) owner.Screens.Changed -= RegionScreensChanged;
         if (_characters is not null) _characters.Changed -= NotifyChanged;
         if (_portraits is IWorkspacePortraitUpdates updates) updates.PortraitChanged -= PortraitUpdated;
     }
@@ -145,12 +150,15 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         {
             switch (command.Action)
             {
+                case "region-add": case "region-update": case "region-rename": case "region-delete": case "region-assign": case "region-edit":
+                case "region-enabled": case "region-drag-docking":
+                    return await EditRegionAsync(command);
                 case "application-add": case "application-remove": return await EditPreviewApplicationAsync(command);
                 case "setting": return await ApplySetting(command.Target, command.Value);
                 case "preview-size-limits": return await ApplyPreviewSizeLimits(command.Settings);
                 case "client-preferences": return await ApplyClientPreferences(command);
                 case "language": _preferences.SetLanguage(command.Value); return CommandResult.Ok("Language saved");
-                case "theme": _preferences.SetTheme(command.Value); return CommandResult.Ok("Theme saved");
+                case "theme": StopRegionEditing(); _preferences.SetTheme(command.Value); return CommandResult.Ok("Theme saved");
                 case "thumbnail-menu-move":
                     var menuOrder = _preferences.ThumbnailMenuOrder.ToList();
                     if (command.Position is not int position || !ThumbnailMenuActions.CanMove(menuOrder, command.Target, position))
@@ -202,6 +210,7 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
                     await _mediator.Send(new SaveConfiguration());
                     break;
                 case "profile-switch":
+                    StopRegionEditing();
                     var profile = _profiles.ProfileLocations.FirstOrDefault(x => x.FullPath == command.Target);
                     if (profile == null) return CommandResult.Error("That profile is no longer available.");
                     await _mediator.Send(new ChangeSelectedProfile(profile));

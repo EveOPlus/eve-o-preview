@@ -7,6 +7,37 @@ public class ThumbnailSnapTests
 {
     private static readonly ThumbnailSnapTarget[] Neighbours = [new(1, new(300, 100, 200, 100))];
 
+    [Theory]
+    [InlineData(-1914, 100, -1920, 100)]
+    [InlineData(-500, -194, -500, -200)]
+    [InlineData(-500, 774, -500, 780)]
+    [InlineData(-194, 300, -200, 300)]
+    [InlineData(6, 300, 0, 300)]
+    [InlineData(500, 6, 500, 0)]
+    [InlineData(1714, 300, 1720, 300)]
+    [InlineData(500, 974, 500, 980)]
+    public void EachMonitorEdgeAndSharedSeamSnapsInPhysicalPixels(int x, int y, int expectedX, int expectedY)
+    {
+        ThumbnailSnapTarget[] screens = [new(long.MinValue, new(-1920, -200, 1920, 1080), true),
+            new(long.MinValue + 1, new(0, 0, 1920, 1080), true)];
+        var raw = new PreviewRect(x, y, 200, 100);
+        var session = new ThumbnailSnapSession();
+        Assert.Equal(new PreviewRect(expectedX, expectedY, 200, 100), session.Move(raw, screens, 8, 16).Bounds);
+        Assert.Equal(raw, session.Move(raw, screens, 8, 16, bypass: true).Bounds);
+        Assert.Equal(new PreviewRect(6, 2000, 200, 100), session.Move(new(6, 2000, 200, 100), screens, 8, 16).Bounds);
+    }
+
+    [Fact]
+    public void FixedMonitorTrailingEdgesRemainTargetsDuringResizeAll()
+    {
+        var screen = new ThumbnailSnapTarget(long.MinValue, new(0, 0, 1920, 1080), true);
+        var result = new ThumbnailSnapSession().Resize(new(100, 100, 1814, 974), [screen], 8, 16,
+            false, true, false, true, leadingTargetsOnly: true);
+        Assert.Equal(new PreviewRect(100, 100, 1820, 980), result.Bounds);
+        var limited = result.WithConstrainedBounds(new(100, 100, 960, 540), false, false);
+        Assert.Null(limited.VerticalGuide); Assert.Null(limited.HorizontalGuide);
+    }
+
     [Fact]
     public void ResizeSnapsOnlyDraggedEdgesAndKeepsOppositeCornerFixed()
     {

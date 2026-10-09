@@ -225,6 +225,7 @@ namespace EveOPreview.Configuration.Implementation
                 catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
                 {
                     _logger.Error(ex, "Failed to save profile {Path}", CurrentProfile.FullPath);
+                    throw;
                 }
                 finally
                 {

@@ -24,6 +24,9 @@ public sealed partial class WindowsWorkspaceBackend
         var maximum = new Size(Integer(values[PreviewSizeLimitKeys[2]]), Integer(values[PreviewSizeLimitKeys[3]]));
         if (minimum.Width > maximum.Width || minimum.Height > maximum.Height)
             return CommandResult.Error("Minimum dimensions cannot exceed the maximum dimensions.");
+        if (_configuration.ThumbnailRegions.Any(region => region.Width < minimum.Width || region.Height < minimum.Height
+            || region.Width > maximum.Width || region.Height > maximum.Height))
+            return CommandResult.Error("Resize existing regions to fit these limits first.");
         var oldMinimum = _configuration.ThumbnailMinimumSize;
         var oldMaximum = _configuration.ThumbnailMaximumSize;
         var oldSize = _view.ThumbnailSize;

@@ -41,6 +41,10 @@ namespace EveOPreview.Services
         void CompleteThumbnailEdit(IntPtr id);
         Task UndoThumbnailEdit();
         void ApplyRuntimeSettings();
+        void ApplyRegionLayout();
+        void SetRegionEditCancel(Action cancel);
+        Task UndockThumbnail(IntPtr id);
+        Task<bool> DockThumbnail(IntPtr id, string regionId);
         void UpdateThumbnailFrames();
         void UpdateThumbnailTitleFont();
         void RegisterAllHotkeys();

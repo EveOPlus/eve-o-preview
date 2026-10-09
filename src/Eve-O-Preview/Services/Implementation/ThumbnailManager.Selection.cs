@@ -16,7 +16,7 @@ sealed partial class ThumbnailManager
 
     public void ToggleThumbnailSelection(IntPtr id)
     {
-        if (!_thumbnailViews.TryGetValue(id, out var view) || !view.IsActive) return;
+        if (!_thumbnailViews.TryGetValue(id, out var view) || !view.IsActive || _configuration.GetThumbnailRegion(view.Title) != null) return;
         if (_selectionAnchor != null) return;
         view.ZoomOut();
         view.SetSelected(!view.IsSelected);

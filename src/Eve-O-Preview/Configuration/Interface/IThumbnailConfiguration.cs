@@ -54,8 +54,17 @@ namespace EveOPreview.Configuration
 
         Size ThumbnailSize { get; set; }
         Dictionary<string, Size> PerClientThumbnailSizes { get; set; }
+        bool EnableThumbnailRegions { get; set; }
+        bool EnableRegionDragDocking { get; set; }
+        List<ThumbnailRegion> ThumbnailRegions { get; set; }
+        Dictionary<string, string> ClientRegionAssignments { get; set; }
+        ThumbnailRegion GetThumbnailRegion(string title);
+        event System.Action RegionsChanged;
+        void NotifyRegionsChanged();
         bool MaintainThumbnailAspectRatio { get; set; }
-        Size GetThumbnailSize(string title) => PerClientThumbnailSizes.TryGetValue(title, out var size) ? size : ThumbnailSize;
+        Size GetThumbnailSize(string title) => GetThumbnailRegion(title) is { } region
+            ? new Size(region.Width, region.Height)
+            : PerClientThumbnailSizes.TryGetValue(title, out var size) ? size : ThumbnailSize;
         Size ThumbnailMinimumSize { get; set; }
         Size ThumbnailMaximumSize { get; set; }
 

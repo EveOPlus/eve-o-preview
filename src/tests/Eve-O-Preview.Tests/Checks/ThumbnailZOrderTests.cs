@@ -45,6 +45,9 @@ public sealed partial class ThumbnailZOrderTests(ITestOutputHelper output)
     [InlineData("ThumbnailMenuOrdering")]
     [InlineData("ThumbnailMenuHover")]
     [InlineData("ThumbnailResize")]
+    [InlineData("ThumbnailRegions")]
+    [InlineData("ThumbnailRegionDragDark")]
+    [InlineData("ThumbnailRegionDragLight")]
     [InlineData("ThumbnailSelectionDark")]
     [InlineData("ThumbnailSelectionLight")]
     [InlineData("ThumbnailSelectionAdjacent")]
@@ -84,6 +87,7 @@ public sealed partial class ThumbnailZOrderTests(ITestOutputHelper output)
         EventHandler<GlobalPointerEventArgs> mouseMove = null;
         Point pointerPosition = Point.Empty;
         ShortcutKeys pointerModifiers = ShortcutKeys.None;
+        PointerButtons pointerButtons = PointerButtons.None;
         var keyboard = Stub.Create<IGlobalPointerInput>((method, args) =>
         {
             if (method.Name == "add_MouseUp") mouseUp += (EventHandler<GlobalPointerEventArgs>)args[0];
@@ -93,12 +97,16 @@ public sealed partial class ThumbnailZOrderTests(ITestOutputHelper output)
             if (method.Name == "get_Position") return pointerPosition;
             if (method.Name == "set_Position") pointerPosition = (Point)args[0];
             if (method.Name == "get_Modifiers") return pointerModifiers;
+            if (method.Name == "get_Buttons") return pointerButtons;
             return Stub.Default(method.ReturnType);
         });
         var sentMessages = new List<object>();
+        bool failSave = false;
         var mediator = Stub.Create<IMediator>((method, args) =>
         {
             if (method.Name == "Send") sentMessages.Add(args[0]);
+            if (failSave && args.FirstOrDefault() is EveOPreview.Mediator.Messages.SaveConfiguration)
+                return Task.FromException(new System.IO.IOException("Region save test failure"));
             return args.FirstOrDefault() is EveOPreview.Mediator.Messages.SetClientCycleSkipped skip
                 ? new EveOPreview.Mediator.Handlers.Thumbnails.SetClientCycleSkippedHandler(config).Handle(skip, default) : Stub.Default(method.ReturnType);
         });
@@ -130,8 +138,14 @@ public sealed partial class ThumbnailZOrderTests(ITestOutputHelper output)
             Id = (IntPtr)args[0], Title = (string)args[1], ThumbnailSize = (Size)args[2]
         });
         using var logger = new LoggerConfiguration().CreateLogger();
+        IReadOnlyList<HotkeyBinding> bindings = [];
+        var hotkeys = Stub.Create<IHotkeyService>((method, args) =>
+        {
+            if (method.Name == "Replace") bindings = (IReadOnlyList<HotkeyBinding>)args[0];
+            return Stub.Default(method.ReturnType);
+        });
         manager = (IThumbnailManager)Activator.CreateInstance(assembly.GetType("EveOPreview.Services.ThumbnailManager"),
-            mediator, config, processMonitor, windowManager, factory, Stub.Create<IHotkeyService>(),
+            mediator, config, processMonitor, windowManager, factory, hotkeys,
             Stub.Create<IHookService>(), Stub.Create<IGlobalEvents>(), logger);
         Call(manager, "UpdateThumbnailsList");
         var views = manager.GetAllKnownClients().Values.Cast<Preview>().OrderBy(v => v.Title).ToArray();
@@ -170,6 +184,23 @@ public sealed partial class ThumbnailZOrderTests(ITestOutputHelper output)
 
             switch (scenario)
             {
+                case "ThumbnailRegions":
+                    RunRegionScenario(config, manager, views, Refresh);
+                    bool escaped = false;
+                    manager.SetRegionEditCancel(() => { escaped = true; manager.SetRegionEditCancel(null); });
+                    Assert.Equal("Escape", bindings[0].Shortcut); Assert.False(bindings[0].OnRelease);
+                    bindings[0].Execute(); Assert.True(escaped);
+                    Assert.DoesNotContain(bindings, binding => binding.Shortcut == "Escape");
+                    break;
+                case "ThumbnailRegionDragDark":
+                case "ThumbnailRegionDragLight":
+                    RunRegionDragScenario(scenario, config, manager, views, Refresh,
+                        (point, keys, buttons) => { pointerPosition = point; pointerModifiers = keys; pointerButtons = buttons; },
+                        () => mouseMove?.Invoke(null, new(PointerButtons.None, pointerButtons, pointerPosition, pointerModifiers)),
+                        () => mouseUp?.Invoke(null, new(PointerButtons.Right, PointerButtons.None, pointerPosition, pointerModifiers)),
+                        () => mouseMove == null && mouseUp == null, value => failSave = value,
+                        () => sentMessages.Count(message => message is EveOPreview.Mediator.Messages.SaveConfiguration));
+                    break;
                 case "ThumbnailUndoDark":
                 case "ThumbnailUndoLight":
                     RunUndoScenario(scenario, config, manager, views, view => Activate(view), (dx, dy) =>

@@ -47,8 +47,11 @@ namespace EveOPreview.View;
 /// physical pixels; WindowsPreviewWindowAdapter is the only pixel/DIP boundary.
 /// The image HWND and separately owned overlay HWND never change on refresh.
 /// </summary>
-public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
+public abstract partial class ThumbnailView : Window, IThumbnailView, IDisposable
 {
+    // Temporary editors must remain above images and their separately owned labels.
+    // Notify only on native stacking changes, never on an ordinary refresh tick.
+    internal static event Action ZOrderChanged;
     // All thumbnail windows share the Avalonia UI thread. Own only the currently
     // open menu, and release the reference/subscription when it closes.
     private static ThumbnailView _openMenuOwner;
@@ -70,6 +73,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
     private readonly MenuItem _resizeMenu;
     private readonly MenuItem _resizeAllItem;
     private readonly MenuItem _legacyResizeItem;
+    private readonly MenuItem _undockItem;
     private readonly Control[] _singleMenuItems;
     private readonly MenuItem _selectionMoveItem;
     private readonly MenuItem _selectionResizeItem;
@@ -174,6 +178,15 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
             RunThumbnailEdit(() => { foreach (var view in selected) view.ResetDefaultSize(); }, selected: true);
         });
         _selectionSkipItem = CreateMenuItem("menuCycleSkipSelected", "Skip Cycling", (_, _) => _ = ToggleSelectionCycleSkipped());
+        _undockItem = CreateMenuItem("menuUndock", "Undock", async (_, _) =>
+        {
+            try { await _thumbnailManager.UndockThumbnail(Id); _undockItem.Header = "Undock"; }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex, "Could not undock thumbnail");
+                _undockItem.Header = "Undock failed - try again";
+            }
+        });
         _undoItem = CreateMenuItem("menuUndo", "Undo", (_, _) =>
         {
             PreserveSelectionForMenuClick(SelectedThumbnails());
@@ -242,7 +255,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
     public bool IsResizingAll { get; private set; }
     public bool IsSelected { get; private set; }
     private bool AspectLocked => _config.MaintainThumbnailAspectRatio;
-    public bool IsInteracting => _groupInteraction || _nativeInteraction || _customMouseModeActive != MouseMode.Disabled;
+    public bool IsInteracting => _groupInteraction || _nativeInteraction || _regionDockPending || _customMouseModeActive != MouseMode.Disabled;
     public OverlayCapabilities GraphicsCapabilities => _overlay.GraphicsCapabilities;
     public OverlayRendererKind OverlayRenderer => _overlay.RendererKind;
 
@@ -461,6 +474,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
 
     public void SetFrames(bool enable)
     {
+        enable &= _config.GetThumbnailRegion(Title) == null;
         var decorations = enable ? SystemDecorations.Full : SystemDecorations.None;
         if (SystemDecorations == decorations) return;
         // A frame changes only outer size. Never save a transient framework client
@@ -483,6 +497,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
         _overlay.TopMost = enableTopmost;
         Topmost = enableTopmost;
         _isTopMost = enableTopmost;
+        ZOrderChanged?.Invoke();
     }
 
     public bool RestoreAndBringToFront()
@@ -496,7 +511,11 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
             | InteropConstants.SWP_NOACTIVATE | InteropConstants.SWP_SHOWWINDOW | InteropConstants.SWP_NOOWNERZORDER;
         if (User32NativeMethods.IsIconic(_overlay.Handle))
             User32NativeMethods.ShowWindow(_overlay.Handle, InteropConstants.SW_SHOWNOACTIVATE);
-        return User32NativeMethods.SetWindowPos(_overlay.Handle, InteropConstants.HWND_TOPMOST, 0, 0, 0, 0, flags);
+        bool restored = User32NativeMethods.SetWindowPos(_overlay.Handle, InteropConstants.HWND_TOPMOST, 0, 0, 0, 0, flags);
+        int error = Marshal.GetLastWin32Error();
+        ZOrderChanged?.Invoke();
+        Marshal.SetLastPInvokeError(error);
+        return restored;
     }
 
     public void SetDefaultBorderColor() { _isHighlightChanged = true; }
@@ -515,7 +534,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
     public void ZoomIn(ViewZoomAnchor anchor, int zoomFactor)
     {
         if (IsInteracting || IsSelected) return;
-        if (_isZoomed) return;
+        if (_isZoomed || _config.GetThumbnailRegion(Title) != null) return;
         if (_baseZoomSize.IsEmpty) SaveWindowSizeAndLocation();
         _isZoomed = true;
         var original = Size;
@@ -610,6 +629,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
         {
             _overlay.Show();
             _isOverlayVisible = true;
+            ZOrderChanged?.Invoke();
         }
         _isLocationChanged = false;
         _overlay.Refresh();
@@ -690,6 +710,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
                 return IntPtr.Zero;
             case 0x0231: // WM_ENTERSIZEMOVE
                 _nativeInteraction = true;
+                _nativeMoving = false;
                 IsResizingAll = false;
                 ZoomOut();
                 _thumbnailManager?.BeginThumbnailEdit(Id, ThumbnailEditKind.Geometry);
@@ -700,12 +721,15 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
                 _snap.Reset();
                 break;
             case 0x0216 when _nativeInteraction: // WM_MOVING: replace the proposed native rectangle immediately.
+                if (!_nativeMoving) { _nativeMoving = true; BeginRegionDrag(); }
                 var rectangle = Marshal.PtrToStructure<NativeRectangle>(lParam);
                 var pointer = _keyboardMouseEvents.Position;
+                UpdateRegionDrag(pointer, _keyboardMouseEvents.Modifiers);
                 var raw = new PreviewRect(_dragWindowOrigin.X + pointer.X - _dragPointerOrigin.X,
                     _dragWindowOrigin.Y + pointer.Y - _dragPointerOrigin.Y,
                     rectangle.Right - rectangle.Left, rectangle.Bottom - rectangle.Top);
                 var result = Snap(raw, (_keyboardMouseEvents.Modifiers & ShortcutKeys.Shift) != 0);
+                _nativeMoveLocation = new(result.X, result.Y);
                 rectangle = new(result.X, result.Y, result.X + result.Width, result.Y + result.Height);
                 Marshal.StructureToPtr(rectangle, lParam, false);
                 handled = true;
@@ -721,10 +745,15 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
                 return new IntPtr(1);
             case 0x0232: // WM_EXITSIZEMOVE
                 _nativeInteraction = false;
+                UpdateRegionDrag(_keyboardMouseEvents.Position, _keyboardMouseEvents.Modifiers);
+                // Native Escape restores the starting rectangle. Do not dock a cancelled move.
+                var nativeDockTarget = EndRegionDrag(_nativeMoving && Location == _nativeMoveLocation);
+                _nativeMoving = false;
                 _snap.Reset();
                 ClearSnapGuides();
                 SaveWindowSizeAndLocation();
                 _thumbnailManager?.CompleteThumbnailEdit(Id);
+                _ = CommitRegionDockAsync(nativeDockTarget);
                 ReleaseHoverOutside();
                 break;
             case 0x02E0: // WM_DPICHANGED: never interpret monitor scaling as a user image resize.
@@ -876,9 +905,14 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
         else if (!thumbnailContextMenu.Items.Contains(_resizeAllItem)) thumbnailContextMenu.Items.Add(_resizeAllItem);
         _skipItem.Header = _config.IsClientCycleSkipped(Title) ? "Resume cycling this character" : "Skip while cycling";
         _skipItem.IsEnabled = !string.IsNullOrWhiteSpace(Title);
+        bool docked = _config.GetThumbnailRegion(Title) != null;
+        foreach (var item in thumbnailContextMenu.Items.OfType<MenuItem>())
+            if (item.Name is "menuReposition" or "menuResizeAll" or "resizeThumbnailToolStripMenuItem") item.IsEnabled = !docked;
         _aspectLockItem.IsChecked = AspectLocked;
         _resetAspectItem.IsEnabled = TryGetClientRatio(out _);
+        thumbnailContextMenu.Items.Remove(_undockItem);
         NativeMenuTheme.ApplyThumbnailOrder(thumbnailContextMenu);
+        if (docked && !legacy) thumbnailContextMenu.Items.Add(_undockItem);
         if (!legacy && _thumbnailManager?.CanUndoThumbnailEdit == true) thumbnailContextMenu.Items.Add(_undoItem);
     }
 
@@ -1095,7 +1129,10 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
     }
     private void EnterCustomMouseMode(MouseMode mode, bool snapCursorPosition = true)
     {
-        if (_disposed) return;
+        if (_config.GetThumbnailRegion(Title) != null
+            && !(mode == MouseMode.Move && !snapCursorPosition && NativeMenuTheme.CurrentTheme != "Legacy"
+                && _config.EnableRegionDragDocking)) return;
+        if (_disposed || _regionDockPending) return;
         ExitCustomMouseMode();
         ZoomOut();
         if (snapCursorPosition)
@@ -1113,6 +1150,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
         _thumbnailRatioAtStartOfResize = _dragClientSize.Height > 0 ? (double)_dragClientSize.Width / _dragClientSize.Height : 1;
         _thumbnailManager?.BeginThumbnailEdit(Id, ThumbnailEditKind.Geometry);
         _snap.Reset();
+        if (mode == MouseMode.Move) BeginRegionDrag(allowUndock: !snapCursorPosition);
         _keyboardMouseEvents.MouseMove += ProcessCustomMouseMode;
         _keyboardMouseEvents.MouseUp += ExitCustomMouseMode;
     }
@@ -1139,11 +1177,12 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
         switch (_customMouseModeActive)
         {
             case MouseMode.Move:
+                UpdateRegionDrag(current, modifiers);
                 var size = Size;
                 var snapped = Snap(new(_dragWindowOrigin.X + dx, _dragWindowOrigin.Y + dy, size.Width, size.Height), shift);
                 Location = new(snapped.X, snapped.Y);
                 _baseZoomLocation = Location;
-                ThumbnailMoved?.Invoke(Id);
+                if (_config.GetThumbnailRegion(Title) == null) ThumbnailMoved?.Invoke(Id);
                 break;
             case MouseMode.Resize:
                 var frame = Size - ClientSize;
@@ -1158,6 +1197,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
     }
     private void ExitCustomMouseMode()
     {
+        EndRegionDrag(false);
         bool wasInteracting = _customMouseModeActive != MouseMode.Disabled;
         if (_customMouseModeActive != MouseMode.Disabled)
         {
@@ -1174,7 +1214,13 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
         ClearSnapGuides();
         if (wasInteracting) ReleaseHoverOutside();
     }
-    private void ExitCustomMouseMode(object sender, GlobalPointerEventArgs args) => ExitCustomMouseMode();
+    private void ExitCustomMouseMode(object sender, GlobalPointerEventArgs args)
+    {
+        UpdateRegionDrag(args.Location, args.Modifiers);
+        var candidate = EndRegionDrag(true);
+        ExitCustomMouseMode();
+        _ = CommitRegionDockAsync(candidate);
+    }
     private void holdRightClickToMoveTimer_Tick(object sender, EventArgs args)
     {
         holdRightClickToMoveTimer.Stop();
@@ -1192,17 +1238,8 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
     private void CollectSnapTargets(bool shift)
     {
         _snapTargets.Clear();
-        if (_config.EnableThumbnailSnap && !shift && _thumbnailManager != null)
-        {
-            foreach (var view in _thumbnailManager.GetAllKnownClients().Values)
-            {
-                if (view.Id == Id || !view.IsActive || _config.IsThumbnailDisabled(view.Title)) continue;
-                if (_groupInteraction && view.IsSelected) continue;
-                var location = view.ThumbnailLocation;
-                var size = view is ThumbnailView native ? native.Size : view.ThumbnailSize;
-                _snapTargets.Add(new(view.Id.ToInt64(), new(location.X, location.Y, size.Width, size.Height)));
-            }
-        }
+        if (_config.EnableThumbnailSnap && !shift)
+            DesktopSnapTargets.Collect(_snapTargets, this, _config, _thumbnailManager, Id, _groupInteraction);
     }
 
     private PreviewRect Snap(PreviewRect raw, bool shift)
@@ -1225,6 +1262,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
     }
     private void BeginResizeAll()
     {
+        if (_config.GetThumbnailRegion(Title) != null) return;
         EnterCustomMouseMode(MouseMode.Resize);
         IsResizingAll = true;
         _thumbnailManager.BeginResizeAll(Id);
@@ -1248,6 +1286,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
 
     private void ApplyClientAspectRatio(double ratio)
     {
+        if (_config.GetThumbnailRegion(Title) != null) return;
         ZoomOut();
         ClientSize = RatioSize(ClientSize.Width, ratio);
         ThumbnailResized?.Invoke(Id);
@@ -1257,6 +1296,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
 
     private void ResetDefaultSize()
     {
+        if (_config.GetThumbnailRegion(Title) != null) return;
         ZoomOut();
         ClientSize = _config.ThumbnailSize;
         _config.PerClientThumbnailSizes.Remove(Title);
@@ -1298,12 +1338,7 @@ public abstract class ThumbnailView : Window, IThumbnailView, IDisposable
             || Math.Abs(result.Bounds.Height - bounded.Height) < Math.Abs(result.Bounds.Width - bounded.Width));
         size = Constrain(result.Bounds.Width - frame.Width, result.Bounds.Height - frame.Height, useHeight);
         var final = Fit(size);
-        // Ratio/limit constraints take precedence; only display edges actually aligned.
-        var vertical = result.VerticalGuide;
-        var horizontal = result.HorizontalGuide;
-        if (vertical?.Coordinate != (left ? final.X : final.X + final.Width)) vertical = null;
-        if (horizontal?.Coordinate != (top ? final.Y : final.Y + final.Height)) horizontal = null;
-        ShowSnapGuides(new(final, vertical, horizontal));
+        ShowSnapGuides(result.WithConstrainedBounds(final, left, top));
         return final;
     }
 

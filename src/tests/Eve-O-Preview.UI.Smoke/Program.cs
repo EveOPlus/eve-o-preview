@@ -264,6 +264,7 @@ internal static partial class Program
             Require(backend.PortraitRequests.SequenceEqual(new long[] { 95465272 }), "Request Aura's portrait once across navigation and theme changes.");
             renders += CheckCharacterPortraits(output);
             renders += CheckCombatLogs(output);
+            renders += CheckRegions(output);
             if (args.Length == 4) renders += CheckInstalledWeaponChoices(output, args[3]);
             Console.WriteLine($"PASS: {renders} production UI renders; three distinct themes; keyboard-accessible navigation; input validation; draft retention; advanced setting command; settings search; compact scrollable layouts.");
             Console.WriteLine("Screenshots: " + output);

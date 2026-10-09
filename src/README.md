@@ -69,6 +69,7 @@ Paths below are relative to `src/`. Search the symbol as well as the filename: n
 | Workspace layout, themes, field labels | `Eve-O-Preview.UI`, `WorkspaceView`, `SettingCatalog` | `WorkspaceContract`, `ApplicationPreferences`, UI review |
 | Setting does not save or reload | `WindowsWorkspaceBackend`, `MainFormPresenter.SaveApplicationSettingsAsync` | `ThumbnailConfiguration`, `ConfigurationStorage`, corresponding handler |
 | Profile switching/migration | `ProfileManager`, `ConfigurationStorage.Load` | `ChangeSelectedProfileHandler`, `SelectedProfileChangedNotificationHandler`, `GlobalEvents` |
+| Screen regions, client docking and Undock | `RegionsView`, `WindowsWorkspaceBackend.Regions`, `ThumbnailRegionWindow` | `ThumbnailManager.Regions`, profile `ThumbnailRegions` / `ClientRegionAssignments`, [Regions](docs/ai/windows-and-thumbnails.md#regions) |
 | Individual sizes, selected group move/resize, one-step Undo, aspect lock, resize-all and menu order | `ThumbnailView`, `ThumbnailManager.Selection`, `ThumbnailManager.Undo`, `ThumbnailMenuActions` | Profile `PerClientThumbnailSizes` / `MaintainThumbnailAspectRatio`, [geometry and snapping](docs/ai/windows-and-thumbnails.md) |
 | Missing/duplicate client preview | `ProcessMonitor.GetUpdatedProcesses` | `ThumbnailManager.UpdateThumbnailsList`, `ThumbnailViewFactory` |
 | Stale, black, or flashing preview | `LiveThumbnailView.RefreshThumbnail`, `DwmThumbnail.Update` | `ThumbnailView.Refresh/ResizeThumbnail`, static compatibility path |

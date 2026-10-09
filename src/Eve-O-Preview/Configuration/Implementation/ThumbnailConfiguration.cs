@@ -35,6 +35,7 @@ namespace EveOPreview.Configuration.Implementation
             .Concat(ClientLayout.Keys).Concat(DisableThumbnail.Keys)
             .Concat(PerClientLayout.Keys).Concat(PerClientLayout.Values.SelectMany(layout => layout.Keys))
             .Concat(CycleGroups.SelectMany(group => group.ClientsOrder.Values))
+            .Concat(ClientRegionAssignments.Keys)
             .Distinct(StringComparer.Ordinal).OrderBy(title => title, StringComparer.OrdinalIgnoreCase);
 
         public ThumbnailConfiguration()
@@ -165,6 +166,22 @@ namespace EveOPreview.Configuration.Implementation
         [JsonProperty(ObjectCreationHandling = ObjectCreationHandling.Replace)]
         public Dictionary<string, Size> PerClientThumbnailSizes { get; set; } = new();
 
+        [JsonProperty(ObjectCreationHandling = ObjectCreationHandling.Replace)]
+        public List<ThumbnailRegion> ThumbnailRegions { get; set; } = new();
+
+        [JsonProperty(ObjectCreationHandling = ObjectCreationHandling.Replace)]
+        public Dictionary<string, string> ClientRegionAssignments { get; set; } = new(StringComparer.Ordinal);
+
+        public bool EnableThumbnailRegions { get; set; } = true;
+        public bool EnableRegionDragDocking { get; set; } = true;
+
+        public ThumbnailRegion GetThumbnailRegion(string title) => EnableThumbnailRegions && title != null
+            && ClientRegionAssignments.TryGetValue(title, out var id)
+            ? ThumbnailRegions.FirstOrDefault(region => region.Id == id) : null;
+
+        public event Action RegionsChanged;
+        public void NotifyRegionsChanged() => RegionsChanged?.Invoke();
+
         public bool MaintainThumbnailAspectRatio { get; set; }
         public Size ThumbnailMaximumSize { get; set; }
         public Size ThumbnailMinimumSize { get; set; }
@@ -229,6 +246,7 @@ namespace EveOPreview.Configuration.Implementation
 
         public Point GetThumbnailLocation(string currentClient, string activeClient, Point defaultLocation)
         {
+            if (GetThumbnailRegion(currentClient) is { } region) return new Point(region.X, region.Y);
             Point location;
 
             // What this code does:
@@ -253,6 +271,7 @@ namespace EveOPreview.Configuration.Implementation
 
         public void SetThumbnailLocation(string currentClient, string activeClient, Point location)
         {
+            if (GetThumbnailRegion(currentClient) != null) return;
             Dictionary<string, Point> layoutSource;
 
             if (this.EnablePerClientThumbnailLayouts)
@@ -393,6 +412,20 @@ namespace EveOPreview.Configuration.Implementation
             TitleFontSettings.Style &= FontStyle.Bold | FontStyle.Italic | FontStyle.Underline | FontStyle.Strikeout;
             ThumbnailMinimumSize = new Size(Math.Clamp(ThumbnailMinimumSize.Width, 1, 960), Math.Clamp(ThumbnailMinimumSize.Height, 1, 540));
             ThumbnailMaximumSize = new Size(Math.Clamp(ThumbnailMaximumSize.Width, ThumbnailMinimumSize.Width, 960), Math.Clamp(ThumbnailMaximumSize.Height, ThumbnailMinimumSize.Height, 540));
+            ThumbnailRegions = (ThumbnailRegions ?? new()).Where(region => region != null && !string.IsNullOrWhiteSpace(region.Id))
+                .DistinctBy(region => region.Id).ToList();
+            foreach (var region in ThumbnailRegions)
+            {
+                region.Name = string.IsNullOrWhiteSpace(region.Name) ? "Region" : region.Name.Trim();
+                region.X = Math.Clamp(region.X, -1000000, 1000000);
+                region.Y = Math.Clamp(region.Y, -1000000, 1000000);
+                region.Width = Math.Clamp(region.Width, ThumbnailMinimumSize.Width, ThumbnailMaximumSize.Width);
+                region.Height = Math.Clamp(region.Height, ThumbnailMinimumSize.Height, ThumbnailMaximumSize.Height);
+            }
+            ClientRegionAssignments ??= new(StringComparer.Ordinal);
+            foreach (var title in ClientRegionAssignments.Keys.ToArray())
+                if (string.IsNullOrWhiteSpace(title) || !ThumbnailRegions.Any(region => region.Id == ClientRegionAssignments[title]))
+                    ClientRegionAssignments.Remove(title);
             PerClientThumbnailSizes ??= new();
             foreach (var title in PerClientThumbnailSizes.Keys.ToArray())
             {

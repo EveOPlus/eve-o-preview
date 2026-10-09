@@ -20,6 +20,10 @@ Local AI artifacts belong in ignored `bin/`, `.ai-work/`, `.ai-output/`, `docs/u
 
 Use [the entry guide](../../README.md) to route by feature; use this page when a file is unfamiliar. Namespaces and filenames are not always identical, and some tracked files are intentionally excluded from compilation.
 
+## Screen regions
+
+For screen-region docking, follow [RegionsView](../../Eve-O-Preview.UI/RegionsView.cs), [RegionMonitorMap](../../Eve-O-Preview.UI/RegionMonitorMap.cs) and [RegionContract](../../Eve-O-Preview.UI/RegionContract.cs) into [WindowsWorkspaceBackend.Regions](../../Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.Regions.cs), [ThumbnailRegionWindow](../../Eve-O-Preview/View/Implementation/ThumbnailRegionWindow.cs), [ThumbnailRegion](../../Eve-O-Preview/Configuration/Implementation/ThumbnailRegion.cs) and [ThumbnailManager.Regions](../../Eve-O-Preview/Services/Implementation/ThumbnailManager.Regions.cs). Drag/drop routing and highlights live in [ThumbnailView.Regions](../../Eve-O-Preview/View/Implementation/ThumbnailView.Regions.cs), with portable proximity selection in [RegionDockTarget](../../Eve-O-Preview.Preview/RegionDockTarget.cs). Coverage lives in [RegionConfigurationTests](../../tests/Eve-O-Preview.Tests/Checks/RegionConfigurationTests.cs), [WorkspaceBackendTests.Regions](../../tests/Eve-O-Preview.Tests/Checks/WorkspaceBackendTests.Regions.cs), [ThumbnailZOrderTests.Regions](../../tests/Eve-O-Preview.Tests/Checks/ThumbnailZOrderTests.Regions.cs), [ThumbnailZOrderTests.RegionDrag](../../tests/Eve-O-Preview.Tests/Checks/ThumbnailZOrderTests.RegionDrag.cs), [RegionDockTargetTests](../../tests/Eve-O-Preview.Tests/Checks/RegionDockTargetTests.cs) and [UI smoke Regions](../../tests/Eve-O-Preview.UI.Smoke/Program.Regions.cs). See the [runtime contract](windows-and-thumbnails.md#regions).
+
 ## Repository root
 
 | File | Responsibility / review note | Guide |
@@ -442,7 +446,7 @@ The [migration report](avalonia-migration.md) records current architecture and a
 | [PreviewContract.cs](../../Eve-O-Preview.Preview/PreviewContract.cs) | Native-or-captured image presentation lifetime; opaque client identity |
 | [WindowsPreviewWindowAdapter.cs](../../Eve-O-Preview/View/Rendering/WindowsPreviewWindowAdapter.cs) | Native nonactivation, owned-overlay z-order and physical client/outer geometry boundary |
 | [WindowsBitmap.cs](../../Eve-O-Preview/View/Rendering/WindowsBitmap.cs), [CompatibilityOverlayRenderer.cs](../../Eve-O-Preview/View/Rendering/CompatibilityOverlayRenderer.cs) | Windows bitmap bridge and compatibility scene presentation through Avalonia |
-| [ThumbnailSnapSession.cs](../../Eve-O-Preview.Preview/ThumbnailSnapSession.cs), [ThumbnailSnapGuideWindow.cs](../../Eve-O-Preview/View/Implementation/ThumbnailSnapGuideWindow.cs) | Portable realtime snap/hysteresis and nonactivating visual guides |
+| [ThumbnailSnapSession.cs](../../Eve-O-Preview.Preview/ThumbnailSnapSession.cs), [DesktopSnapTargets.cs](../../Eve-O-Preview/View/Implementation/DesktopSnapTargets.cs), [ThumbnailSnapGuideWindow.cs](../../Eve-O-Preview/View/Implementation/ThumbnailSnapGuideWindow.cs) | Shared thumbnail/region snap hysteresis, monitor/preview targets and nonactivating guides |
 | [WindowsDwmPreviewBackend.cs](../../Eve-O-Preview/View/Rendering/WindowsDwmPreviewBackend.cs) | Persistent DWM image relationship and recovery |
 | [WindowsStaticPreviewBackend.cs](../../Eve-O-Preview/View/Rendering/WindowsStaticPreviewBackend.cs) | Compatibility image/control ownership and last-valid-frame retention |
 | [NativeCompositionOverlayRenderer.cs](../../Eve-O-Preview/View/Rendering/NativeCompositionOverlayRenderer.cs) | Shared hardware device, retained graphics assets and compositor animations |

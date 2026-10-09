@@ -44,6 +44,7 @@ This downloads the project's public root certificate and adds it to the computer
 | See my fleet at a glance | **Overview** |
 | Choose which characters have previews | **Clients** |
 | Create thumbnails for other applications | **Clients > Other applications > Add application** (Light/Dark) |
+| Dock thumbnails into reusable screen areas | **Regions** (Light/Dark) |
 | Cycle through EVE login screens | **Switching & hotkeys > Global shortcuts > Cycle login clients** (Light/Dark) |
 | Include linked login screens in a character cycle | Select a cycle group, then **Group shortcuts > Include login clients** (Light/Dark) |
 | Change preview size, opacity or hover zoom | **Previews & layout → Size & zoom** |
@@ -105,6 +106,20 @@ In **Previews & layout**:
 The **Clients** page saves each character's preview visibility in the active profile. **Hide all previews** is a quick way to clear the screen without removing your layout.
 
 Turning off remembered game window positions or separate preview layouts clears the corresponding saved positions. Clone your profile first if you want to experiment and return to the old arrangement.
+
+### Arrange thumbnails with Regions
+
+Open **Regions** in Light or Dark and choose **Add region**. The monitor preview shows your display arrangement and region positions; click a region to select it. Turn on **Edit regions on screen** to show yellow boxes with outlines. Drag a box to move it; drag its edges or corners to resize it. Change its label with **Save name**. Position and size are edited directly on screen, within your preview size limits. Press Escape to leave edit mode.
+
+Select a region and tick one or more **Assigned clients**. The list combines clients in any cycle group with currently detected EVE clients and available selected applications; unrelated old history is excluded. Their thumbnails automatically take that region's position and size. Clients sharing a region overlap there and retain the normal active-preview ordering. Regions and assignments belong to the current profile and apply when assigned clients return. **Enable regions** turns the whole feature on or off, preserving templates and assignments while off.
+
+Region movement and resizing use **Snap previews together**, snapping to other regions, visible thumbnails and every monitor's edges. The same guides and magnetic breakaway apply to thumbnails. Hold Shift to bypass snapping; while resizing, Shift also preserves the starting proportions.
+
+With drag docking enabled, moving an individual thumbnail shows yellow region highlights. Move the pointer into or near a region; a stronger outline and **Release to dock** label mark the destination. Release to assign the thumbnail and match the region's position and size. This works with **Move**, right-click-and-hold dragging, and window-frame movement. Hold Shift to bypass docking.
+
+With **Dock and undock with right-click drag** enabled, hold a thumbnail's right mouse button and drag it to another highlighted region to transfer it. Dropping away from all regions undocks it at the new position. Turning this option off disables automatic docking and undocking; assigned thumbnails stay locked until you choose **Undock** from the right-click menu. Undock removes the assignment while keeping the current position and size, allowing free movement and resizing. Hover zoom, group selection and Resize all leave docked thumbnails in place. Docked thumbnails are borderless so they fit the yellow outline exactly.
+
+Turn off edit mode when finished. Leaving the Regions page, hiding the workspace or switching profiles closes the yellow boxes. **Remove region** removes its assignments and returns those clients to their saved individual layouts.
 
 ### Preview other applications
 
@@ -211,7 +226,7 @@ Shift+right-click again to remove a member. A normal left-click, or a normal cli
 
 **Maintain aspect ratio** is shared by all thumbnails and saved in the current profile. It preserves each thumbnail's starting proportions during future individual, window-border and numeric size changes. **Resize all** always scales all previews, including saved sizes for offline clients, by a common factor, retaining their relative sizes and aspect ratios. Scaling stops when any preview reaches a configured size limit. Positions stay fixed. Sizes and the shared checkbox survive normal saves, restart and profile switching; old profiles use the default size with the checkbox off.
 
-Resizing uses **Snap previews together**, including window-border resizing. A ratio lock keeps proportions while snapping; hold Shift to bypass snapping temporarily. Resize all snaps to neighbours' fixed left/top edges because their right/bottom edges also move during scaling. Minimum and maximum dimensions still apply. If a client ratio cannot fit both limits, the nearest permitted dimensions are used. Legacy retains its existing direct Resize action; use Light or Dark for the individual resize submenu.
+Moving and resizing use **Snap previews together**, including window-border gestures, with targets at nearby preview edges and every monitor's edges. A ratio lock keeps proportions while snapping; hold Shift to bypass snapping temporarily. Resize all snaps to neighbours' fixed left/top edges because their right/bottom edges also move during scaling; all monitor edges remain targets. Minimum and maximum dimensions still apply. If a client ratio cannot fit both limits, the nearest permitted dimensions are used. Legacy retains its existing direct Resize action; use Light or Dark for the individual resize submenu.
 
 ## Performance and audio
 
@@ -246,7 +261,7 @@ In **Previews & layout → Advanced**, you can configure:
 
 | Setting | What it does |
 | --- | --- |
-| Snap previews together | Align nearby preview edges during movement, with visible guides; hold Shift to bypass |
+| Snap previews together | Align previews and region editors to nearby edges and screen boundaries, with visible guides; hold Shift to bypass |
 | Delay before hiding | Wait before hiding previews outside EVE; enter seconds, rounded up to the next client check |
 | Resize limits | Set minimum and maximum width and height together; the current preview size adjusts to fit |
 | Client check interval | Check for clients and update preview properties every 300–1000 ms; this does **not** control game FPS or the live preview frame rate |
